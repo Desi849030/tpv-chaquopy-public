@@ -1,0 +1,28 @@
+# Android
+.idea/
+*.iml
+.gradle/
+local.properties
+*.apk
+*.aab
+build/
+app/build/
+
+# Python
+*.pyc
+__pycache__/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Keystore
+*.jks
+*.keystore
+
+# Env
+.env
+backup_ia_v85/
+tpv_ia_v82.zip
+tpv-ultrasmart.keystore
+keystore_base64.txt

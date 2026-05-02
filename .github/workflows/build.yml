@@ -1,0 +1,55 @@
+name: Build & Release APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Clean build cache
+        run: ./gradlew clean
+
+      - name: Generate keystore
+        run: keytool -genkeypair -v -keystore app/tpv-ultrasmart.keystore -alias tpvultrasmart -keyalg RSA -keysize 2048 -validity 10000 -storepass tpv2024secure -keypass tpv2024secure -dname "CN=TPV,OU=Dev,O=Universidad,L=City,ST=State,C=US"
+
+      - name: Build APK
+        run: ./gradlew assembleRelease
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release.apk
+          path: app/build/outputs/apk/release/*.apk
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v13.0.0
+          name: "TPV Ultra Smart v13.0.0"
+          body: |
+            - IA Assistant v13.0.0 completo con todas las funciones
+            - Busqueda por palabras (reconoce productos importados)
+            - 100% SQLite local sin Supabase
+            - Batch query resumen rol 5x mas rapido
+            - Saludo contextual por rol
+            - Limpieza de repositorio
+          files: app/build/outputs/apk/release/*.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

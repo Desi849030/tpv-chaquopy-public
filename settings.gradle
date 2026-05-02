@@ -1,0 +1,18 @@
+pluginManagement {
+    repositories {
+        maven { url "https://chaquo.com/maven" }
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        maven { url "https://chaquo.com/maven" }
+        google()
+        mavenCentral()
+    }
+}
+rootProject.name = "TPV Ultra Smart"
+include ':app'

@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout code
+    - name: Checkout
       uses: actions/checkout@v4
       
     - name: Setup Java 17
@@ -28,15 +28,17 @@ jobs:
         python-version: '3.8'
         
     - name: Install Python deps
-      run: pip install flask==2.0.3
-      
+      run: |
+        pip install flask==2.0.3
+        pip install werkzeug==2.0.3
+        
     - name: Grant gradlew permission
       run: chmod +x gradlew
       
     - name: Build debug APK
       run: ./gradlew assembleDebug --stacktrace
       
-    - name: Show APK info
+    - name: Find APK
       run: find . -name "*.apk" -exec ls -lh {} \;
       
     - name: Upload APK

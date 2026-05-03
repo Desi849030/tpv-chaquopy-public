@@ -12,7 +12,7 @@
 
 var SID = 'session_' + Date.now();
 var hist = [];
-var currentRole = 'cliente';
+var currentRole = localStorage.getItem('tpv_rol') || 'cliente';
 var currentUserName = '';
 var alertsTimer = null;
 var retryTimer = null;

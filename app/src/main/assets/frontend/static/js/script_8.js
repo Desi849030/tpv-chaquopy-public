@@ -611,7 +611,7 @@ async function _auth_init(intentos = 0) {
         const res  = await fetch('/api/auth/me', { signal: ctrl.signal, credentials: 'same-origin' });
         const data = await res.json();
         if (res.ok && data.autenticado && data.usuario) {
-            AUTH.usuario = data.usuario; localStorage.setItem("tpv_rol", data.usuario.rol || "vendedor"); localStorage.setItem("tpv_user", JSON.stringify(data.usuario));
+            AUTH.usuario = data.usuario; localStorage.setItem("tpv_rol", data.usuario.rol || "vendedor"); guardarCredenciales(usr, pw); localStorage.setItem("tpv_user", JSON.stringify(data.usuario));
             _auth_mostrarApp();
             return;
         }
@@ -809,7 +809,7 @@ async function auth_login() {
         });
         const data = await res.json();
         if (res.ok && data.ok) {
-            AUTH.usuario = data.usuario; localStorage.setItem("tpv_rol", data.usuario.rol || "vendedor"); localStorage.setItem("tpv_user", JSON.stringify(data.usuario));
+            AUTH.usuario = data.usuario; localStorage.setItem("tpv_rol", data.usuario.rol || "vendedor"); guardarCredenciales(usr, pw); localStorage.setItem("tpv_user", JSON.stringify(data.usuario));
             _auth_mostrarApp();
         } else {
             _loginErr(data.error || 'Usuario o contraseña incorrectos.');
@@ -2985,31 +2985,33 @@ async function auth_biometric_check() {
 }
 
 async function auth_biometric() {
-    document.getElementById('bio-btn').disabled = true;
-    document.getElementById('bio-btn').textContent = 'Verificando...';
-    
-    // Simular verificación biométrica (Android BiometricPrompt)
+    var btn = document.getElementById("bio-btn");
+    btn.disabled = true;
+    btn.textContent = "Verificando...";
     try {
-        const res = await fetch('/api/biometric/setup', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+        var res = await fetch("/api/biometric/setup", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
             body: JSON.stringify({})
         });
-        const data = await res.json();
+        var data = await res.json();
         if (data.ok) {
-            // Éxito - cargar usuario de localStorage
-            const user = JSON.parse(localStorage.getItem('tpv_user') || '{}');
-            if (user.rol) {
+            var user = JSON.parse(localStorage.getItem("tpv_user") || "{}");
+            if (user.rol && user.username) {
                 AUTH.usuario = user;
                 _auth_mostrarApp();
                 return;
             }
         }
     } catch(e) {}
-    
-    document.getElementById('bio-btn').disabled = false;
-    document.getElementById('bio-btn').textContent = '🔓 Huella digital';
-    _loginErr('No se pudo verificar. Use su contraseña.');
+    btn.disabled = false;
+    btn.textContent = "🔓 Huella/Rostro";
+    _loginErr("Biometría no disponible. Use su contraseña.");
+}
+
+function guardarCredenciales(user, pass) {
+    localStorage.setItem("tpv_saved_user", user);
+    localStorage.setItem("tpv_saved_pass", btoa(pass));
 }
 
 // Verificar disponibilidad al cargar

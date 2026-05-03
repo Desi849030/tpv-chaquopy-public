@@ -285,6 +285,7 @@ def api_cambiar_password():
 # ══════════════════════════════════════════════════════════════
 
 _MODULOS_DISPONIBLES = {
+    "catalogo":"Gestion de catalogo","ventas":"Registro de ventas","caja":"Caja y cobros","dashboard":"Panel estadisticas","inventario":"Control inventario","productos":"CRUD productos","categorias":"Gestion categorias","orden":"Gestion de ordenes","tienda":"Tienda online","registros":"Historial","herramientas":"Herramientas","configuracion":"Configuracion","usuarios":"Gestion usuarios","licencias":"Gestion licencias","debug":"Panel depuracion","privilegios":"Gestion privilegios","blindajes":"Panel blindajes","ia_edge":"IA Edge Analytics","lealtad":"Programa Lealtad","asistente_ia":"Asistente IA","descuentos":"Descuentos","supabase":"Configuracion Supabase","seguridad":"Seguridad","exportar":"Exportar datos","copias":"Copias de seguridad",
     "catalogo":"Gestion de catalogo","productos":"CRUD productos","categorias":"Gestion categorias",
     "dashboard":"Panel estadisticas","ventas":"Registro ventas","orden":"Gestion ordenes",
     "inventario":"Control inventario","registros":"Historial","tienda":"Tienda online",

@@ -1408,3 +1408,63 @@ def api_debug_health():
 
 if __name__ == "__main__":
     main()
+
+# ============================================================
+# RUTAS BIOMÉTRICAS
+# ============================================================
+@app.route('/api/biometric/check', methods=['GET'])
+@requiere_login
+def api_biometric_check():
+    try:
+        result = check_biometric_availability()
+        return jsonify({"ok": True, "biometric": result})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+@app.route('/api/biometric/setup', methods=['POST'])
+@requiere_login
+def api_biometric_setup():
+    u = usuario_actual()
+    result = quick_login_setup(u.get("username", ""))
+    return jsonify({"ok": True, "setup": result})
+
+# ============================================================
+# RUTAS TOKENIZACIÓN
+# ============================================================
+@app.route('/api/payment/tokenize', methods=['POST'])
+@requiere_login
+def api_payment_tokenize():
+    datos = request.get_json(force=True, silent=True) or {}
+    amount = float(datos.get("amount", 0))
+    method = datos.get("method", "efectivo")
+    card_ref = datos.get("card_ref", "")
+    
+    if amount <= 0:
+        return jsonify({"error": "Monto inválido"}), 400
+    
+    record = create_payment_record(amount, method, card_ref)
+    return jsonify({"ok": True, "payment": record})
+
+# ============================================================
+# RUTAS RLS
+# ============================================================
+@app.route('/api/branch/info', methods=['GET'])
+@requiere_login
+def api_branch_info():
+    branch_id = get_branch_id()
+    headers = get_rls_headers()
+    return jsonify({
+        "ok": True,
+        "branch_id": branch_id,
+        "rls_enabled": True,
+        "headers": headers
+    })
+
+@app.route('/api/branch/filter', methods=['POST'])
+@requiere_login
+def api_branch_filter():
+    datos = request.get_json(force=True, silent=True) or {}
+    items = datos.get("items", [])
+    filtered = filter_inventory_by_branch(items)
+    return jsonify({"ok": True, "filtered": filtered, "count": len(filtered)})
+

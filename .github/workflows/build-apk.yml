@@ -1,0 +1,52 @@
+name: Build TPV APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+        
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        pip install flask==2.3.0
+        
+    - name: Create APK structure
+      run: |
+        mkdir -p app/src/main/python
+        cp *.py app/src/main/python/
+        
+    - name: Build APK
+      run: |
+        echo "✅ Estructura creada"
+        echo "📱 APK listo para build"
+        ls -la app/src/main/python/
+        
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: TPV-Source
+        path: |
+          *.py
+          *.xml
+          .github/

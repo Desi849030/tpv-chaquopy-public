@@ -1469,3 +1469,20 @@ def api_branch_filter():
     filtered = filter_inventory_by_branch(items)
     return jsonify({"ok": True, "filtered": filtered, "count": len(filtered)})
 
+
+@app.route('/api/health/full', methods=['GET'])
+def api_health_full():
+    """Health check completo del sistema"""
+    import time, os
+    from database import obtener_info_db
+    info = obtener_info_db()
+    return jsonify({
+        "ok": True,
+        "version": "1.0.0",
+        "timestamp": datetime.now().isoformat(),
+        "uptime": time.time(),
+        "db": info,
+        "modules": 26,
+        "routes": 114,
+        "roles": 5
+    })

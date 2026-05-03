@@ -1,107 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.venv/
+env/
+*.egg-info/
+
 # Android
-.idea/
-*.iml
-.gradle/
-local.properties
 *.apk
 *.aab
+*.keystore
+local.properties
+.gradle/
 build/
 app/build/
 
-# Python
-*.pyc
-__pycache__/
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Keystore
-*.jks
-*.keystore
+# Backup
+*.bak
+*_backup*
+*_danado*
+
+# Logs
+*.log
+tpv.log
 
 # Env
 .env
-backup_ia_v85/
-tpv_ia_v82.zip
-tpv-ultrasmart.keystore
-keystore_base64.txt
-tpv-chaquopy/
-backend/
-tpv-chaquopy/
-tpv-chaquopy/
-
-# Python
-__pycache__/
-*.pyc
-*.pyo
-.venv/
-
-# Android
-*.apk
-*.aab
-*.keystore
-local.properties
-
-# IDE
-.vscode/
-.idea/
-
-# Archivos temporales
-*.tmp
-*.bak
-*.swp
-*~
-
-# Backup
-backup/
-
-# Python
-__pycache__/
-*.pyc
-*.pyo
-.venv/
-
-# Android
-*.apk
-*.aab
-*.keystore
-local.properties
-
-# IDE
-.vscode/
-.idea/
-
-# Archivos temporales
-*.tmp
-*.bak
-*.swp
-*~
-
-# Backup
-backup/
-
-# Python
-__pycache__/
-*.pyc
-*.pyo
-.venv/
-
-# Android
-*.apk
-*.aab
-*.keystore
-local.properties
-
-# IDE
-.vscode/
-.idea/
-
-# Archivos temporales
-*.tmp
-*.bak
-*.swp
-*~
-
-# Backup
-backup/
+.env.local

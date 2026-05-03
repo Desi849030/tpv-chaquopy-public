@@ -28,7 +28,7 @@ def check_biometric_availability() -> dict:
         # Fallback: asumir disponible en Android 6+
         return {
             "available": True,
-            "type": "fingerprint",
+            "type": "fingerprint/face",
             "enrolled": True
         }
 

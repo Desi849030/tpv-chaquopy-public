@@ -610,7 +610,7 @@ async function _auth_init(intentos = 0) {
         const res  = await fetch('/api/auth/me', { signal: ctrl.signal, credentials: 'same-origin' });
         const data = await res.json();
         if (res.ok && data.autenticado && data.usuario) {
-            AUTH.usuario = data.usuario;
+            AUTH.usuario = data.usuario; localStorage.setItem("tpv_rol", data.usuario.rol || "vendedor"); localStorage.setItem("tpv_user", JSON.stringify(data.usuario)); localStorage.setItem("tpv_rol", data.usuario.rol || "vendedor"); localStorage.setItem("tpv_user", JSON.stringify(data.usuario));
             _auth_mostrarApp();
             return;
         }
@@ -808,7 +808,7 @@ async function auth_login() {
         });
         const data = await res.json();
         if (res.ok && data.ok) {
-            AUTH.usuario = data.usuario;
+            AUTH.usuario = data.usuario; localStorage.setItem("tpv_rol", data.usuario.rol || "vendedor"); localStorage.setItem("tpv_user", JSON.stringify(data.usuario)); localStorage.setItem("tpv_rol", data.usuario.rol || "vendedor"); localStorage.setItem("tpv_user", JSON.stringify(data.usuario));
             _auth_mostrarApp();
         } else {
             _loginErr(data.error || 'Usuario o contraseña incorrectos.');

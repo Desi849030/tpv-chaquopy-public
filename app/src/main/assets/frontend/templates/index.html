@@ -1393,5 +1393,23 @@
 <!-- IA Assistant v10.0 - Chat flotante (burbuja) REESCRITO DESDE CERO -->
 <script src="/static/lib/ia_assistant_ui.js"></script>
 
+<script>
+// Control de visibilidad por rol - v1.0
+var _rol = localStorage.getItem("tpv_rol") || sessionStorage.getItem("tpv_rol") || "vendedor";
+
+// Solo desarrollador ve Supabase y Descuentos
+if(_rol !== "desarrollador"){
+  var el;
+  el = document.getElementById("cfg-descuentos-wrap"); if(el) el.style.display = "none";
+  el = document.getElementById("cfg-supabase-config-wrap"); if(el) el.style.display = "none";
+  el = document.getElementById("cfg-supabase-sync-wrap"); if(el) el.style.display = "none";
+  el = document.getElementById("cfg-licencias-tab"); if(el) el.style.display = "none";
+}
+
+// Admin no ve debug ni privilegios
+if(_rol === "administrador"){
+  el = document.getElementById("dbg-v2"); if(el) el.style.display = "none";
+}
+</script>
 </body>
 </html>

@@ -22,28 +22,26 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
       
-    - name: Setup Python
+    - name: Setup Python 3.8
       uses: actions/setup-python@v5
       with:
-        python-version: '3.9'
+        python-version: '3.8'
         
-    - name: Install dependencies
-      run: |
-        pip install flask==2.3.0
-        
-    - name: Verify structure
-      run: |
-        echo "=== Archivos Python ==="
-        find . -name "*.py" -type f | sort
-        echo ""
-        echo "=== Archivos en app/src/main/python/ ==="
-        ls -la app/src/main/python/ 2>/dev/null || echo "No existe"
-        
-    - name: Upload artifact
+    - name: Install Python deps
+      run: pip install flask==2.0.3
+      
+    - name: Grant gradlew permission
+      run: chmod +x gradlew
+      
+    - name: Build debug APK
+      run: ./gradlew assembleDebug --stacktrace
+      
+    - name: Show APK info
+      run: find . -name "*.apk" -exec ls -lh {} \;
+      
+    - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: TPV-Smart-Source
-        path: |
-          app/
-          *.py
+        name: TPV-Smart-APK
+        path: app/build/outputs/apk/debug/*.apk
         retention-days: 90

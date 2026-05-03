@@ -66,3 +66,4 @@ def quick_login_setup(username: str) -> dict:
     }
 
 print("✅ biometric_auth.py v1.0 listo - Login biométrico activo")
+

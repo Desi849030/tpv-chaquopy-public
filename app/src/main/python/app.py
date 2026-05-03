@@ -94,6 +94,9 @@ import supabase_sync as _sb
 
 from tienda_routes import tienda_bp, crear_tablas_tienda
 from loyalty_routes import loyalty_bp
+from payment_tokenizer import tokenize, create_payment_record, mask_card
+from biometric_auth import check_biometric_availability, quick_login_setup
+from supabase_rls import get_branch_id, build_rls_query, get_rls_headers
 from api_routes import api_bp
 try:
     from ia_assistant_routes import assistant_bp

@@ -30,3 +30,78 @@ tpv-chaquopy/
 backend/
 tpv-chaquopy/
 tpv-chaquopy/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# Android
+*.apk
+*.aab
+*.keystore
+local.properties
+
+# IDE
+.vscode/
+.idea/
+
+# Archivos temporales
+*.tmp
+*.bak
+*.swp
+*~
+
+# Backup
+backup/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# Android
+*.apk
+*.aab
+*.keystore
+local.properties
+
+# IDE
+.vscode/
+.idea/
+
+# Archivos temporales
+*.tmp
+*.bak
+*.swp
+*~
+
+# Backup
+backup/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# Android
+*.apk
+*.aab
+*.keystore
+local.properties
+
+# IDE
+.vscode/
+.idea/
+
+# Archivos temporales
+*.tmp
+*.bak
+*.swp
+*~
+
+# Backup
+backup/

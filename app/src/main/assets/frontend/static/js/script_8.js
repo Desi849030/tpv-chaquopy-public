@@ -2319,16 +2319,7 @@ function priv_renderTabla(rol) {
     var privs = _priv_datos_cache[rol] || {};
     var html = '';
 
-    var iconos = {
-        catalogo:'bi-grid-3x3-gap-fill', productos:'bi-journal-album',
-        categorias:'bi-tags-fill', dashboard:'bi-speedometer2',
-        ventas:'bi-currency-dollar', orden:'bi-receipt',
-        inventario:'bi-box-seam', registros:'bi-clock-history',
-        tienda:'bi-shop', herramientas:'bi-tools',
-        configuracion:'bi-palette', usuarios:'bi-people-fill',
-        licencias:'bi-shield-check', debug:'bi-bug-fill',
-        privilegios:'bi-shield-lock-fill'
-    };
+    var iconos = {catalogo:"bi-grid-3x3-gap-fill",ventas:"bi-currency-dollar",caja:"bi-cash-stack",dashboard:"bi-speedometer2",inventario:"bi-box-seam",productos:"bi-journal-album",categorias:"bi-tags-fill",orden:"bi-receipt",tienda:"bi-shop",registros:"bi-clock-history",herramientas:"bi-tools",configuracion:"bi-palette",usuarios:"bi-people-fill",licencias:"bi-shield-check",debug:"bi-bug-fill",privilegios:"bi-shield-lock-fill",blindajes:"bi-shield-shaded",ia_edge:"bi-cpu-fill",lealtad:"bi-star-fill",asistente_ia:"bi-robot",descuentos:"bi-tag-fill",supabase:"bi-cloud-fill",seguridad:"bi-lock-fill",exportar:"bi-download",copias:"bi-copy"};
 
     var modulos = Object.keys(_priv_modulos_cache);
     modulos.sort();

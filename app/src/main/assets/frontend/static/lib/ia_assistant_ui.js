@@ -1,4 +1,4 @@
-// ia_assistant_ui.js - TPV Smart v13.0.0
+// ia_assistant_ui.js - TPV Smart v1.0
 // AGENTE IA DINAMICO E INTERACTIVO
 // Principios:
 //   1. Al abrir: muestra datos REALES del servidor (ventas, stock, KPIs por rol)
@@ -425,7 +425,7 @@ function init(){
 
     var panel = ce('div', {id: 'tpv-chat-panel'});
     panel.innerHTML =
-        '<div class="tpvc-head"><div><h3><svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="none"><path d="M20 2H4C2.9 2 2 2.9 2 4V16C2 17.1 2.9 18 4 18H6V22L10 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2Z" fill="white" opacity=".9"/><path d="M13 6L8.5 12.5H11.5L11 16L15.5 9.5H12.5L13 6Z" fill="#0f1923" stroke="#0f1923" stroke-width=".5"/></svg> TPV Smart <span class="tpvc-role-badge" style="border-color:' + roleColor + ';color:' + roleColor + '">' + roleIcon + '</span> <span class="tpvc-role-label" style="font-size:10px;opacity:.8">' + roleLabel + '</span><span class="tpvc-status-dot connecting"></span></h3><div class="tpvc-head-sub">IA on-device v13.0</div></div><button class="tpvc-close" onclick="document.getElementById(\'tpv-chat-panel\').classList.remove(\'open\')">&times;</button></div>' +
+        '<div class="tpvc-head"><div><h3><svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="none"><path d="M20 2H4C2.9 2 2 2.9 2 4V16C2 17.1 2.9 18 4 18H6V22L10 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2Z" fill="white" opacity=".9"/><path d="M13 6L8.5 12.5H11.5L11 16L15.5 9.5H12.5L13 6Z" fill="#0f1923" stroke="#0f1923" stroke-width=".5"/></svg> TPV Smart <span class="tpvc-role-badge" style="border-color:' + roleColor + ';color:' + roleColor + '">' + roleIcon + '</span> <span class="tpvc-role-label" style="font-size:10px;opacity:.8">' + roleLabel + '</span><span class="tpvc-status-dot connecting"></span></h3><div class="tpvc-head-sub">IA on-device v1.0</div></div><button class="tpvc-close" onclick="document.getElementById(\'tpv-chat-panel\').classList.remove(\'open\')">&times;</button></div>' +
         '<div class="tpvc-msgs"></div>' +
         '<div class="tpvc-input"><input type="text" placeholder="Escribe lo que necesites..." autocomplete="off"><button>></button></div>';
     document.body.appendChild(panel);

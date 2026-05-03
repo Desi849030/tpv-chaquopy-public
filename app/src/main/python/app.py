@@ -93,6 +93,7 @@ from supabase_sync import (
 import supabase_sync as _sb
 
 from tienda_routes import tienda_bp, crear_tablas_tienda
+from loyalty_routes import loyalty_bp
 from api_routes import api_bp
 try:
     from ia_assistant_routes import assistant_bp
@@ -118,6 +119,7 @@ app.config["SESSION_COOKIE_DOMAIN"]     = None  # acepta cualquier host
 app.config["PERMANENT_SESSION_LIFETIME"] = 86400 * 7
 app.secret_key = _KEY_FILE.read_text().strip()
 app.register_blueprint(tienda_bp)
+app.register_blueprint(loyalty_bp)
 app.register_blueprint(api_bp)
 if assistant_bp:
     app.register_blueprint(assistant_bp)
@@ -284,12 +286,12 @@ _MODULOS_DISPONIBLES = {
     "dashboard":"Panel estadisticas","ventas":"Registro ventas","orden":"Gestion ordenes",
     "inventario":"Control inventario","registros":"Historial","tienda":"Tienda online",
     "herramientas":"Herramientas","configuracion":"Configuracion","usuarios":"Gestion usuarios",
-    "licencias":"Gestion licencias","debug":"Panel depuracion","privilegios":"Gestion privilegios","blindajes":"Panel blindajes"}
+    "licencias":"Gestion licencias","debug":"Panel depuracion","privilegios":"Gestion privilegios","blindajes":"Panel blindajes","ia_edge":"IA Edge Analytics","lealtad":"Programa Lealtad","asistente_ia":"Asistente IA"}
 _PRIVILEGIOS_DEFAULT = {
     "desarrollador":{m:True for m in _MODULOS_DISPONIBLES},
     "administrador":{m:True for m in _MODULOS_DISPONIBLES if m not in("debug","privilegios")},
-    "supervisor":{"catalogo":True,"productos":True,"categorias":True,"dashboard":True,"ventas":True,"orden":True,"inventario":True,"registros":True,"tienda":True},
-    "vendedor":{"catalogo":True,"ventas":True,"orden":True,"dashboard":True}}
+    "supervisor":{"catalogo":True,"productos":True,"categorias":True,"dashboard":True,"ventas":True,"orden":True,"inventario":True,"registros":True,"tienda":True,"ia_edge":True,"lealtad":True,"asistente_ia":True},
+    "vendedor":{"catalogo":True,"ventas":True,"orden":True,"dashboard":True,"ia_edge":True,"lealtad":True,"asistente_ia":True}}
 
 def _obtener_privilegios_rol(rol):
     from database import obtener_conexion

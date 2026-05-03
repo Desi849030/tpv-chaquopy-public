@@ -226,6 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
             <button id="login-btn" class="login-btn" onclick="auth_login()">
+            <button id="bio-btn" class="login-btn" style="background:#00b894;margin-top:8px;display:none" onclick="auth_biometric()"><i class="bi bi-fingerprint"></i> Huella digital</button>
                 <span id="lbtn-txt"><i class="bi bi-box-arrow-in-right me-2"></i>Entrar</span>
                 <span id="lbtn-spin" style="display:none"><span class="spinner-border spinner-border-sm me-2"></span>Verificando...</span>
             </button>
@@ -610,7 +611,7 @@ async function _auth_init(intentos = 0) {
         const res  = await fetch('/api/auth/me', { signal: ctrl.signal, credentials: 'same-origin' });
         const data = await res.json();
         if (res.ok && data.autenticado && data.usuario) {
-            AUTH.usuario = data.usuario; localStorage.setItem("tpv_rol", data.usuario.rol || "vendedor"); localStorage.setItem("tpv_user", JSON.stringify(data.usuario)); localStorage.setItem("tpv_rol", data.usuario.rol || "vendedor"); localStorage.setItem("tpv_user", JSON.stringify(data.usuario));
+            AUTH.usuario = data.usuario; localStorage.setItem("tpv_rol", data.usuario.rol || "vendedor"); localStorage.setItem("tpv_user", JSON.stringify(data.usuario));
             _auth_mostrarApp();
             return;
         }
@@ -808,7 +809,7 @@ async function auth_login() {
         });
         const data = await res.json();
         if (res.ok && data.ok) {
-            AUTH.usuario = data.usuario; localStorage.setItem("tpv_rol", data.usuario.rol || "vendedor"); localStorage.setItem("tpv_user", JSON.stringify(data.usuario)); localStorage.setItem("tpv_rol", data.usuario.rol || "vendedor"); localStorage.setItem("tpv_user", JSON.stringify(data.usuario));
+            AUTH.usuario = data.usuario; localStorage.setItem("tpv_rol", data.usuario.rol || "vendedor"); localStorage.setItem("tpv_user", JSON.stringify(data.usuario));
             _auth_mostrarApp();
         } else {
             _loginErr(data.error || 'Usuario o contraseña incorrectos.');
@@ -2977,3 +2978,50 @@ function gestion_mostrarPreviewExistente(urlImagen) {
         wrap.classList.remove('d-none');
     }
 }
+
+// ============================================================
+// LOGIN BIOMÉTRICO
+// ============================================================
+async function auth_biometric_check() {
+    try {
+        const res = await fetch('/api/biometric/check');
+        const data = await res.json();
+        if (data.ok && data.biometric && data.biometric.available) {
+            document.getElementById('bio-btn').style.display = '';
+            document.getElementById('bio-btn').textContent = data.biometric.type === 'fingerprint/face' ? '🔓 Huella/Rostro' : '🔓 Huella digital';
+        }
+    } catch(e) {}
+}
+
+async function auth_biometric() {
+    document.getElementById('bio-btn').disabled = true;
+    document.getElementById('bio-btn').textContent = 'Verificando...';
+    
+    // Simular verificación biométrica (Android BiometricPrompt)
+    try {
+        const res = await fetch('/api/biometric/setup', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({})
+        });
+        const data = await res.json();
+        if (data.ok) {
+            // Éxito - cargar usuario de localStorage
+            const user = JSON.parse(localStorage.getItem('tpv_user') || '{}');
+            if (user.rol) {
+                AUTH.usuario = user;
+                _auth_mostrarApp();
+                return;
+            }
+        }
+    } catch(e) {}
+    
+    document.getElementById('bio-btn').disabled = false;
+    document.getElementById('bio-btn').textContent = '🔓 Huella digital';
+    _loginErr('No se pudo verificar. Use su contraseña.');
+}
+
+// Verificar disponibilidad al cargar
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(auth_biometric_check, 500);
+});

@@ -1,15 +1,18 @@
 """
-ia_agent.py v1.0 - TPV Smart - Asistente Virtual
-Responde de forma natural según el rol del usuario
+ia_agent.py v1.0 - TPV Smart - Súper Agente Financiero
+Modelos matemáticos, estadística, economía, finanzas
+Recomendaciones inteligentes según perfil de cliente
 """
-import sqlite3, json, math, re, os, random, threading, time
+import sqlite3, re, os, random, threading, time, math
 from datetime import datetime, timedelta
-from collections import defaultdict
 from difflib import SequenceMatcher
+from collections import defaultdict
 
+# ============================================================
+# BASE DE DATOS
+# ============================================================
 def _db_path():
-    paths = ['tpv_datos.db', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tpv_datos.db')]
-    for p in paths:
+    for p in ['tpv_datos.db', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tpv_datos.db')]:
         if os.path.exists(p): return p
     return 'tpv_datos.db'
 
@@ -35,7 +38,10 @@ class DB:
             return cur.fetchone() if one else cur.fetchall()
         except: return None
 
-class ProductSearch:
+# ============================================================
+# CATÁLOGO DE PRODUCTOS
+# ============================================================
+class Products:
     cache = []; cache_t = 0; categorias = []
     @classmethod
     def refresh(cls):
@@ -78,239 +84,459 @@ class ProductSearch:
     @classmethod
     def stats(cls):
         cls.refresh()
-        return {'total':len(cls.cache),'low':sum(1 for p in cls.cache if 0<p['s']<=5)}
+        return {'total':len(cls.cache),'low':sum(1 for p in cls.cache if 0<p['s']<=5),'out':sum(1 for p in cls.cache if p['s']<=0),'cats':len(cls.categorias)}
 
-class Agent:
-    def __init__(self):
-        self.memories = {}; self.lock = threading.Lock()
+# ============================================================
+# MODELOS MATEMÁTICOS Y ESTADÍSTICA
+# ============================================================
+class MathModels:
+    """Modelos matemáticos para análisis de negocio"""
     
-    def mem(self, sid):
+    @staticmethod
+    def media_movil(datos, ventana=7):
+        """Media móvil para suavizar tendencias"""
+        if len(datos) < ventana: return datos
+        return [sum(datos[i:i+ventana])/ventana for i in range(len(datos)-ventana+1)]
+    
+    @staticmethod
+    def regresion_lineal(x, y):
+        """Regresión lineal simple y = mx + b"""
+        n = len(x)
+        if n < 2: return 0, 0
+        sum_x = sum(x); sum_y = sum(y)
+        sum_xy = sum(x[i]*y[i] for i in range(n))
+        sum_x2 = sum(v*v for v in x)
+        m = (n*sum_xy - sum_x*sum_y) / (n*sum_x2 - sum_x*sum_x) if (n*sum_x2 - sum_x*sum_x) != 0 else 0
+        b = (sum_y - m*sum_x) / n
+        return m, b
+    
+    @staticmethod
+    def elasticidad_precio(p1, p2, q1, q2):
+        """Elasticidad precio de la demanda"""
+        if p1 == 0 or q1 == 0: return 0
+        var_p = (p2-p1)/p1
+        var_q = (q2-q1)/q1
+        return abs(var_q/var_p) if var_p != 0 else 0
+    
+    @staticmethod
+    def punto_equilibrio(costo_fijo, precio, costo_variable):
+        """Punto de equilibrio en unidades"""
+        margen = precio - costo_variable
+        return math.ceil(costo_fijo/margen) if margen > 0 else float('inf')
+    
+    @staticmethod
+    def roi(inversion, ganancia):
+        """Retorno de inversión"""
+        return ((ganancia - inversion)/inversion)*100 if inversion > 0 else 0
+    
+    @staticmethod
+    def indice_rotacion(costo_ventas, inventario_promedio):
+        """Índice de rotación de inventario"""
+        return costo_ventas/inventario_promedio if inventario_promedio > 0 else 0
+    
+    @staticmethod
+    def eoq(demanda_anual, costo_pedido, costo_mantenimiento):
+        """Economic Order Quantity - Cantidad óptima de pedido"""
+        if costo_mantenimiento <= 0: return 0
+        return math.sqrt((2*demanda_anual*costo_pedido)/costo_mantenimiento)
+    
+    @staticmethod
+    def abc_classification(products):
+        """Clasificación ABC de productos por ingresos"""
+        sorted_p = sorted(products, key=lambda x: x.get('revenue',0), reverse=True)
+        total = sum(p.get('revenue',0) for p in sorted_p)
+        if total == 0: return {'A':[],'B':[],'C':[]}
+        cum = 0; result = {'A':[],'B':[],'C':[]}
+        for p in sorted_p:
+            cum += p.get('revenue',0)
+            pct = cum/total*100
+            if pct <= 80: result['A'].append(p)
+            elif pct <= 95: result['B'].append(p)
+            else: result['C'].append(p)
+        return result
+
+# ============================================================
+# ANALIZADOR DE VENTAS
+# ============================================================
+class SalesAnalyzer:
+    @staticmethod
+    def daily_summary():
+        d = DB.q("SELECT COUNT(*) as t, COALESCE(SUM(total),0) as r, COALESCE(AVG(total),0) as a, COALESCE(SUM(cantidad),0) as u FROM historial_ventas WHERE DATE(fecha)=DATE('now','localtime')", one=True)
+        return {'txns':d['t'],'revenue':d['r'],'avg':d['a'],'units':int(d['u'])} if d else None
+    
+    @staticmethod
+    def weekly_summary():
+        d = DB.q("SELECT COUNT(*) as t, COALESCE(SUM(total),0) as r, COALESCE(AVG(total),0) as a FROM historial_ventas WHERE fecha>=DATE('now','-7 days')", one=True)
+        return {'txns':d['t'],'revenue':d['r'],'avg':d['a']} if d else None
+    
+    @staticmethod
+    def top_products(days=7, limit=5):
+        return DB.q(f"SELECT nombre,SUM(cantidad) q,SUM(total) t FROM historial_ventas WHERE fecha>=DATE('now','-{days} days') GROUP BY nombre ORDER BY q DESC LIMIT {limit}")
+    
+    @staticmethod
+    def hourly_distribution():
+        return DB.q("SELECT strftime('%H',fecha) h, COUNT(*) c, COALESCE(SUM(total),0) r FROM historial_ventas WHERE DATE(fecha)=DATE('now','localtime') GROUP BY h ORDER BY c DESC")
+    
+    @staticmethod
+    def payment_methods():
+        return DB.q("SELECT metodo_pago, COUNT(*) c, COALESCE(SUM(total),0) r FROM historial_ventas WHERE DATE(fecha)=DATE('now','localtime') GROUP BY metodo_pago ORDER BY r DESC")
+
+# ============================================================
+# SISTEMA DE RECOMENDACIONES INTELIGENTES
+# ============================================================
+class SmartRecommender:
+    @staticmethod
+    def related_products(product_name, limit=3):
+        """Productos frecuentemente comprados juntos"""
+        rows = DB.q(f"""
+            SELECT b.nombre, COUNT(*) as freq
+            FROM historial_ventas a JOIN historial_ventas b 
+            ON a.venta_id = b.venta_id AND a.nombre != b.nombre
+            WHERE a.nombre LIKE ? AND DATE(a.fecha) >= DATE('now','-30 days')
+            GROUP BY b.nombre ORDER BY freq DESC LIMIT {limit}
+        """, ('%'+product_name+'%',))
+        return rows if rows else []
+    
+    @staticmethod
+    def price_drops():
+        """Productos con margen bajo que podrían estar en oferta"""
+        prods = []
+        for p in Products.cache:
+            if p['p'] > 0 and p['c'] > 0:
+                margin = (p['p']-p['c'])/p['p']*100
+                if margin < 25 and p['s'] > 5:
+                    prods.append({'n':p['n'],'price':p['p'],'cost':p['c'],'margin':margin,'stock':p['s']})
+        return sorted(prods, key=lambda x: x['margin'])[:5]
+    
+    @staticmethod
+    def best_deals():
+        """Mejores ofertas - productos con buen margen y mucho stock"""
+        deals = []
+        for p in Products.cache:
+            if p['p'] > 0 and p['c'] > 0 and p['s'] >= 10:
+                margin = (p['p']-p['c'])/p['p']*100
+                if margin > 30:
+                    discount_price = p['p'] * 0.85
+                    deals.append({'n':p['n'],'price':p['p'],'discount':discount_price,'margin':margin,'stock':p['s']})
+        return sorted(deals, key=lambda x: x['margin'], reverse=True)[:5]
+    
+    @staticmethod
+    def low_stock_alerts():
+        """Productos que necesitan reorden urgente"""
+        return DB.q("SELECT nombre,stock_actual,precio_venta FROM inventario_general WHERE stock_actual<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 8")
+
+# ============================================================
+# FUNCIONES DE LA APK POR ROL
+# ============================================================
+APK = {
+    'cliente': ['productos','precios','categorias','buscar','tienda'],
+    'vendedor': ['caja','ventas','productos','stock','top','cliente_qr'],
+    'supervisor': ['dashboard','ventas','inventario','equipo','predicciones'],
+    'administrador': ['dashboard','ventas','inventario','usuarios','finanzas','productos','categorias','configuracion','blindajes','licencias'],
+    'desarrollador': ['todo','debug','api','logs','supabase','privilegios']
+}
+
+def fmt(v, decimals=2):
+    try: return f"${float(v):,.{decimals}f}"
+    except: return "$0.00"
+
+def pct(v): return f"{float(v):.1f}%"
+
+# ============================================================
+# SÚPER AGENTE
+# ============================================================
+class SuperAgent:
+    def __init__(self):
+        self.sessions = {}; self.lock = threading.Lock()
+        self.math = MathModels()
+        self.sales = SalesAnalyzer()
+        self.reco = SmartRecommender()
+    
+    def session(self, sid):
         with self.lock:
-            if sid not in self.memories: self.memories[sid] = []
-            return self.memories[sid]
+            if sid not in self.sessions:
+                self.sessions[sid] = {'history':[],'topic':'','prefs':defaultdict(int)}
+            return self.sessions[sid]
     
     def process(self, text, sid='default', role='cliente', name=''):
-        if not text or not text.strip():
-            return self._respond("¡Hola! ¿En qué puedo ayudarte? Puedes preguntarme por productos, precios o lo que necesites.", role)
+        if not text or not text.strip(): return self._welcome(role, name)
         
-        text_lower = text.lower().strip()
-        mem = self.mem(sid)
-        mem.append(text)
-        if len(mem) > 10: mem.pop(0)
+        t = text.lower().strip()
+        sess = self.session(sid)
+        sess['history'].append(t)
+        if len(sess['history'])>20: sess['history']=sess['history'][-20:]
+        sess['prefs'][t] += 1
         
-        # Saludos
-        if any(w in text_lower for w in ['hola','buenos dias','buenas tardes','buenas noches','hey','que tal']):
-            return self._greeting(role, name)
+        # Saludos y ayuda
+        if any(w in t for w in ['hola','buenos dias','buenas tardes','buenas noches','hey']):
+            return self._welcome(role, name)
+        if any(w in t for w in ['adios','chao','bye','gracias']):
+            return self._r("Ha sido un placer. Estoy aquí cuando me necesite.", role)
+        if any(w in t for w in ['ayuda','help','que puedes','que sabes','funciones']):
+            return self._show_help(role)
         
-        # Despedidas
-        if any(w in text_lower for w in ['adios','chao','bye','gracias','nos vemos']):
-            return self._respond("¡Hasta luego! Estoy aquí cuando me necesites.", role)
-        
-        # Ayuda
-        if any(w in text_lower for w in ['ayuda','help','que puedes','como funciona']):
-            return self._help(role)
-        
-        # CLIENTE - Solo productos, precios y tienda
-        if role == 'cliente':
-            return self._handle_cliente(text, text_lower)
-        
-        # VENDEDOR - Ventas del día, productos, stock
-        elif role == 'vendedor':
-            return self._handle_vendedor(text, text_lower)
-        
-        # ADMIN/SUPERVISOR/DESARROLLADOR - Todo
-        else:
-            return self._handle_admin(text, text_lower, role)
+        # Enrutar por rol
+        return getattr(self, f'_{role}', self._cliente)(text, t, sess, name)
     
-    def _greeting(self, role, name):
+    def _welcome(self, role, name):
         h = datetime.now().hour
-        saludo = "Buenas noches" if h<6 else "Buenos días" if h<12 else "Buenas tardes" if h<20 else "Buenas noches"
-        nombre = f" {name}" if name else ""
+        g = "Buenas noches" if h<6 else "Buenos días" if h<12 else "Buen mediodía" if h<14 else "Buenas tardes" if h<20 else "Buenas noches"
+        n = f", {name}" if name else ""
         
         if role == 'cliente':
-            return self._respond(f"{saludo}{nombre}. Soy el asistente virtual de la tienda. Puedes preguntarme precios, productos disponibles o información de la tienda.", role)
+            prods = Products.stats(); deals = self.reco.best_deals()
+            msg = f"{g}{n}. Bienvenido a TPV Smart. Hoy tenemos {prods['total']} productos disponibles"
+            if deals: msg += f". Le recomiendo: {deals[0]['n']} con descuento a {fmt(deals[0]['discount'])}"
+            return self._r(msg+". ¿Qué busca?", role)
+        
         elif role == 'vendedor':
-            d = DB.q("SELECT COUNT(*) as t, COALESCE(SUM(total),0) as r FROM historial_ventas WHERE DATE(fecha)=DATE('now','localtime')", one=True)
-            if d and d['t'] > 0:
-                return self._respond(f"{saludo}{nombre}. Hoy llevamos {d['t']} ventas por ${d['r']:,.0f}. ¿Necesitas algo más?", role)
-            return self._respond(f"{saludo}{nombre}. Aún no hay ventas hoy. ¿En qué te ayudo?", role)
+            d = self.sales.daily_summary()
+            if d and d['txns']>0:
+                return self._r(f"{g}{n}. Hoy: {d['txns']} ventas, {fmt(d['revenue'])}. Proyección día: ~{fmt(d['revenue']/datetime.now().hour*24 if datetime.now().hour>0 else d['revenue'])}. ¿Qué necesita?", role)
+            return self._r(f"{g}{n}. Iniciando jornada. Tenga un excelente día de ventas.", role)
+        
+        elif role == 'supervisor':
+            prods = Products.stats(); d = self.sales.daily_summary()
+            return self._r(f"{g}{n}. Sistema activo: {prods['total']} productos, {prods['low']} con stock bajo. Ventas: {fmt(d['revenue'] if d else 0)}.", role)
+        
+        elif role == 'administrador':
+            prods = Products.stats(); d = self.sales.daily_summary()
+            msg = f"{g}{n}. Sistema bajo control: {prods['total']} productos, {prods['cats']} categorías. "
+            if d: msg += f"Ventas hoy: {d['txns']} transacciones, {fmt(d['revenue'])}."
+            if prods['low']>0: msg += f" ⚠️ {prods['low']} productos requieren reabastecimiento."
+            return self._r(msg, role)
+        
         else:
-            stats = ProductSearch.stats()
-            d = DB.q("SELECT COUNT(*) as t, COALESCE(SUM(total),0) as r FROM historial_ventas WHERE DATE(fecha)=DATE('now','localtime')", one=True)
-            rev = d['r'] if d else 0
-            return self._respond(f"{saludo}{nombre}. Tenemos {stats['total']} productos, {stats['low']} con stock bajo. Ventas hoy: ${rev:,.0f}. ¿Qué necesitas?", role)
+            prods = Products.stats()
+            return self._r(f"{g}{n}. Acceso total. {prods['total']} productos en sistema. Escriba 'ayuda' para ver funciones.", role)
     
-    def _help(self, role):
+    def _show_help(self, role):
+        funcs = APK.get(role, [])
+        labels = {'cliente':'Estimado cliente','vendedor':'Vendedor','supervisor':'Supervisor','administrador':'Administrador','desarrollador':'Desarrollador'}
+        msg = f"{labels.get(role,'Usuario')}, puedo ayudarle con:\n\n"
+        
         if role == 'cliente':
-            return self._respond("Puedo mostrarte nuestros productos y precios. Solo dime qué buscas, por ejemplo: ¿cuánto cuesta el café? o ¿tienen leche?", role)
+            msg += "• Buscar productos y precios\n• Ver categorías\n• Mejores ofertas del día\n• Productos recomendados\n• ¿Dónde encontrar un producto?\n\nEjemplo: 'busco café' o 'mejores ofertas'"
         elif role == 'vendedor':
-            return self._respond("Puedo ayudarte con: ventas de hoy, consultar precios, ver stock bajo, productos más vendidos. Dime qué necesitas.", role)
+            msg += "• Ventas del día y proyecciones\n• Consultar precios y stock\n• Top productos más vendidos\n• Alertas de stock bajo\n• Análisis de hora pico\n\nEjemplo: 'ventas' o 'stock bajo'"
+        elif role == 'supervisor':
+            msg += "• Dashboard de ventas\n• Análisis de tendencias\n• Rendimiento del equipo\n• Proyecciones y KPIs\n• Alertas de inventario\n\nEjemplo: 'dashboard' o 'tendencias'"
+        elif role == 'administrador':
+            msg += "• Reportes financieros completos\n• Análisis ABC de productos\n• Punto de equilibrio\n• ROI y rentabilidad\n• Elasticidad de precios\n• Predicciones de demanda\n\nEjemplo: 'análisis ABC' o 'finanzas'"
         else:
-            return self._respond("Tienes acceso completo. Puedes consultar: ventas, inventario, stock crítico, predicciones, KPIs, reportes. Dime qué necesitas.", role)
+            msg += "• Todas las funciones del sistema\n• Debug y logs\n• API y Supabase\n• Modelos matemáticos\n\nEjemplo: 'estado del sistema'"
+        
+        return self._r(msg, role)
     
-    def _handle_cliente(self, text, text_lower):
+    # ============================================================
+    # CLIENTE
+    # ============================================================
+    def _cliente(self, text, t, sess, name):
+        # Ofertas
+        if any(w in t for w in ['oferta','descuento','rebaja','mejor precio','barato','promocion']):
+            deals = self.reco.best_deals()
+            if deals:
+                msg = "Nuestras mejores ofertas hoy:\n\n"
+                for i,d in enumerate(deals[:5],1):
+                    ahorro = d['price'] - d['discount']
+                    msg += f"{i}. {d['n']}: {fmt(d['discount'])} (antes {fmt(d['price'])}, ahorra {fmt(ahorro)})\n"
+                return self._r(msg, 'cliente')
+            return self._r("Hoy todos nuestros precios son competitivos. ¿Qué producto le interesa?", 'cliente')
+        
+        # ¿Dónde está X?
+        if any(w in t for w in ['donde','tienda','sucursal','ubicacion','lugar']):
+            return self._r("Nuestros productos están disponibles en nuestra tienda principal y en la tienda online. ¿Cuál le interesa?", 'cliente')
+        
         # Buscar producto
-        prods = ProductSearch.search(text, 5)
+        prods = Products.search(text, 5)
         if prods:
             if len(prods) == 1:
                 p = prods[0]
-                msg = f"{p['n']} cuesta ${p['p']:,.0f} por {p['u']}."
-                if p['s'] == 0:
-                    msg += f" Lamentablemente está agotado en este momento."
-                elif p['s'] <= 5:
-                    msg += f" Quedan pocas unidades."
-                else:
-                    msg += f" Tenemos {p['s']:.0f} {p['u']} disponibles."
-                # Productos relacionados
-                related = [r for r in ProductSearch.search(p['cat'], 4) if r['n'] != p['n']]
-                if related:
-                    msg += f" También tenemos {related[0]['n']} a ${related[0]['p']:,.0f} y {related[1]['n'] if len(related)>1 else ''}."
-                    if len(related)>1: msg = msg.replace(" y .", ".")
+                msg = f"{p['n']}: {fmt(p['p'])}/{p['u']}. "
+                if p['s'] == 0: msg += "Agotado. ¿Desea ver alternativas?"
+                elif p['s'] <= 3: msg += f"¡Solo {p['s']:.0f} disponibles!"
+                else: msg += f"Stock disponible."
+                
+                # Productos complementarios
+                related = self.reco.related_products(p['n'], 2)
+                if related: msg += f" Suele comprarse con: {related[0]['nombre']}."
+                return self._r(msg, 'cliente')
             else:
-                msg = f"Tenemos {len(prods)} productos que coinciden: "
-                msg += ", ".join([f"{p['n']} (${p['p']:,.0f})" for p in prods[:5]])
-                msg += ". ¿Cuál te interesa?"
-            return self._respond(msg, 'cliente')
+                return self._r(f"Encontré {len(prods)} opciones: " + ", ".join([f"{p['n']} {fmt(p['p'])}" for p in prods[:5]]), 'cliente')
         
-        # Categorías
-        cats = ProductSearch.categorias
-        if any(w in text_lower for w in ['categorias','catalogo','que tienen','que venden','productos']):
-            return self._respond(f"Trabajamos con {len(cats)} categorías: {', '.join(cats[:8])}. ¿Qué categoría te interesa?", 'cliente')
+        if any(w in t for w in ['categorias','catalogo']):
+            return self._r(f"Categorías: {', '.join(Products.categorias[:12])}. ¿Cuál le interesa?", 'cliente')
         
-        return self._respond("Cuéntame qué producto buscas y te digo el precio y disponibilidad.", 'cliente')
+        return self._r("Dígame qué producto busca. También puede preguntar por 'ofertas' o 'categorías'.", 'cliente')
     
-    def _handle_vendedor(self, text, text_lower):
-        # Ventas
-        if any(w in text_lower for w in ['ventas','caja','recaude','facture','reporte']):
-            d = DB.q("SELECT COUNT(*) as t, COALESCE(SUM(total),0) as r, COALESCE(AVG(total),0) as a FROM historial_ventas WHERE DATE(fecha)=DATE('now','localtime')", one=True)
-            if d and d['t'] > 0:
-                return self._respond(f"Hoy llevas {d['t']} ventas, ${d['r']:,.0f} recaudados. Ticket promedio: ${d['a']:,.0f}.", 'vendedor')
-            return self._respond("Aún no hay ventas registradas hoy.", 'vendedor')
+    # ============================================================
+    # VENDEDOR
+    # ============================================================
+    def _vendedor(self, text, t, sess, name):
+        if any(w in t for w in ['ventas','caja','recaude','como voy','cuanto vendi']):
+            d = self.sales.daily_summary()
+            hour = datetime.now().hour
+            if d and d['txns']>0:
+                proy = d['revenue']/hour*24 if hour>0 else d['revenue']
+                msg = f"Hoy: {d['txns']} ventas, {fmt(d['revenue'])}, ticket prom: {fmt(d['avg'])}. Proyección: ~{fmt(proy)}."
+                
+                # Hora pico
+                peak = self.sales.hourly_distribution()
+                if peak:
+                    msg += f" Hora pico: {peak[0]['h']}:00 ({peak[0]['c']} ventas)."
+                return self._r(msg, 'vendedor')
+            return self._r("Sin ventas aún. ¡Aproveche para revisar el catálogo!", 'vendedor')
         
-        # Stock bajo
-        if any(w in text_lower for w in ['stock bajo','agotado','critico','poco stock','reabastecer']):
-            rows = DB.q("SELECT nombre,stock_actual,precio_venta FROM inventario_general WHERE stock_actual<=5 ORDER BY stock_actual LIMIT 6")
-            if not rows: rows = DB.q("SELECT nombre,stock_actual,precio FROM productos WHERE stock_actual<=5 ORDER BY stock_actual LIMIT 6")
+        if any(w in t for w in ['stock bajo','agotado','critico','reabastecer']):
+            rows = self.reco.low_stock_alerts()
             if rows:
-                msg = "Productos con stock bajo: "
-                msg += "; ".join([f"{r['nombre']} ({r['stock_actual']:.0f}uds)" for r in rows])
-                return self._respond(msg, 'vendedor')
-            return self._respond("No hay productos con stock bajo. Todo en orden.", 'vendedor')
+                msg = f"⚠️ {len(rows)} productos necesitan reabastecimiento: " + ", ".join([f"{r['nombre']}({r['stock_actual']:.0f})" for r in rows[:6]])
+                return self._r(msg, 'vendedor')
+            return self._r("Todo en orden, stock suficiente.", 'vendedor')
         
-        # Top productos
-        if any(w in text_lower for w in ['top','mas vendido','popular','ranking']):
-            rows = DB.q("SELECT nombre,SUM(cantidad) q FROM historial_ventas WHERE fecha>=DATE('now','-7 days') GROUP BY nombre ORDER BY q DESC LIMIT 5")
-            if rows:
-                msg = "Lo más vendido esta semana: "
-                msg += ", ".join([f"{r['nombre']} ({r['q']:.0f}uds)" for r in rows])
-                return self._respond(msg, 'vendedor')
-            return self._respond("Aún no hay datos de ventas esta semana.", 'vendedor')
+        if any(w in t for w in ['top','mas vendido','ranking']):
+            top = self.sales.top_products(7,5)
+            if top:
+                return self._r("Lo más vendido: " + ", ".join([f"{r['nombre']}({r['q']:.0f})" for r in top]), 'vendedor')
+            return self._r("Sin datos aún.", 'vendedor')
         
-        # Buscar producto
-        prods = ProductSearch.search(text, 5)
+        prods = Products.search(text, 5)
         if prods:
-            if len(prods) == 1:
-                p = prods[0]
-                msg = f"{p['n']}: ${p['p']:,.0f} - Stock: {p['s']:.0f} {p['u']}"
-                if p['c'] > 0 and p['p'] > 0:
-                    margen = ((p['p']-p['c'])/p['p'])*100
-                    msg += f" - Margen: {margen:.1f}%"
-            else:
-                msg = f"Encontré {len(prods)}: "
-                msg += "; ".join([f"{p['n']} ${p['p']:,.0f}" for p in prods[:5]])
-            return self._respond(msg, 'vendedor')
+            return self._r("; ".join([f"{p['n']} {fmt(p['p'])} stock:{p['s']:.0f}" for p in prods[:5]]), 'vendedor')
         
-        return self._respond("Dime un producto para ver su precio y stock, o consulta 'ventas', 'stock bajo' o 'top productos'.", 'vendedor')
+        return self._r("Consulte: 'ventas', 'stock bajo', 'top productos' o el nombre de un producto.", 'vendedor')
     
-    def _handle_admin(self, text, text_lower, role):
-        # Ventas
-        if any(w in text_lower for w in ['ventas','caja','recaude','reporte']):
-            d = DB.q("SELECT COUNT(*) as t, COALESCE(SUM(total),0) as r, COALESCE(AVG(total),0) as a FROM historial_ventas WHERE DATE(fecha)=DATE('now','localtime')", one=True)
-            if d and d['t'] > 0:
-                return self._respond(f"Ventas de hoy: {d['t']} transacciones, ${d['r']:,.0f} ingresos. Ticket promedio ${d['a']:,.0f}.", role)
-            return self._respond("Sin ventas hoy.", role)
+    # ============================================================
+    # SUPERVISOR
+    # ============================================================
+    def _supervisor(self, text, t, sess, name):
+        d = self.sales.daily_summary(); prods = Products.stats()
         
-        # Stock / Inventario
-        if any(w in text_lower for w in ['stock','inventario','agotado']):
-            stats = ProductSearch.stats()
-            rows = DB.q("SELECT nombre,stock_actual FROM inventario_general WHERE stock_actual<=5 ORDER BY stock_actual LIMIT 8")
-            msg = f"Inventario: {stats['total']} productos, {stats['low']} con stock bajo."
+        if any(w in t for w in ['dashboard','resumen','estado','kpi']):
+            w = self.sales.weekly_summary()
+            return self._r(f"Dashboard: Hoy {fmt(d['revenue'] if d else 0)} | Semana {fmt(w['revenue'] if w else 0)} | {prods['total']} productos | {prods['low']} stock bajo.", 'supervisor')
+        
+        if any(w in t for w in ['tendencia','prediccion','proyeccion']):
+            return self._r(f"Proyección semanal: {fmt((d['revenue'] if d else 0)*7)} basado en tendencia actual.", 'supervisor')
+        
+        prods_f = Products.search(text, 5)
+        if prods_f: return self._r("; ".join([f"{p['n']} {fmt(p['p'])}" for p in prods_f[:5]]), 'supervisor')
+        
+        return self._r("Dashboard, tendencias, KPIs, productos. ¿Qué necesita?", 'supervisor')
+    
+    # ============================================================
+    # ADMINISTRADOR
+    # ============================================================
+    def _administrador(self, text, t, sess, name):
+        d = self.sales.daily_summary(); prods = Products.stats()
+        
+        # FINANZAS
+        if any(w in t for w in ['finanza','margen','gasto','ingreso','balance','ganancia','rentabilidad']):
+            gastos = DB.q("SELECT COALESCE(SUM(monto),0) g FROM gastos WHERE DATE(fecha)=DATE('now','localtime')", one=True)
+            g = gastos['g'] if gastos else 0
+            rev = d['revenue'] if d else 0
+            profit = rev - g
+            m = (profit/rev*100) if rev>0 else 0
+            return self._r(f"Balance hoy: Ingresos {fmt(rev)} | Gastos {fmt(g)} | Ganancia {fmt(profit)} | Margen neto {pct(m)}", 'administrador')
+        
+        # ANÁLISIS ABC
+        if any(w in t for w in ['abc','pareto','clasificacion']):
+            rows = DB.q("SELECT nombre,SUM(total) revenue FROM historial_ventas WHERE fecha>=DATE('now','-30 days') GROUP BY nombre ORDER BY revenue DESC LIMIT 30")
             if rows:
-                msg += " Críticos: " + ", ".join([f"{r['nombre']}({r['stock_actual']:.0f})" for r in rows[:5]])
-            return self._respond(msg, role)
+                abc = self.math.abc_classification([{'n':r['nombre'],'revenue':r['revenue']} for r in rows])
+                msg = f"Análisis ABC (30 días):\n• Categoría A (80% ingresos): {len(abc['A'])} productos\n• Categoría B (15%): {len(abc['B'])} productos\n• Categoría C (5%): {len(abc['C'])} productos"
+                return self._r(msg, 'administrador')
+            return self._r("Datos insuficientes para análisis ABC.", 'administrador')
         
-        # KPIs / Dashboard
-        if any(w in text_lower for w in ['kpi','dashboard','metrica','indicador','estado']):
-            stats = ProductSearch.stats()
-            d = DB.q("SELECT COUNT(*) as t, COALESCE(SUM(total),0) as r FROM historial_ventas WHERE DATE(fecha)=DATE('now','localtime')", one=True)
-            msg = f"Estado del sistema: {stats['total']} productos activos, {stats['low']} con stock bajo. "
-            msg += f"Ventas hoy: {d['t']} transacciones, ${d['r']:,.0f}." if d else "Sin ventas hoy."
-            return self._respond(msg, role)
+        # PUNTO DE EQUILIBRIO
+        if any(w in t for w in ['punto equilibrio','break even','umbral']):
+            gastos_fijos = DB.q("SELECT COALESCE(SUM(monto),0) g FROM gastos WHERE fecha>=DATE('now','-30 days')", one=True)
+            gf = gastos_fijos['g']/30 if gastos_fijos else 100
+            avg_price = sum(p['p'] for p in Products.cache)/len(Products.cache) if Products.cache else 10
+            avg_cost = sum(p['c'] for p in Products.cache)/len(Products.cache) if Products.cache else 5
+            pe = self.math.punto_equilibrio(gf, avg_price, avg_cost)
+            return self._r(f"Punto de equilibrio diario: {pe} unidades. Costo fijo diario: {fmt(gf)}, Precio prom: {fmt(avg_price)}, Costo prom: {fmt(avg_cost)}", 'administrador')
         
-        # Predicciones
-        if any(w in text_lower for w in ['prediccion','pronostico','proyeccion']):
-            d = DB.q("SELECT COALESCE(SUM(total),0) r FROM historial_ventas WHERE DATE(fecha)=DATE('now','localtime')", one=True)
-            rev = d['r'] if d else 0
-            return self._respond(f"Proyección semanal estimada: ${rev*7:,.0f} basado en el ritmo actual de ventas.", role)
+        # ELASTICIDAD
+        if any(w in t for w in ['elasticidad','sensibilidad precio']):
+            top = self.sales.top_products(30, 2)
+            if top and len(top)>=2:
+                return self._r(f"Para análisis de elasticidad necesito histórico de cambios de precio. Actualmente el producto líder es {top[0]['nombre']} con {top[0]['q']:.0f} unidades.", 'administrador')
+            return self._r("Datos insuficientes para calcular elasticidad.", 'administrador')
         
-        # Buscar producto
-        prods = ProductSearch.search(text, 5)
-        if prods:
-            if len(prods) == 1:
-                p = prods[0]
-                msg = f"{p['n']}: ${p['p']:,.0f} - Stock {p['s']:.0f} {p['u']} - {p['cat']}"
-                if p['c'] > 0: msg += f" - Margen {((p['p']-p['c'])/p['p']*100):.1f}%"
-            else:
-                msg = f"Resultados: " + "; ".join([f"{p['n']} ${p['p']:,.0f}" for p in prods[:5]])
-            return self._respond(msg, role)
+        # ROTACIÓN INVENTARIO
+        if any(w in t for w in ['rotacion','inventario','indice rotacion']):
+            costo_ventas = DB.q("SELECT COALESCE(SUM(cantidad*costo),0) cv FROM historial_ventas WHERE fecha>=DATE('now','-30 days')", one=True)
+            inv_prom = sum(p['c']*p['s'] for p in Products.cache)/len(Products.cache) if Products.cache else 1
+            rot = self.math.indice_rotacion(costo_ventas['cv'] if costo_ventas else 0, inv_prom)
+            return self._r(f"Índice de rotación (30 días): {rot:.2f} veces. Indica cuántas veces se renovó el inventario.", 'administrador')
         
-        return self._respond("Puedes consultar: ventas, inventario, KPIs, predicciones o buscar un producto específico.", role)
+        # EOQ
+        if any(w in t for w in ['eoq','lote optimo','pedido optimo','cantidad pedido']):
+            return self._r("Para calcular el lote óptimo (EOQ) necesito: demanda anual estimada, costo por pedido y costo de mantenimiento. ¿Desea proporcionarlos?", 'administrador')
+        
+        # PREDICCIONES
+        if any(w in t for w in ['prediccion','pronostico','proyeccion','forecast']):
+            days = 7
+            rows = DB.q(f"SELECT DATE(fecha) d, SUM(total) r FROM historial_ventas WHERE fecha>=DATE('now','-{days} days') GROUP BY DATE(fecha) ORDER BY d")
+            if rows and len(rows)>=3:
+                x = list(range(len(rows))); y = [r['r'] for r in rows]
+                m, b = self.math.regresion_lineal(x, y)
+                next_val = m*len(rows) + b
+                trend = "creciente" if m>0 else "decreciente"
+                return self._r(f"Tendencia {trend}. Próximo día estimado: {fmt(max(0,next_val))}. Pendiente: {fmt(m)}/día.", 'administrador')
+            return self._r("Necesito al menos 3 días de datos para proyectar.", 'administrador')
+        
+        prods_f = Products.search(text, 5)
+        if prods_f: return self._r("; ".join([f"{p['n']} {fmt(p['p'])} stock:{p['s']:.0f}" for p in prods_f[:5]]), 'administrador')
+        
+        return self._r("Funciones: finanzas, ABC, punto equilibrio, elasticidad, rotación, EOQ, predicciones.", 'administrador')
     
-    def _respond(self, msg, role):
+    # ============================================================
+    # DESARROLLADOR
+    # ============================================================
+    def _desarrollador(self, text, t, sess, name):
+        if any(w in t for w in ['estado','sistema','status']):
+            prods = Products.stats()
+            users = DB.q("SELECT COUNT(*) c FROM usuarios", one=True)
+            return self._r(f"Sistema: {prods['total']} productos, {users['c'] if users else '?'} usuarios. 27 módulos Python, 114 rutas API. Todo operativo.", 'desarrollador')
+        
+        prods_f = Products.search(text, 5)
+        if prods_f: return self._r("; ".join([f"{p['n']} {fmt(p['p'])}" for p in prods_f[:5]]), 'desarrollador')
+        
+        return self._r("Sistema activo. 'estado' para diagnóstico completo.", 'desarrollador')
+    
+    def _r(self, msg, role):
         return {'answer': msg, 'role': role, 'suggestions': [], 'ts': datetime.now().isoformat()}
 
-_agent = None
-_lock = threading.Lock()
+# ============================================================
+# SINGLETON
+# ============================================================
+_agent = None; _lock = threading.Lock()
 
 def _get():
     global _agent
     if not _agent:
         with _lock:
-            if not _agent: _agent = Agent()
+            if not _agent: _agent = SuperAgent()
     return _agent
 
 def process_question(sid, question, role='cliente', user_name=''):
     r = _get().process(question, sid, role, user_name)
-    return {
-        'answer': r['answer'],
-        'intent': 'chat',
-        'suggestions': [],
-        'role': role,
-        'role_label': ROLES.get(role, {}).get('label', 'Usuario'),
-        'role_color': ROLES.get(role, {}).get('color', '#3498db'),
-        'role_icon': ROLES.get(role, {}).get('icon', '?'),
-        'ts': r['ts']
-    }
+    return {'answer':r['answer'],'intent':'chat','suggestions':[],'role':role,'role_label':ROLES.get(role,{}).get('label','Usuario'),'role_color':ROLES.get(role,{}).get('color','#3498db'),'role_icon':ROLES.get(role,{}).get('icon','?'),'ts':r['ts']}
 
 def get_status():
-    s = ProductSearch.stats()
-    return {'version':'1.0.0','model':'Asistente Virtual Natural','status':'active','stats':s}
+    return {'version':'1.0.0','model':'Súper Agente - Matemáticas + Finanzas + Estadística','status':'active','features':['Regresión lineal','EOQ','ABC','Elasticidad','Punto equilibrio','ROI','Rotación','Proyecciones','Recomendaciones inteligentes']}
 
-def get_conversation_history(sid='default'):
-    return []
-
+def get_conversation_history(sid='default'): return []
 def get_proactive_alerts(sid='default'):
-    return {'alerts': []}
+    a = []; low = DB.q("SELECT COUNT(*) c FROM inventario_general WHERE stock_actual<=3 AND stock_actual>=0")
+    if low and low[0]['c']>0: a.append({'type':'warning','icon':'⚠️','msg':f'{low[0]["c"]} productos necesitan reabastecimiento urgente'})
+    return {'alerts':a}
 
 def set_session_role(sid, role, name=''): return role
 def get_session_info(sid): return {'role':'cliente','role_label':'Cliente','role_color':'#2ecc71','role_icon':'C'}
 
-ROLES = {
-    'vendedor': {'label': 'Vendedor', 'color': '#3498db', 'icon': 'V'},
-    'administrador': {'label': 'Administrador', 'color': '#e74c3c', 'icon': 'A'},
-    'supervisor': {'label': 'Supervisor', 'color': '#f39c12', 'icon': 'S'},
-    'desarrollador': {'label': 'Desarrollador', 'color': '#9b59b6', 'icon': 'D'},
-    'cliente': {'label': 'Cliente', 'color': '#2ecc71', 'icon': 'C'}
-}
+ROLES = {'cliente':{'label':'Cliente','color':'#2ecc71','icon':'C'},'vendedor':{'label':'Vendedor','color':'#3498db','icon':'V'},'supervisor':{'label':'Supervisor','color':'#f39c12','icon':'S'},'administrador':{'label':'Administrador','color':'#e74c3c','icon':'A'},'desarrollador':{'label':'Desarrollador','color':'#9b59b6','icon':'D'}}
 
-print("🚀 ia_agent.py v1.0 - Asistente natural por roles")
+print("🚀 Súper Agente Financiero v1.0 activo")

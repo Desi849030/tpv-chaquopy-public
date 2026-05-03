@@ -9,8 +9,8 @@ android {
         applicationId "com.universidad.tpv.tpvultrasmart"
         minSdk 21
         targetSdk 34
-        versionCode 1300000
-        versionName "13.0.0"
+        versionCode 1500000
+        versionName "15.0.0"
         ndk { abiFilters "arm64-v8a", "armeabi-v7a" }
         python {
             version "3.8"

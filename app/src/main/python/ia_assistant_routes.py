@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""ia_assistant_routes.py - TPV Smart v15.0 - Compatible con ia_agent.py"""
+"""ia_assistant_routes.py - TPV Smart v1.0 - Compatible con ia_agent.py"""
 from flask import Blueprint, request, jsonify, session
 
 assistant_bp = Blueprint('assistant', __name__, url_prefix='/api/ia')
@@ -23,7 +23,7 @@ try:
     _set_session_role = set_session_role
     _get_session_info = get_session_info
     _ia_module = True
-    print("[IA Routes v15.0] ia_agent.py cargado correctamente")
+    print("[IA Routes v1.0] ia_agent.py cargado correctamente")
 except Exception as e:
     try:
         from ia_assistant import (
@@ -112,4 +112,4 @@ def status():
     except Exception as e:
         return jsonify({'version': '15.0.0', 'error': str(e)})
 
-print("[ia_assistant_routes.py v15.0] Listo")
+print("[ia_assistant_routes.py v1.0] Listo")

@@ -1,5 +1,5 @@
 """
-ia_agent.py v15.0 - TPV Smart - Agente IA Profesional
+ia_agent.py v1.0 - TPV Smart - Agente IA Profesional
 100% On-Device | NLP Engine | Memoria Conversacional
 Compatible con ia_assistant_routes.py
 """
@@ -405,7 +405,7 @@ class R:
     
     @staticmethod
     def help_menu():
-        msg = "🤖 *Asistente TPV Smart v15.0*\n\n"
+        msg = "🤖 *Asistente TPV Smart v1.0*\n\n"
         msg += "*Puedes preguntarme:*\n\n"
         msg += "📦 *Productos*\n  • ¿Cuánto cuesta [producto]?\n  • ¿Hay stock de [producto]?\n  • Buscar [nombre/categoría]\n\n"
         msg += "💰 *Ventas*\n  • ¿Cómo van las ventas hoy?\n  • Ventas de la semana\n  • Top productos más vendidos\n\n"
@@ -419,7 +419,7 @@ class Agent:
     def __init__(self):
         self.memories = {}
         self.lock = threading.Lock()
-        print("✅ Agente IA v15.0 inicializado")
+        print("✅ Agente IA v1.0 inicializado")
     
     def _mem(self, sid):
         with self.lock:
@@ -618,7 +618,7 @@ def process_question(sid, question, role='vendedor', user_name=''):
 def get_status():
     stats = ProductSearch.stats()
     return {
-        'version': '15.0.0',
+        'version': '1.0.0',
         'model': 'NLP + Fuzzy Search + Dialogue Memory',
         'status': 'active',
         'features': [
@@ -665,4 +665,4 @@ ROLES = {
     'cliente': {'label': 'Cliente', 'color': '#2ecc71', 'icon': 'C'}
 }
 
-print("🚀 ia_agent.py v15.0 cargado correctamente")
+print("🚀 ia_agent.py v1.0 cargado correctamente")

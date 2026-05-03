@@ -12,7 +12,7 @@
 
 var SID = 'session_' + Date.now();
 var hist = [];
-var currentRole = 'vendedor';
+var currentRole = 'cliente';
 var currentUserName = '';
 var alertsTimer = null;
 var retryTimer = null;

@@ -412,7 +412,7 @@ function init(){
                 if(inp) inp.focus();
                 updateBadge(0);
                 // Al abrir, actualizar datos del servidor
-                if(!wasOpen && serverReady) loadServerData();
+                if(!wasOpen) { if(!serverReady) { setTimeout(loadServerData, 1000); } else { loadServerData(); } }
             }
         }
     });

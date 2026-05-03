@@ -13,10 +13,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup Java
+    - name: Setup Java 17
       uses: actions/setup-java@v4
       with:
-        java-version: '11'
+        java-version: '17'
         distribution: 'temurin'
         
     - name: Setup Android SDK
@@ -31,22 +31,19 @@ jobs:
       run: |
         pip install flask==2.3.0
         
-    - name: Create APK structure
+    - name: Verify structure
       run: |
-        mkdir -p app/src/main/python
-        cp *.py app/src/main/python/
-        
-    - name: Build APK
-      run: |
-        echo "✅ Estructura creada"
-        echo "📱 APK listo para build"
-        ls -la app/src/main/python/
+        echo "=== Archivos Python ==="
+        find . -name "*.py" -type f | sort
+        echo ""
+        echo "=== Archivos en app/src/main/python/ ==="
+        ls -la app/src/main/python/ 2>/dev/null || echo "No existe"
         
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: TPV-Source
+        name: TPV-Smart-Source
         path: |
+          app/
           *.py
-          *.xml
-          .github/
+        retention-days: 90

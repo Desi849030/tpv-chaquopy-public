@@ -114,7 +114,7 @@ function renderSystemMsg(text){
     if(c){ c.appendChild(d); c.scrollTop = c.scrollHeight; }
 }
 
-function return; // renderSuggestions(suggestions){
+function renderSuggestions(suggestions){
     if(!suggestions || !suggestions.length) return;
     var c = $('.tpvc-msgs');
     if(!c) return;

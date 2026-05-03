@@ -285,7 +285,6 @@ def api_cambiar_password():
 # ══════════════════════════════════════════════════════════════
 
 _MODULOS_DISPONIBLES = {
-    "catalogo":"Catálogo de productos","ventas":"Registro de ventas","caja":"Caja y cobros","dashboard":"Panel de estadísticas","inventario":"Control de inventario","productos":"CRUD productos","categorias":"Gestión categorías","orden":"Gestión de órdenes","tienda":"Tienda online","registros":"Historial y registros","herramientas":"Herramientas","configuracion":"Configuración","usuarios":"Gestión de usuarios","licencias":"Gestión de licencias","debug":"Panel de depuración","privilegios":"Gestión de privilegios","blindajes":"Panel de seguridad","ia_edge":"IA Edge Analytics","lealtad":"Programa de Lealtad","asistente_ia":"Asistente IA","descuentos":"Descuentos y promociones","supabase":"Configuración Supabase","seguridad":"Seguridad del sistema","exportar":"Exportar datos","copias":"Copias de seguridad"
     "catalogo":"Gestion de catalogo","productos":"CRUD productos","categorias":"Gestion categorias",
     "dashboard":"Panel estadisticas","ventas":"Registro ventas","orden":"Gestion ordenes",
     "inventario":"Control inventario","registros":"Historial","tienda":"Tienda online",
@@ -293,10 +292,9 @@ _MODULOS_DISPONIBLES = {
     "licencias":"Gestion licencias","debug":"Panel depuracion","privilegios":"Gestion privilegios","blindajes":"Panel blindajes","ia_edge":"IA Edge Analytics","lealtad":"Programa Lealtad","asistente_ia":"Asistente IA"}
 _PRIVILEGIOS_DEFAULT = {
     "desarrollador":{m:True for m in _MODULOS_DISPONIBLES},
-    "administrador":{m:True for m in _MODULOS_DISPONIBLES if m not in("debug","privilegios","licencias","supabase","descuentos")},
     "administrador":{m:True for m in _MODULOS_DISPONIBLES if m not in("debug","privilegios")},
-    "supervisor":{"catalogo":True,"ventas":True,"dashboard":True,"inventario":True,"registros":True,"tienda":True,"ia_edge":True,"lealtad":True,"asistente_ia":True},
-    "vendedor":{"catalogo":True,"ventas":True,"caja":True,"dashboard":True,"ia_edge":True,"asistente_ia":True}}
+    "supervisor":{"catalogo":True,"productos":True,"categorias":True,"dashboard":True,"ventas":True,"orden":True,"inventario":True,"registros":True,"tienda":True,"ia_edge":True,"lealtad":True,"asistente_ia":True},
+    "vendedor":{"catalogo":True,"ventas":True,"orden":True,"dashboard":True,"ia_edge":True,"lealtad":True,"asistente_ia":True}}
 
 def _obtener_privilegios_rol(rol):
     from database import obtener_conexion

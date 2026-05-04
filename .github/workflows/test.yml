@@ -1,0 +1,30 @@
+name: Test Python
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Python 3.8
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.8'
+        
+    - name: Run tests
+      run: |
+        cd app/src/main/python
+        for f in tests/*.py; do
+          python3 "$f" || exit 1
+        done
+        
+    - name: Test result
+      run: echo "✅ Todos los tests pasaron"

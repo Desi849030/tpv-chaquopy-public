@@ -1579,3 +1579,33 @@ def obtener_info_db():
         return info
     finally:
         conn.close()
+
+def crear_tabla_audit():
+    conn = obtener_conexion()
+    try:
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS audit_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                usuario TEXT,
+                accion TEXT,
+                tabla TEXT,
+                registro_id TEXT,
+                valor_anterior TEXT,
+                valor_nuevo TEXT,
+                fecha TEXT DEFAULT (datetime('now','localtime'))
+            )
+        ''')
+        conn.commit()
+    except: pass
+    finally: conn.close()
+
+def audit_log(usuario, accion, tabla, registro_id="", valor_anterior="", valor_nuevo=""):
+    conn = obtener_conexion()
+    try:
+        conn.execute(
+            "INSERT INTO audit_logs (usuario,accion,tabla,registro_id,valor_anterior,valor_nuevo) VALUES (?,?,?,?,?,?)",
+            (usuario, accion, tabla, registro_id, str(valor_anterior)[:500], str(valor_nuevo)[:500])
+        )
+        conn.commit()
+    except: pass
+    finally: conn.close()

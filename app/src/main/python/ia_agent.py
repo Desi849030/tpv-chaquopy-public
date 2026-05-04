@@ -1,4 +1,7 @@
 """ia_agent.py v1.0 - TPV Smart - Gestor Total Conversacional"""
+from ia.nlp_engine import NLPEngine
+from ia.guide_manager import GuideManager
+from ia.humanizer import Humanizer
 import sqlite3, re, os, random, threading, time, math
 from datetime import datetime, timedelta
 from difflib import SequenceMatcher
@@ -126,7 +129,7 @@ class O:
     def relacionados(prod, lim=3):
         return q(f"SELECT b.nombre,COUNT(*) f FROM historial_ventas a JOIN historial_ventas b ON a.venta_id=b.venta_id AND a.nombre!=b.nombre WHERE a.nombre LIKE ? AND DATE(a.fecha)>=DATE('now','-30 days') GROUP BY b.nombre ORDER BY f DESC LIMIT {lim}",('%'+prod+'%',))
 
-def $(v): return f"${float(v):,.2f}" if v else "$0.00"
+def fmt_money(v): return f"${float(v):,.2f}" if v else "$0.00"
 def pct(v): return f"{float(v):.1f}%"
 
 class Agent:
@@ -175,7 +178,7 @@ class Agent:
             of = O.mejores()
             msg = f"{g}{n}. Bienvenido a TPV Smart. Contamos con {len(P.cache)} productos en {len(P.cats)} categorías."
             if of:
-                msg += f" Le recomiendo aprovechar: {of[0]['n']} con descuento a {$(of[0]['d'])} (antes {$(of[0]['p'])})."
+                msg += f" Le recomiendo aprovechar: {of[0]['n']} con descuento a {fmt_money(of[0]['d'])} (antes {fmt_money(of[0]['p'])})."
             msg += " ¿Qué producto le interesa?"
             return msg
         
@@ -184,17 +187,17 @@ class Agent:
             if d['t'] > 0:
                 h2 = datetime.now().hour
                 proy = d['r']/h2*24 if h2>0 else d['r']
-                return f"{g}{n}. Al momento lleva {d['t']} ventas por {$(d['r'])}. Proyectamos cerrar el día en ~{$(proy)}. ¿En qué le ayudo?"
+                return f"{g}{n}. Al momento lleva {d['t']} ventas por {fmt_money(d['r'])}. Proyectamos cerrar el día en ~{fmt_money(proy)}. ¿En qué le ayudo?"
             return f"{g}{n}. Aún no hay ventas hoy. Revise el catálogo para ofrecer a sus clientes. ¿Necesita algo?"
         
         if role == 'supervisor':
             d = F.diario(); low = sum(1 for p in P.cache if 0<p['s']<=5)
-            return f"{g}{n}. Panel de supervisión activo. {len(P.cache)} productos, {low} con stock bajo. Ventas hoy: {$(d['r'])}. ¿Qué desea revisar?"
+            return f"{g}{n}. Panel de supervisión activo. {len(P.cache)} productos, {low} con stock bajo. Ventas hoy: {fmt_money(d['r'])}. ¿Qué desea revisar?"
         
         d = F.diario()
         low = sum(1 for p in P.cache if 0<p['s']<=5)
         out = sum(1 for p in P.cache if p['s']<=0)
-        return f"{g}{n}. Sistema completo bajo su control. {len(P.cache)} productos activos, {low} requieren atención, {out} agotados. Ventas: {$(d['r'])}. Estoy a sus órdenes."
+        return f"{g}{n}. Sistema completo bajo su control. {len(P.cache)} productos activos, {low} requieren atención, {out} agotados. Ventas: {fmt_money(d['r'])}. Estoy a sus órdenes."
     
     def _ayuda(self, role):
         if role == 'cliente':
@@ -213,7 +216,7 @@ class Agent:
             msg = "Estas son nuestras mejores ofertas del día:\n\n"
             for i,o in enumerate(of,1):
                 ahorro = o['p'] - o['d']
-                msg += f"{i}. {o['n']}: {$(o['d'])} (Normal: {$(o['p'])} - Ahorra {$(ahorro)})\n"
+                msg += f"{i}. {o['n']}: {fmt_money(o['d'])} (Normal: {fmt_money(o['p'])} - Ahorra {fmt_money(ahorro)})\n"
             msg += "\n¿Le interesa alguno en particular?"
             return msg
         
@@ -225,7 +228,7 @@ class Agent:
             m['p'] = prods[0]['n']
             if len(prods)==1:
                 p = prods[0]
-                msg = f"Perfecto. {p['n']} tiene un valor de {$(p['p'])} por {p['u']}. "
+                msg = f"Perfecto. {p['n']} tiene un valor de {fmt_money(p['p'])} por {p['u']}. "
                 if p['s']==0:
                     msg += "Lamentablemente está agotado en este momento."
                     rel = O.relacionados(p['n'],2)
@@ -240,7 +243,7 @@ class Agent:
             
             msg = f"Encontré {len(prods)} productos que coinciden:\n"
             for p in prods[:5]:
-                msg += f"• {p['n']}: {$(p['p'])} ({p['s']:.0f} {p['u']})\n"
+                msg += f"• {p['n']}: {fmt_money(p['p'])} ({p['s']:.0f} {p['u']})\n"
             msg += "\n¿Cuál le interesa para darle más detalles?"
             return msg
         
@@ -253,7 +256,7 @@ class Agent:
             if d['t']==0: return "Todavía no se registran ventas hoy. ¿Quiere que le muestre el catálogo o los productos más populares?"
             h = datetime.now().hour
             proy = d['r']/h*24 if h>0 else d['r']
-            return f"Excelente trabajo. Al momento: {d['t']} ventas realizadas, {$(d['r'])} facturados. Ticket promedio: {$(d['a'])}. Proyectamos cerrar en ~{$(proy)}. ¿Necesita algo más?"
+            return f"Excelente trabajo. Al momento: {d['t']} ventas realizadas, {fmt_money(d['r'])} facturados. Ticket promedio: {fmt_money(d['a'])}. Proyectamos cerrar en ~{fmt_money(proy)}. ¿Necesita algo más?"
         
         if any(w in t for w in ['stock bajo','agotado','critico','reabastecer','faltante']):
             rows = q("SELECT nombre,stock_actual FROM inventario_general WHERE stock_actual<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 8")
@@ -280,7 +283,7 @@ class Agent:
             msg = "Información de productos:\n"
             for p in prods[:5]:
                 mrg = ((p['p']-p['c'])/p['p']*100) if p['p']>0 and p['c']>0 else 0
-                msg += f"• {p['n']}: {$(p['p'])} | Stock: {p['s']:.0f}"
+                msg += f"• {p['n']}: {fmt_money(p['p'])} | Stock: {p['s']:.0f}"
                 if mrg>0: msg += f" | Margen: {pct(mrg)}"
                 msg += "\n"
             return msg
@@ -293,11 +296,11 @@ class Agent:
         low = sum(1 for p in P.cache if 0<p['s']<=5)
         
         if any(w2 in t for w2 in ['dashboard','resumen','estado','kpi']):
-            return f"Dashboard:\n• Ventas hoy: {$(d['r'])}\n• Ventas semana: {$(w['r'])}\n• Productos activos: {len(P.cache)}\n• Stock bajo: {low} productos\n• Categorías: {len(P.cats)}"
+            return f"Dashboard:\n• Ventas hoy: {fmt_money(d['r'])}\n• Ventas semana: {fmt_money(w['r'])}\n• Productos activos: {len(P.cache)}\n• Stock bajo: {low} productos\n• Categorías: {len(P.cats)}"
         
         if any(w2 in t for w2 in ['tendencia','prediccion','proyeccion']):
             proy = d['r']*7 if d['r']>0 else w['r']
-            return f"Proyección semanal: {$(proy)}. Basado en el ritmo de ventas actual."
+            return f"Proyección semanal: {fmt_money(proy)}. Basado en el ritmo de ventas actual."
         
         return "Panel de supervisión: 'dashboard' para KPIs, 'tendencias' para proyecciones. ¿Qué necesita?"
     
@@ -314,11 +317,11 @@ class Agent:
             comision = d['r']*0.05 if d['r']>0 else 0
             
             msg = f"Estimado administrador{n}, aquí tiene el balance del día:\n\n"
-            msg += f"💰 Ingresos por ventas: {$(d['r'])}\n"
-            msg += f"🧾 Gastos registrados: {$(d['g'])}\n"
-            msg += f"📊 Ganancia bruta: {$(prof)}\n"
+            msg += f"💰 Ingresos por ventas: {fmt_money(d['r'])}\n"
+            msg += f"🧾 Gastos registrados: {fmt_money(d['g'])}\n"
+            msg += f"📊 Ganancia bruta: {fmt_money(prof)}\n"
             msg += f"📈 Margen neto: {pct(margen)}\n"
-            msg += f"👥 Comisión estimada (5%): {$(comision)}\n\n"
+            msg += f"👥 Comisión estimada (5%): {fmt_money(comision)}\n\n"
             
             if prof > d['g']*2:
                 msg += "¡Excelente rentabilidad hoy! El negocio está generando buenas ganancias."
@@ -348,9 +351,9 @@ class Agent:
             pe = M.punto_eq(gf, pp, pc)
             msg = f"Punto de equilibrio diario:\n\n"
             msg += f"🎯 Necesita vender: {pe} unidades\n"
-            msg += f"💰 Para cubrir: {$(gf)} de gastos fijos\n"
-            msg += f"📦 Precio promedio: {$(pp)}\n"
-            msg += f"📉 Costo promedio: {$(pc)}\n"
+            msg += f"💰 Para cubrir: {fmt_money(gf)} de gastos fijos\n"
+            msg += f"📦 Precio promedio: {fmt_money(pp)}\n"
+            msg += f"📉 Costo promedio: {fmt_money(pc)}\n"
             return msg
         
         # EOQ
@@ -375,9 +378,9 @@ class Agent:
                 tend = "creciente 📈" if m>0 else "decreciente 📉"
                 msg = f"Análisis de tendencia:\n\n"
                 msg += f"📊 Tendencia: {tend}\n"
-                msg += f"📈 Cambio diario: {$(m)}\n"
-                msg += f"🔮 Próximo día estimado: {$(prox)}\n"
-                msg += f"📅 Proyección semanal: {$(prox*7)}\n"
+                msg += f"📈 Cambio diario: {fmt_money(m)}\n"
+                msg += f"🔮 Próximo día estimado: {fmt_money(prox)}\n"
+                msg += f"📅 Proyección semanal: {fmt_money(prox*7)}\n"
                 return msg
             return "Necesito al menos 3 días de ventas para proyectar. Siga vendiendo y pronto tendremos datos."
         
@@ -387,7 +390,7 @@ class Agent:
             if not of: return "No hay productos con margen suficiente para ofertas. Revise los precios de compra."
             msg = "Productos ideales para poner en oferta:\n\n"
             for i,o in enumerate(of,1):
-                msg += f"{i}. {o['n']}: Precio normal {$(o['p'])} → Oferta {$(o['d'])} ({pct(o['m'])} margen)\n"
+                msg += f"{i}. {o['n']}: Precio normal {fmt_money(o['p'])} → Oferta {fmt_money(o['d'])} ({pct(o['m'])} margen)\n"
             return msg
         
         # STOCK
@@ -420,9 +423,9 @@ class Agent:
             msg = f"Gastos del día ({len(rows)}):\n\n"
             total = 0
             for r in rows:
-                msg += f"• {r['descripcion']}: {$(r['monto'])} ({r['categoria']})\n"
+                msg += f"• {r['descripcion']}: {fmt_money(r['monto'])} ({r['categoria']})\n"
                 total += r['monto']
-            msg += f"\nTotal gastos: {$(total)}"
+            msg += f"\nTotal gastos: {fmt_money(total)}"
             return msg
         
         # PRODUCTO
@@ -439,17 +442,17 @@ class Agent:
                             vendido = r['q']
                             break
                 msg = f"Análisis completo de {p['n']}:\n\n"
-                msg += f"💰 Precio venta: {$(p['p'])}\n"
-                msg += f"📉 Costo: {$(p['c'])}\n"
+                msg += f"💰 Precio venta: {fmt_money(p['p'])}\n"
+                msg += f"📉 Costo: {fmt_money(p['c'])}\n"
                 msg += f"📈 Margen: {pct(m)}\n"
-                msg += f"💵 Ganancia/unidad: {$(p['p']-p['c'])}\n"
+                msg += f"💵 Ganancia/unidad: {fmt_money(p['p']-p['c'])}\n"
                 msg += f"📦 Stock: {p['s']:.0f} {p['u']}\n"
-                msg += f"💎 Valor inventario: {$(p['p']*p['s'])}\n"
+                msg += f"💎 Valor inventario: {fmt_money(p['p']*p['s'])}\n"
                 if vendido>0: msg += f"🛒 Vendidos (30d): {vendido:.0f} unidades\n"
                 return msg
             msg = f"Resultados para su búsqueda:\n"
             for p in prods[:5]:
-                msg += f"• {p['n']}: {$(p['p'])} | Stock: {p['s']:.0f}\n"
+                msg += f"• {p['n']}: {fmt_money(p['p'])} | Stock: {p['s']:.0f}\n"
             return msg
         
         return "Gestor completo a su disposición. Puede consultar:\n💰 'finanzas' | 📊 'ABC' | ⚖️ 'punto equilibrio'\n📦 'stock' | 🔮 'predicciones' | 🏷️ 'ofertas'\n🔄 'rotación' | 🧾 'gastos' | 📐 'EOQ'"

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-ia_assistant.py - TPV Smart v13.0.0
+ia_assistant.py - TPV Smart v1.0
 Asistente IA 100% ON-DEVICE - Texto 100% ASCII (sin tildes, sin simbolos)
 
-v13.0.0 ULTRA-OPTIMIZADO:
+v1.0 ULTRA-OPTIMIZADO:
   - FIX: Busqueda por PALABRAS (no solo coincidencia exacta) - encuentra "aceite"
     incluso si el producto es "Aceite Oliva ExtraVirgen 500ml"
   - FIX: Eliminado filtro activo=1 de busqueda principal - reconoce TODOS
@@ -817,7 +817,7 @@ def _handle_product_search(products):
 def _handle_app_info(role):
     try:
         lines = ["TPV Smart - Informacion del Sistema:",""]
-        lines.append("  Version: v13.0.0")
+        lines.append("  Version: v1.0")
         lines.append("  Motor IA: NLU v13.0 Role-Aware ON-DEVICE")
         lines.append("  Base de datos: SQLite local (prioridad) + Supabase (respaldo)")
         lines.append("  Busqueda: 100% local, por palabras, 3 tablas SQLite")

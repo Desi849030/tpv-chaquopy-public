@@ -2996,25 +2996,30 @@ async function auth_biometric_check() {
 
 async function auth_biometric() {
     var btn = document.getElementById("bio-btn");
+    if (!btn) return;
     btn.disabled = true;
     btn.textContent = "Verificando...";
-    try {
-        var res = await fetch("/api/biometric/setup", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({})
-        });
-        var data = await res.json();
-        if (data.ok) {
-            var user = JSON.parse(localStorage.getItem("tpv_user") || "{}");
-            if (user.rol && user.username) {
-                AUTH.usuario = user;
-                _auth_mostrarApp();
-                return;
+    if (typeof TPVNative !== "undefined" && TPVNative.authenticate) {
+        window.onBiometricCallback = function(result) {
+            btn.disabled = false;
+            if (result && result.success) {
+                var user = JSON.parse(localStorage.getItem("tpv_user") || "{}");
+                if (user.rol && user.username) {
+                    AUTH.usuario = user;
+                    _auth_mostrarApp();
+                    return;
+                }
             }
-        }
-    } catch(e) {}
-    btn.disabled = false;
+            btn.textContent = "🔓 Huella/Rostro";
+            _loginErr("No se pudo verificar. Use su contrasena.");
+        };
+        TPVNative.authenticate("TPV Ultra Smart", "Verificacion de identidad", "Usa tu huella o rostro para entrar");
+    } else {
+        btn.disabled = false;
+        btn.textContent = "🔓 Huella/Rostro";
+        _loginErr("Biometria no disponible en este dispositivo.");
+    }
+}
     btn.textContent = "🔓 Huella/Rostro";
     _loginErr("Biometría no disponible. Use su contraseña.");
 }

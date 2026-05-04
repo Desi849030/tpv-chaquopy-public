@@ -1,0 +1,73 @@
+name: TPV Ultra Smart CI/CD
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  # --- PASO 1: EJECUTAR TESTS ---
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+
+      - name: Install dependencies
+        run: |
+          pip install flask==2.0.3 werkzeug==2.0.3
+
+      - name: Run Tests
+        run: |
+          cd tests
+          for f in *.py; do
+            echo "=== $f ==="
+            python3 "$f" || exit 1
+          done
+
+  # --- PASO 2: COMPILAR APK (solo si tests pasan) ---
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+
+      - name: Install Python deps
+        run: |
+          pip install flask==2.0.3 werkzeug==2.0.3
+
+      - name: Grant gradlew permission
+        run: chmod +x gradlew
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Find APK
+        run: find . -name "*.apk" -exec ls -lh {} \;
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: TPV-Ultra-Smart-APK
+          path: app/build/outputs/apk/debug/*.apk
+          retention-days: 90

@@ -41,7 +41,7 @@ class P:
         c = _db()
         if not c: return
         prods = []
-        for r in c.execute("SELECT nombre,precio,costo,categoria,0 as stock_actual,unidad_medida FROM productos WHERE activo=1").fetchall():
+        for r in c.execute("SELECT nombre,precio_venta as precio,precio_compra as costo,categoria,stock_actual,unidad_medida FROM inventario_general").fetchall():
             prods.append({'n':r[0] or '','p':float(r[1] or 0),'c':float(r[2] or 0),'cat':r[3] or 'General','s':float(r[4] or 0),'u':r[5] or 'Un'})
         names = {p['n'].lower() for p in prods}
         for r in c.execute("SELECT nombre,precio_venta,precio_compra,categoria,stock_actual,unidad_medida FROM inventario_general").fetchall():
@@ -112,7 +112,7 @@ class F:
     
     @staticmethod
     def abc():
-        rows = q("SELECT nombre,SUM(total) rev FROM historial_ventas WHERE fecha>=DATE('now','-30 days') GROUP BY nombre ORDER BY rev DESC LIMIT 30")
+        rows = q("SELECT nombre,SUM(total) rev FROM historial_ventas WHERE fecha>=DATE('now','-30 days') GROUP BY nombre ORDER BY rev DESC LIMIT 500")
         if not rows: return {'A':[],'B':[],'C':[]}
         total = sum(r['rev'] for r in rows)
         if total==0: return {'A':[],'B':[],'C':[]}
@@ -133,7 +133,7 @@ class O:
                 m = (p['p']-p['c'])/p['p']*100
                 if m>30:
                     deals.append({'n':p['n'],'p':p['p'],'d':p['p']*0.85,'m':m,'s':p['s']})
-        return sorted(deals, key=lambda x:x['m'], reverse=True)[:5]
+        return sorted(deals, key=lambda x:x['m'], reverse=True)[:50]
     
     @staticmethod
     def relacionados(prod, lim=3):
@@ -252,7 +252,7 @@ class Agent:
                 return msg
             
             msg = f"Encontré {len(prods)} productos que coinciden:\n"
-            for p in prods[:5]:
+            for p in prods[:50]:
                 msg += f"• {p['n']}: {fmt_money(p['p'])} ({p['s']:.0f} {p['u']})\n"
             msg += "\n¿Cuál le interesa para darle más detalles?"
             return msg
@@ -269,8 +269,8 @@ class Agent:
             return f"Excelente trabajo. Al momento: {d['t']} ventas realizadas, {fmt_money(d['r'])} facturados. Ticket promedio: {fmt_money(d['a'])}. Proyectamos cerrar en ~{fmt_money(proy)}. ¿Necesita algo más?"
         
         if any(w in t for w in ['stock bajo','agotado','critico','reabastecer','faltante']):
-            rows = q("SELECT nombre,stock_actual FROM inventario_general WHERE stock_actual<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 8")
-            if not rows: rows = q("SELECT nombre,0 as stock_actual FROM productos WHERE 0<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 8")
+            rows = q("SELECT nombre,stock_actual FROM inventario_general WHERE stock_actual<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 500")
+            if not rows: rows = q("SELECT nombre,0 as stock_actual FROM productos WHERE 0<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 500")
             if rows:
                 msg = f"Atención: {len(rows)} productos necesitan reabastecimiento:\n"
                 for r in rows:
@@ -291,7 +291,7 @@ class Agent:
         if prods:
             m['p'] = prods[0]['n']
             msg = "Información de productos:\n"
-            for p in prods[:5]:
+            for p in prods[:50]:
                 mrg = ((p['p']-p['c'])/p['p']*100) if p['p']>0 and p['c']>0 else 0
                 msg += f"• {p['n']}: {fmt_money(p['p'])} | Stock: {p['s']:.0f}"
                 if mrg>0: msg += f" | Margen: {pct(mrg)}"
@@ -405,7 +405,7 @@ class Agent:
         
         # STOCK
         if any(w in t for w in ['stock','inventario','critico']):
-            rows = q("SELECT nombre,stock_actual,precio_venta FROM inventario_general WHERE stock_actual<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 8")
+            rows = q("SELECT nombre,stock_actual,precio_venta FROM inventario_general WHERE stock_actual<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 500")
             out = sum(1 for p in P.cache if p['s']<=0)
             msg = f"Estado del inventario:\n\n📦 Total productos: {len(P.cache)}\n⚠️ Stock bajo: {low}\n❌ Agotados: {out}\n"
             if rows:
@@ -461,7 +461,7 @@ class Agent:
                 if vendido>0: msg += f"🛒 Vendidos (30d): {vendido:.0f} unidades\n"
                 return msg
             msg = f"Resultados para su búsqueda:\n"
-            for p in prods[:5]:
+            for p in prods[:50]:
                 msg += f"• {p['n']}: {fmt_money(p['p'])} | Stock: {p['s']:.0f}\n"
             return msg
         

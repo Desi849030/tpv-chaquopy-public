@@ -21,8 +21,9 @@ jobs:
         
     - name: Run tests
       run: |
-        cd app/src/main/python
-        for f in tests/*.py; do
+        cd tests
+        for f in *.py; do
+          echo "=== Ejecutando $f ==="
           python3 "$f" || exit 1
         done
         

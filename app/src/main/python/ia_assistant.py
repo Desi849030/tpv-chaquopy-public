@@ -855,7 +855,7 @@ def _handle_ventas(sub, role):
             elif period=="semana": sql="fecha >= DATE('now','localtime','-7 days')"; label="Semana"
             elif period=="mes": sql="fecha >= DATE('now','localtime','-30 days')"; label="Mes"
             else: sql="DATE(fecha)=DATE('now','localtime')"; label="Hoy"
-            rows = _safe_q("SELECT nombre, SUM(cantidad), SUM(total) FROM historial_ventas WHERE %s AND nombre IS NOT NULL GROUP BY nombre ORDER BY SUM(total) DESC LIMIT 5" % sql)
+            rows = _safe_q("SELECT * FROM historial_ventas WHERE fecha >= ?"  % sql)
             if not rows: return "No hay ventas en este periodo."
             lines = ["Top 5 productos (%s):" % label,""]
             for i,r in enumerate(rows,1):
@@ -879,8 +879,8 @@ def _handle_ventas(sub, role):
             period = sub.replace("ingresos_","")
             if period=="semana": sql_date="DATE('now','localtime','-7 days')"; label="la semana"
             else: sql_date="DATE('now','localtime')"; label="hoy"
-            rev = _safe_q("SELECT COALESCE(SUM(total),0) FROM historial_ventas WHERE fecha >= %s" % sql_date, one=True)
-            exp = _safe_q("SELECT COALESCE(SUM(monto),0) FROM gastos WHERE fecha >= %s" % sql_date, one=True)
+            rev = _safe_q("SELECT * FROM historial_ventas WHERE fecha >= ?"  % sql_date, one=True)
+            exp = _safe_q("SELECT * FROM historial_ventas WHERE fecha >= ?"  % sql_date, one=True)
             if not rev: return "No hay datos financieros %s." % label
             rv = float(rev[0] or 0); ev = float(exp[0] or 0) if exp else 0; p = rv-ev
             if rv==0: return "No hay ingresos %s." % label

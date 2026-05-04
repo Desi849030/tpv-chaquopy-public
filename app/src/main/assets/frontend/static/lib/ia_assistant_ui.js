@@ -421,7 +421,7 @@ function init(){
     // PANEL
     var roleColor = ROLE_COLORS[currentRole] || '#6c757d';
     var roleIcon = ROLE_ICONS[currentRole] || 'U';
-    var roleLabel = currentRole === 'cliente' ? 'Usuario' : currentRole.charAt(0).toUpperCase() + currentRole.slice(1);
+    var roleLabel = currentRole === 'cliente' ? 'Invitado' : currentRole.charAt(0).toUpperCase() + currentRole.slice(1);
 
     var panel = ce('div', {id: 'tpv-chat-panel'});
     panel.innerHTML =

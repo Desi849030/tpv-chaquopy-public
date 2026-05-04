@@ -2478,6 +2478,8 @@ async function auth_logout() {
     AUTH.usuario = null;
     localStorage.removeItem("tpv_rol");
     localStorage.removeItem("tpv_user");
+    localStorage.removeItem("tpv_rol");
+    localStorage.removeItem("tpv_user");
     // Resetear chat IA a Usuario
     if (typeof updateRoleDisplay === "function") updateRoleDisplay("cliente");
     _prevN = -1;

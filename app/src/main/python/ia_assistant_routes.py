@@ -54,7 +54,6 @@ def ping():
 
 
 @assistant_bp.route('/chat', methods=['POST'])
-@requiere_login
 def chat():
     if not _ia_module:
         return jsonify({'answer': 'Error: modulo IA no disponible.', 'suggestions': ['ayuda']})

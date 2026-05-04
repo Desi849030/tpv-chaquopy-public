@@ -1488,3 +1488,13 @@ def api_health_full():
         "routes": 114,
         "roles": 5
     })
+
+@app.route('/api/ia/chat/secure', methods=['POST'])
+@requiere_login
+def ia_chat_secure():
+    data = request.get_json(force=True, silent=True) or {}
+    query = data.get('query', data.get('question', ''))
+    role = session.get('usuario', {}).get('rol', 'cliente')
+    from ia_agent import process_question
+    response = process_question(session.get('usuario', {}).get('usuario_id', '0'), query, role)
+    return jsonify(response)

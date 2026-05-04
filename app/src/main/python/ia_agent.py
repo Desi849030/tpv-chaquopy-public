@@ -1,5 +1,8 @@
 """ia_agent.py v1.0 - TPV Smart - Gestor Total Conversacional"""
 from ia.nlp_engine import NLPEngine
+from ia.guardrails import Guardrails
+from ia.session_context import SessionContext
+from ia.nlp_engine import NLPEngine
 from ia.guide_manager import GuideManager
 from ia.humanizer import Humanizer
 import sqlite3, re, os, random, threading, time, math
@@ -135,6 +138,9 @@ def pct(v): return f"{float(v):.1f}%"
 class Agent:
     def __init__(self):
         self.ses = {}; self.lk = threading.Lock()
+        self.nlp = NLPEngine()
+        self.guard = Guardrails()
+        self.memory = SessionContext()
         self.humanizer = Humanizer()
     
     def mem(self, sid):

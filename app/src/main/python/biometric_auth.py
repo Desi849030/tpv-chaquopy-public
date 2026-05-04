@@ -3,7 +3,7 @@ biometric_auth.py v1.0 - TPV Ultra Smart
 Autenticación biométrica para Android (huella/rostro)
 Se integra con el sistema de login existente
 """
-import hashlib, os, json, time
+import hashlib, hmac, os, json, time
 from datetime import datetime
 
 # Simulación de API biométrica de Android (Chaquopy)
@@ -35,7 +35,7 @@ def check_biometric_availability() -> dict:
 def generate_biometric_key(user_id: str) -> dict:
     """Genera clave biométrica vinculada al usuario"""
     salt = os.urandom(32)
-    raw = f"{user_id}:biometric:{salt.hex()}:{int(time.time())}"
+    raw = f"{user_id}:biometric:{salt.hex()}"
     key = hashlib.pbkdf2_hmac('sha256', raw.encode(), salt, 100000).hex()
     
     return {
@@ -48,7 +48,7 @@ def generate_biometric_key(user_id: str) -> dict:
 def validate_biometric(user_id: str, biometric_key: str, stored_salt: str) -> bool:
     """Valida clave biométrica contra la almacenada"""
     salt = bytes.fromhex(stored_salt)
-    raw = f"{user_id}:biometric:{stored_salt}:{int(time.time())}"
+    raw = f"{user_id}:biometric:{stored_salt}"
     expected = hashlib.pbkdf2_hmac('sha256', raw.encode(), salt, 100000).hex()
     return hmac.compare_digest(expected[:32], biometric_key[:32])
 

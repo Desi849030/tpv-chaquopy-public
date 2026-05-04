@@ -226,6 +226,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
             <button id="login-btn" class="login-btn" onclick="auth_login()">
+                <span id="lbtn-txt"><i class="bi bi-box-arrow-in-right me-2"></i>Entrar</span>
+                <span id="lbtn-spin" style="display:none"><span class="spinner-border spinner-border-sm me-2"></span>Verificando...</span>
+            </button>
+            <button id="bio-btn" class="login-btn" style="background:#00b894;margin-top:8px;display:none" onclick="auth_biometric()"><i class="bi bi-fingerprint"></i> Huella digital</button>
             <button id="bio-btn" class="login-btn" style="background:#00b894;margin-top:8px;display:"" onclick="auth_biometric()"><i class="bi bi-fingerprint"></i> Huella digital</button>
                 <span id="lbtn-txt"><i class="bi bi-box-arrow-in-right me-2"></i>Entrar</span>
                 <span id="lbtn-spin" style="display:none"><span class="spinner-border spinner-border-sm me-2"></span>Verificando...</span>

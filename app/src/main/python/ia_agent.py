@@ -491,3 +491,4 @@ def get_session_info(sid): return {'role':'cliente','role_label':'Cliente','role
 ROLES = {'cliente':{'label':'Cliente','color':'#2ecc71','icon':'C'},'vendedor':{'label':'Vendedor','color':'#3498db','icon':'V'},'supervisor':{'label':'Supervisor','color':'#f39c12','icon':'S'},'administrador':{'label':'Administrador','color':'#e74c3c','icon':'A'},'desarrollador':{'label':'Desarrollador','color':'#9b59b6','icon':'D'}}
 
 print("🚀 Gestor Total Conversacional v1.0 activo")
+ 

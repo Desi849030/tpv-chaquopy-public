@@ -152,6 +152,11 @@ class Agent:
         
         # SALUDOS
         if any(w in t for w in ['hola','buenos dias','buenas tardes','buenas noches','hey','que tal','saludos']):
+            try:
+                from ia.fuzzy_match import contains_frustration
+                if contains_frustration(t):
+                    return self._r('Detecto que algo no va bien. Estoy aqui para ayudarle. ¿Podria decirme que problema tiene?', role)
+            except: pass
             # Usar NLP para detectar frustracion
             from ia.fuzzy_match import contains_frustration
             if contains_frustration(t):

@@ -41,7 +41,7 @@ class P:
         cls.cats = sorted(set(p['cat'] for p in prods))
     
     @classmethod
-    def search(cls, query, limit=5):
+    def search(cls, query, limit=1000):
         cls.refresh()
         qr = query.lower().strip()
         if len(qr)<2: return []
@@ -123,7 +123,7 @@ class O:
                 m = (p['p']-p['c'])/p['p']*100
                 if m>30:
                     deals.append({'n':p['n'],'p':p['p'],'d':p['p']*0.85,'m':m,'s':p['s']})
-        return sorted(deals, key=lambda x:x['m'], reverse=True)[:5]
+        return sorted(deals, key=lambda x:x['m'], reverse=True)[:20]
     
     @staticmethod
     def relacionados(prod, lim=3):
@@ -242,7 +242,7 @@ class Agent:
                 return msg
             
             msg = f"Encontré {len(prods)} productos que coinciden:\n"
-            for p in prods[:5]:
+            for p in prods[:20]:
                 msg += f"• {p['n']}: {fmt_money(p['p'])} ({p['s']:.0f} {p['u']})\n"
             msg += "\n¿Cuál le interesa para darle más detalles?"
             return msg
@@ -259,8 +259,8 @@ class Agent:
             return f"Excelente trabajo. Al momento: {d['t']} ventas realizadas, {fmt_money(d['r'])} facturados. Ticket promedio: {fmt_money(d['a'])}. Proyectamos cerrar en ~{fmt_money(proy)}. ¿Necesita algo más?"
         
         if any(w in t for w in ['stock bajo','agotado','critico','reabastecer','faltante']):
-            rows = q("SELECT nombre,stock_actual FROM inventario_general WHERE stock_actual<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 8")
-            if not rows: rows = q("SELECT nombre,0 as stock_actual FROM productos WHERE 0<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 8")
+            rows = q("SELECT nombre,stock_actual FROM inventario_general WHERE stock_actual<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 500")
+            if not rows: rows = q("SELECT nombre,0 as stock_actual FROM productos WHERE 0<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 500")
             if rows:
                 msg = f"Atención: {len(rows)} productos necesitan reabastecimiento:\n"
                 for r in rows:
@@ -281,7 +281,7 @@ class Agent:
         if prods:
             m['p'] = prods[0]['n']
             msg = "Información de productos:\n"
-            for p in prods[:5]:
+            for p in prods[:20]:
                 mrg = ((p['p']-p['c'])/p['p']*100) if p['p']>0 and p['c']>0 else 0
                 msg += f"• {p['n']}: {fmt_money(p['p'])} | Stock: {p['s']:.0f}"
                 if mrg>0: msg += f" | Margen: {pct(mrg)}"
@@ -395,7 +395,7 @@ class Agent:
         
         # STOCK
         if any(w in t for w in ['stock','inventario','critico']):
-            rows = q("SELECT nombre,stock_actual,precio_venta FROM inventario_general WHERE stock_actual<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 8")
+            rows = q("SELECT nombre,stock_actual,precio_venta FROM inventario_general WHERE stock_actual<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 500")
             out = sum(1 for p in P.cache if p['s']<=0)
             msg = f"Estado del inventario:\n\n📦 Total productos: {len(P.cache)}\n⚠️ Stock bajo: {low}\n❌ Agotados: {out}\n"
             if rows:
@@ -451,7 +451,7 @@ class Agent:
                 if vendido>0: msg += f"🛒 Vendidos (30d): {vendido:.0f} unidades\n"
                 return msg
             msg = f"Resultados para su búsqueda:\n"
-            for p in prods[:5]:
+            for p in prods[:20]:
                 msg += f"• {p['n']}: {fmt_money(p['p'])} | Stock: {p['s']:.0f}\n"
             return msg
         

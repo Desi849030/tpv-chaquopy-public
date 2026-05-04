@@ -306,7 +306,8 @@ def _obtener_privilegios_rol(rol):
             import json as _j
             v=row[0]; p=_j.loads(v) if isinstance(v,str) else v
             if isinstance(p,dict): return p
-    except: pass
+    except Exception as e:
+        pass  # Log: {e} pass
     finally: conn.close()
     return None
 
@@ -938,7 +939,8 @@ def api_ping():
         req.add_header("apikey","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjbGFmcndkcWVudHZ4Z3BtZGJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwMDA4MjIsImV4cCI6MjA4ODU3NjgyMn0.***REMOVED***")
         urllib.request.urlopen(req, timeout=5)
         return jsonify({"online": True})
-    except:
+    except Exception as e:
+        pass  # Log: {e}
         return jsonify({"online": False})
 
 @app.route("/api/backup", methods=["GET"])
@@ -1236,7 +1238,8 @@ def error_500(e):
 def abrir_navegador():
     time.sleep(1.5)
     try: webbrowser.open("http://localhost:5000")
-    except: pass
+    except Exception as e:
+        pass  # Log: {e} pass
 
 def main():
     print("\n" + "="*58)

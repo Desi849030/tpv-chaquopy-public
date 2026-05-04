@@ -135,6 +135,7 @@ def pct(v): return f"{float(v):.1f}%"
 class Agent:
     def __init__(self):
         self.ses = {}; self.lk = threading.Lock()
+        self.humanizer = Humanizer()
     
     def mem(self, sid):
         with self.lk:
@@ -176,10 +177,10 @@ class Agent:
         
         if role == 'cliente':
             of = O.mejores()
-            msg = f"{g}{n}. Bienvenido a TPV Smart. Contamos con {len(P.cache)} productos en {len(P.cats)} categorías."
-            if of:
+            msg = f"{g}{n}. Bienvenido a TPV Smart. Puede consultar productos, precios y ofertas. Si desea registrarse, solicite al administrador sus credenciales de acceso."
+            if P.cache and len(P.cache)>0:
                 msg += f" Le recomiendo aprovechar: {of[0]['n']} con descuento a {fmt_money(of[0]['d'])} (antes {fmt_money(of[0]['p'])})."
-            msg += " ¿Qué producto le interesa?"
+            msg += " Escriba el nombre del producto que busca o consulte categorias."
             return msg
         
         if role == 'vendedor':
@@ -458,6 +459,7 @@ class Agent:
         return "Gestor completo a su disposición. Puede consultar:\n💰 'finanzas' | 📊 'ABC' | ⚖️ 'punto equilibrio'\n📦 'stock' | 🔮 'predicciones' | 🏷️ 'ofertas'\n🔄 'rotación' | 🧾 'gastos' | 📐 'EOQ'"
     
     def _r(self, msg, role):
+        msg = self.humanizer.sanitize_text(msg)
         return {'answer': msg, 'role': role, 'suggestions': [], 'ts': datetime.now().isoformat()}
 
 # ============================================================

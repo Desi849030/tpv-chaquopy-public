@@ -1,3 +1,4 @@
+from ia.nlp_engine import NLPEngine
 """ia_agent.py v1.0 - TPV Smart - Gestor Total Conversacional"""
 from ia.guardrails import Guardrails
 from ia.session_context import SessionContext

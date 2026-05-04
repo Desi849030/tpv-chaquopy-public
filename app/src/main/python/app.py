@@ -1414,7 +1414,6 @@ if __name__ == "__main__":
 # RUTAS BIOMÉTRICAS
 # ============================================================
 @app.route('/api/biometric/check', methods=['GET'])
-@requiere_login
 def api_biometric_check():
     try:
         result = check_biometric_availability()

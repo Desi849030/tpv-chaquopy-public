@@ -230,10 +230,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span id="lbtn-spin" style="display:none"><span class="spinner-border spinner-border-sm me-2"></span>Verificando...</span>
             </button>
             <button id="bio-btn" class="login-btn" style="background:#00b894;margin-top:8px;display:none" onclick="auth_biometric()"><i class="bi bi-fingerprint"></i> Huella digital</button>
-            <button id="bio-btn" class="login-btn" style="background:#00b894;margin-top:8px;display:"" onclick="auth_biometric()"><i class="bi bi-fingerprint"></i> Huella digital</button>
-                <span id="lbtn-txt"><i class="bi bi-box-arrow-in-right me-2"></i>Entrar</span>
-                <span id="lbtn-spin" style="display:none"><span class="spinner-border spinner-border-sm me-2"></span>Verificando...</span>
-            </button>
             <div class="login-footer"><i class="bi bi-shield-lock me-1"></i>Acceso restringido al personal</div>
         </div>
         <div id="panel-cliente" style="display:none">
@@ -3024,9 +3020,6 @@ async function auth_biometric() {
     _loginErr("Biometría no disponible. Use su contraseña.");
 }
 
-function guardarCredenciales(user, pass) {
-    localStorage.setItem("tpv_saved_user", user);
-    localStorage.setItem("tpv_saved_pass", btoa(pass));
 }
 
 // Verificar disponibilidad al cargar

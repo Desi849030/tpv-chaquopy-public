@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""ia_assistant_routes.py - TPV Smart v1.0 - Compatible con ia_agent.py"""
+"""ia_assistant_routes.py - TPV Smart v1.1 - Compatible con ia_agent.py"""
 from flask import Blueprint, request, jsonify, session
 
 assistant_bp = Blueprint('assistant', __name__, url_prefix='/api/ia')
@@ -11,7 +11,6 @@ _get_proactive_alerts = None
 _set_session_role = None
 _get_session_info = None
 
-# Intentar cargar ia_agent.py (nuevo), fallback a ia_assistant.py (viejo)
 try:
     from ia_agent import (
         process_question, get_status, get_proactive_alerts,
@@ -23,7 +22,7 @@ try:
     _set_session_role = set_session_role
     _get_session_info = get_session_info
     _ia_module = True
-    print("[IA Routes v1.0] ia_agent.py cargado correctamente")
+    print("[IA Routes v1.1] ia_agent.py cargado correctamente")
 except Exception as e:
     try:
         from ia_assistant import (
@@ -36,11 +35,23 @@ except Exception as e:
         _set_session_role = set_session_role
         _get_session_info = get_session_info
         _ia_module = True
-        print("[IA Routes] ia_assistant.py cargado (fallback)")
+        print("[IA Routes v1.1] ia_assistant.py cargado (fallback)")
     except Exception as e2:
         _ia_module = False
         print(f"[IA Routes ERROR] {e} | {e2}")
 
+try:
+    from app import requiere_login
+except ImportError:
+    def requiere_login(f):
+        from functools import wraps
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            if not session.get('usuario'):
+                return jsonify({'error': 'No autorizado', 'answer': 'Inicie sesion primero.'}), 401
+            return f(*args, **kwargs)
+        return decorated
+    print("[IA Routes] requiere_login: usando fallback local")
 
 @assistant_bp.route('/ping')
 def ping():
@@ -52,22 +63,18 @@ def ping():
     except Exception as e:
         return jsonify({'status': 'error', 'error': str(e)})
 
-
 @assistant_bp.route('/chat', methods=['POST'])
 @requiere_login
 def chat():
     if not _ia_module:
         return jsonify({'answer': 'Error: modulo IA no disponible.', 'suggestions': ['ayuda']})
-    
     data = request.get_json(silent=True) or {}
     q = data.get('question', '').strip()
     sid = data.get('session_id', 'default')
     role = session.get('usuario', {}).get('rol', data.get('role', 'vendedor'))
     user_name = session.get('usuario', {}).get('nombre', data.get('user_name', ''))
-    
     if not q:
         return jsonify({'answer': 'Escribe algo para ayudarte.', 'suggestions': ['ventas de hoy', 'ayuda']})
-    
     try:
         result = _process_question(sid, q, role=role, user_name=user_name)
         result.setdefault('suggestions', [])
@@ -75,8 +82,8 @@ def chat():
     except Exception as e:
         return jsonify({'answer': f'Error: {str(e)[:100]}', 'suggestions': ['ayuda']})
 
-
 @assistant_bp.route('/role', methods=['POST'])
+@requiere_login
 def set_role():
     if not _ia_module:
         return jsonify({'error': 'Modulo IA no disponible'}), 500
@@ -88,8 +95,8 @@ def set_role():
     info = _get_session_info(sid)
     return jsonify(info)
 
-
 @assistant_bp.route('/alerts', methods=['GET'])
+@requiere_login
 def alerts():
     try:
         if not _ia_module:
@@ -99,7 +106,6 @@ def alerts():
         return jsonify(result)
     except Exception as e:
         return jsonify({'alerts': []})
-
 
 @assistant_bp.route('/status')
 def status():
@@ -113,4 +119,4 @@ def status():
     except Exception as e:
         return jsonify({'version': '15.0.0', 'error': str(e)})
 
-print("[ia_assistant_routes.py v1.0] Listo")
+print("[ia_assistant_routes.py v1.1] Listo")

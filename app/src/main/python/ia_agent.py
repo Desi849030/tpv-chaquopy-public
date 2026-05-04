@@ -179,7 +179,7 @@ class Agent:
             of = O.mejores()
             msg = f"{g}{n}. Bienvenido a TPV Smart. Puede consultar productos, precios y ofertas. Si desea registrarse, solicite al administrador sus credenciales de acceso."
             if P.cache and len(P.cache)>0:
-                msg += f" Le recomiendo aprovechar: {of[0]['n']} con descuento a {fmt_money(of[0]['d'])} (antes {fmt_money(of[0]['p'])})."
+                msg += f" Hoy tenemos {len(P.cache)} productos disponibles. Le recomiendo aprovechar las ofertas."
             msg += " Escriba el nombre del producto que busca o consulte categorias."
             return msg
         

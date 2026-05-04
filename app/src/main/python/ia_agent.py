@@ -223,7 +223,7 @@ class Agent:
         if any(w in t for w in ['categorias','catalogo','que tienen','secciones','productos']):
             return f"Contamos con {len(P.cats)} categorías: {', '.join(P.cats[:12])}. ¿Cuál le gustaría explorar?"
         
-        prods = P.search(text, 5)
+        prods = P.search(t, 5)
         if prods:
             m['p'] = prods[0]['n']
             if len(prods)==1:
@@ -277,7 +277,7 @@ class Agent:
                 msg += f"{i}. {r['nombre']}: {r['q']:.0f} unidades (${r['t']:,.0f})\n"
             return msg
         
-        prods = P.search(text, 5)
+        prods = P.search(t, 5)
         if prods:
             m['p'] = prods[0]['n']
             msg = "Información de productos:\n"
@@ -429,7 +429,7 @@ class Agent:
             return msg
         
         # PRODUCTO
-        prods = P.search(text, 5)
+        prods = P.search(t, 5)
         if prods:
             if len(prods)==1:
                 p = prods[0]

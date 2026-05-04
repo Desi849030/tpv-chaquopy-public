@@ -31,7 +31,7 @@ class P:
         c = _db()
         if not c: return
         prods = []
-        for r in c.execute("SELECT nombre,precio,costo,categoria,stock_actual,unidad_medida FROM productos WHERE activo=1").fetchall():
+        for r in c.execute("SELECT nombre,precio,costo,categoria,0 as stock_actual,unidad_medida FROM productos WHERE activo=1").fetchall():
             prods.append({'n':r[0] or '','p':float(r[1] or 0),'c':float(r[2] or 0),'cat':r[3] or 'General','s':float(r[4] or 0),'u':r[5] or 'Un'})
         names = {p['n'].lower() for p in prods}
         for r in c.execute("SELECT nombre,precio_venta,precio_compra,categoria,stock_actual,unidad_medida FROM inventario_general").fetchall():
@@ -260,7 +260,7 @@ class Agent:
         
         if any(w in t for w in ['stock bajo','agotado','critico','reabastecer','faltante']):
             rows = q("SELECT nombre,stock_actual FROM inventario_general WHERE stock_actual<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 8")
-            if not rows: rows = q("SELECT nombre,stock_actual FROM productos WHERE stock_actual<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 8")
+            if not rows: rows = q("SELECT nombre,0 as stock_actual FROM productos WHERE 0<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 8")
             if rows:
                 msg = f"Atención: {len(rows)} productos necesitan reabastecimiento:\n"
                 for r in rows:

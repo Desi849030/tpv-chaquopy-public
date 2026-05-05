@@ -60,7 +60,10 @@ from tienda_routes import tienda_bp, crear_tablas_tienda
 from loyalty_routes import loyalty_bp
 from api_routes import api_bp
 from license_routes import lic_bp
-from validacion_routes import val_bp
+try:
+    from validacion_routes import val_bp
+except ImportError:
+    val_bp = None
 
 try:
     from ia_assistant_routes import assistant_bp
@@ -97,12 +100,16 @@ for bp in _blueprints:
     app.register_blueprint(bp)
 
 if assistant_bp: app.register_blueprint(assistant_bp)
-app.register_blueprint(val_bp)
+if val_bp: app.register_blueprint(val_bp)
 if ai_bp: app.register_blueprint(ai_bp)
 if analytics_bp: app.register_blueprint(analytics_bp)
 
-from tpv_security import registrar_auditoria
-registrar_auditoria(app)
+try:
+    from tpv_security import registrar_auditoria
+    registrar_auditoria(app)
+    print("Auditoria de seguridad activa")
+except ImportError:
+    print("tpv_security no disponible (modulo opcional)")
 print("Blueprints registrados: auth + admin + inventory + ventas + settings + tienda + loyalty + api + license + assistant + ai")
 
 # ══════════════════════════════════════════════════════════════

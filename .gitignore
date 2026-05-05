@@ -38,3 +38,8 @@ tpv.log
 .env
 .env.local
 storage/
+
+# Database runtime (NO versionar)
+tpv_datos.db
+tpv_datos.db-shm
+tpv_datos.db-wal

@@ -52,7 +52,7 @@ import supabase_sync as _sb
 
 # ── Blueprint modules ──
 from auth_routes import auth_bp
-from admin_routes import admin_bp
+from admin_routes import admin_bp, _MODULOS_DISPONIBLES, _PRIVILEGIOS_DEFAULT
 from inventory_routes import inv_bp
 from ventas_routes import ventas_bp
 from settings_routes import settings_bp

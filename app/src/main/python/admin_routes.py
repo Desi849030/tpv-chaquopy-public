@@ -23,7 +23,7 @@ _MODULOS_DISPONIBLES = {
     "licencias":"Gestion licencias","debug":"Panel depuracion",
     "privilegios":"Gestion privilegios","blindajes":"Panel blindajes",
     "ia_edge":"IA Edge Analytics","lealtad":"Programa Lealtad",
-    "asistente_ia":"Asistente IA"
+    "asistente_ia":"Asistente IA","caja":"Caja y cobros","descuentos":"Descuentos","supabase":"Configuracion Supabase","seguridad":"Seguridad","exportar":"Exportar datos","copias":"Copias de seguridad"
 }
 
 _PRIVILEGIOS_DEFAULT = {

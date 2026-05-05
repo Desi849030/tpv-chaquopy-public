@@ -414,6 +414,7 @@
             ventas_renderizarTablaHoy();
             registros_renderizar();
             document.getElementById('nom-selectPais') && nom_cargarDenominaciones(document.getElementById('nom-selectPais').value);
+        localStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
             lic_checkLicense();
             cliente_renderizarDropdownCategoriasQR(); 
             
@@ -3872,6 +3873,7 @@
                 tpvState.licencia.fechaActivacion = new Date().toISOString();
                 tpvState.licencia.unidadTiempo = 'dias';
                 await saveState();
+        localStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
                 lic_checkLicense();
                 showToast(lang.toast_admin_license_activated, "info");
                 return;
@@ -3921,6 +3923,7 @@
                 tpvState.licencia.unidadTiempo = unidadTiempo;
                 tpvState.licencia.fechaActivacion = new Date().toISOString();
                 await saveState();
+        localStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
                 lic_checkLicense();
                 startLicenseAutoCheck(); // Reiniciar el auto-check con la nueva unidad
                 const unidadTexto = unidadTiempo === 'dias' ? 'días' : unidadTiempo === 'minutos' ? 'minutos' : 'segundos';
@@ -4011,7 +4014,7 @@
             } else {
                 estado.innerText = lang.license_expired;
                 estado.className = "text-danger fw-bold";
-                if(overlay) overlay.classList.remove("d-none");
+                if(overlay) overlay.classList.add("d-none");
                 countdownContainer.classList.add("d-none");
                 if(deactivateSection) deactivateSection.classList.add("d-none");
             }
@@ -4028,6 +4031,7 @@
                     '🔒 MODO PRUEBA RÁPIDA DESACTIVADO - Licencia requerida',
                     !modoActual ? 'success' : 'warning'
                 );
+        localStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
                 lic_checkLicense();
             }
         });
@@ -4063,6 +4067,7 @@
                 tpvState.licencia.fechaActivacion = new Date().toISOString();
                 tpvState.licencia.unidadTiempo = 'dias';
                 await saveState();
+        localStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
                 lic_checkLicense();
                 showToast("Licencia de administrador activada", "success");
                 document.getElementById("overlay-license-key").value = "";
@@ -4110,6 +4115,7 @@
                 tpvState.licencia.unidadTiempo = unidadTiempo;
                 tpvState.licencia.fechaActivacion = new Date().toISOString();
                 await saveState();
+        localStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
                 lic_checkLicense();
                 startLicenseAutoCheck(); // Reiniciar el auto-check con la nueva unidad
                 const unidadTexto = unidadTiempo === 'dias' ? 'días' : unidadTiempo === 'minutos' ? 'minutos' : 'segundos';
@@ -4129,6 +4135,7 @@
                 tpvState.licencia.key = "";
                 tpvState.licencia.fechaActivacion = null;
                 await saveState();
+        localStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
                 lic_checkLicense();
                 showToast("Licencia desactivada. Ahora puede probar otras claves.", "info");
                 // Limpiar el campo de entrada
@@ -4306,16 +4313,19 @@
             if (unidad === 'segundos') {
                 // Actualizar cada segundo
                 licenseCheckInterval = setInterval(() => {
+        localStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
                     lic_checkLicense();
                 }, 1000);
             } else if (unidad === 'minutos') {
                 // Actualizar cada 10 segundos
                 licenseCheckInterval = setInterval(() => {
+        localStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
                     lic_checkLicense();
                 }, 10000);
             } else {
                 // Para días, actualizar cada 5 minutos
                 licenseCheckInterval = setInterval(() => {
+        localStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
                     lic_checkLicense();
                 }, 300000);
             }
@@ -4978,12 +4988,14 @@
                 tpvState.licencia.key = null;
                 saveState();
                 showToast('Licencia eliminada', 'warning');
+        localStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
                 lic_checkLicense();
             }
         }
         
         function mostrar_info_licencia() {
             // Delegamos al sistema principal de licencias
+        localStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
             lic_checkLicense();
         }
         

@@ -173,6 +173,7 @@ def index():
         # Subcarpeta organizada
         os.path.join(_CARPETA, 'frontend', 'templates', 'index.html'),
         os.path.join(_CARPETA, 'templates', 'index.html'),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'assets', 'frontend', 'templates', 'index.html'),
     ]
     try:
         candidatos.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'index.html'))
@@ -220,7 +221,16 @@ def serve_static(filename):
         os.path.join(_CARPETA, 'frontend', 'static', 'lib', nombre_base),
         os.path.join(_CARPETA, 'frontend', 'static', 'lib', 'fonts', nombre_base),
         os.path.join(_assets_dir, 'static', 'lib', nombre_base),
+        os.path.join(_assets_dir, 'static', 'js', nombre_base),
+        os.path.join(_assets_dir, 'static', 'css', nombre_base),
+        os.path.join(_assets_dir, 'static', 'icons', nombre_base),
+        os.path.join(_assets_dir, 'static', 'css', nombre_base),
+        os.path.join(_assets_dir, 'static', 'icons', nombre_base),
+        os.path.join(_assets_dir, 'static', 'icons', nombre_base),
         os.path.join(_assets_dir, 'static', 'lib', 'fonts', nombre_base),
+        os.path.join(_assets_dir, 'static', 'js', nombre_base),
+        os.path.join(_assets_dir, 'static', 'css', nombre_base),
+        os.path.join(_assets_dir, 'static', 'icons', nombre_base),
         os.path.join(os.getcwd(), 'frontend', 'static', 'lib', nombre_base),
         os.path.join(os.getcwd(), 'frontend', 'static', 'lib', 'fonts', nombre_base),
         os.path.join(_CARPETA, nombre_base),

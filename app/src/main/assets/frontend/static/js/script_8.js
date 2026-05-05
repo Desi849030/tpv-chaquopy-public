@@ -3016,12 +3016,6 @@ async function auth_biometric() {
         _loginErr("Biometria no disponible en este dispositivo.");
     }
 }
-    btn.textContent = "🔓 Huella/Rostro";
-    _loginErr("Biometría no disponible. Use su contraseña.");
-}
-
-}
-
 // Verificar disponibilidad al cargar
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(auth_biometric_check, 500);

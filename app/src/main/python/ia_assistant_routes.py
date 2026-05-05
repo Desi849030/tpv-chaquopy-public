@@ -35,10 +35,8 @@ except Exception as e:
         _set_session_role = set_session_role
         _get_session_info = get_session_info
         _ia_module = True
-        print("[IA Routes v1.1] ia_assistant.py cargado (fallback)")
     except Exception as e2:
         _ia_module = False
-        print(f"[IA Routes ERROR] {e} | {e2}")
 
 try:
     from app import requiere_login
@@ -48,10 +46,9 @@ except ImportError:
         @wraps(f)
         def decorated(*args, **kwargs):
             if not session.get('usuario'):
-                return jsonify({'error': 'No autorizado', 'answer': 'Inicie sesion primero.'}), 401
+                return jsonify({'error': 'No autorizado'}), 401
             return f(*args, **kwargs)
         return decorated
-    print("[IA Routes] requiere_login: usando fallback local")
 
 @assistant_bp.route('/ping')
 def ping():
@@ -88,12 +85,7 @@ def set_role():
     if not _ia_module:
         return jsonify({'error': 'Modulo IA no disponible'}), 500
     data = request.get_json(silent=True) or {}
-    sid = data.get('session_id', 'default')
-    role = data.get('role', 'vendedor')
-    user_name = data.get('user_name', '')
-    actual_role = _set_session_role(sid, role, user_name)
-    info = _get_session_info(sid)
-    return jsonify(info)
+    return jsonify(_set_session_role(data.get('session_id','default'), data.get('role','vendedor'), data.get('user_name','')))
 
 @assistant_bp.route('/alerts', methods=['GET'])
 @requiere_login
@@ -101,10 +93,8 @@ def alerts():
     try:
         if not _ia_module:
             return jsonify({'alerts': []})
-        sid = request.args.get('session_id', 'default')
-        result = _get_proactive_alerts(sid)
-        return jsonify(result)
-    except Exception as e:
+        return jsonify(_get_proactive_alerts(request.args.get('session_id', 'default')))
+    except:
         return jsonify({'alerts': []})
 
 @assistant_bp.route('/status')

@@ -43,3 +43,7 @@ storage/
 tpv_datos.db
 tpv_datos.db-shm
 tpv_datos.db-wal
+# Secrets (se generan en runtime)
+.tpv_secret_key
+.branch_id
+.supabase_config.json

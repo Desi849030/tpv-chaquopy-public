@@ -9,6 +9,19 @@ from datetime import datetime, timedelta
 from difflib import SequenceMatcher
 from collections import defaultdict
 
+try:
+    from ia.memory import (save as _mem_save, recall as _mem_recall,
+        search as _mem_search, extract_and_save as _mem_extract,
+        get_enriched_context as _mem_context)
+    _HAS_MEM = True
+except Exception:
+    _HAS_MEM = False
+try:
+    from ia.anti_slop import refine as _anti_slop
+    _HAS_ANTI_SLOP = True
+except Exception:
+    _HAS_ANTI_SLOP = False
+
 def _db():
     for p in ['tpv_datos.db', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tpv_datos.db')]:
         if os.path.exists(p):
@@ -141,6 +154,8 @@ class Agent:
         self.guard = Guardrails()
         self.memory = SessionContext()
         self.humanizer = Humanizer()
+        self._mem_ok = _HAS_MEM
+        self._as_ok = _HAS_ANTI_SLOP
     
     def mem(self, sid):
         with self.lk:

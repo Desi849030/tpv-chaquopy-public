@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""ia_assistant_routes.py - TPV Smart v1.1 - Compatible con ia_agent.py"""
+"""ia_assistant_routes.py - TPV Smart v1.2 - Compatible con ia_agent.py + memoria persistente"""
 from flask import Blueprint, request, jsonify, session
+from functools import wraps
 
 assistant_bp = Blueprint('assistant', __name__, url_prefix='/api/ia')
 
@@ -22,7 +23,7 @@ try:
     _set_session_role = set_session_role
     _get_session_info = get_session_info
     _ia_module = True
-    print("[IA Routes v1.1] ia_agent.py cargado correctamente")
+    print("[IA Routes v1.2] ia_agent.py cargado correctamente")
 except Exception as e:
     try:
         from ia_assistant import (
@@ -38,17 +39,29 @@ except Exception as e:
     except Exception as e2:
         _ia_module = False
 
+# Importar requiere_login
 try:
     from app import requiere_login
 except ImportError:
     def requiere_login(f):
-        from functools import wraps
         @wraps(f)
         def decorated(*args, **kwargs):
             if not session.get('usuario'):
                 return jsonify({'error': 'No autorizado'}), 401
             return f(*args, **kwargs)
         return decorated
+
+# Importar memoria persistente
+_mem_module = False
+try:
+    from ia.memory import (save as mem_save, recall as mem_recall,
+        search as mem_search, forget as mem_forget, get_summary as mem_summary,
+        extract_and_save as mem_extract, get_enriched_context as mem_context)
+    _mem_module = True
+    print("[IA Routes v1.2] Modulo memoria persistente cargado")
+except Exception:
+    _mem_module = False
+
 
 @assistant_bp.route('/ping')
 def ping():
@@ -59,6 +72,7 @@ def ping():
         return jsonify({'status': 'ok', 'ia_module': True, 'version': info.get('version', '?')})
     except Exception as e:
         return jsonify({'status': 'error', 'error': str(e)})
+
 
 @assistant_bp.route('/chat', methods=['POST'])
 @requiere_login
@@ -73,11 +87,27 @@ def chat():
     if not q:
         return jsonify({'answer': 'Escribe algo para ayudarte.', 'suggestions': ['ventas de hoy', 'ayuda']})
     try:
+        # Enriquecer contexto con memoria persistente
+        if _mem_module:
+            mem_ctx = mem_context(sid, q)
+            # Se podria inyectar contexto extra en el futuro
+            data['_memory'] = mem_ctx
+
         result = _process_question(sid, q, role=role, user_name=user_name)
+
+        # Extraer y guardar datos clave de esta conversacion
+        if _mem_module:
+            try:
+                mem_extract(sid, q, result.get('intent', 'chat'),
+                           result.get('answer', '')[:200], role)
+            except Exception:
+                pass
+
         result.setdefault('suggestions', [])
         return jsonify(result)
     except Exception as e:
         return jsonify({'answer': f'Error: {str(e)[:100]}', 'suggestions': ['ayuda']})
+
 
 @assistant_bp.route('/role', methods=['POST'])
 @requiere_login
@@ -85,7 +115,8 @@ def set_role():
     if not _ia_module:
         return jsonify({'error': 'Modulo IA no disponible'}), 500
     data = request.get_json(silent=True) or {}
-    return jsonify(_set_session_role(data.get('session_id','default'), data.get('role','vendedor'), data.get('user_name','')))
+    return jsonify(_set_session_role(data.get('session_id', 'default'), data.get('role', 'vendedor'), data.get('user_name', '')))
+
 
 @assistant_bp.route('/alerts', methods=['GET'])
 @requiere_login
@@ -94,8 +125,9 @@ def alerts():
         if not _ia_module:
             return jsonify({'alerts': []})
         return jsonify(_get_proactive_alerts(request.args.get('session_id', 'default')))
-    except:
+    except Exception:
         return jsonify({'alerts': []})
+
 
 @assistant_bp.route('/status')
 def status():
@@ -105,8 +137,81 @@ def status():
         result = _get_status()
         result['current_role'] = session.get('usuario', {}).get('rol', 'vendedor')
         result['current_user'] = session.get('usuario', {}).get('nombre', '')
+        result['memory_enabled'] = _mem_module
         return jsonify(result)
     except Exception as e:
         return jsonify({'version': '15.0.0', 'error': str(e)})
 
-print("[ia_assistant_routes.py v1.1] Listo")
+
+# ═══════════════════════════════════════════════════════════
+#  RUTAS DE MEMORIA PERSISTENTE
+# ═══════════════════════════════════════════════════════════
+
+@assistant_bp.route('/memory/recall', methods=['POST'])
+@requiere_login
+def memory_recall():
+    if not _mem_module:
+        return jsonify({'memories': [], 'error': 'Modulo memoria no disponible'}), 503
+    data = request.get_json(silent=True) or {}
+    sid = data.get('session_id', 'default')
+    cat = data.get('category')
+    key = data.get('key')
+    results = mem_recall(sid, category=cat, key=key)
+    return jsonify({'ok': True, 'memories': results, 'count': len(results)})
+
+
+@assistant_bp.route('/memory/search', methods=['POST'])
+@requiere_login
+def memory_search():
+    if not _mem_module:
+        return jsonify({'results': [], 'error': 'Modulo memoria no disponible'}), 503
+    data = request.get_json(silent=True) or {}
+    query = data.get('query', '').strip()
+    if not query:
+        return jsonify({'error': 'Query requerida'}), 400
+    sid = data.get('session_id', 'default')
+    cat = data.get('category')
+    results = mem_search(query, session_id=sid, category=cat)
+    return jsonify({'ok': True, 'results': results, 'count': len(results)})
+
+
+@assistant_bp.route('/memory/save', methods=['POST'])
+@requiere_login
+def memory_save():
+    if not _mem_module:
+        return jsonify({'error': 'Modulo memoria no disponible'}), 503
+    data = request.get_json(silent=True) or {}
+    sid = data.get('session_id', 'default')
+    cat = data.get('category', 'general')
+    key = data.get('key', '')
+    value = data.get('value', '')
+    if not key or not value:
+        return jsonify({'error': 'key y value son requeridos'}), 400
+    ok = mem_save(sid, cat, key, value, metadata=data.get('metadata'),
+                  confidence=data.get('confidence', 1.0),
+                  expires_days=data.get('expires_days'))
+    return jsonify({'ok': ok})
+
+
+@assistant_bp.route('/memory/forget', methods=['POST'])
+@requiere_login
+def memory_forget():
+    if not _mem_module:
+        return jsonify({'error': 'Modulo memoria no disponible'}), 503
+    data = request.get_json(silent=True) or {}
+    sid = data.get('session_id', 'default')
+    ok = mem_forget(sid, category=data.get('category'), key=data.get('key'))
+    return jsonify({'ok': ok})
+
+
+@assistant_bp.route('/memory/summary', methods=['GET'])
+@requiere_login
+def memory_summary():
+    if not _mem_module:
+        return jsonify({'summary': {}, 'error': 'Modulo memoria no disponible'}), 503
+    sid = request.args.get('session_id', 'default')
+    summary = mem_summary(sid)
+    return jsonify({'ok': True, 'summary': summary})
+
+
+print("[ia_assistant_routes.py v1.2] Listo + memoria persistente")

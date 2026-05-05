@@ -28,9 +28,9 @@ from datetime import datetime
 
 # ── Clave secreta ──
 try:
-    _KEY_FILE = pathlib.Path(__file__).parent / ".tpv_secret_key"
+    _SECRET_KEY = None
 except NameError:
-    _KEY_FILE = pathlib.Path(_CARPETA) / ".tpv_secret_key"
+try:
 if not _KEY_FILE.exists():
     _KEY_FILE.write_text(_secrets.token_hex(32))
 try: _KEY_FILE.chmod(0o600)
@@ -87,7 +87,7 @@ app.config["SESSION_COOKIE_SECURE"] = False
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_DOMAIN"] = None
 app.config["PERMANENT_SESSION_LIFETIME"] = 86400 * 7
-app.secret_key = _KEY_FILE.read_text().strip()
+app.secret_key = _SECRET_KEY
 
 # ══════════════════════════════════════════════════════════════
 #  REGISTRAR BLUEPRINTS

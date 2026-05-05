@@ -10,6 +10,12 @@ from difflib import SequenceMatcher
 from collections import defaultdict
 
 try:
+    from ia.skills import get_registry as _get_skills_registry
+    _HAS_SKILLS = True
+except Exception:
+    _HAS_SKILLS = False
+
+try:
     from ia.memory import (save as _mem_save, recall as _mem_recall,
         search as _mem_search, extract_and_save as _mem_extract,
         get_enriched_context as _mem_context)
@@ -156,6 +162,8 @@ class Agent:
         self.humanizer = Humanizer()
         self._mem_ok = _HAS_MEM
         self._as_ok = _HAS_ANTI_SLOP
+        self._sk_ok = _HAS_SKILLS
+        self._skills = _get_skills_registry() if _HAS_SKILLS else None
     
     def mem(self, sid):
         with self.lk:

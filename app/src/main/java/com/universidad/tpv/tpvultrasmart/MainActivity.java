@@ -35,7 +35,6 @@ public class MainActivity extends FragmentActivity {
     private static final int CAMERA_PERMISSION_REQUEST = 100;
     private ValueCallback<Uri[]> filePathCallback;
     private WebView webView;
-    private TPVNative tpvNative;
     private boolean cameraPermissionGranted = false;
     private BiometricPrompt biometricPrompt;
     private Executor executor;
@@ -283,60 +282,7 @@ public class MainActivity extends FragmentActivity {
     }
 
     // ═══════════ Biometric Authentication ═══════════
-    public void sendBiometricResult(final boolean success, final String message) {
-        runOnUiThread(new Runnable() {
-            @Override public void run() {
-                if (webView != null) {
-                    String esc = message.replace("\\","\\\\").replace("'", "\\'").replace("\n","\\n");
-                    String js = "if(window.onBiometricCallback)window.onBiometricCallback({success:"
-                        + success + ",message:'" + esc + "'});";
-                    webView.evaluateJavascript(js, null);
-                }
-            }
-        });
-    }
 
-    public boolean checkBiometricAvailable() {
-        try {
-            BiometricManager bm = BiometricManager.from(this);
-            return bm.canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS;
-        } catch (Exception e) { Log.e("TPV","bio-check: "+e.getMessage()); return false; }
-    }
 
-    public void showBiometricPrompt(String title, String subtitle, String desc) {
-        try {
-            BiometricManager bm = BiometricManager.from(this);
-            if (bm.canAuthenticate() != BiometricManager.BIOMETRIC_SUCCESS) {
-                sendBiometricResult(false, "Biometria no disponible en este dispositivo");
-                return;
-            }
-            BiometricPrompt.PromptInfo info = new BiometricPrompt.PromptInfo.Builder()
-                .setTitle(title != null ? title : "TPV")
-                .setSubtitle(subtitle != null ? subtitle : "")
-                .setDescription(desc != null ? desc : "")
-                .setNegativeButtonText("Cancelar")
-                .build();
-            new BiometricPrompt(this, ContextCompat.getMainExecutor(this),
-                new BiometricPrompt.AuthenticationCallback() {
-                    @Override
-                    public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult r) {
-                        Log.d("TPV","bio OK");
-                        sendBiometricResult(true, "Autenticado correctamente");
-                    }
-                    @Override
-                    public void onAuthenticationFailed() {
-                        sendBiometricResult(false, "No se pudo verificar la biometria");
-                    }
-                    @Override
-                    public void onError(int code, CharSequence msg) {
-                        Log.e("TPV","bio err "+code+": "+msg);
-                        sendBiometricResult(false, msg.toString());
-                    }
-                }).authenticate(info);
-        } catch (Exception e) {
-            Log.e("TPV","bio: "+e.getMessage());
-            sendBiometricResult(false, "Error: " + e.getMessage());
-        }
-    }
 
 }

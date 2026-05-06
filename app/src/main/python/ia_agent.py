@@ -304,224 +304,95 @@ class Agent:
 
     # ============================================================
     def _sup(self, t):
-        """Supervisor - acceso completo a ventas, stock, equipo, finanzas."""
         d = F.diario(); w = F.semanal()
-        low = sum(1 for p in P.cache if 0<p['s']<=5)
-
-        # AYUDA
-        if any(w2 in t for w2 in ['ayuda','que puedes','menu','opciones']):
-            return ("Como supervisor tienes acceso completo:
-
-"
-                    "• 'dashboard' - KPIs y metricas del negocio
-"
-                    "• 'ventas' - Resumen de ventas del dia y semana
-"
-                    "• 'stock bajo' - Alertas de reabastecimiento
-"
-                    "• 'top' - Productos mas vendidos
-"
-                    "• 'finanzas' - Balance, margen, ganancia
-"
-                    "• 'gastos' - Egresos del dia
-"
-                    "• 'predicciones' - Tendencias y proyecciones
-"
-                    "• 'rotacion' - Indice de rotacion de inventario
-"
-                    "• 'ABC' - Clasificacion de productos
-"
-                    "• 'ofertas' - Productos ideales para promocion
-"
-                    "• Nombre de producto - Info detallada
-
-"
-                    "Escribe lo que necesites en lenguaje natural.")
-
-        # DASHBOARD
-        if any(w2 in t for w2 in ['dashboard','resumen','estado','kpi']):
-            msg = f"Dashboard:
-• Ventas hoy: {fmt_money(d['r'])} ({d['t']} operaciones)
-• Ventas semana: {fmt_money(w['r'])}
-• Ticket promedio: {fmt_money(d['a'])}
-• Productos activos: {len(P.cache)}
-• Stock bajo: {low} productos
-• Categorias: {len(P.cats)}"
-            if d['t'] > 0:
+        low = sum(1 for p in P.cache if 0 < p["s"] <= 5)
+        if any(w2 in t for w2 in ["ayuda","que puedes","menu","opciones"]):
+            return "Como supervisor tienes acceso completo:\n\n- dashboard: KPIs\n- ventas: Resumen del dia\n- stock bajo: Alertas\n- top: Mas vendidos\n- finanzas: Balance y margen\n- gastos: Egresos\n- predicciones: Tendencias\n- rotacion: Indice\n- ABC: Clasificacion\n- ofertas: Promociones\n- Nombre de producto para info detallada"
+        if any(w2 in t for w2 in ["dashboard","resumen","estado","kpi"]):
+            msg = "Dashboard:\n- Ventas hoy: " + fmt_money(d["r"]) + " (" + str(d["t"]) + " ops)\n- Ventas semana: " + fmt_money(w["r"]) + "\n- Ticket promedio: " + fmt_money(d["a"]) + "\n- Productos: " + str(len(P.cache)) + "\n- Stock bajo: " + str(low) + "\n- Categorias: " + str(len(P.cats))
+            if d["t"] > 0:
                 h = datetime.now().hour
-                proy = d['r']/h*24 if h>0 else d['r']
-                msg += f"
-• Proyeccion cierre: {fmt_money(proy)}"
+                proy = d["r"]/h*24 if h > 0 else d["r"]
+                msg += "\n- Proyeccion cierre: " + fmt_money(proy)
             return msg
-
-        # VENTAS
-        if any(w2 in t for w2 in ['ventas','caja','recaude','cuanto vendi','como voy','cuanto llevo','total vendido']):
-            if d['t']==0: return "Aun no se registran ventas hoy. Consulta 'top' para ver productos populares o 'stock bajo' para revisar inventario."
+        if any(w2 in t for w2 in ["ventas","caja","recaude","cuanto vendi","como voy"]):
+            if d["t"] == 0: return "Aun no hay ventas hoy."
             h = datetime.now().hour
-            proy = d['r']/h*24 if h>0 else d['r']
-            msg = f"Ventas del dia:
-• Operaciones: {d['t']}
-• Facturado: {fmt_money(d['r'])}
-• Ticket promedio: {fmt_money(d['a'])}
-• Proyeccion cierre: {fmt_money(proy)}
-• Gastos: {fmt_money(d['g'])}
-• Ganancia bruta: {fmt_money(d['r']-d['g'])}"
-            return msg
-
-        # STOCK BAJO
-        if any(w2 in t for w2 in ['stock bajo','agotado','critico','reabastecer','faltante']):
+            proy = d["r"]/h*24 if h > 0 else d["r"]
+            return "Ventas del dia:\n- Ops: " + str(d["t"]) + "\n- Facturado: " + fmt_money(d["r"]) + "\n- Ticket: " + fmt_money(d["a"]) + "\n- Proyeccion: " + fmt_money(proy) + "\n- Gastos: " + fmt_money(d["g"]) + "\n- Ganancia: " + fmt_money(d["r"]-d["g"])
+        if any(w2 in t for w2 in ["stock bajo","agotado","critico","reabastecer","faltante"]):
             rows = q("SELECT nombre,stock_actual FROM inventario_general WHERE stock_actual<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 500")
-            if not rows: rows = q("SELECT nombre,stock_actual FROM inventario_general WHERE stock_actual<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 500")
-            if rows:
-                msg = f"Alerta: {len(rows)} productos necesitan reabastecimiento:
-
-"
-                for r in rows[:15]:
-                    icon = "X" if r['stock_actual']==0 else "!"
-                    msg += f" [{icon}] {r['nombre']}: {r['stock_actual']:.0f} unidades
-"
-                if len(rows) > 15: msg += f"
-... y {len(rows)-15} mas."
-                msg += "
-
-Desea generar una orden de pedido?"
-                return msg
-            return "Todo en orden. No hay productos con stock bajo."
-
-        # TOP VENDIDOS
-        if any(w2 in t for w2 in ['top','mas vendido','popular','ranking','mejor','vendidos']):
-            top = F.top(7,5)
-            if not top: return "Aun no hay suficiente historial de ventas esta semana."
-            msg = "Productos mas vendidos (7 dias):
-
-"
-            for i,r in enumerate(top,1):
-                msg += f"{i}. {r['nombre']}: {r['q']:.0f} unidades ({fmt_money(r['t'])})
-"
+            if not rows: return "Todo en orden. No hay productos con stock bajo."
+            msg = "Alerta: " + str(len(rows)) + " productos necesitan reabastecimiento:\n\n"
+            for r in rows[:15]:
+                icon = "X" if r["stock_actual"] == 0 else "!"
+                msg += " [" + icon + "] " + r["nombre"] + ": " + str(int(r["stock_actual"])) + " uds\n"
+            return msg + "\nDesea generar orden de pedido?"
+        if any(w2 in t for w2 in ["top","mas vendido","popular","ranking","mejor","vendidos"]):
+            top = F.top(7, 5)
+            if not top: return "Aun no hay suficiente historial."
+            msg = "Mas vendidos (7 dias):\n\n"
+            for i, r in enumerate(top, 1):
+                msg += str(i) + ". " + r["nombre"] + ": " + str(int(r["q"])) + " uds (" + fmt_money(r["t"]) + ")\n"
             return msg
-
-        # FINANZAS
-        if any(w2 in t for w2 in ['finanza','margen','gasto','ingreso','balance','ganancia','rentabilidad']):
-            prof = d['r'] - d['g']
-            margen = (prof/d['r']*100) if d['r']>0 else 0
-            msg = f"Finanzas del dia:
-
-• Ingresos: {fmt_money(d['r'])}
-• Gastos: {fmt_money(d['g'])}
-• Ganancia bruta: {fmt_money(prof)}
-• Margen: {pct(margen)}
-• Ticket promedio: {fmt_money(d['a'])}"
-            if prof > d['g']*2: msg += "
-
-Excelente rentabilidad."
-            elif prof > 0: msg += "
-
-Buen desempeno."
-            else: msg += "
-
-Atencion: gastos superan ingresos."
-            return msg
-
-        # GASTOS
-        if any(w2 in t for w2 in ['gasto','egreso','costo fijo','gastos']):
+        if any(w2 in t for w2 in ["finanza","margen","gasto","ingreso","balance","ganancia","rentabilidad"]):
+            prof = d["r"] - d["g"]
+            margen = (prof/d["r"]*100) if d["r"] > 0 else 0
+            return "Finanzas:\n\n- Ingresos: " + fmt_money(d["r"]) + "\n- Gastos: " + fmt_money(d["g"]) + "\n- Ganancia: " + fmt_money(prof) + "\n- Margen: " + pct(margen) + "\n- Ticket: " + fmt_money(d["a"])
+        if any(w2 in t for w2 in ["gasto","egreso","gastos","costo"]):
             rows = q("SELECT descripcion,monto,categoria FROM gastos WHERE DATE(fecha)=DATE('now','localtime') ORDER BY monto DESC")
-            if not rows: return "No hay gastos registrados hoy."
-            msg = f"Gastos del dia ({len(rows)}):
-
-"
+            if not rows: return "No hay gastos hoy."
+            msg = "Gastos del dia (" + str(len(rows)) + "):\n\n"
             total = 0
             for r in rows[:10]:
-                msg += f"• {r['descripcion']}: {fmt_money(r['monto'])} ({r['categoria']})
-"
-                total += r['monto']
-            msg += f"
-Total: {fmt_money(total)}"
-            return msg
-
-        # PREDICCIONES
-        if any(w2 in t for w2 in ['tendencia','prediccion','proyeccion','forecast','pronostico']):
-            proy = d['r']*7 if d['r']>0 else w['r']
-            msg = f"Proyeccion semanal: {fmt_money(proy)}
-• Ritmo diario: {fmt_money(d['r'])}
-• Semana actual: {fmt_money(w['r'])}"
-            rows = q("SELECT DATE(fecha) d,SUM(total) r FROM historial_ventas WHERE fecha>=DATE('now','-7 days') GROUP BY DATE(fecha) ORDER BY d")
-            if rows and len(rows)>=3:
-                x = list(range(len(rows))); y = [r['r'] for r in rows]
-                m_coef, b = M.regresion(x, y)
-                tend = "creciente" if m_coef>0 else "decreciente"
-                msg += f"
-• Tendencia: {tend} ({fmt_money(m_coef)}/dia)"
-            return msg
-
-        # ROTACION
-        if any(w2 in t for w2 in ['rotacion','indice']):
+                msg += "- " + r["descripcion"] + ": " + fmt_money(r["monto"]) + " (" + r["categoria"] + ")\n"
+                total += r["monto"]
+            return msg + "\nTotal: " + fmt_money(total)
+        if any(w2 in t for w2 in ["tendencia","prediccion","proyeccion","forecast","pronostico"]):
+            proy = d["r"]*7 if d["r"] > 0 else w["r"]
+            return "Proyeccion semanal: " + fmt_money(proy) + "\n- Ritmo diario: " + fmt_money(d["r"]) + "\n- Semana: " + fmt_money(w["r"])
+        if any(w2 in t for w2 in ["rotacion","indice"]):
             cv = q("SELECT COALESCE(SUM(cantidad*costo),0) cv FROM historial_ventas WHERE fecha>=DATE('now','-30 days')", one=True)
-            ip = sum(p['c']*p['s'] for p in P.cache)/len(P.cache) if P.cache else 1
-            rot = (cv['cv']/ip) if ip>0 else 0
-            msg = f"Rotacion de inventario (30 dias): {rot:.2f} veces"
-            if rot > 4: msg += "
-Excelente: inventario se renueva rapido."
-            elif rot > 1: msg += "
-Normal: buen ritmo de movimiento."
-            else: msg += "
-Baja: considere promociones."
+            ip = sum(p["c"]*p["s"] for p in P.cache)/len(P.cache) if P.cache else 1
+            rot = (cv["cv"]/ip) if ip > 0 else 0
+            msg = "Rotacion (30 dias): " + str(round(rot, 2)) + " veces"
+            if rot > 4: msg += "\nExcelente: inventario se renueva rapido."
+            elif rot > 1: msg += "\nNormal: buen ritmo."
+            else: msg += "\nBaja: considere promociones."
             return msg
-
-        # ABC
-        if any(w2 in t for w2 in ['abc','pareto','clasificacion']):
+        if any(w2 in t for w2 in ["abc","pareto","clasificacion"]):
             abc = F.abc()
-            if not abc['A']: return "Necesito al menos 30 dias de ventas para el analisis ABC."
-            msg = f"Analisis ABC:
-
-• A (80% ingresos): {len(abc['A'])} productos"
-            if abc['A']: msg += f"
-  Top: {abc['A'][0]}"
-            msg += f"
-• B (15% ingresos): {len(abc['B'])} productos"
-            msg += f"
-• C (5% ingresos): {len(abc['C'])} productos"
+            if not abc["A"]: return "Necesito al menos 30 dias para analisis ABC."
+            msg = "Analisis ABC:\n\n- A (80%): " + str(len(abc["A"])) + " productos"
+            if abc["A"]: msg += "\n  Top: " + abc["A"][0]
+            msg += "\n- B (15%): " + str(len(abc["B"])) + " productos"
+            msg += "\n- C (5%): " + str(len(abc["C"])) + " productos"
             return msg
-
-        # EOQ
-        if any(w2 in t for w2 in ['eoq','lote optimo','pedido optimo']):
-            top = F.top(30,1)
+        if any(w2 in t for w2 in ["eoq","lote optimo","pedido optimo"]):
+            top = F.top(30, 1)
             if top:
-                demanda = top[0]['q']*12
+                demanda = top[0]["q"]*12
                 eoq = M.eoq(demanda, 50, 10)
-                msg = f"Lote optimo para {top[0]['nombre']}:
-• EOQ: {eoq:.0f} unidades/pedido
-• Demanda anual estimada: {demanda:.0f} unidades"
-                return msg
-            return "Necesito mas datos de ventas para el calculo EOQ."
-
-        # OFERTAS
-        if any(w2 in t for w2 in ['oferta','descuento','rebaja','promo']):
+                return "Lote optimo " + top[0]["nombre"] + ":\n- EOQ: " + str(int(eoq)) + " uds/pedido\n- Demanda anual: " + str(int(demanda)) + " uds"
+            return "Necesito mas datos de ventas para EOQ."
+        if any(w2 in t for w2 in ["oferta","descuento","rebaja","promo"]):
             of = O.mejores()
-            if not of: return "No hay productos con margen suficiente para ofertas."
-            msg = "Productos ideales para oferta:
-
-"
-            for i,o in enumerate(of,1):
-                msg += f"{i}. {o['n']}: {fmt_money(o['p'])} -> {fmt_money(o['d'])} ({pct(o['m'])} margen)
-"
+            if not of: return "No hay productos con margen para ofertas."
+            msg = "Productos para oferta:\n\n"
+            for i, o in enumerate(of, 1):
+                msg += str(i) + ". " + o["n"] + ": " + fmt_money(o["p"]) + " -> " + fmt_money(o["d"]) + " (" + pct(o["m"]) + ")\n"
             return msg
-
-        # PRODUCTO
         prods = P.search(t, 5)
         if prods:
-            m['p'] = prods[0]['n']
-            msg = "Informacion de productos:
-
-"
+            m["p"] = prods[0]["n"]
+            msg = "Productos:\n\n"
             for p in prods[:5]:
-                mrg = ((p['p']-p['c'])/p['p']*100) if p['p']>0 and p['c']>0 else 0
-                msg += f"• {p['n']}: {fmt_money(p['p'])} | Stock: {p['s']:.0f}"
-                if mrg>0: msg += f" | Margen: {pct(mrg)}"
-                msg += "
-"
+                mrg = ((p["p"]-p["c"])/p["p"]*100) if p["p"] > 0 and p["c"] > 0 else 0
+                msg += "- " + p["n"] + ": " + fmt_money(p["p"]) + " | Stock: " + str(int(p["s"]))
+                if mrg > 0: msg += " | Margen: " + pct(mrg)
+                msg += "\n"
             return msg
-
-        return "Escriba lo que necesite: 'ventas', 'stock bajo', 'top', 'finanzas', 'gastos', 'predicciones', 'ABC', 'rotacion', 'ofertas', 'EOQ', o el nombre de un producto."
+        return "Escriba: ventas, stock bajo, top, finanzas, gastos, predicciones, ABC, rotacion, ofertas, EOQ, o nombre de producto."
 
     def _adm(self, t, name):
         d = F.diario()

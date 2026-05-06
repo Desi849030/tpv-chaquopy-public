@@ -75,8 +75,8 @@ public class MainActivity extends FragmentActivity {
         initBiometricPrompt();
         requestCameraPermission();
         Python py = Python.getInstance();
-                new Thread(() -> {
-            py.getModule("start_server");
+            new Thread(() -> {
+                py.getModule("start_server");
             for (int i = 0; i < 40; i++) {
                 try {
                     java.net.HttpURLConnection conn = (java.net.HttpURLConnection)

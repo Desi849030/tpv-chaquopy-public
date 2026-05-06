@@ -40,7 +40,6 @@ try:
     _SECRET_KEY = _KEY_FILE.read_text().strip()
 except Exception:
     _SECRET_KEY = _secrets.token_hex(32)
-app.secret_key = _SECRET_KEY
 # ── Flask ──
 try:
     from flask import Flask, request, jsonify, session, Response
@@ -86,13 +85,13 @@ _CARPETA = os.environ.get("TPV_FRONTEND_DIR") or _CARPETA_DETECTADA or os.getcwd
 
 # ── Flask App ──
 app = Flask(__name__, static_folder=None)
+app.secret_key = _SECRET_KEY
 app.config["JSON_ENSURE_ASCII"] = False
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = False
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_DOMAIN"] = None
 app.config["PERMANENT_SESSION_LIFETIME"] = 86400 * 7
-app.secret_key = _SECRET_KEY
 
 # ══════════════════════════════════════════════════════════════
 #  REGISTRAR BLUEPRINTS

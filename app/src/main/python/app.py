@@ -27,15 +27,20 @@ import json, threading, webbrowser, time, pathlib, secrets as _secrets
 from datetime import datetime
 
 # ── Clave secreta ──
-try:
-    _SECRET_KEY = None
-except NameError:
-try:
+import pathlib as _pathlib
+_KEY_FILE = _pathlib.Path(os.environ.get("TPV_FILES_DIR", os.getcwd())) / ".tpv_secret"
 if not _KEY_FILE.exists():
-    _KEY_FILE.write_text(_secrets.token_hex(32))
-try: _KEY_FILE.chmod(0o600)
-except Exception: pass
-
+    try:
+        _KEY_FILE.write_text(_secrets.token_hex(32))
+        try: _KEY_FILE.chmod(0o600)
+        except Exception: pass
+    except Exception:
+        pass
+try:
+    _SECRET_KEY = _KEY_FILE.read_text().strip()
+except Exception:
+    _SECRET_KEY = _secrets.token_hex(32)
+app.secret_key = _SECRET_KEY
 # ── Flask ──
 try:
     from flask import Flask, request, jsonify, session, Response

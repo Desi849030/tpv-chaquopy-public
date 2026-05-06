@@ -248,46 +248,121 @@ class Agent:
     
     # ============================================================
     def _cli(self, t, m):
-        if any(w in t for w in ['oferta','descuento','rebaja','mejor precio','barato']):
+        """Cliente - sin limites: busca cualquier cosa con datos reales."""
+        # AYUDA
+        if any(w in t for w in ['ayuda','que puedes','que haces','como funciona','menu','opciones']):
+            return ("Puedo ayudarte con muchas cosas:
+
+"
+                    "• Buscar productos y precios
+"
+                    "• Ver ofertas y descuentos
+"
+                    "• Consultar stock disponible
+"
+                    "• Ver categorias del catalogo
+"
+                    "• Informacion de puntos y lealtad
+"
+                    "• Historial de compras
+
+"
+                    "Simplemente escribe lo que necesitas, por ejemplo: 'cuanto cuesta el cafe' o 'que ofertas tienen'.")
+
+        # PUNTOS / LEALTAD
+        if any(w in t for w in ['puntos','lealtad','fidelidad','recompensa','beneficio']):
+            return "Sistema de puntos activo. Cada compra acumula puntos que puedes canjear por descuentos y productos. Consulta tus puntos en la seccion de Lealtad o preguntame 'mis puntos' para ver tu saldo actual."
+
+        # HISTORIAL / COMPRAS
+        if any(w in t for w in ['mis compras','historial','compre','recibo','factura']):
+            return "Puedes ver tu historial de compras en la seccion de Registros. Alli encontraras todos los recibos con fecha, productos, cantidades y totales. Si necesitas un recibo especifico, dimelo."
+
+        # METODOS DE PAGO
+        if any(w in t for w in ['pago','pagar','efectivo','tarjeta','transferencia','metodo']):
+            return "Aceptamos multiples metodos de pago: efectivo, tarjeta de credito/debito, transferencia bancaria y codigo QR. Elige el que prefieras al momento de pagar."
+
+        # HORARIO / UBICACION
+        if any(w in t for w in ['horario','horario','abierto','cerrado','donde','ubicacion','direccion']):
+            return "Estamos abiertos para atenderte. Consulta los detalles de horario y ubicacion en la seccion de Tienda. Si necesitas algo urgente, escribeme y te ayudo."
+
+        # OFERTAS
+        if any(w in t for w in ['oferta','descuento','rebaja','mejor precio','barato','promo','promocion']):
             of = O.mejores()
-            if not of: return "Hoy todos nuestros precios son muy competitivos. ¿Qué producto busca?"
-            msg = "Estas son nuestras mejores ofertas del día:\n\n"
+            if not of: return "Hoy todos nuestros precios son muy competitivos. Escribe el nombre de un producto y te doy el precio."
+            msg = "Ofertas disponibles:
+
+"
             for i,o in enumerate(of,1):
                 ahorro = o['p'] - o['d']
-                msg += f"{i}. {o['n']}: {fmt_money(o['d'])} (Normal: {fmt_money(o['p'])} - Ahorra {fmt_money(ahorro)})\n"
-            msg += "\n¿Le interesa alguno en particular?"
+                msg += f"{i}. {o['n']}: {fmt_money(o['d'])} (Normal: {fmt_money(o['p'])} - Ahorras {fmt_money(ahorro)})
+"
+            msg += "
+Escribe el nombre de cualquier producto para ver mas detalles."
             return msg
-        
-        if any(w in t for w in ['categorias','catalogo','que tienen','secciones','productos']):
-            return f"Contamos con {len(P.cats)} categorías: {', '.join(P.cats[:12])}. ¿Cuál le gustaría explorar?"
-        
-        prods = P.search(t, 5)
+
+        # CATEGORIAS
+        if any(w in t for w in ['categorias','catalogo','que tienen','secciones','que venden','departamento']):
+            return f"Contamos con {len(P.cats)} categorias: {', '.join(P.cats[:15])}.
+
+Escribe el nombre de una categoria o producto para ver precios y stock."
+
+        # STOCK ESPECIFICO
+        if any(w in t for w in ['stock','disponible','cuanto hay','hay de','quedan','existencia']):
+            prods = P.search(t, 8)
+            if prods:
+                msg = "Disponibilidad:
+
+"
+                for p in prods[:6]:
+                    estado = f"{p['s']:.0f} {p['u']}" if p['s'] > 0 else "AGOTADO"
+                    msg += f"• {p['n']}: {estado} - {fmt_money(p['p'])}
+"
+                msg += "
+Preguntame por cualquier producto."
+                return msg
+
+        # BUSQUEDA GENERAL - sin limites
+        prods = P.search(t, 8)
         if prods:
             m['p'] = prods[0]['n']
             if len(prods)==1:
                 p = prods[0]
-                msg = f"Perfecto. {p['n']} tiene un valor de {fmt_money(p['p'])} por {p['u']}. "
+                msg = f"{p['n']}: {fmt_money(p['p'])} por {p['u']}.
+"
                 if p['s']==0:
-                    msg += "Lamentablemente está agotado en este momento."
+                    msg += "Momentaneamente agotado. "
                     rel = O.relacionados(p['n'],2)
-                    if rel: msg += f" Le sugiero: {rel[0]['nombre']}."
+                    if rel: msg += f"Te sugiero: {rel[0]['nombre']} ({fmt_money(rel[0]['precio'])})."
                 elif p['s']<=3:
-                    msg += f"¡Aproveche! Solo quedan {p['s']:.0f} {p['u']}."
+                    msg += f"Ultimas {p['s']:.0f} unidades disponibles."
                 else:
-                    msg += f"Disponemos de {p['s']:.0f} {p['u']} para entrega inmediata."
+                    msg += f"Stock disponible: {p['s']:.0f} {p['u']}."
                 rel = O.relacionados(p['n'],2)
-                if rel: msg += f" Frecuentemente se compra junto con: {rel[0]['nombre']}."
+                if rel: msg += f"
+Te puede interesar tambien: {rel[0]['nombre']}."
                 return msg
-            
-            msg = f"Encontré {len(prods)} productos que coinciden:\n"
-            for p in prods[:5]:
-                msg += f"• {p['n']}: {fmt_money(p['p'])} ({p['s']:.0f} {p['u']})\n"
-            msg += "\n¿Cuál le interesa para darle más detalles?"
+
+            msg = f"Encontre {len(prods)} resultados:
+
+"
+            for p in prods[:6]:
+                stock_info = f" | {p['s']:.0f} {p['u']}" if p['s'] > 0 else " | AGOTADO"
+                msg += f"• {p['n']}: {fmt_money(p['p'])}{stock_info}
+"
+            msg += "
+Escribe el nombre para mas detalles."
             return msg
-        
-        return "Disculpe, ¿podría decirme el nombre del producto que busca? Por ejemplo: 'café', 'leche', 'pan'... O consulte 'ofertas' para ver descuentos."
-    
-    # ============================================================
+
+        # SALUDO AMIGABLE
+        if any(w in t for w in ['hola','buenas','buenos dias','buenas tardes','buenas noches','hey']):
+            hora = datetime.now().hour
+            saludo = "Buenos dias" if hora < 12 else "Buenas tardes" if hora < 18 else "Buenas noches"
+            return f"{saludo}. Soy tu asistente y estoy aqui para ayudarte.
+
+Puedes preguntarme por productos, precios, ofertas, stock o cualquier cosa que necesites."
+
+        return "Con gusto te ayudo. Puedes preguntarme sobre productos, precios, ofertas, stock, categorias o escribir 'ayuda' para ver todo lo que puedo hacer."
+
     def _ven(self, t, m):
         if any(w in t for w in ['ventas','caja','recaude','cuanto vendi','como voy','cuanto llevo']):
             d = F.diario()
@@ -330,19 +405,225 @@ class Agent:
     
     # ============================================================
     def _sup(self, t):
+        """Supervisor - acceso completo a ventas, stock, equipo, finanzas."""
         d = F.diario(); w = F.semanal()
         low = sum(1 for p in P.cache if 0<p['s']<=5)
-        
+
+        # AYUDA
+        if any(w2 in t for w2 in ['ayuda','que puedes','menu','opciones']):
+            return ("Como supervisor tienes acceso completo:
+
+"
+                    "• 'dashboard' - KPIs y metricas del negocio
+"
+                    "• 'ventas' - Resumen de ventas del dia y semana
+"
+                    "• 'stock bajo' - Alertas de reabastecimiento
+"
+                    "• 'top' - Productos mas vendidos
+"
+                    "• 'finanzas' - Balance, margen, ganancia
+"
+                    "• 'gastos' - Egresos del dia
+"
+                    "• 'predicciones' - Tendencias y proyecciones
+"
+                    "• 'rotacion' - Indice de rotacion de inventario
+"
+                    "• 'ABC' - Clasificacion de productos
+"
+                    "• 'ofertas' - Productos ideales para promocion
+"
+                    "• Nombre de producto - Info detallada
+
+"
+                    "Escribe lo que necesites en lenguaje natural.")
+
+        # DASHBOARD
         if any(w2 in t for w2 in ['dashboard','resumen','estado','kpi']):
-            return f"Dashboard:\n• Ventas hoy: {fmt_money(d['r'])}\n• Ventas semana: {fmt_money(w['r'])}\n• Productos activos: {len(P.cache)}\n• Stock bajo: {low} productos\n• Categorías: {len(P.cats)}"
-        
-        if any(w2 in t for w2 in ['tendencia','prediccion','proyeccion']):
+            msg = f"Dashboard:
+• Ventas hoy: {fmt_money(d['r'])} ({d['t']} operaciones)
+• Ventas semana: {fmt_money(w['r'])}
+• Ticket promedio: {fmt_money(d['a'])}
+• Productos activos: {len(P.cache)}
+• Stock bajo: {low} productos
+• Categorias: {len(P.cats)}"
+            if d['t'] > 0:
+                h = datetime.now().hour
+                proy = d['r']/h*24 if h>0 else d['r']
+                msg += f"
+• Proyeccion cierre: {fmt_money(proy)}"
+            return msg
+
+        # VENTAS
+        if any(w2 in t for w2 in ['ventas','caja','recaude','cuanto vendi','como voy','cuanto llevo','total vendido']):
+            if d['t']==0: return "Aun no se registran ventas hoy. Consulta 'top' para ver productos populares o 'stock bajo' para revisar inventario."
+            h = datetime.now().hour
+            proy = d['r']/h*24 if h>0 else d['r']
+            msg = f"Ventas del dia:
+• Operaciones: {d['t']}
+• Facturado: {fmt_money(d['r'])}
+• Ticket promedio: {fmt_money(d['a'])}
+• Proyeccion cierre: {fmt_money(proy)}
+• Gastos: {fmt_money(d['g'])}
+• Ganancia bruta: {fmt_money(d['r']-d['g'])}"
+            return msg
+
+        # STOCK BAJO
+        if any(w2 in t for w2 in ['stock bajo','agotado','critico','reabastecer','faltante']):
+            rows = q("SELECT nombre,stock_actual FROM inventario_general WHERE stock_actual<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 500")
+            if not rows: rows = q("SELECT nombre,stock_actual FROM inventario_general WHERE stock_actual<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 500")
+            if rows:
+                msg = f"Alerta: {len(rows)} productos necesitan reabastecimiento:
+
+"
+                for r in rows[:15]:
+                    icon = "X" if r['stock_actual']==0 else "!"
+                    msg += f" [{icon}] {r['nombre']}: {r['stock_actual']:.0f} unidades
+"
+                if len(rows) > 15: msg += f"
+... y {len(rows)-15} mas."
+                msg += "
+
+Desea generar una orden de pedido?"
+                return msg
+            return "Todo en orden. No hay productos con stock bajo."
+
+        # TOP VENDIDOS
+        if any(w2 in t for w2 in ['top','mas vendido','popular','ranking','mejor','vendidos']):
+            top = F.top(7,5)
+            if not top: return "Aun no hay suficiente historial de ventas esta semana."
+            msg = "Productos mas vendidos (7 dias):
+
+"
+            for i,r in enumerate(top,1):
+                msg += f"{i}. {r['nombre']}: {r['q']:.0f} unidades ({fmt_money(r['t'])})
+"
+            return msg
+
+        # FINANZAS
+        if any(w2 in t for w2 in ['finanza','margen','gasto','ingreso','balance','ganancia','rentabilidad']):
+            prof = d['r'] - d['g']
+            margen = (prof/d['r']*100) if d['r']>0 else 0
+            msg = f"Finanzas del dia:
+
+• Ingresos: {fmt_money(d['r'])}
+• Gastos: {fmt_money(d['g'])}
+• Ganancia bruta: {fmt_money(prof)}
+• Margen: {pct(margen)}
+• Ticket promedio: {fmt_money(d['a'])}"
+            if prof > d['g']*2: msg += "
+
+Excelente rentabilidad."
+            elif prof > 0: msg += "
+
+Buen desempeno."
+            else: msg += "
+
+Atencion: gastos superan ingresos."
+            return msg
+
+        # GASTOS
+        if any(w2 in t for w2 in ['gasto','egreso','costo fijo','gastos']):
+            rows = q("SELECT descripcion,monto,categoria FROM gastos WHERE DATE(fecha)=DATE('now','localtime') ORDER BY monto DESC")
+            if not rows: return "No hay gastos registrados hoy."
+            msg = f"Gastos del dia ({len(rows)}):
+
+"
+            total = 0
+            for r in rows[:10]:
+                msg += f"• {r['descripcion']}: {fmt_money(r['monto'])} ({r['categoria']})
+"
+                total += r['monto']
+            msg += f"
+Total: {fmt_money(total)}"
+            return msg
+
+        # PREDICCIONES
+        if any(w2 in t for w2 in ['tendencia','prediccion','proyeccion','forecast','pronostico']):
             proy = d['r']*7 if d['r']>0 else w['r']
-            return f"Proyección semanal: {fmt_money(proy)}. Basado en el ritmo de ventas actual."
-        
-        return "Panel de supervisión: 'dashboard' para KPIs, 'tendencias' para proyecciones. ¿Qué necesita?"
-    
-    # ============================================================
+            msg = f"Proyeccion semanal: {fmt_money(proy)}
+• Ritmo diario: {fmt_money(d['r'])}
+• Semana actual: {fmt_money(w['r'])}"
+            rows = q("SELECT DATE(fecha) d,SUM(total) r FROM historial_ventas WHERE fecha>=DATE('now','-7 days') GROUP BY DATE(fecha) ORDER BY d")
+            if rows and len(rows)>=3:
+                x = list(range(len(rows))); y = [r['r'] for r in rows]
+                m_coef, b = M.regresion(x, y)
+                tend = "creciente" if m_coef>0 else "decreciente"
+                msg += f"
+• Tendencia: {tend} ({fmt_money(m_coef)}/dia)"
+            return msg
+
+        # ROTACION
+        if any(w2 in t for w2 in ['rotacion','indice']):
+            cv = q("SELECT COALESCE(SUM(cantidad*costo),0) cv FROM historial_ventas WHERE fecha>=DATE('now','-30 days')", one=True)
+            ip = sum(p['c']*p['s'] for p in P.cache)/len(P.cache) if P.cache else 1
+            rot = (cv['cv']/ip) if ip>0 else 0
+            msg = f"Rotacion de inventario (30 dias): {rot:.2f} veces"
+            if rot > 4: msg += "
+Excelente: inventario se renueva rapido."
+            elif rot > 1: msg += "
+Normal: buen ritmo de movimiento."
+            else: msg += "
+Baja: considere promociones."
+            return msg
+
+        # ABC
+        if any(w2 in t for w2 in ['abc','pareto','clasificacion']):
+            abc = F.abc()
+            if not abc['A']: return "Necesito al menos 30 dias de ventas para el analisis ABC."
+            msg = f"Analisis ABC:
+
+• A (80% ingresos): {len(abc['A'])} productos"
+            if abc['A']: msg += f"
+  Top: {abc['A'][0]}"
+            msg += f"
+• B (15% ingresos): {len(abc['B'])} productos"
+            msg += f"
+• C (5% ingresos): {len(abc['C'])} productos"
+            return msg
+
+        # EOQ
+        if any(w2 in t for w2 in ['eoq','lote optimo','pedido optimo']):
+            top = F.top(30,1)
+            if top:
+                demanda = top[0]['q']*12
+                eoq = M.eoq(demanda, 50, 10)
+                msg = f"Lote optimo para {top[0]['nombre']}:
+• EOQ: {eoq:.0f} unidades/pedido
+• Demanda anual estimada: {demanda:.0f} unidades"
+                return msg
+            return "Necesito mas datos de ventas para el calculo EOQ."
+
+        # OFERTAS
+        if any(w2 in t for w2 in ['oferta','descuento','rebaja','promo']):
+            of = O.mejores()
+            if not of: return "No hay productos con margen suficiente para ofertas."
+            msg = "Productos ideales para oferta:
+
+"
+            for i,o in enumerate(of,1):
+                msg += f"{i}. {o['n']}: {fmt_money(o['p'])} -> {fmt_money(o['d'])} ({pct(o['m'])} margen)
+"
+            return msg
+
+        # PRODUCTO
+        prods = P.search(t, 5)
+        if prods:
+            m['p'] = prods[0]['n']
+            msg = "Informacion de productos:
+
+"
+            for p in prods[:5]:
+                mrg = ((p['p']-p['c'])/p['p']*100) if p['p']>0 and p['c']>0 else 0
+                msg += f"• {p['n']}: {fmt_money(p['p'])} | Stock: {p['s']:.0f}"
+                if mrg>0: msg += f" | Margen: {pct(mrg)}"
+                msg += "
+"
+            return msg
+
+        return "Escriba lo que necesite: 'ventas', 'stock bajo', 'top', 'finanzas', 'gastos', 'predicciones', 'ABC', 'rotacion', 'ofertas', 'EOQ', o el nombre de un producto."
+
     def _adm(self, t, name):
         d = F.diario()
         low = sum(1 for p in P.cache if 0<p['s']<=5)

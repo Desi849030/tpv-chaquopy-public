@@ -3006,7 +3006,8 @@
                                 costoUnitario: precioCosto,
                                 um: String(um).trim(),
                                 imagen: "",
-                                onSale: false
+                                onSale: false,
+                                stock_actual: cantidad
                             };
                     
                             productosNuevos.push(producto);

@@ -132,11 +132,14 @@ function renderSuggestions(suggestions){
     c.scrollTop = c.scrollHeight;
 }
 
-function updateBadge(count){
+var lastAlertText = '';
+function updateBadge(count, text){
     var b = $('.tpv-fab-badge');
     if(!b) return;
     b.textContent = count > 9 ? '9+' : count;
     b.style.display = count > 0 ? 'flex' : 'none';
+    if(text){ lastAlertText = text; b.title = text; b.style.cursor = 'help'; }
+    else if(lastAlertText){ b.title = lastAlertText; b.style.cursor = 'help'; }
 }
 
 function setStatusDot(status){
@@ -364,8 +367,8 @@ function fetchAlerts(){
     fetchSafe('/api/ia/alerts?session_id=' + SID, null, 3000).then(function(d){
         var alerts = (d && d.alerts) || [];
         if(alerts.length > 0){
-            updateBadge(alerts.length);
-            // Mostrar alertas como mensajes del sistema
+            var primerTexto = (alerts[0].title || 'Nueva alerta') + ': ' + (alerts[0].body || '');
+            updateBadge(alerts.length, primerTexto);
             for(var i = 0; i < alerts.length && i < 2; i++){
                 var a = alerts[i];
                 if(a.body && !a._shown){
@@ -454,6 +457,13 @@ function init(){
 
     // Alertas proactivas cada 30s
     alertsTimer = setInterval(fetchAlerts, 30000);
+    // Vibrar FAB si hay alertas al abrir panel
+    var fab = $('#tpv-chat-fab');
+    if(fab && lastAlertText){
+        fab.style.animation = 'none';
+        fab.offsetHeight;
+        fab.style.animation = 'tpv-fab-pulse 0.5s ease-in-out 3, tpv-fab-pulse 3s ease-in-out 0s infinite';
+    }
 }
 
 // Ejecutar init cuando el DOM este listo

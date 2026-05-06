@@ -248,85 +248,59 @@ class Agent:
     
     # ============================================================
     def _cli(self, t, m):
-        if any(w in t for w in ['ayuda','que puedes','que haces','como funciona','menu','opciones']):
-            return "Puedo ayudarte con muchas cosas:
-
-• Buscar productos y precios
-• Ver ofertas y descuentos
-• Consultar stock disponible
-• Ver categorias del catalogo
-• Informacion de puntos y lealtad
-• Historial de compras
-
-Escribe lo que necesites."
-        if any(w in t for w in ['puntos','lealtad','fidelidad','recompensa','beneficio']):
+        if any(w in t for w in ["ayuda","que puedes","que haces","como funciona","menu","opciones"]):
+            return "Puedo ayudarte con muchas cosas:\n\n- Buscar productos y precios\n- Ver ofertas y descuentos\n- Consultar stock disponible\n- Ver categorias del catalogo\n- Informacion de puntos y lealtad\n- Historial de compras\n\nEscribe lo que necesites."
+        if any(w in t for w in ["puntos","lealtad","fidelidad","recompensa","beneficio"]):
             return "Sistema de puntos activo. Cada compra acumula puntos que puedes canjear por descuentos y productos. Consulta tus puntos en la seccion de Lealtad."
-        if any(w in t for w in ['mis compras','historial','compre','recibo','factura']):
+        if any(w in t for w in ["mis compras","historial","compre","recibo","factura"]):
             return "Puedes ver tu historial de compras en la seccion de Registros. Alli encontraras todos los recibos con fecha, productos, cantidades y totales."
-        if any(w in t for w in ['pago','pagar','efectivo','tarjeta','transferencia','metodo']):
+        if any(w in t for w in ["pago","pagar","efectivo","tarjeta","transferencia","metodo"]):
             return "Aceptamos multiples metodos de pago: efectivo, tarjeta de credito/debito, transferencia bancaria y codigo QR."
-        if any(w in t for w in ['horario','abierto','cerrado','donde','ubicacion','direccion']):
+        if any(w in t for w in ["horario","abierto","cerrado","donde","ubicacion","direccion"]):
             return "Consulte los detalles de horario y ubicacion en la seccion de Tienda."
-        if any(w in t for w in ['oferta','descuento','rebaja','mejor precio','barato','promo','promocion']):
+        if any(w in t for w in ["oferta","descuento","rebaja","mejor precio","barato","promo","promocion"]):
             of = O.mejores()
             if not of: return "Hoy todos nuestros precios son muy competitivos. Escribe el nombre de un producto."
-            msg = "Ofertas disponibles:
-
-"
+            msg = "Ofertas disponibles:\n\n"
             for i,o in enumerate(of,1):
-                ahorro = o['p'] - o['d']
-                msg += f"{i}. {o['n']}: {fmt_money(o['d'])} (Normal: {fmt_money(o['p'])} - Ahorras {fmt_money(ahorro)})
-"
-            return msg + "
-Escribe el nombre de cualquier producto para ver mas detalles."
-        if any(w in t for w in ['categorias','catalogo','que tienen','secciones','que venden','departamento']):
-            return f"Contamos con {len(P.cats)} categorias: {', '.join(P.cats[:15])}.
-
-Escribe el nombre de una categoria o producto."
-        if any(w in t for w in ['stock','disponible','cuanto hay','hay de','quedan','existencia']):
+                ahorro = o["p"] - o["d"]
+                msg += str(i) + ". " + o["n"] + ": " + fmt_money(o["d"]) + " (Normal: " + fmt_money(o["p"]) + " - Ahorras " + fmt_money(ahorro) + ")\n"
+            return msg + "\nEscribe el nombre de cualquier producto para ver mas detalles."
+        if any(w in t for w in ["categorias","catalogo","que tienen","secciones","que venden","departamento"]):
+            return "Contamos con " + str(len(P.cats)) + " categorias: " + ", ".join(P.cats[:15]) + ".\n\nEscribe el nombre de una categoria o producto."
+        if any(w in t for w in ["stock","disponible","cuanto hay","hay de","quedan","existencia"]):
             prods = P.search(t, 8)
             if prods:
-                msg = "Disponibilidad:
-
-"
+                msg = "Disponibilidad:\n\n"
                 for p in prods[:6]:
-                    estado = f"{p['s']:.0f} {p['u']}" if p['s'] > 0 else "AGOTADO"
-                    msg += f"• {p['n']}: {estado} - {fmt_money(p['p'])}
-"
-                return msg + "
-Preguntame por cualquier producto."
+                    estado = str(p["s"]) + " " + p["u"] if p["s"] > 0 else "AGOTADO"
+                    msg += "- " + p["n"] + ": " + estado + " - " + fmt_money(p["p"]) + "\n"
+                return msg + "\nPreguntame por cualquier producto."
         prods = P.search(t, 8)
         if prods:
-            m['p'] = prods[0]['n']
+            m["p"] = prods[0]["n"]
             if len(prods)==1:
                 p = prods[0]
-                msg = f"{p['n']}: {fmt_money(p['p'])} por {p['u']}.
-"
-                if p['s']==0:
+                msg = p["n"] + ": " + fmt_money(p["p"]) + " por " + p["u"] + ".\n"
+                if p["s"]==0:
                     msg += "Momentaneamente agotado. "
-                    rel = O.relacionados(p['n'],2)
-                    if rel: msg += f"Te sugiero: {rel[0]['nombre']}."
-                elif p['s']<=3:
-                    msg += f"Ultimas {p['s']:.0f} unidades disponibles."
+                    rel = O.relacionados(p["n"],2)
+                    if rel: msg += "Te sugiero: " + rel[0]["nombre"] + "."
+                elif p["s"]<=3:
+                    msg += "Ultimas " + str(int(p["s"])) + " unidades disponibles."
                 else:
-                    msg += f"Stock: {p['s']:.0f} {p['u']}.
-"
-                rel = O.relacionados(p['n'],2)
-                if rel: msg += f"Te puede interesar: {rel[0]['nombre']}."
+                    msg += "Stock: " + str(int(p["s"])) + " " + p["u"] + ".\n"
+                rel = O.relacionados(p["n"],2)
+                if rel: msg += "Te puede interesar: " + rel[0]["nombre"] + "."
                 return msg
-            msg = f"Encontre {len(prods)} resultados:
-
-"
+            msg = "Encontre " + str(len(prods)) + " resultados:\n\n"
             for p in prods[:6]:
-                stock_info = f" | {p['s']:.0f} {p['u']}" if p['s'] > 0 else " | AGOTADO"
-                msg += f"• {p['n']}: {fmt_money(p['p'])}{stock_info}
-"
-            return msg + "
-Escribe el nombre para mas detalles."
-        if any(w in t for w in ['hola','buenas','buenos dias','buenas tardes','buenas noches','hey']):
+                stock_info = " | " + str(int(p["s"])) + " " + p["u"] if p["s"] > 0 else " | AGOTADO"
+                msg += "- " + p["n"] + ": " + fmt_money(p["p"]) + stock_info + "\n"
+            return msg + "\nEscribe el nombre para mas detalles."
+        if any(w in t for w in ["hola","buenas","buenos dias","buenas tardes","buenas noches","hey"]):
             return "Hola! Soy tu asistente y estoy aqui para ayudarte. Puedes preguntarme sobre productos, precios, ofertas, stock o cualquier cosa que necesites."
-        return "Con gusto te ayudo. Puedes preguntarme sobre productos, precios, ofertas, stock, categorias o escribir 'ayuda' para ver todo lo que puedo hacer."
-
+        return "Con gusto te ayudo. Puedes preguntarme sobre productos, precios, ofertas, stock, categorias o escribir ayuda para ver todo lo que puedo hacer."
 
     # ============================================================
     def _sup(self, t):

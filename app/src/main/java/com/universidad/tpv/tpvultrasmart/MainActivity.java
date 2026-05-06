@@ -30,14 +30,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.Executor;
 
-private WebView webView;
-    private TPVNative tpvNative;
-
-    public class MainActivity extends FragmentActivity {
+public class MainActivity extends FragmentActivity {
     private static final int FILE_CHOOSER_REQUEST = 1;
     private static final int CAMERA_PERMISSION_REQUEST = 100;
     private ValueCallback<Uri[]> filePathCallback;
     private WebView webView;
+    private TPVNative tpvNative;
     private boolean cameraPermissionGranted = false;
     private BiometricPrompt biometricPrompt;
     private Executor executor;

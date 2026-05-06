@@ -8,6 +8,22 @@ import sqlite3, re, os, random, threading, time, math
 from datetime import datetime, timedelta
 from difflib import SequenceMatcher
 from collections import defaultdict
+try:
+    from ia.normalizer import normalize, contains_any, extract_entities
+    _HAS_NORM = True
+except Exception:
+    _HAS_NORM = False
+try:
+    from ia.intent_engine import detect_intents as _detect_intents, get_suggestions as _get_suggestions
+    _HAS_INTENT = True
+except Exception:
+    _HAS_INTENT = False
+try:
+    from ia.context_memory import get_context as _get_ctx
+    _HAS_CTX = True
+except Exception:
+    _HAS_CTX = False
+
 
 try:
     from ia.skills import get_registry as _get_skills_registry
@@ -164,6 +180,23 @@ class Agent:
         self._as_ok = _HAS_ANTI_SLOP
         self._sk_ok = _HAS_SKILLS
         self._skills = _get_skills_registry() if _HAS_SKILLS else None
+    def _fm(self, text, keywords, threshold=0.7):
+        '''Fuzzy match con soporte tildes/typos.'''
+        try:
+            if _HAS_NORM:
+                matched, kw, score = contains_any(text, keywords, threshold)
+                return matched
+        except: pass
+        return any(w in text for w in keywords)
+
+    def _get_sug(self, intent_name, role):
+        '''Sugerencias contextuales segun intent y rol.'''
+        try:
+            if _HAS_INTENT:
+                return _get_suggestions(intent_name, role)
+        except: pass
+        return []
+
     
     def mem(self, sid):
         with self.lk:
@@ -172,40 +205,77 @@ class Agent:
     
     def process(self, text, sid='0', role='cliente', name=''):
         if not text or not text.strip():
-            return self._r(self._hola(role, name), role)
-        
+            return self._r(self._hola(role, name), role, 'GREETING')
+
         t = text.lower().strip()
         m = self.mem(sid); m['h'].append(t)
         if len(m['h'])>20: m['h']=m['h'][-20:]
-        
+
+        # === AGENTIC PIPELINE ===
+        # 1. Intent detection con fuzzy matching
+        intents = []; sug = []
+        try:
+            if _HAS_INTENT:
+                intents = _detect_intents(t, role)
+                if intents:
+                    sug = self._get_sug(intents[0]['intent'], role)
+        except: pass
+
+        # 2. Memoria contextual: resolver referencias
+        ctx = None
+        try:
+            if _HAS_CTX:
+                ctx = _get_ctx(sid)
+                ref = ctx.resolve_reference(text)
+                if ref.get('query') and len(t.split()) <= 5 and not P.search(t, 1):
+                    t = ref['query']
+        except: pass
+
+        primary = intents[0]['intent'] if intents else 'GENERAL'
+
         # SALUDOS
-        if any(w in t for w in ['hola','buenos dias','buenas tardes','buenas noches','hey','que tal','saludos']):
-            try:
-                from ia.fuzzy_match import contains_frustration
-                if contains_frustration(t):
-                    return self._r('Detecto que algo no va bien. Estoy aqui para ayudarle. ¿Podria decirme que problema tiene?', role)
-            except: pass
-            # Usar NLP para detectar frustracion
-            from ia.fuzzy_match import contains_frustration
-            if contains_frustration(t):
-                return self._r('Detecto que algo no va bien. ¿Quiere que le ayude con algo especifico? Estoy aqui para asistirle.', role)
-            return self._r(self._hola(role, name), role)
-        
+        if primary == 'GREETING':
+            if ctx: ctx.add_turn(text, '', primary)
+            return self._r(self._hola(role, name), role, primary, sug)
+
         # DESPEDIDAS
-        if any(w in t for w in ['adios','chao','bye','gracias','hasta luego','nos vemos']):
-            return self._r("¡Ha sido un placer! Estoy aquí cuando me necesite. 👋", role)
-        
+        if primary == 'FAREWELL':
+            return self._r('Ha sido un placer. Estoy aqui cuando me necesite.', role, primary, sug)
+
         # AYUDA
-        if any(w in t for w in ['ayuda','help','que puedes','que sabes','funciones','menu']):
-            return self._r(self._ayuda(role), role)
-        
-        # EJECUTAR SEGÚN ROL
-        if role == 'cliente': return self._r(self._cli(t, m), role)
-        if role == 'vendedor': return self._r(self._ven(t, m), role)
-        if role == 'supervisor': return self._r(self._sup(t), role)
-        return self._r(self._adm(t, name), role)
-    
-    # ============================================================
+        if primary == 'HELP':
+            return self._r(self._ayuda(role), role, primary, sug)
+
+        # FRUSTRACION
+        if primary == 'FRUSTRATION':
+            return self._r('Detecto que algo no va bien. Estoy aqui para ayudarle. Que problema tiene?', role, primary, ['ayuda'])
+
+        # EJECUTAR SEGUN ROL (sin limites)
+        if role == 'cliente': result = self._cli(t, m)
+        elif role == 'vendedor': result = self._ven(t, m)
+        elif role == 'supervisor': result = self._sup(t, m)
+        else: result = self._adm(t, name)
+
+        # Actualizar memoria contextual
+        if ctx:
+            ctx.add_turn(text, result, primary)
+            try:
+                prods = P.search(text, 1)
+                if prods:
+                    ctx.last_product = prods[0]['n']
+            except: pass
+
+        # Proactive: alertas si stock bajo del producto consultado
+        try:
+            if ctx and ctx.last_product:
+                lp = ctx.last_product.lower()
+                for p in P.cache:
+                    if p['n'].lower() == lp and 0 < p['s'] <= 3:
+                        result += '\n\n[!] Alerta: ' + p['n'] + ' tiene solo ' + str(int(p['s'])) + ' unidades.'
+                        break
+        except: pass
+
+        return self._r(result, role, primary, sug)
     def _hola(self, role, name):
         h = datetime.now().hour
         g = "Buenas noches" if h<6 else "Buenos días" if h<12 else "Buen mediodía" if h<14 else "Buenas tardes" if h<20 else "Buenas noches"
@@ -248,17 +318,17 @@ class Agent:
     
     # ============================================================
     def _cli(self, t, m):
-        if any(w in t for w in ["ayuda","que puedes","que haces","como funciona","menu","opciones"]):
+        if self._fm(t, ["ayuda","que puedes","que haces","como funciona","menu","opciones"]):
             return "Puedo ayudarte con muchas cosas:\n\n- Buscar productos y precios\n- Ver ofertas y descuentos\n- Consultar stock disponible\n- Ver categorias del catalogo\n- Informacion de puntos y lealtad\n- Historial de compras\n\nEscribe lo que necesites."
-        if any(w in t for w in ["puntos","lealtad","fidelidad","recompensa","beneficio"]):
+        if self._fm(t, ["puntos","lealtad","fidelidad","recompensa","beneficio"]):
             return "Sistema de puntos activo. Cada compra acumula puntos que puedes canjear por descuentos y productos. Consulta tus puntos en la seccion de Lealtad."
-        if any(w in t for w in ["mis compras","historial","compre","recibo","factura"]):
+        if self._fm(t, ["mis compras","historial","compre","recibo","factura"]):
             return "Puedes ver tu historial de compras en la seccion de Registros. Alli encontraras todos los recibos con fecha, productos, cantidades y totales."
-        if any(w in t for w in ["pago","pagar","efectivo","tarjeta","transferencia","metodo"]):
+        if self._fm(t, ["pago","pagar","efectivo","tarjeta","transferencia","metodo"]):
             return "Aceptamos multiples metodos de pago: efectivo, tarjeta de credito/debito, transferencia bancaria y codigo QR."
-        if any(w in t for w in ["horario","abierto","cerrado","donde","ubicacion","direccion"]):
+        if self._fm(t, ["horario","abierto","cerrado","donde","ubicacion","direccion"]):
             return "Consulte los detalles de horario y ubicacion en la seccion de Tienda."
-        if any(w in t for w in ["oferta","descuento","rebaja","mejor precio","barato","promo","promocion"]):
+        if self._fm(t, ["oferta","descuento","rebaja","mejor precio","barato","promo","promocion"]):
             of = O.mejores()
             if not of: return "Hoy todos nuestros precios son muy competitivos. Escribe el nombre de un producto."
             msg = "Ofertas disponibles:\n\n"
@@ -266,9 +336,9 @@ class Agent:
                 ahorro = o["p"] - o["d"]
                 msg += str(i) + ". " + o["n"] + ": " + fmt_money(o["d"]) + " (Normal: " + fmt_money(o["p"]) + " - Ahorras " + fmt_money(ahorro) + ")\n"
             return msg + "\nEscribe el nombre de cualquier producto para ver mas detalles."
-        if any(w in t for w in ["categorias","catalogo","que tienen","secciones","que venden","departamento"]):
+        if self._fm(t, ["categorias","catalogo","que tienen","secciones","que venden","departamento"]):
             return "Contamos con " + str(len(P.cats)) + " categorias: " + ", ".join(P.cats[:15]) + ".\n\nEscribe el nombre de una categoria o producto."
-        if any(w in t for w in ["stock","disponible","cuanto hay","hay de","quedan","existencia"]):
+        if self._fm(t, ["stock","disponible","cuanto hay","hay de","quedan","existencia"]):
             prods = P.search(t, 8)
             if prods:
                 msg = "Disponibilidad:\n\n"
@@ -298,29 +368,29 @@ class Agent:
                 stock_info = " | " + str(int(p["s"])) + " " + p["u"] if p["s"] > 0 else " | AGOTADO"
                 msg += "- " + p["n"] + ": " + fmt_money(p["p"]) + stock_info + "\n"
             return msg + "\nEscribe el nombre para mas detalles."
-        if any(w in t for w in ["hola","buenas","buenos dias","buenas tardes","buenas noches","hey"]):
+        if self._fm(t, ["hola","buenas","buenos dias","buenas tardes","buenas noches","hey"]):
             return "Hola! Soy tu asistente y estoy aqui para ayudarte. Puedes preguntarme sobre productos, precios, ofertas, stock o cualquier cosa que necesites."
         return "Con gusto te ayudo. Puedes preguntarme sobre productos, precios, ofertas, stock, categorias o escribir ayuda para ver todo lo que puedo hacer."
 
     # ============================================================
-    def _sup(self, t):
+    def _sup(self, t, m=None):
         d = F.diario(); w = F.semanal()
         low = sum(1 for p in P.cache if 0 < p["s"] <= 5)
-        if any(w2 in t for w2 in ["ayuda","que puedes","menu","opciones"]):
+        if self._fm(t, ["ayuda","que puedes","menu","opciones"]):
             return "Como supervisor tienes acceso completo:\n\n- dashboard: KPIs\n- ventas: Resumen del dia\n- stock bajo: Alertas\n- top: Mas vendidos\n- finanzas: Balance y margen\n- gastos: Egresos\n- predicciones: Tendencias\n- rotacion: Indice\n- ABC: Clasificacion\n- ofertas: Promociones\n- Nombre de producto para info detallada"
-        if any(w2 in t for w2 in ["dashboard","resumen","estado","kpi"]):
+        if self._fm(t, ["dashboard","resumen","estado","kpi"]):
             msg = "Dashboard:\n- Ventas hoy: " + fmt_money(d["r"]) + " (" + str(d["t"]) + " ops)\n- Ventas semana: " + fmt_money(w["r"]) + "\n- Ticket promedio: " + fmt_money(d["a"]) + "\n- Productos: " + str(len(P.cache)) + "\n- Stock bajo: " + str(low) + "\n- Categorias: " + str(len(P.cats))
             if d["t"] > 0:
                 h = datetime.now().hour
                 proy = d["r"]/h*24 if h > 0 else d["r"]
                 msg += "\n- Proyeccion cierre: " + fmt_money(proy)
             return msg
-        if any(w2 in t for w2 in ["ventas","caja","recaude","cuanto vendi","como voy"]):
+        if self._fm(t, ["ventas","caja","recaude","cuanto vendi","como voy"]):
             if d["t"] == 0: return "Aun no hay ventas hoy."
             h = datetime.now().hour
             proy = d["r"]/h*24 if h > 0 else d["r"]
             return "Ventas del dia:\n- Ops: " + str(d["t"]) + "\n- Facturado: " + fmt_money(d["r"]) + "\n- Ticket: " + fmt_money(d["a"]) + "\n- Proyeccion: " + fmt_money(proy) + "\n- Gastos: " + fmt_money(d["g"]) + "\n- Ganancia: " + fmt_money(d["r"]-d["g"])
-        if any(w2 in t for w2 in ["stock bajo","agotado","critico","reabastecer","faltante"]):
+        if self._fm(t, ["stock bajo","agotado","critico","reabastecer","faltante"]):
             rows = q("SELECT nombre,stock_actual FROM inventario_general WHERE stock_actual<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 500")
             if not rows: return "Todo en orden. No hay productos con stock bajo."
             msg = "Alerta: " + str(len(rows)) + " productos necesitan reabastecimiento:\n\n"
@@ -328,18 +398,18 @@ class Agent:
                 icon = "X" if r["stock_actual"] == 0 else "!"
                 msg += " [" + icon + "] " + r["nombre"] + ": " + str(int(r["stock_actual"])) + " uds\n"
             return msg + "\nDesea generar orden de pedido?"
-        if any(w2 in t for w2 in ["top","mas vendido","popular","ranking","mejor","vendidos"]):
+        if self._fm(t, ["top","mas vendido","popular","ranking","mejor","vendidos"]):
             top = F.top(7, 5)
             if not top: return "Aun no hay suficiente historial."
             msg = "Mas vendidos (7 dias):\n\n"
             for i, r in enumerate(top, 1):
                 msg += str(i) + ". " + r["nombre"] + ": " + str(int(r["q"])) + " uds (" + fmt_money(r["t"]) + ")\n"
             return msg
-        if any(w2 in t for w2 in ["finanza","margen","gasto","ingreso","balance","ganancia","rentabilidad"]):
+        if self._fm(t, ["finanza","margen","gasto","ingreso","balance","ganancia","rentabilidad"]):
             prof = d["r"] - d["g"]
             margen = (prof/d["r"]*100) if d["r"] > 0 else 0
             return "Finanzas:\n\n- Ingresos: " + fmt_money(d["r"]) + "\n- Gastos: " + fmt_money(d["g"]) + "\n- Ganancia: " + fmt_money(prof) + "\n- Margen: " + pct(margen) + "\n- Ticket: " + fmt_money(d["a"])
-        if any(w2 in t for w2 in ["gasto","egreso","gastos","costo"]):
+        if self._fm(t, ["gasto","egreso","gastos","costo"]):
             rows = q("SELECT descripcion,monto,categoria FROM gastos WHERE DATE(fecha)=DATE('now','localtime') ORDER BY monto DESC")
             if not rows: return "No hay gastos hoy."
             msg = "Gastos del dia (" + str(len(rows)) + "):\n\n"
@@ -348,10 +418,10 @@ class Agent:
                 msg += "- " + r["descripcion"] + ": " + fmt_money(r["monto"]) + " (" + r["categoria"] + ")\n"
                 total += r["monto"]
             return msg + "\nTotal: " + fmt_money(total)
-        if any(w2 in t for w2 in ["tendencia","prediccion","proyeccion","forecast","pronostico"]):
+        if self._fm(t, ["tendencia","prediccion","proyeccion","forecast","pronostico"]):
             proy = d["r"]*7 if d["r"] > 0 else w["r"]
             return "Proyeccion semanal: " + fmt_money(proy) + "\n- Ritmo diario: " + fmt_money(d["r"]) + "\n- Semana: " + fmt_money(w["r"])
-        if any(w2 in t for w2 in ["rotacion","indice"]):
+        if self._fm(t, ["rotacion","indice"]):
             cv = q("SELECT COALESCE(SUM(cantidad*costo),0) cv FROM historial_ventas WHERE fecha>=DATE('now','-30 days')", one=True)
             ip = sum(p["c"]*p["s"] for p in P.cache)/len(P.cache) if P.cache else 1
             rot = (cv["cv"]/ip) if ip > 0 else 0
@@ -360,7 +430,7 @@ class Agent:
             elif rot > 1: msg += "\nNormal: buen ritmo."
             else: msg += "\nBaja: considere promociones."
             return msg
-        if any(w2 in t for w2 in ["abc","pareto","clasificacion"]):
+        if self._fm(t, ["abc","pareto","clasificacion"]):
             abc = F.abc()
             if not abc["A"]: return "Necesito al menos 30 dias para analisis ABC."
             msg = "Analisis ABC:\n\n- A (80%): " + str(len(abc["A"])) + " productos"
@@ -368,14 +438,14 @@ class Agent:
             msg += "\n- B (15%): " + str(len(abc["B"])) + " productos"
             msg += "\n- C (5%): " + str(len(abc["C"])) + " productos"
             return msg
-        if any(w2 in t for w2 in ["eoq","lote optimo","pedido optimo"]):
+        if self._fm(t, ["eoq","lote optimo","pedido optimo"]):
             top = F.top(30, 1)
             if top:
                 demanda = top[0]["q"]*12
                 eoq = M.eoq(demanda, 50, 10)
                 return "Lote optimo " + top[0]["nombre"] + ":\n- EOQ: " + str(int(eoq)) + " uds/pedido\n- Demanda anual: " + str(int(demanda)) + " uds"
             return "Necesito mas datos de ventas para EOQ."
-        if any(w2 in t for w2 in ["oferta","descuento","rebaja","promo"]):
+        if self._fm(t, ["oferta","descuento","rebaja","promo"]):
             of = O.mejores()
             if not of: return "No hay productos con margen para ofertas."
             msg = "Productos para oferta:\n\n"
@@ -395,13 +465,13 @@ class Agent:
         return "Escriba: ventas, stock bajo, top, finanzas, gastos, predicciones, ABC, rotacion, ofertas, EOQ, o nombre de producto."
 
     def _ven(self, t, m):
-        if any(w in t for w in ["ventas","caja","recaude","cuanto vendi","como voy"]):
+        if self._fm(t, ["ventas","caja","recaude","cuanto vendi","como voy"]):
             d = F.diario()
             if d["t"] == 0: return "Todavia no hay ventas hoy."
             h = datetime.now().hour
             proy = d["r"]/h*24 if h > 0 else d["r"]
             return "Al momento: " + str(d["t"]) + " ventas, " + fmt_money(d["r"]) + " facturados. Ticket promedio: " + fmt_money(d["a"]) + ". Proyeccion cierre: " + fmt_money(proy) + "."
-        if any(w in t for w in ["stock bajo","agotado","critico","reabastecer"]):
+        if self._fm(t, ["stock bajo","agotado","critico","reabastecer"]):
             rows = q("SELECT nombre,stock_actual FROM inventario_general WHERE stock_actual<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 500")
             if rows:
                 msg = "Atencion: " + str(len(rows)) + " productos necesitan reabastecimiento:\n"
@@ -409,7 +479,7 @@ class Agent:
                     msg += "- " + r["nombre"] + ": " + str(int(r["stock_actual"])) + " uds\n"
                 return msg + "\nDesea generar orden de pedido?"
             return "Todo en orden. No hay stock bajo."
-        if any(w in t for w in ["top","mas vendido","popular","ranking"]):
+        if self._fm(t, ["top","mas vendido","popular","ranking"]):
             top = F.top(7, 5)
             if not top: return "Aun no hay historial suficiente esta semana."
             msg = "Mas vendidos (7 dias):\n"
@@ -428,40 +498,6 @@ class Agent:
             return msg
         return "Dime que necesitas: ventas, stock bajo, top, o nombre de un producto."
 
-
-    def _ven(self, t, m):
-        if any(w in t for w in ["ventas","caja","recaude","cuanto vendi","como voy"]):
-            d = F.diario()
-            if d["t"] == 0: return "Todavia no hay ventas hoy."
-            h = datetime.now().hour
-            proy = d["r"]/h*24 if h > 0 else d["r"]
-            return "Al momento: " + str(d["t"]) + " ventas, " + fmt_money(d["r"]) + " facturados. Ticket promedio: " + fmt_money(d["a"]) + ". Proyeccion cierre: " + fmt_money(proy) + "."
-        if any(w in t for w in ["stock bajo","agotado","critico","reabastecer"]):
-            rows = q("SELECT nombre,stock_actual FROM inventario_general WHERE stock_actual<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 500")
-            if rows:
-                msg = "Atencion: " + str(len(rows)) + " productos necesitan reabastecimiento:\n"
-                for r in rows[:10]:
-                    msg += "- " + r["nombre"] + ": " + str(int(r["stock_actual"])) + " uds\n"
-                return msg + "\nDesea generar orden de pedido?"
-            return "Todo en orden. No hay stock bajo."
-        if any(w in t for w in ["top","mas vendido","popular","ranking"]):
-            top = F.top(7, 5)
-            if not top: return "Aun no hay historial suficiente esta semana."
-            msg = "Mas vendidos (7 dias):\n"
-            for i, r in enumerate(top, 1):
-                msg += str(i) + ". " + r["nombre"] + ": " + str(int(r["q"])) + " uds (" + fmt_money(r["t"]) + ")\n"
-            return msg
-        prods = P.search(t, 5)
-        if prods:
-            m["p"] = prods[0]["n"]
-            msg = "Productos:\n"
-            for p in prods[:5]:
-                mrg = ((p["p"]-p["c"])/p["p"]*100) if p["p"] > 0 and p["c"] > 0 else 0
-                msg += "- " + p["n"] + ": " + fmt_money(p["p"]) + " | Stock: " + str(int(p["s"]))
-                if mrg > 0: msg += " | Margen: " + pct(mrg)
-                msg += "\n"
-            return msg
-        return "Dime que necesitas: ventas, stock bajo, top, o nombre de un producto."
 
 
     def _adm(self, t, name):
@@ -470,7 +506,7 @@ class Agent:
         n = f", {name}" if name else ""
         
         # FINANZAS COMPLETO
-        if any(w in t for w in ['finanza','margen','gasto','ingreso','balance','ganancia','comision','rentabilidad']):
+        if self._fm(t, ['finanza','margen','gasto','ingreso','balance','ganancia','comision','rentabilidad']):
             prof = d['r'] - d['g']
             margen = (prof/d['r']*100) if d['r']>0 else 0
             comision = d['r']*0.05 if d['r']>0 else 0
@@ -491,7 +527,7 @@ class Agent:
             return msg
         
         # ABC
-        if any(w in t for w in ['abc','pareto','clasificacion']):
+        if self._fm(t, ['abc','pareto','clasificacion']):
             abc = F.abc()
             if not abc['A']: return "Necesito al menos 30 días de ventas para el análisis ABC."
             msg = f"Análisis ABC de productos (últimos 30 días):\n\n"
@@ -503,7 +539,7 @@ class Agent:
             return msg
         
         # PUNTO EQUILIBRIO
-        if any(w in t for w in ['punto equilibrio','break even','umbral']):
+        if self._fm(t, ['punto equilibrio','break even','umbral']):
             gf = d['g'] if d['g']>0 else 100
             pp = sum(p['p'] for p in P.cache)/len(P.cache) if P.cache else 10
             pc = sum(p['c'] for p in P.cache)/len(P.cache) if P.cache else 5
@@ -516,7 +552,7 @@ class Agent:
             return msg
         
         # EOQ
-        if any(w in t for w in ['eoq','lote optimo','pedido optimo']):
+        if self._fm(t, ['eoq','lote optimo','pedido optimo']):
             top = F.top(30,1)
             if top:
                 demanda = top[0]['q']*12
@@ -528,7 +564,7 @@ class Agent:
             return "Necesito más datos. Mientras más ventas se registren, más preciso será el cálculo."
         
         # PREDICCIONES
-        if any(w in t for w in ['prediccion','pronostico','proyeccion','forecast','tendencia']):
+        if self._fm(t, ['prediccion','pronostico','proyeccion','forecast','tendencia']):
             rows = q("SELECT DATE(fecha) d,SUM(total) r FROM historial_ventas WHERE fecha>=DATE('now','-7 days') GROUP BY DATE(fecha) ORDER BY d")
             if rows and len(rows)>=3:
                 x = list(range(len(rows))); y = [r['r'] for r in rows]
@@ -544,7 +580,7 @@ class Agent:
             return "Necesito al menos 3 días de ventas para proyectar. Siga vendiendo y pronto tendremos datos."
         
         # OFERTAS
-        if any(w in t for w in ['oferta','descuento','rebaja']):
+        if self._fm(t, ['oferta','descuento','rebaja']):
             of = O.mejores()
             if not of: return "No hay productos con margen suficiente para ofertas. Revise los precios de compra."
             msg = "Productos ideales para poner en oferta:\n\n"
@@ -553,7 +589,7 @@ class Agent:
             return msg
         
         # STOCK
-        if any(w in t for w in ['stock','inventario','critico']):
+        if self._fm(t, ['stock','inventario','critico']):
             rows = q("SELECT nombre,stock_actual,precio_venta FROM inventario_general WHERE stock_actual<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 500")
             out = sum(1 for p in P.cache if p['s']<=0)
             msg = f"Estado del inventario:\n\n📦 Total productos: {len(P.cache)}\n⚠️ Stock bajo: {low}\n❌ Agotados: {out}\n"
@@ -565,7 +601,7 @@ class Agent:
             return msg
         
         # ROTACIÓN
-        if any(w in t for w in ['rotacion','indice rotacion']):
+        if self._fm(t, ['rotacion','indice rotacion']):
             cv = q("SELECT COALESCE(SUM(cantidad*costo),0) cv FROM historial_ventas WHERE fecha>=DATE('now','-30 days')", one=True)
             ip = sum(p['c']*p['s'] for p in P.cache)/len(P.cache) if P.cache else 1
             rot = (cv['cv']/ip) if ip>0 else 0
@@ -576,7 +612,7 @@ class Agent:
             return msg
         
         # GASTOS
-        if any(w in t for w in ['gasto','egreso','costo fijo']):
+        if self._fm(t, ['gasto','egreso','costo fijo']):
             rows = q("SELECT descripcion,monto,categoria FROM gastos WHERE DATE(fecha)=DATE('now','localtime') ORDER BY monto DESC")
             if not rows: return "No hay gastos registrados hoy."
             msg = f"Gastos del día ({len(rows)}):\n\n"
@@ -616,9 +652,10 @@ class Agent:
         
         return "Gestor completo a su disposición. Puede consultar:\n💰 'finanzas' | 📊 'ABC' | ⚖️ 'punto equilibrio'\n📦 'stock' | 🔮 'predicciones' | 🏷️ 'ofertas'\n🔄 'rotación' | 🧾 'gastos' | 📐 'EOQ'"
     
-    def _r(self, msg, role):
+    def _r(self, msg, role, intent='GENERAL', suggestions=None):
         msg = self.humanizer.sanitize_text(msg)
-        return {'answer': msg, 'role': role, 'suggestions': [], 'ts': datetime.now().isoformat()}
+        if suggestions is None: suggestions = []
+        return {'answer': msg, 'role': role, 'suggestions': suggestions, 'intent': intent, 'ts': datetime.now().isoformat()}
 
 # ============================================================
 _agent = None; _lk = threading.Lock()
@@ -632,7 +669,7 @@ def _get():
 
 def process_question(sid, question, role='cliente', user_name=''):
     r = _get().process(question, sid, role, user_name)
-    return {'answer':r['answer'],'intent':'chat','suggestions':[],'role':role,'role_label':ROLES.get(role,{}).get('label','Usuario'),'role_color':ROLES.get(role,{}).get('color','#3498db'),'role_icon':ROLES.get(role,{}).get('icon','?'),'ts':r['ts']}
+    return {'answer':r['answer'],'intent':r.get('intent','chat'),'suggestions':r.get('suggestions',[]),'role':role,'role_label':ROLES.get(role,{}).get('label','Usuario'),'role_color':ROLES.get(role,{}).get('color','#3498db'),'role_icon':ROLES.get(role,{}).get('icon','?'),'ts':r['ts']}
 
 def get_status():
     P.refresh()

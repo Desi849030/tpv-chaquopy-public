@@ -802,16 +802,7 @@ async function auth_login() {
     try {
         const ctrl = new AbortController();
         setTimeout(() => ctrl.abort(), 10000);
-        const res  = await function auth_retryConnection(maxMs){
-    var start=Date.now();
-    var iv=setInterval(function(){
-        if(Date.now()-start>maxMs){clearInterval(iv);return;}
-        fetch('/api/health',{signal:AbortSignal.timeout(2000)})
-        .then(function(r){if(r.ok){clearInterval(iv);location.reload();}})
-        .catch(function(){});
-    },1500);
-}
-    fetch('/api/auth/login', {
+        const res  = await fetch('/api/auth/login', {
             method:'POST', headers:{'Content-Type':'application/json'},
             body: JSON.stringify({ username:usr, password:pw }),
             signal: ctrl.signal, credentials:'same-origin'

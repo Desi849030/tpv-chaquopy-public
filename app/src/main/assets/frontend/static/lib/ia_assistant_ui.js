@@ -439,7 +439,7 @@ function init(){
 
     // SALUDO INMEDIATO (local, sin esperar)
     renderMsg(getImmediateGreeting(currentRole), true);
-    return; // renderSuggestions(getRoleSuggestions(currentRole));
+    renderSuggestions(getRoleSuggestions(currentRole));
     setStatusDot('connecting');
 
     // Cargar datos REALES del servidor en background

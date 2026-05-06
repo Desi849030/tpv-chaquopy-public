@@ -9,10 +9,9 @@ def test_import():
         assert 'cliente' in ROLES
         assert 'administrador' in ROLES
         print("✅ Import exitoso")
-        return True
+
     except Exception as e:
         print(f"❌ Error: {e}")
-        return False
 
 def test_greeting():
     """Verifica saludo por rol"""
@@ -22,7 +21,6 @@ def test_greeting():
     assert r['role'] == 'cliente'
     assert len(r['answer']) > 10
     print("✅ Saludo cliente OK")
-    return True
 
 def test_product_search():
     """Verifica búsqueda de productos"""
@@ -30,7 +28,6 @@ def test_product_search():
     r = process_question('test', 'cafe', 'cliente')
     assert 'answer' in r
     print("✅ Búsqueda producto OK")
-    return True
 
 def test_finanzas():
     """Verifica finanzas admin"""
@@ -39,7 +36,6 @@ def test_finanzas():
     assert 'answer' in r
     assert 'ingreso' in r['answer'].lower() or 'Ingreso' in r['answer'] or '$' in r['answer']
     print("✅ Finanzas admin OK")
-    return True
 
 def test_abc():
     """Verifica ABC"""
@@ -47,7 +43,6 @@ def test_abc():
     r = process_question('test', 'abc', 'administrador')
     assert 'answer' in r
     print("✅ ABC OK")
-    return True
 
 def test_roles():
     """Verifica los 5 roles"""
@@ -56,7 +51,6 @@ def test_roles():
     for rol in ['cliente','vendedor','supervisor','administrador','desarrollador']:
         assert rol in ROLES
     print("✅ 5 roles OK")
-    return True
 
 if __name__ == '__main__':
     print("=" * 40)

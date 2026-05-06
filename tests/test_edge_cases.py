@@ -9,7 +9,6 @@ def test_stock_zero():
     assert 'answer' in r
     assert len(r['answer']) > 5
     print("✅ Stock cero: OK")
-    return True
 
 def test_precio_negativo():
     """La IA maneja datos anómalos"""
@@ -18,7 +17,6 @@ def test_precio_negativo():
     intent, conf = nlp.predict_intent("")
     assert intent == "UNKNOWN" or conf < 0.5
     print("✅ NLP vacío: OK")
-    return True
 
 def test_busqueda_sin_resultados():
     """Búsqueda sin resultados no rompe"""
@@ -26,7 +24,6 @@ def test_busqueda_sin_resultados():
     r = process_question('test', 'xyzproducto123', 'cliente')
     assert 'answer' in r
     print("✅ Búsqueda vacía: OK")
-    return True
 
 def test_rol_invalido():
     """Rol inválido no debe crashear"""
@@ -34,7 +31,6 @@ def test_rol_invalido():
     r = process_question('test', 'hola', 'rol_invalido')
     assert 'answer' in r
     print("✅ Rol inválido: OK")
-    return True
 
 def test_sql_injection_simple():
     """Intento de inyección SQL básico"""
@@ -43,7 +39,6 @@ def test_sql_injection_simple():
     assert 'answer' in r
     assert 'error' not in r['answer'].lower()
     print("✅ SQL injection: OK")
-    return True
 
 def test_montos_grandes():
     """Manejo de números muy grandes"""
@@ -51,7 +46,6 @@ def test_montos_grandes():
     r = process_question('test', 'ventas', 'administrador')
     assert 'answer' in r
     print("✅ Montos grandes: OK")
-    return True
 
 if __name__ == '__main__':
     print("=" * 40)

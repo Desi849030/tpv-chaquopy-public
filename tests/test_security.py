@@ -9,10 +9,9 @@ def test_tokenizer():
         assert 'token' in t
         assert 'signature' in t
         print("✅ Tokenización OK")
-        return True
+
     except Exception as e:
         print(f"❌ Tokenización: {e}")
-        return False
 
 def test_biometric():
     try:
@@ -20,10 +19,9 @@ def test_biometric():
         r = check_biometric_availability()
         assert 'available' in r
         print("✅ Biométrico OK")
-        return True
+
     except Exception as e:
         print(f"❌ Biométrico: {e}")
-        return False
 
 def test_rls():
     try:
@@ -33,10 +31,9 @@ def test_rls():
         h = get_rls_headers()
         assert 'X-Branch-ID' in h
         print("✅ RLS OK")
-        return True
+
     except Exception as e:
         print(f"❌ RLS: {e}")
-        return False
 
 if __name__ == '__main__':
     print("=" * 40)

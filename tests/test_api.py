@@ -6,18 +6,15 @@ def test_app():
     assert len(_MODULOS_DISPONIBLES) >= 20
     assert len(_PRIVILEGIOS_DEFAULT) >= 3
     print(f"✅ app.py: {len(_MODULOS_DISPONIBLES)} módulos OK")
-    return True
 
 def test_db():
     from database import obtener_conexion
     print("✅ database.py OK")
-    return True
 
 def test_routes():
     from app import app
     rules = list(app.url_map.iter_rules())
     print(f"✅ {len(rules)} rutas registradas")
-    return True
 
 if __name__ == '__main__':
     print("=" * 40)

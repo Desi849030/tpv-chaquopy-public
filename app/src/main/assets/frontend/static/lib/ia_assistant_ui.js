@@ -219,7 +219,7 @@ async function send(){
         if(!connected){
             if(typing.parentNode) typing.remove();
             renderMsg('El servidor no responde. Reintentare en unos segundos...\n\nEscribe "ayuda" para ver opciones offline.', true);
-            return; // renderSuggestions(['ayuda', 'ventas de hoy', 'resumen']);
+            renderSuggestions(['ayuda', 'ventas de hoy', 'resumen']);
             sending = false;
             inp.disabled = false;
             inp.focus();
@@ -248,7 +248,7 @@ async function send(){
             lastServerAnswer = ans;
             if(d.role && d.role !== currentRole) updateRoleDisplay(d.role);
             renderMsg(ans, true);
-            if(d.suggestions && d.suggestions.length) return; // renderSuggestions(d.suggestions);
+            if(d.suggestions && d.suggestions.length) renderSuggestions(d.suggestions);
         }
         updateBadge(0);
     } catch(e){
@@ -347,7 +347,7 @@ function loadServerData(){
                     } else {
                         renderMsg(ans, true);
                     }
-                    if(d.suggestions && d.suggestions.length) return; // renderSuggestions(d.suggestions);
+                    if(d.suggestions && d.suggestions.length) renderSuggestions(d.suggestions);
                     if(d.role && d.role !== currentRole) updateRoleDisplay(d.role);
                     greetingLoaded = true;
                     lastServerAnswer = ans;

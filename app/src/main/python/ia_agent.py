@@ -248,47 +248,28 @@ class Agent:
     
     # ============================================================
     def _cli(self, t, m):
-        """Cliente - sin limites: busca cualquier cosa con datos reales."""
-        # AYUDA
         if any(w in t for w in ['ayuda','que puedes','que haces','como funciona','menu','opciones']):
-            return ("Puedo ayudarte con muchas cosas:
+            return "Puedo ayudarte con muchas cosas:
 
-"
-                    "• Buscar productos y precios
-"
-                    "• Ver ofertas y descuentos
-"
-                    "• Consultar stock disponible
-"
-                    "• Ver categorias del catalogo
-"
-                    "• Informacion de puntos y lealtad
-"
-                    "• Historial de compras
+• Buscar productos y precios
+• Ver ofertas y descuentos
+• Consultar stock disponible
+• Ver categorias del catalogo
+• Informacion de puntos y lealtad
+• Historial de compras
 
-"
-                    "Simplemente escribe lo que necesitas, por ejemplo: 'cuanto cuesta el cafe' o 'que ofertas tienen'.")
-
-        # PUNTOS / LEALTAD
+Escribe lo que necesites."
         if any(w in t for w in ['puntos','lealtad','fidelidad','recompensa','beneficio']):
-            return "Sistema de puntos activo. Cada compra acumula puntos que puedes canjear por descuentos y productos. Consulta tus puntos en la seccion de Lealtad o preguntame 'mis puntos' para ver tu saldo actual."
-
-        # HISTORIAL / COMPRAS
+            return "Sistema de puntos activo. Cada compra acumula puntos que puedes canjear por descuentos y productos. Consulta tus puntos en la seccion de Lealtad."
         if any(w in t for w in ['mis compras','historial','compre','recibo','factura']):
-            return "Puedes ver tu historial de compras en la seccion de Registros. Alli encontraras todos los recibos con fecha, productos, cantidades y totales. Si necesitas un recibo especifico, dimelo."
-
-        # METODOS DE PAGO
+            return "Puedes ver tu historial de compras en la seccion de Registros. Alli encontraras todos los recibos con fecha, productos, cantidades y totales."
         if any(w in t for w in ['pago','pagar','efectivo','tarjeta','transferencia','metodo']):
-            return "Aceptamos multiples metodos de pago: efectivo, tarjeta de credito/debito, transferencia bancaria y codigo QR. Elige el que prefieras al momento de pagar."
-
-        # HORARIO / UBICACION
-        if any(w in t for w in ['horario','horario','abierto','cerrado','donde','ubicacion','direccion']):
-            return "Estamos abiertos para atenderte. Consulta los detalles de horario y ubicacion en la seccion de Tienda. Si necesitas algo urgente, escribeme y te ayudo."
-
-        # OFERTAS
+            return "Aceptamos multiples metodos de pago: efectivo, tarjeta de credito/debito, transferencia bancaria y codigo QR."
+        if any(w in t for w in ['horario','abierto','cerrado','donde','ubicacion','direccion']):
+            return "Consulte los detalles de horario y ubicacion en la seccion de Tienda."
         if any(w in t for w in ['oferta','descuento','rebaja','mejor precio','barato','promo','promocion']):
             of = O.mejores()
-            if not of: return "Hoy todos nuestros precios son muy competitivos. Escribe el nombre de un producto y te doy el precio."
+            if not of: return "Hoy todos nuestros precios son muy competitivos. Escribe el nombre de un producto."
             msg = "Ofertas disponibles:
 
 "
@@ -296,17 +277,12 @@ class Agent:
                 ahorro = o['p'] - o['d']
                 msg += f"{i}. {o['n']}: {fmt_money(o['d'])} (Normal: {fmt_money(o['p'])} - Ahorras {fmt_money(ahorro)})
 "
-            msg += "
+            return msg + "
 Escribe el nombre de cualquier producto para ver mas detalles."
-            return msg
-
-        # CATEGORIAS
         if any(w in t for w in ['categorias','catalogo','que tienen','secciones','que venden','departamento']):
             return f"Contamos con {len(P.cats)} categorias: {', '.join(P.cats[:15])}.
 
-Escribe el nombre de una categoria o producto para ver precios y stock."
-
-        # STOCK ESPECIFICO
+Escribe el nombre de una categoria o producto."
         if any(w in t for w in ['stock','disponible','cuanto hay','hay de','quedan','existencia']):
             prods = P.search(t, 8)
             if prods:
@@ -317,11 +293,8 @@ Escribe el nombre de una categoria o producto para ver precios y stock."
                     estado = f"{p['s']:.0f} {p['u']}" if p['s'] > 0 else "AGOTADO"
                     msg += f"• {p['n']}: {estado} - {fmt_money(p['p'])}
 "
-                msg += "
+                return msg + "
 Preguntame por cualquier producto."
-                return msg
-
-        # BUSQUEDA GENERAL - sin limites
         prods = P.search(t, 8)
         if prods:
             m['p'] = prods[0]['n']
@@ -332,16 +305,15 @@ Preguntame por cualquier producto."
                 if p['s']==0:
                     msg += "Momentaneamente agotado. "
                     rel = O.relacionados(p['n'],2)
-                    if rel: msg += f"Te sugiero: {rel[0]['nombre']} ({fmt_money(rel[0]['precio'])})."
+                    if rel: msg += f"Te sugiero: {rel[0]['nombre']}."
                 elif p['s']<=3:
                     msg += f"Ultimas {p['s']:.0f} unidades disponibles."
                 else:
-                    msg += f"Stock disponible: {p['s']:.0f} {p['u']}."
+                    msg += f"Stock: {p['s']:.0f} {p['u']}.
+"
                 rel = O.relacionados(p['n'],2)
-                if rel: msg += f"
-Te puede interesar tambien: {rel[0]['nombre']}."
+                if rel: msg += f"Te puede interesar: {rel[0]['nombre']}."
                 return msg
-
             msg = f"Encontre {len(prods)} resultados:
 
 "
@@ -349,60 +321,13 @@ Te puede interesar tambien: {rel[0]['nombre']}."
                 stock_info = f" | {p['s']:.0f} {p['u']}" if p['s'] > 0 else " | AGOTADO"
                 msg += f"• {p['n']}: {fmt_money(p['p'])}{stock_info}
 "
-            msg += "
+            return msg + "
 Escribe el nombre para mas detalles."
-            return msg
-
-        # SALUDO AMIGABLE
         if any(w in t for w in ['hola','buenas','buenos dias','buenas tardes','buenas noches','hey']):
-            hora = datetime.now().hour
-            saludo = "Buenos dias" if hora < 12 else "Buenas tardes" if hora < 18 else "Buenas noches"
-            return f"{saludo}. Soy tu asistente y estoy aqui para ayudarte.
-
-Puedes preguntarme por productos, precios, ofertas, stock o cualquier cosa que necesites."
-
+            return "Hola! Soy tu asistente y estoy aqui para ayudarte. Puedes preguntarme sobre productos, precios, ofertas, stock o cualquier cosa que necesites."
         return "Con gusto te ayudo. Puedes preguntarme sobre productos, precios, ofertas, stock, categorias o escribir 'ayuda' para ver todo lo que puedo hacer."
 
-    def _ven(self, t, m):
-        if any(w in t for w in ['ventas','caja','recaude','cuanto vendi','como voy','cuanto llevo']):
-            d = F.diario()
-            if d['t']==0: return "Todavía no se registran ventas hoy. ¿Quiere que le muestre el catálogo o los productos más populares?"
-            h = datetime.now().hour
-            proy = d['r']/h*24 if h>0 else d['r']
-            return f"Excelente trabajo. Al momento: {d['t']} ventas realizadas, {fmt_money(d['r'])} facturados. Ticket promedio: {fmt_money(d['a'])}. Proyectamos cerrar en ~{fmt_money(proy)}. ¿Necesita algo más?"
-        
-        if any(w in t for w in ['stock bajo','agotado','critico','reabastecer','faltante']):
-            rows = q("SELECT nombre,stock_actual FROM inventario_general WHERE stock_actual<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 500")
-            if not rows: rows = q("SELECT nombre,stock_actual FROM inventario_general WHERE stock_actual<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 500")
-            if rows:
-                msg = f"Atención: {len(rows)} productos necesitan reabastecimiento:\n"
-                for r in rows:
-                    msg += f"• {r['nombre']}: {r['stock_actual']:.0f} unidades\n"
-                msg += "\n¿Desea generar una orden de pedido?"
-                return msg
-            return "Afortunadamente todo está en orden. No hay productos con stock bajo."
-        
-        if any(w in t for w in ['top','mas vendido','popular','ranking','mejor']):
-            top = F.top(7,5)
-            if not top: return "Aún no hay suficiente historial de ventas esta semana. ¡A vender se ha dicho!"
-            msg = "Los productos más vendidos esta semana:\n"
-            for i,r in enumerate(top,1):
-                msg += f"{i}. {r['nombre']}: {r['q']:.0f} unidades (${r['t']:,.0f})\n"
-            return msg
-        
-        prods = P.search(t, 5)
-        if prods:
-            m['p'] = prods[0]['n']
-            msg = "Información de productos:\n"
-            for p in prods[:5]:
-                mrg = ((p['p']-p['c'])/p['p']*100) if p['p']>0 and p['c']>0 else 0
-                msg += f"• {p['n']}: {fmt_money(p['p'])} | Stock: {p['s']:.0f}"
-                if mrg>0: msg += f" | Margen: {pct(mrg)}"
-                msg += "\n"
-            return msg
-        
-        return "Dígame qué necesita: 'ventas' para ver el día, 'stock bajo' para alertas, 'top' para los más vendidos, o el nombre de un producto."
-    
+
     # ============================================================
     def _sup(self, t):
         """Supervisor - acceso completo a ventas, stock, equipo, finanzas."""

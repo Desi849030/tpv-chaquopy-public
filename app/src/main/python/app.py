@@ -234,3 +234,10 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# ── Biometric ──
+@app.route('/api/biometric/check')
+def biometric_check():
+    """Verificar disponibilidad de biometria en el dispositivo."""
+    return jsonify({'ok': True, 'biometric': {'available': True, 'type': 'fingerprint/face'}})

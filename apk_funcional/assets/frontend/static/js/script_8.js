@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div id="login-error-msg"></div>
         </div>
         <div id="login-hint" class="login-hint" style="display:none">
-            <strong>Flask no responde.</strong> Abre TPV y ejecuta:<br>
+            <strong>Flask no responde.</strong> Abre Pydroid3 y ejecuta:<br>
             <code>python app.py</code>
         </div>
         <div id="panel-staff" style="display:none">
@@ -229,7 +229,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span id="lbtn-txt"><i class="bi bi-box-arrow-in-right me-2"></i>Entrar</span>
                 <span id="lbtn-spin" style="display:none"><span class="spinner-border spinner-border-sm me-2"></span>Verificando...</span>
             </button>
-            <button id="bio-btn" class="login-btn" style="background:#00b894;margin-top:8px;display:none" onclick="auth_biometric()"><i class="bi bi-fingerprint"></i> Huella digital</button>
             <div class="login-footer"><i class="bi bi-shield-lock me-1"></i>Acceso restringido al personal</div>
         </div>
         <div id="panel-cliente" style="display:none">
@@ -611,7 +610,7 @@ async function _auth_init(intentos = 0) {
         const res  = await fetch('/api/auth/me', { signal: ctrl.signal, credentials: 'same-origin' });
         const data = await res.json();
         if (res.ok && data.autenticado && data.usuario) {
-            AUTH.usuario = data.usuario; localStorage.setItem("tpv_rol", data.usuario.rol || "vendedor"); localStorage.setItem("tpv_user", JSON.stringify(data.usuario));
+            AUTH.usuario = data.usuario;
             _auth_mostrarApp();
             return;
         }
@@ -809,7 +808,7 @@ async function auth_login() {
         });
         const data = await res.json();
         if (res.ok && data.ok) {
-            AUTH.usuario = data.usuario; localStorage.setItem("tpv_rol", data.usuario.rol || "vendedor"); localStorage.setItem("tpv_user", JSON.stringify(data.usuario));
+            AUTH.usuario = data.usuario;
             _auth_mostrarApp();
         } else {
             _loginErr(data.error || 'Usuario o contraseña incorrectos.');
@@ -2319,7 +2318,16 @@ function priv_renderTabla(rol) {
     var privs = _priv_datos_cache[rol] || {};
     var html = '';
 
-    var iconos = {catalogo:"bi-grid-3x3-gap-fill",ventas:"bi-currency-dollar",caja:"bi-cash-stack",dashboard:"bi-speedometer2",inventario:"bi-box-seam",productos:"bi-journal-album",categorias:"bi-tags-fill",orden:"bi-receipt",tienda:"bi-shop",registros:"bi-clock-history",herramientas:"bi-tools",configuracion:"bi-palette",usuarios:"bi-people-fill",licencias:"bi-shield-check",debug:"bi-bug-fill",privilegios:"bi-shield-lock-fill",blindajes:"bi-shield-shaded",ia_edge:"bi-cpu-fill",lealtad:"bi-star-fill",asistente_ia:"bi-robot",descuentos:"bi-tag-fill",supabase:"bi-cloud-fill",seguridad:"bi-lock-fill",exportar:"bi-download",copias:"bi-copy"};
+    var iconos = {
+        catalogo:'bi-grid-3x3-gap-fill', productos:'bi-journal-album',
+        categorias:'bi-tags-fill', dashboard:'bi-speedometer2',
+        ventas:'bi-currency-dollar', orden:'bi-receipt',
+        inventario:'bi-box-seam', registros:'bi-clock-history',
+        tienda:'bi-shop', herramientas:'bi-tools',
+        configuracion:'bi-palette', usuarios:'bi-people-fill',
+        licencias:'bi-shield-check', debug:'bi-bug-fill',
+        privilegios:'bi-shield-lock-fill'
+    };
 
     var modulos = Object.keys(_priv_modulos_cache);
     modulos.sort();
@@ -2476,12 +2484,6 @@ async function auth_logout() {
     // Limpiar panel debug al cerrar sesión
     if (typeof window._dbg_limpiar === 'function') window._dbg_limpiar();
     AUTH.usuario = null;
-    localStorage.removeItem("tpv_rol");
-    localStorage.removeItem("tpv_user");
-    localStorage.removeItem("tpv_rol");
-    localStorage.removeItem("tpv_user");
-    // Resetear chat IA a Usuario
-    if (typeof updateRoleDisplay === "function") updateRoleDisplay("cliente");
     _prevN = -1;
 
     document.getElementById('user-bar')?.classList.add('d-none');
@@ -2975,48 +2977,3 @@ function gestion_mostrarPreviewExistente(urlImagen) {
         wrap.classList.remove('d-none');
     }
 }
-
-// ============================================================
-// LOGIN BIOMETRICO (TPVNative bridge)
-// ============================================================
-function auth_biometric_check() {
-    try {
-        var saved = JSON.parse(localStorage.getItem("tpv_user") || "{}");
-        var hasCreds = saved && saved.username && saved.rol;
-        if (typeof TPVNative !== "undefined" && TPVNative.isAvailable && TPVNative.isAvailable() && hasCreds) {
-            var btn = document.getElementById("bio-btn");
-            if (btn) { btn.style.display = ""; btn.textContent = "Huella / Rostro"; }
-        }
-    } catch(e) { /* biometria no disponible */ }
-}
-
-function auth_biometric() {
-    var btn = document.getElementById("bio-btn");
-    if (!btn) return;
-    btn.disabled = true; btn.textContent = "Verificando...";
-    if (typeof TPVNative === "undefined" || !TPVNative.authenticate) {
-        btn.disabled = false; btn.textContent = "Huella / Rostro";
-        _loginErr("Biometria no disponible en este dispositivo."); return;
-    }
-    window.onBiometricCallback = function(result) {
-        btn.disabled = false;
-        if (result && result.success) {
-            var user = JSON.parse(localStorage.getItem("tpv_user") || "{}");
-            if (user.rol && user.username) {
-                AUTH.usuario = user;
-                _auth_mostrarApp();
-                return;
-            }
-        }
-        btn.textContent = "Huella / Rostro";
-        if (result) _loginErr(result.message || "Verificacion fallida. Use su contrasena.");
-    };
-    try {
-        TPVNative.authenticate("TPV Ultra Smart", "Verificacion de identidad", "Usa tu huella o rostro para entrar");
-    } catch(e) {
-        btn.disabled = false; btn.textContent = "Huella / Rostro";
-        _loginErr("Error de biometria: " + e.message);
-    }
-}
-
-document.addEventListener("DOMContentLoaded", function() { setTimeout(auth_biometric_check, 1000); });

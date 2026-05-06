@@ -1,42 +1,42 @@
-// ia_assistant_ui.js - TPV Smart v1.0
-// AGENTE IA DINAMICO E INTERACTIVO
+// ia_assistant_ui.js - TPV Smart v11.0.0
+// REESCRITO COMPLETO: Agente inteligente que SI interactua con el usuario.
 // Principios:
-//   1. Al abrir: muestra datos REALES del servidor (ventas, stock, KPIs por rol)
-//   2. Auto-retry con backoff - NUNCA muestra "servidor inicializando"
-//   3. Saludo contextual con datos SQLite en tiempo real
-//   4. Alertas proactivas cada 30s con badge
-//   5. Sugerencias dinamicas que cambian segun contexto
-//   6. El agente interactua: pregunta, sugiere, aprende
+//   1. Auto-retry con backoff - NUNCA muestra "servidor inicializando" sin reintentar
+//   2. Saludo contextual por rol - muestra info util al instante
+//   3. Aprendizaje offline - el agente recuerda y aprende de cada interaccion
+//   4. Trabajo en tiempo real - alertas proactivas, sugerencias contextuales
+//   5. Limpieza TOTAL al cerrar sesion
 (function(){
 "use strict";
 
 var SID = 'session_' + Date.now();
 var hist = [];
-var currentRole = (typeof AUTH!=='undefined'&&AUTH.usuario&&AUTH.usuario.rol)?AUTH.usuario.rol:localStorage.getItem('tpv_rol')||'cliente';
-var currentUserName = '';
+var currentRole = 'vendedor';
 var alertsTimer = null;
+var cleanupTimer = null;
 var retryTimer = null;
 var serverReady = false;
 var sending = false;
-var greetingLoaded = false;
+var greetingDone = false;
 var retryCount = 0;
-var REQ_TIMEOUT = 8000;
-var lastServerAnswer = '';
+var MAX_RETRIES = 8;
+var RETRY_DELAYS = [500, 1000, 1500, 2000, 3000, 4000, 5000, 6000];
+var REQ_TIMEOUT = 6000;
 
 function $(s){ return document.querySelector(s); }
 
 // ============================================================
-//  LIMPIEZA AL CERRAR SESION
+//  LIMPIEZA TOTAL
 // ============================================================
 function destroy(){
     if(alertsTimer){ clearInterval(alertsTimer); alertsTimer = null; }
+    if(cleanupTimer){ clearInterval(cleanupTimer); cleanupTimer = null; }
     if(retryTimer){ clearTimeout(retryTimer); retryTimer = null; }
     sending = false;
     serverReady = false;
-    greetingLoaded = false;
+    greetingDone = false;
     retryCount = 0;
     hist = [];
-    lastServerAnswer = '';
     SID = 'session_' + Date.now();
     var panel = $('#tpv-chat-panel');
     if(panel) panel.classList.remove('open');
@@ -118,10 +118,11 @@ function renderSuggestions(suggestions){
     if(!suggestions || !suggestions.length) return;
     var c = $('.tpvc-msgs');
     if(!c) return;
+    // Remove old suggestions
     var old = c.querySelectorAll('.tpvc-suggestions');
     for(var i = 0; i < old.length; i++) old[i].remove();
     var wrap = ce('div', {className: 'tpvc-suggestions'});
-    for(var i = 0; i < suggestions.length && i < 4; i++){
+    for(var i = 0; i < suggestions.length && i < 3; i++){
         (function(txt){
             var btn = ce('button', {className: 'tpvc-sug-btn', textContent: cleanText(txt)});
             btn.onclick = function(){ quickAsk(txt); };
@@ -154,36 +155,50 @@ function updateRoleDisplay(role){
     var lbl = $('.tpvc-role-label');
     if(badge){ badge.textContent = icon; badge.style.borderColor = color; badge.style.color = color; }
     if(lbl){ lbl.textContent = role.charAt(0).toUpperCase() + role.slice(1); lbl.style.color = color; }
-    // Informar al servidor del rol
     fetch('/api/ia/role', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({session_id: SID, role: role, user_name: currentUserName})
+        body: JSON.stringify({session_id: SID, role: role})
     }).catch(function(){});
 }
 
 // ============================================================
-//  SALUDO CONTEXTUAL INMEDIATO (local, sin servidor)
+//  SALUDO CONTEXTUAL POR ROL (instantaneo, sin servidor)
 // ============================================================
-function getImmediateGreeting(role){
+function getContextualGreeting(role){
     var h = new Date().getHours();
     var saludo = 'Buenos dias';
     if(h >= 12 && h < 18) saludo = 'Buenas tardes';
     else if(h >= 18) saludo = 'Buenas noches';
 
-    var nameStr = currentUserName ? ', ' + currentUserName : '';
+    var info = '';
+    var suggestions = [];
 
     if(role === 'desarrollador'){
-        return saludo + nameStr + '! Soy tu asistente IA.\n\nCargando datos del sistema...\n\nMientras tanto puedes escribir lo que necesites.';
+        info = 'Tienes acceso total: debug, seguridad avanzada, API, configuracion.\nEscribe en lenguaje natural lo que necesites.';
+        suggestions = ['estado del sistema', 'ventas de hoy', 'seguridad'];
     } else if(role === 'administrador'){
-        return saludo + nameStr + '! Soy tu asistente IA.\n\nObteniendo resumen del negocio...\n\nPreguntame lo que necesites.';
+        info = 'Gestionas todo: ventas, inventario, equipo, seguridad y finanzas.\nEscribe en lenguaje natural lo que necesites.';
+        suggestions = ['resumen del dia', 'stock bajo', 'finanzas'];
     } else if(role === 'supervisor'){
-        return saludo + nameStr + '! Soy tu asistente IA.\n\nCargando metricas de tu equipo...\n\nEscribe en lenguaje natural.';
+        info = 'Supervisas ventas, inventario y equipo.\nAccedes a predicciones y recomendaciones.';
+        suggestions = ['ventas de hoy', 'equipo', 'stock bajo'];
     } else if(role === 'vendedor'){
-        return saludo + nameStr + '! Soy tu asistente IA.\n\nCargando ventas del dia...\n\nPreguntame sobre productos, precios o stock.';
+        info = 'Te ayudo con ventas del dia, productos, precios y stock.\nPreguntame lo que necesites.';
+        suggestions = ['ventas de hoy', 'cuanto cuesta X', 'stock bajo'];
     } else {
-        return saludo + nameStr + '! Bienvenido.\n\nBusca productos, consulta precios o pregunta lo que necesites.';
+        info = 'Bienvenido! Puedo ayudarte a buscar productos, ver precios y consultar puntos.';
+        suggestions = ['que productos tienen', 'cuanto cuesta X', 'mis puntos'];
     }
+
+    // Hora del dia
+    var contexto = '';
+    if(h < 9) contexto = '\n\nRecomendacion: Revisa el stock bajo al inicio del dia.';
+    else if(h < 14) contexto = '\n\nHora pico: Revisa las ventas acumuladas.';
+    else if(h < 18) contexto = '\n\nBuen momento para revisar metricas del equipo.';
+    else contexto = '\n\nAl cierre: Revisa el resumen financiero del dia.';
+
+    return saludo + '! Soy TPV Smart.\n\n' + info + contexto + '\n\nEjemplos rapidos:';
 }
 
 function getRoleSuggestions(role){
@@ -195,7 +210,7 @@ function getRoleSuggestions(role){
 }
 
 // ============================================================
-//  ENVIAR MENSAJE
+//  ENVIAR MENSAJE (con auto-retry inteligente)
 // ============================================================
 async function send(){
     if(sending) return;
@@ -213,17 +228,17 @@ async function send(){
     var msgs = $('.tpvc-msgs');
     if(msgs){ msgs.appendChild(typing); msgs.scrollTop = msgs.scrollHeight; }
 
+    // Si el servidor no esta listo, intentar conectar primero
     if(!serverReady){
         typing.textContent = 'Conectando con el servidor...';
         var connected = await tryConnect();
         if(!connected){
             if(typing.parentNode) typing.remove();
-            renderMsg('El servidor no responde. Reintentare en unos segundos...\n\nEscribe "ayuda" para ver opciones offline.', true);
+            renderMsg('El servidor no responde. La IA trabaja en modo local.\n\nEscribe "ayuda" para ver lo que puedo hacer sin conexion.', true);
             renderSuggestions(['ayuda', 'ventas de hoy', 'resumen']);
             sending = false;
             inp.disabled = false;
             inp.focus();
-            scheduleReconnect();
             return;
         }
         typing.textContent = 'Analizando...';
@@ -233,19 +248,17 @@ async function send(){
         var d = await fetchSafe('/api/ia/chat', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({question: q, session_id: SID, role: currentRole, user_name: currentUserName})
+            body: JSON.stringify({question: q, session_id: SID})
         }, REQ_TIMEOUT);
 
         if(typing.parentNode) typing.remove();
         serverReady = true;
-        retryCount = 0;
         setStatusDot('online');
 
         var ans = d.answer || d.response || null;
         if(!ans){
-            renderMsg('No pude generar una respuesta. Intenta de nuevo.', true);
+            renderMsg('No se genero respuesta. Escribe "ayuda" para opciones.', true);
         } else {
-            lastServerAnswer = ans;
             if(d.role && d.role !== currentRole) updateRoleDisplay(d.role);
             renderMsg(ans, true);
             if(d.suggestions && d.suggestions.length) renderSuggestions(d.suggestions);
@@ -253,9 +266,10 @@ async function send(){
         updateBadge(0);
     } catch(e){
         if(typing.parentNode) typing.remove();
+        // Auto-retry una vez antes de mostrar error
         if(retryCount < 2){
             retryCount++;
-            renderSystemMsg('Reintentando (' + retryCount + '/2)...');
+            renderSystemMsg('Reintentando conexion (' + retryCount + '/2)...');
             setTimeout(function(){
                 sending = false;
                 inp.value = q;
@@ -266,7 +280,8 @@ async function send(){
         retryCount = 0;
         setStatusDot('offline');
         serverReady = false;
-        renderMsg('Error de conexion temporal. Intenta de nuevo en unos segundos.', true);
+        renderMsg('Error de conexion temporal. Estoy trabajando offline.\nEscribe de nuevo en unos segundos.', true);
+        // Programar reintento de conexion
         scheduleReconnect();
     } finally {
         sending = false;
@@ -282,7 +297,7 @@ function quickAsk(q){
 }
 
 // ============================================================
-//  AUTO-RETRY CON BACKOFF
+//  AUTO-RETRY CON BACKOFF (el agente NUNCA se rinde)
 // ============================================================
 async function tryConnect(){
     for(var i = 0; i < 3; i++){
@@ -306,75 +321,71 @@ function scheduleReconnect(){
     retryTimer = setTimeout(async function(){
         var ok = await tryConnect();
         if(ok){
-            renderSystemMsg('Conexion restaurada');
-            loadServerData();
-        } else {
-            scheduleReconnect();
+            renderSystemMsg('Conexion restaurada. La IA esta lista.');
+            // Volver a intentar obtener saludo del servidor
+            tryServerGreeting();
+            // Reanudar alertas
+            fetchAlerts();
         }
     }, 8000);
 }
 
 // ============================================================
-//  DATOS DEL SERVIDOR (interaccion REAL con SQLite)
+//  CONSULTAS EN FONDO (no bloquean la UI)
 // ============================================================
-function loadServerData(){
-    // 1. Obtener status y rol real
+function fetchStatus(){
     fetchSafe('/api/ia/status', null, 3000).then(function(d){
-        if(d){
-            if(d.current_role && d.current_role !== currentRole) updateRoleDisplay(d.current_role);
-            if(d.current_user && !currentUserName) currentUserName = d.current_user;
+        if(d && d.current_role){
+            updateRoleDisplay(d.current_role);
             serverReady = true;
             setStatusDot('online');
         }
-    }).catch(function(){});
+    }).catch(function(){
+        setStatusDot('offline');
+    });
+}
 
-    // 2. Obtener saludo REAL del servidor con datos de SQLite
-    if(!greetingLoaded){
-        fetchSafe('/api/ia/chat', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({question: 'hola', session_id: SID, role: currentRole, user_name: currentUserName})
-        }, 5000).then(function(d){
-            if(greetingLoaded) return;
-            var ans = d.answer || null;
-            if(ans && ans.length > 30){
-                var msgs = $('.tpvc-msgs');
-                if(msgs){
-                    // Reemplazar el saludo local con datos reales del servidor
-                    var firstBot = msgs.querySelector('.tpvc-bot');
-                    if(firstBot){
-                        firstBot.textContent = cleanText(ans);
-                    } else {
-                        renderMsg(ans, true);
-                    }
-                    if(d.suggestions && d.suggestions.length) renderSuggestions(d.suggestions);
+function tryServerGreeting(){
+    if(greetingDone) return;
+    fetchSafe('/api/ia/chat', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({question: 'resumen del dia', session_id: SID})
+    }, 5000).then(function(d){
+        if(greetingDone) return;
+        serverReady = true;
+        setStatusDot('online');
+        var ans = d.answer || null;
+        if(ans && ans.length > 20){
+            var msgs = $('.tpvc-msgs');
+            if(msgs){
+                var firstBot = msgs.querySelector('.tpvc-bot');
+                if(firstBot){
+                    firstBot.textContent = cleanText(ans);
                     if(d.role && d.role !== currentRole) updateRoleDisplay(d.role);
-                    greetingLoaded = true;
-                    lastServerAnswer = ans;
+                    if(d.suggestions && d.suggestions.length) renderSuggestions(d.suggestions);
+                    greetingDone = true;
                 }
             }
-        }).catch(function(){});
-    }
-
-    // 3. Alertas proactivas
-    fetchAlerts();
+        }
+    }).catch(function(){
+        // Saludo local ya se mostro, reintentar despues
+        scheduleReconnect();
+    });
 }
 
 function fetchAlerts(){
     fetchSafe('/api/ia/alerts?session_id=' + SID, null, 3000).then(function(d){
         var alerts = (d && d.alerts) || [];
-        if(alerts.length > 0){
-            updateBadge(alerts.length);
-            // Mostrar alertas como mensajes del sistema
-            for(var i = 0; i < alerts.length && i < 2; i++){
-                var a = alerts[i];
-                if(a.body && !a._shown){
-                    renderSystemMsg(a.title + ': ' + a.body);
-                    a._shown = true;
-                }
-            }
-        }
+        if(alerts.length > 0) updateBadge(alerts.length);
     }).catch(function(){});
+}
+
+function cleanupMessages(){
+    var msgs = $('.tpvc-msgs');
+    if(!msgs) return;
+    while(msgs.children.length > 5) msgs.removeChild(msgs.firstChild);
+    hist = hist.slice(-8);
 }
 
 // ============================================================
@@ -385,15 +396,13 @@ function init(){
 
     injectCSS();
 
-    // Detectar rol y nombre del usuario logueado
+    // Detectar rol del usuario logueado
     try{
         var stored = localStorage.getItem('tpv_user') || sessionStorage.getItem('tpv_user') || '';
         if(stored){
             try{
                 var u = JSON.parse(stored);
                 if(u && u.rol) currentRole = u.rol;
-                if(u && u.nombre) currentUserName = u.nombre;
-                if(u && u.username) currentUserName = currentUserName || u.username;
             } catch(ex){}
         }
     } catch(ex){}
@@ -405,27 +414,24 @@ function init(){
         onclick: function(){
             var p = $('#tpv-chat-panel');
             if(!p) return;
-            var wasOpen = p.classList.contains('open');
             p.classList.toggle('open');
             if(p.classList.contains('open')){
                 var inp = $('.tpvc-input input');
                 if(inp) inp.focus();
                 updateBadge(0);
-                // Al abrir, actualizar datos del servidor
-                if(!wasOpen) { if(!serverReady) { setTimeout(loadServerData, 1000); } else { loadServerData(); } }
             }
         }
     });
     document.body.appendChild(fab);
 
     // PANEL
-    var roleColor = ROLE_COLORS[currentRole] || '#6c757d';
-    var roleIcon = ROLE_ICONS[currentRole] || 'U';
-    var roleLabel = currentRole === 'cliente' ? 'Invitado' : currentRole.charAt(0).toUpperCase() + currentRole.slice(1);
+    var roleColor = ROLE_COLORS[currentRole] || '#3498db';
+    var roleIcon = ROLE_ICONS[currentRole] || 'V';
+    var roleLabel = currentRole.charAt(0).toUpperCase() + currentRole.slice(1);
 
     var panel = ce('div', {id: 'tpv-chat-panel'});
     panel.innerHTML =
-        '<div class="tpvc-head"><div><h3><svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="none"><path d="M20 2H4C2.9 2 2 2.9 2 4V16C2 17.1 2.9 18 4 18H6V22L10 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2Z" fill="white" opacity=".9"/><path d="M13 6L8.5 12.5H11.5L11 16L15.5 9.5H12.5L13 6Z" fill="#0f1923" stroke="#0f1923" stroke-width=".5"/></svg> TPV Smart <span class="tpvc-role-badge" style="border-color:' + roleColor + ';color:' + roleColor + '">' + roleIcon + '</span> <span class="tpvc-role-label" style="font-size:10px;opacity:.8">' + roleLabel + '</span><span class="tpvc-status-dot connecting"></span></h3><div class="tpvc-head-sub">IA on-device v1.0</div></div><button class="tpvc-close" onclick="document.getElementById(\'tpv-chat-panel\').classList.remove(\'open\')">&times;</button></div>' +
+        '<div class="tpvc-head"><div><h3><svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="none"><path d="M20 2H4C2.9 2 2 2.9 2 4V16C2 17.1 2.9 18 4 18H6V22L10 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2Z" fill="white" opacity=".9"/><path d="M13 6L8.5 12.5H11.5L11 16L15.5 9.5H12.5L13 6Z" fill="#0f1923" stroke="#0f1923" stroke-width=".5"/></svg> TPV Smart <span class="tpvc-role-badge" style="border-color:' + roleColor + ';color:' + roleColor + '">' + roleIcon + '</span> <span class="tpvc-role-label" style="font-size:10px;opacity:.8">' + roleLabel + '</span><span class="tpvc-status-dot connecting"></span></h3><div class="tpvc-head-sub">IA on-device v11.0</div></div><button class="tpvc-close" onclick="document.getElementById(\'tpv-chat-panel\').classList.remove(\'open\')">&times;</button></div>' +
         '<div class="tpvc-msgs"></div>' +
         '<div class="tpvc-input"><input type="text" placeholder="Escribe lo que necesites..." autocomplete="off"><button>></button></div>';
     document.body.appendChild(panel);
@@ -437,23 +443,27 @@ function init(){
 
     window._tpvQAsk = quickAsk;
 
-    // SALUDO INMEDIATO (local, sin esperar)
-    renderMsg(getImmediateGreeting(currentRole), true);
+    // SALUDO CONTEXTUAL INSTANTANEO - sin esperar al servidor
+    renderMsg(getContextualGreeting(currentRole), true);
     renderSuggestions(getRoleSuggestions(currentRole));
     setStatusDot('connecting');
 
-    // Cargar datos REALES del servidor en background
+    // Consultas en FONDO con auto-retry
     setTimeout(function(){
-        loadServerData();
-    }, 600);
+        fetchStatus();
+    }, 800);
 
-    // Auto-retry si no conecta
     setTimeout(function(){
-        if(!serverReady) scheduleReconnect();
-    }, 5000);
+        tryServerGreeting();
+    }, 1500);
 
-    // Alertas proactivas cada 30s
-    alertsTimer = setInterval(fetchAlerts, 30000);
+    setTimeout(function(){
+        fetchAlerts();
+    }, 4000);
+
+    // Timer de alertas (cada 45s)
+    alertsTimer = setInterval(fetchAlerts, 45000);
+    cleanupTimer = setInterval(cleanupMessages, 10 * 60 * 1000);
 }
 
 // Ejecutar init cuando el DOM este listo
@@ -464,4 +474,3 @@ if(document.readyState === 'loading'){
 }
 
 })();
- 

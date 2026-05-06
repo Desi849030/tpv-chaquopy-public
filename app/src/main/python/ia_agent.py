@@ -394,6 +394,41 @@ class Agent:
             return msg
         return "Escriba: ventas, stock bajo, top, finanzas, gastos, predicciones, ABC, rotacion, ofertas, EOQ, o nombre de producto."
 
+    def _ven(self, t, m):
+        if any(w in t for w in ["ventas","caja","recaude","cuanto vendi","como voy"]):
+            d = F.diario()
+            if d["t"] == 0: return "Todavia no hay ventas hoy."
+            h = datetime.now().hour
+            proy = d["r"]/h*24 if h > 0 else d["r"]
+            return "Al momento: " + str(d["t"]) + " ventas, " + fmt_money(d["r"]) + " facturados. Ticket promedio: " + fmt_money(d["a"]) + ". Proyeccion cierre: " + fmt_money(proy) + "."
+        if any(w in t for w in ["stock bajo","agotado","critico","reabastecer"]):
+            rows = q("SELECT nombre,stock_actual FROM inventario_general WHERE stock_actual<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 500")
+            if rows:
+                msg = "Atencion: " + str(len(rows)) + " productos necesitan reabastecimiento:\n"
+                for r in rows[:10]:
+                    msg += "- " + r["nombre"] + ": " + str(int(r["stock_actual"])) + " uds\n"
+                return msg + "\nDesea generar orden de pedido?"
+            return "Todo en orden. No hay stock bajo."
+        if any(w in t for w in ["top","mas vendido","popular","ranking"]):
+            top = F.top(7, 5)
+            if not top: return "Aun no hay historial suficiente esta semana."
+            msg = "Mas vendidos (7 dias):\n"
+            for i, r in enumerate(top, 1):
+                msg += str(i) + ". " + r["nombre"] + ": " + str(int(r["q"])) + " uds (" + fmt_money(r["t"]) + ")\n"
+            return msg
+        prods = P.search(t, 5)
+        if prods:
+            m["p"] = prods[0]["n"]
+            msg = "Productos:\n"
+            for p in prods[:5]:
+                mrg = ((p["p"]-p["c"])/p["p"]*100) if p["p"] > 0 and p["c"] > 0 else 0
+                msg += "- " + p["n"] + ": " + fmt_money(p["p"]) + " | Stock: " + str(int(p["s"]))
+                if mrg > 0: msg += " | Margen: " + pct(mrg)
+                msg += "\n"
+            return msg
+        return "Dime que necesitas: ventas, stock bajo, top, o nombre de un producto."
+
+
     def _adm(self, t, name):
         d = F.diario()
         low = sum(1 for p in P.cache if 0<p['s']<=5)

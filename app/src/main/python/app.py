@@ -236,13 +236,13 @@ def main():
 # ========== v24: Validación BD al inicio ==========
 def tpv_validate_db():
     """Verificar que la BD existe y tiene datos al arrancar."""
-    from database import DB_FILE, get_connection
-    import os
+    import sqlite3, os
+    from database import DB_FILE
     if not os.path.exists(DB_FILE):
         print("[v24] ADVERTENCIA: BD no encontrada en", DB_FILE)
         return False
     try:
-        conn = get_connection()
+        conn = sqlite3.connect(DB_FILE)
         cur = conn.cursor()
         cur.execute("SELECT COUNT(*) FROM productos")
         count = cur.fetchone()[0]

@@ -78,7 +78,7 @@ class P:
         cls.cats = sorted(set(p['cat'] for p in prods))
     
     @classmethod
-    def search(cls, query, limit=5):
+    def search(cls, query, limit=10):
         cls.refresh()
         qr = query.lower().strip()
         if len(qr)<2: return []
@@ -342,7 +342,7 @@ class Agent:
             prods = P.search(t, 8)
             if prods:
                 msg = "Disponibilidad:\n\n"
-                for p in prods[:6]:
+                for p in prods[:10]:
                     estado = str(p["s"]) + " " + p["u"] if p["s"] > 0 else "AGOTADO"
                     msg += "- " + p["n"] + ": " + estado + " - " + fmt_money(p["p"]) + "\n"
                 return msg + "\nPreguntame por cualquier producto."
@@ -364,7 +364,7 @@ class Agent:
                 if rel: msg += "Te puede interesar: " + rel[0]["nombre"] + "."
                 return msg
             msg = "Encontre " + str(len(prods)) + " resultados:\n\n"
-            for p in prods[:6]:
+            for p in prods[:10]:
                 stock_info = " | " + str(int(p["s"])) + " " + p["u"] if p["s"] > 0 else " | AGOTADO"
                 msg += "- " + p["n"] + ": " + fmt_money(p["p"]) + stock_info + "\n"
             return msg + "\nEscribe el nombre para mas detalles."
@@ -394,7 +394,7 @@ class Agent:
             rows = q("SELECT nombre,stock_actual FROM inventario_general WHERE stock_actual<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 500")
             if not rows: return "Todo en orden. No hay productos con stock bajo."
             msg = "Alerta: " + str(len(rows)) + " productos necesitan reabastecimiento:\n\n"
-            for r in rows[:15]:
+            for r in rows[:20]:
                 icon = "X" if r["stock_actual"] == 0 else "!"
                 msg += " [" + icon + "] " + r["nombre"] + ": " + str(int(r["stock_actual"])) + " uds\n"
             return msg + "\nDesea generar orden de pedido?"
@@ -414,7 +414,7 @@ class Agent:
             if not rows: return "No hay gastos hoy."
             msg = "Gastos del dia (" + str(len(rows)) + "):\n\n"
             total = 0
-            for r in rows[:10]:
+            for r in rows[:20]:
                 msg += "- " + r["descripcion"] + ": " + fmt_money(r["monto"]) + " (" + r["categoria"] + ")\n"
                 total += r["monto"]
             return msg + "\nTotal: " + fmt_money(total)
@@ -452,11 +452,11 @@ class Agent:
             for i, o in enumerate(of, 1):
                 msg += str(i) + ". " + o["n"] + ": " + fmt_money(o["p"]) + " -> " + fmt_money(o["d"]) + " (" + pct(o["m"]) + ")\n"
             return msg
-        prods = P.search(t, 5)
+        prods = P.search(t, 10)
         if prods:
             m["p"] = prods[0]["n"]
             msg = "Productos:\n\n"
-            for p in prods[:5]:
+            for p in prods[:10]:
                 mrg = ((p["p"]-p["c"])/p["p"]*100) if p["p"] > 0 and p["c"] > 0 else 0
                 msg += "- " + p["n"] + ": " + fmt_money(p["p"]) + " | Stock: " + str(int(p["s"]))
                 if mrg > 0: msg += " | Margen: " + pct(mrg)
@@ -475,7 +475,7 @@ class Agent:
             rows = q("SELECT nombre,stock_actual FROM inventario_general WHERE stock_actual<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 500")
             if rows:
                 msg = "Atencion: " + str(len(rows)) + " productos necesitan reabastecimiento:\n"
-                for r in rows[:10]:
+                for r in rows[:20]:
                     msg += "- " + r["nombre"] + ": " + str(int(r["stock_actual"])) + " uds\n"
                 return msg + "\nDesea generar orden de pedido?"
             return "Todo en orden. No hay stock bajo."
@@ -486,11 +486,11 @@ class Agent:
             for i, r in enumerate(top, 1):
                 msg += str(i) + ". " + r["nombre"] + ": " + str(int(r["q"])) + " uds (" + fmt_money(r["t"]) + ")\n"
             return msg
-        prods = P.search(t, 5)
+        prods = P.search(t, 10)
         if prods:
             m["p"] = prods[0]["n"]
             msg = "Productos:\n"
-            for p in prods[:5]:
+            for p in prods[:10]:
                 mrg = ((p["p"]-p["c"])/p["p"]*100) if p["p"] > 0 and p["c"] > 0 else 0
                 msg += "- " + p["n"] + ": " + fmt_money(p["p"]) + " | Stock: " + str(int(p["s"]))
                 if mrg > 0: msg += " | Margen: " + pct(mrg)
@@ -624,7 +624,7 @@ class Agent:
             return msg
         
         # PRODUCTO
-        prods = P.search(t, 5)
+        prods = P.search(t, 10)
         if prods:
             if len(prods)==1:
                 p = prods[0]
@@ -646,7 +646,7 @@ class Agent:
                 if vendido>0: msg += f"🛒 Vendidos (30d): {vendido:.0f} unidades\n"
                 return msg
             msg = f"Resultados para su búsqueda:\n"
-            for p in prods[:5]:
+            for p in prods[:10]:
                 msg += f"• {p['n']}: {fmt_money(p['p'])} | Stock: {p['s']:.0f}\n"
             return msg
         

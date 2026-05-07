@@ -12,7 +12,7 @@
 
 var SID = 'session_' + Date.now();
 var hist = [];
-var currentRole = (typeof AUTH!=='undefined'&&AUTH.usuario&&AUTH.usuario.rol)?AUTH.usuario.rol:localStorage.getItem('tpv_rol')||'cliente';
+var currentRole = (typeof AUTH!=='undefined'&&AUTH.usuario&&AUTH.usuario.rol)?AUTH.usuario.rol:'cliente';
 var currentUserName = '';
 var alertsTimer = null;
 var retryTimer = null;

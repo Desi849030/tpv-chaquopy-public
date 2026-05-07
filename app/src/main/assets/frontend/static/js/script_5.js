@@ -2479,7 +2479,7 @@
                         // Verificar contra patrones de encabezados
                         for (const [tipo, patron] of Object.entries(this.patterns.headers)) {
                             if (patron.test(celda) && !colsEncontradas[tipo]) {
-                                colsEncontradas[tipo] = j;
+                                colsEncontradas[tipo === 'producto' ? 'nombre' : tipo] = j;
                                 coincidencias++;
                                 if (this.DEBUG) {
                                     console.log(`  📌 Fila ${i+1}, Col ${j+1}: "${celda}" → ${tipo}`);
@@ -2489,11 +2489,11 @@
                     }
             
                     // Si encontramos al menos producto y precio, es probable que sea encabezado
-                    if (coincidencias >= 2 && colsEncontradas.producto !== undefined && colsEncontradas.precio !== undefined) {
+                    if (coincidencias >= 2 && (colsEncontradas.producto !== undefined || colsEncontradas.precio !== undefined || colsEncontradas.cantidad !== undefined)) {
                         resultado.filaEncabezado = i;
                         resultado.filaInicioDatos = i + 1;
                         resultado.columnas = colsEncontradas;
-                        resultado.confianza = Math.min(coincidencias / 6, 1); // Máximo 6 columnas esperadas
+                        resultado.confianza = Math.min(coincidencias / 4, 1.0); // Máximo 6 columnas esperadas
                 
                         if (this.DEBUG) {
                             console.log(`✓ Encabezados encontrados en fila ${i+1} (${coincidencias} columnas, confianza: ${resultado.confianza.toFixed(2)})`);
@@ -3541,7 +3541,7 @@
 
                 const productosConStock = tpvState.productos.map(p => ({
                     ...p,
-                    stock_actual: stockMap[p.id] ?? 0
+                    stock_actual: p.stock_actual || stockMap[p.id] || 0
                 }));
 
                 // Sincronizar servidor con productos + stock real

@@ -82,8 +82,8 @@ def chat():
     data = request.get_json(silent=True) or {}
     q = data.get('question', '').strip()
     sid = data.get('session_id', 'default')
-    role = session.get('usuario', {}).get('rol', data.get('role', 'vendedor'))
-    user_name = session.get('usuario', {}).get('nombre', data.get('user_name', ''))
+    role = data.get('role', session.get('usuario', {}).get('rol', 'cliente'))
+    user_name = data.get('user_name', session.get('usuario', {}).get('nombre', ''))
     if not q:
         return jsonify({'answer': 'Escribe algo para ayudarte.', 'suggestions': ['ventas de hoy', 'ayuda']})
     try:
@@ -115,7 +115,7 @@ def set_role():
     if not _ia_module:
         return jsonify({'error': 'Modulo IA no disponible'}), 500
     data = request.get_json(silent=True) or {}
-    return jsonify(_set_session_role(data.get('session_id', 'default'), data.get('role', 'vendedor'), data.get('user_name', '')))
+    return jsonify(_set_session_role(data.get('session_id', 'default'), data.get('role', 'cliente'), data.get('user_name', '')))
 
 
 @assistant_bp.route('/alerts', methods=['GET'])
@@ -135,7 +135,7 @@ def status():
         if not _ia_module:
             return jsonify({'version': '15.0.0', 'error': 'Module not loaded'})
         result = _get_status()
-        result['current_role'] = session.get('usuario', {}).get('rol', 'vendedor')
+        result['current_role'] = session.get('usuario', {}).get('rol', 'cliente')
         result['current_user'] = session.get('usuario', {}).get('nombre', '')
         result['memory_enabled'] = _mem_module
         return jsonify(result)

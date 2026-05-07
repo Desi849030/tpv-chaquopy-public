@@ -3,7 +3,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(
 
 from database import obtener_conexion, crear_tablas
 
-crear_tablas(), reconstruir_desde_productos, importar_catalogo_a_inventario
+reconstruir_desde_productos, importar_catalogo_a_inventario
 
 ADMIN = "user-4fd3220f"
 

@@ -384,6 +384,50 @@ function fetchAlerts(){
 //  INIT
 // ============================================================
 function init(){
+    // Draggable para FAB y offline indicator
+    function makeDraggable(el){
+      if(!el)return;
+      var sx,sy,ox,oy,moving=false;
+      el.addEventListener('touchstart',function(e){
+        if(e.target.closest('.tpvc-close,.tpvc-input'))return;
+        moving=true;var t=e.touches[0];sx=t.clientX;sy=t.clientY;
+        var r=el.getBoundingClientRect();ox=r.left;oy=r.top;
+        el.style.transition='none';el.style.zIndex='10001';
+      },{passive:true});
+      el.addEventListener('touchmove',function(e){
+        if(!moving)return;e.preventDefault();
+        var t=e.touches[0];var dx=t.clientX-sx;var dy=t.clientY-sy;
+        var nx=ox+dx;var ny=oy+dy;
+        nx=Math.max(0,Math.min(nx,window.innerWidth-el.offsetWidth));
+        ny=Math.max(0,Math.min(ny,window.innerHeight-el.offsetHeight));
+        el.style.position='fixed';el.style.left=nx+'px';el.style.top=ny+'px';el.style.right='auto';el.style.bottom='auto';
+        sx=t.clientX;sy=t.clientY;ox=nx;oy=ny;
+      },{passive:false});
+      el.addEventListener('touchend',function(){moving=false;el.style.transition='';el.style.zIndex='';});
+      el.addEventListener('mousedown',function(e){
+        if(e.target.closest('.tpvc-close,.tpvc-input'))return;
+        moving=true;sx=e.clientX;sy=e.clientY;
+        var r=el.getBoundingClientRect();ox=r.left;oy=r.top;
+        el.style.transition='none';el.style.zIndex='10001';
+        e.preventDefault();
+      });
+      document.addEventListener('mousemove',function(e){
+        if(!moving)return;
+        var dx=e.clientX-sx;var dy=e.clientY-sy;
+        var nx=ox+dx;var ny=oy+dy;
+        nx=Math.max(0,Math.min(nx,window.innerWidth-el.offsetWidth));
+        ny=Math.max(0,Math.min(ny,window.innerHeight-el.offsetHeight));
+        el.style.position='fixed';el.style.left=nx+'px';el.style.top=ny+'px';el.style.right='auto';el.style.bottom='auto';
+        sx=e.clientX;sy=e.clientY;ox=nx;oy=ny;
+      });
+      document.addEventListener('mouseup',function(){moving=false;el.style.transition='';el.style.zIndex='';});
+    }
+    setTimeout(function(){
+      makeDraggable(document.getElementById('tpv-chat-fab'));
+      makeDraggable(document.getElementById('offline-indicator'));
+      makeDraggable(document.getElementById('ia-bubble-container'));
+    },500);
+
     if($('#tpv-chat-fab')) return;
 
     injectCSS();

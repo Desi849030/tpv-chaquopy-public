@@ -47,3 +47,6 @@ tpv_datos.db-wal
 .tpv_secret_key
 .branch_id
 .supabase_config.json
+.tpv_secret
+*.db
+tpv_debug.log

@@ -33,11 +33,14 @@ def contains_any(text, keywords, threshold=0.7):
         norm_kw = normalize(kw)
         if norm_kw in norm:
             return True, kw, 1.0
-    norms = [normalize(k) for k in keywords]
-    best, score = best_match(norm, norms, threshold=threshold*100)
-    if best:
-        idx = norms.index(best)
-        return True, keywords[idx], score/100
+    norms_kw = [normalize(k) for k in keywords]
+    for word in norm.split():
+        if len(word) < 3:
+            continue
+        best, score = best_match(word, norms_kw, threshold=threshold*100)
+        if best:
+            idx = norms_kw.index(best)
+            return True, keywords[idx], score/100
     return False, None, 0
 
 def extract_entities(text):

@@ -1,9 +1,9 @@
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "app/src/main/python"))
 
-from database import obtener_conexion, crear_tablas
+from database import obtener_conexion, crear_tablas, reconstruir_desde_productos, importar_catalogo_a_inventario
 
-reconstruir_desde_productos, importar_catalogo_a_inventario
+crear_tablas()
 
 ADMIN = "user-4fd3220f"
 
@@ -17,9 +17,9 @@ class TestImportacion:
 
     def test_reconstruir_productos(self):
         prods = [
-            {"id": "T1", "nombre": "Test Mod v25", "precio": 5.0, "costoUnitario": 2.0,
+            {"id": "T1", "nombre": "Test v25", "precio": 5.0, "costoUnitario": 2.0,
              "categoria": "General", "um": "C/U", "enOferta": False, "imagen": "", "stock_actual": 10},
-            {"id": "T2", "nombre": "Test Dos v25", "precio": 8.0, "costoUnitario": 3.0,
+            {"id": "T2", "nombre": "Test Dos", "precio": 8.0, "costoUnitario": 3.0,
              "categoria": "Bebidas", "um": "C/U", "enOferta": True, "imagen": "", "stock_actual": 20}
         ]
         r = reconstruir_desde_productos(ADMIN, prods)

@@ -43,4 +43,5 @@ r3=process_question("0","hola","cliente","Test")
 T("process_question dict",isinstance(r3,dict))
 T("answer not empty",len(r3.get("answer",""))>0)
 print("\n=== "+str(p)+" passed, "+str(f)+" failed ===")
-sys.exit(1 if f else 0)
+if __name__=="__main__":
+    sys.exit(1 if f else 0)

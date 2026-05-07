@@ -32,7 +32,7 @@
   var origFetch = window.fetch;
   window.fetch = function(url, opts){
     return origFetch.apply(this, arguments).then(function(resp){
-      if(url && (url.indexOf('/api/productos') !== -1 || url.indexOf('/api/catalogo') !== -1 || url.indexOf('/api/inventario') !== -1)){
+      if(url && (!opts || !opts.method || opts.method==='GET') && (url.indexOf('/api/productos') !== -1 || url.indexOf('/api/catalogo') !== -1 || url.indexOf('/api/inventario') !== -1)){
         resp.clone().json().then(function(data){
           if(Array.isArray(data)) saveCache(data);
           else if(data && data.productos) saveCache(data.productos);

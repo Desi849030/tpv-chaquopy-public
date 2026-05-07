@@ -37,7 +37,7 @@ def api_inventario_general():
         return jsonify({"error": f"Error inventario general: {str(e)}"}), 500
 
 @inv_bp.route("/api/inventario/importar-catalogo", methods=["POST"])
-@requiere_rol("administrador","desarrollador")
+@requiere_rol("administrador","desarrollador","vendedor")
 def api_importar_catalogo():
     u = usuario_actual()
     r = importar_catalogo_a_inventario(u["usuario_id"])
@@ -122,7 +122,7 @@ def api_limpiar_tablas():
         return jsonify({"error": str(e)}), 500
 
 @inv_bp.route("/api/reconstruir-desde-productos", methods=["POST"])
-@requiere_rol("administrador","desarrollador")
+@requiere_rol("administrador","desarrollador","vendedor")
 def api_reconstruir_desde_productos():
     try:
         u = usuario_actual()

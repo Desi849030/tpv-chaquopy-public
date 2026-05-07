@@ -16,6 +16,7 @@ DB_FILE = os.path.join(os.environ.get("TPV_FILES_DIR", os.getcwd()), "tpv_datos.
 # ══════════════════════════════════════════════════════════════
 #  SEGURIDAD
 # ══════════════════════════════════════════════════════════════
+# === AUTENTICACION Y USUARIOS ===
 def _hash_password(password: str, salt: str = None) -> tuple:
     if salt is None:
         salt = secrets.token_hex(16)
@@ -514,6 +515,7 @@ def desactivar_usuario(usuario_id, admin_id):
 # ══════════════════════════════════════════════════════════════
 #  LICENCIAS (solo Desarrollador)
 # ══════════════════════════════════════════════════════════════
+# === LICENCIAS ===
 def crear_licencia(admin_id, tipo, dias, notas, dev_id, cliente_id="", clave_activacion=""):
     """Crea una licencia para un administrador. Solo el desarrollador puede hacerlo."""
     conn   = obtener_conexion()
@@ -646,6 +648,7 @@ def desactivar_licencia(licencia_id, dev_id):
 # ══════════════════════════════════════════════════════════════
 #  INVENTARIO GENERAL
 # ══════════════════════════════════════════════════════════════
+# === INVENTARIO GENERAL ===
 def cargar_stock_masivo(admin_id, items):
     """
     Carga stock a múltiples productos del almacén general de una vez.
@@ -655,10 +658,10 @@ def cargar_stock_masivo(admin_id, items):
     conn   = obtener_conexion()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT rol FROM usuarios WHERE usuario_id=? AND activo=1", (admin_id,))
+        cursor.execute("SELECT rol FROM usuarios WHERE usuario_id=?", (admin_id,))
         u = cursor.fetchone()
-        if not u or u["rol"] not in ("administrador", "desarrollador"):
-            return {"ok": False, "mensaje": "Solo Admin/Dev"}
+        if not u or u["rol"] not in ("administrador", "desarrollador", "vendedor"):
+            return {"ok": False, "mensaje": "Sin permisos. Rol: " + str(u["rol"])}
 
         fecha_ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         ok = 0
@@ -695,7 +698,7 @@ def registrar_entrada_producto(datos, admin_id):
     try:
         cursor.execute("SELECT rol FROM usuarios WHERE usuario_id = ? AND activo = 1", (admin_id,))
         u = cursor.fetchone()
-        if not u or u["rol"] not in ("administrador", "desarrollador"):
+        if not u or u["rol"] not in ("administrador", "desarrollador", "vendedor"):
             return {"ok": False, "mensaje": "Solo Admin/Dev puede registrar entradas"}
 
         producto_id   = datos.get("producto_id", "")
@@ -760,7 +763,7 @@ def obtener_inventario_general(admin_id):
     try:
         cursor.execute("SELECT rol FROM usuarios WHERE usuario_id = ?", (admin_id,))
         u = cursor.fetchone()
-        if not u or u["rol"] not in ("administrador", "desarrollador"):
+        if not u or u["rol"] not in ("administrador", "desarrollador", "vendedor"):
             return []
         cursor.execute("""
             SELECT ig.producto_id, ig.nombre, ig.stock_actual, ig.stock_minimo,
@@ -798,13 +801,14 @@ def obtener_historial_entradas(admin_id, producto_id=None):
 # ══════════════════════════════════════════════════════════════
 #  INVENTARIO DIARIO
 # ══════════════════════════════════════════════════════════════
+# === INVENTARIO DIARIO ===
 def asignar_inventario_diario(vendedor_id, productos, admin_id):
     conn   = obtener_conexion()
     cursor = conn.cursor()
     try:
         cursor.execute("SELECT rol FROM usuarios WHERE usuario_id = ? AND activo = 1", (admin_id,))
         u = cursor.fetchone()
-        if not u or u["rol"] not in ("administrador", "desarrollador"):
+        if not u or u["rol"] not in ("administrador", "desarrollador", "vendedor"):
             return {"ok": False, "mensaje": "Solo Admin/Dev puede asignar inventario"}
 
         fecha_hoy = datetime.now().strftime("%Y-%m-%d")
@@ -910,7 +914,7 @@ def limpiar_inventarios_diarios(admin_id, vendedor_id=None, fecha=None):
     try:
         cursor.execute("SELECT rol FROM usuarios WHERE usuario_id = ? AND activo = 1", (admin_id,))
         u = cursor.fetchone()
-        if not u or u["rol"] not in ("administrador", "desarrollador"):
+        if not u or u["rol"] not in ("administrador", "desarrollador", "vendedor"):
             return {"ok": False, "mensaje": "Solo Admin/Dev puede limpiar inventarios"}
         if vendedor_id and fecha:
             cursor.execute("DELETE FROM inventario_diario WHERE vendedor_id = ? AND fecha = ?", (vendedor_id, fecha))
@@ -934,6 +938,7 @@ def limpiar_inventarios_diarios(admin_id, vendedor_id=None, fecha=None):
 # ══════════════════════════════════════════════════════════════
 #  CATÁLOGO DE PRODUCTOS (server-side, compartido entre roles)
 # ══════════════════════════════════════════════════════════════
+# === CATALOGO Y PRODUCTOS ===
 def obtener_productos_catalogo():
     """
     Devuelve catálogo activo desde la tabla productos.
@@ -961,7 +966,7 @@ def sincronizar_productos_catalogo(productos, admin_id):
     conn   = obtener_conexion()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT rol FROM usuarios WHERE usuario_id=? AND activo=1", (admin_id,))
+        cursor.execute("SELECT rol FROM usuarios WHERE usuario_id=?", (admin_id,))
         u = cursor.fetchone()
         if not u or u["rol"] not in ("administrador","desarrollador"):
             return {"ok": False, "mensaje": "Solo Admin/Dev puede sincronizar catálogo"}
@@ -1020,10 +1025,10 @@ def importar_catalogo_a_inventario(admin_id):
     conn   = obtener_conexion()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT rol FROM usuarios WHERE usuario_id=? AND activo=1",(admin_id,))
+        cursor.execute("SELECT rol FROM usuarios WHERE usuario_id=?",(admin_id,))
         u = cursor.fetchone()
         if not u or u["rol"] not in ("administrador","desarrollador"):
-            return {"ok": False, "mensaje": "Solo Admin/Dev"}
+            return {"ok": False, "mensaje": "Sin permisos. Rol: " + str(u["rol"])}
         cursor.execute("SELECT producto_id,nombre,precio,costo,categoria,unidad_medida FROM productos")
         prods = cursor.fetchall()
         if not prods:
@@ -1093,9 +1098,9 @@ def sincronizar_estado_completo(admin_id):
     conn   = obtener_conexion()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT rol FROM usuarios WHERE usuario_id=? AND activo=1", (admin_id,))
+        cursor.execute("SELECT rol FROM usuarios WHERE usuario_id=?", (admin_id,))
         u = cursor.fetchone()
-        if not u or u["rol"] not in ("administrador", "desarrollador"):
+        if not u or u["rol"] not in ("administrador", "desarrollador", "vendedor"):
             return {"ok": False, "mensaje": "Solo Admin/Dev puede sincronizar"}
 
         ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -1174,10 +1179,10 @@ def limpiar_tablas_completo(admin_id):
     conn   = obtener_conexion()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT rol FROM usuarios WHERE usuario_id=? AND activo=1", (admin_id,))
+        cursor.execute("SELECT rol FROM usuarios WHERE usuario_id=?", (admin_id,))
         u = cursor.fetchone()
-        if not u or u["rol"] not in ("administrador", "desarrollador"):
-            return {"ok": False, "mensaje": "Solo Admin/Dev"}
+        if not u or u["rol"] not in ("administrador", "desarrollador", "vendedor"):
+            return {"ok": False, "mensaje": "Sin permisos. Rol: " + str(u["rol"])}
 
         tablas = [
             "productos",
@@ -1210,6 +1215,7 @@ def limpiar_tablas_completo(admin_id):
 
 
 def reconstruir_desde_productos(admin_id, productos_js):
+    agregar_log(f"[v25] reconstruir: admin={admin_id}, n={len(productos_js)}", "info")
     """
     Recibe la lista de productos del cliente (JS) y reconstruye
     productos + inventario_general desde cero.
@@ -1219,10 +1225,10 @@ def reconstruir_desde_productos(admin_id, productos_js):
     conn   = obtener_conexion()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT rol FROM usuarios WHERE usuario_id=? AND activo=1", (admin_id,))
+        cursor.execute("SELECT rol FROM usuarios WHERE usuario_id=?", (admin_id,))
         u = cursor.fetchone()
-        if not u or u["rol"] not in ("administrador", "desarrollador"):
-            return {"ok": False, "mensaje": "Solo Admin/Dev"}
+        if not u or u["rol"] not in ("administrador", "desarrollador", "vendedor"):
+            return {"ok": False, "mensaje": "Sin permisos. Rol: " + str(u["rol"])}
 
         ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         total = 0
@@ -1287,6 +1293,7 @@ def reconstruir_desde_productos(admin_id, productos_js):
 # ══════════════════════════════════════════════════════════════
 #  ESTADO JSON
 # ══════════════════════════════════════════════════════════════
+# === ESTADO Y SINCRONIZACION ===
 def cargar_estado():
     conn   = obtener_conexion()
     cursor = conn.cursor()
@@ -1389,6 +1396,7 @@ def _sincronizar_tablas_relacionales(cursor, conn, estado):
 # ══════════════════════════════════════════════════════════════
 #  CONSULTAS REPORTES
 # ══════════════════════════════════════════════════════════════
+# === CONSULTAS DE VENTAS ===
 def consultar_ventas_por_fecha(fecha_inicio, fecha_fin, vendedor_id=None):
     conn   = obtener_conexion()
     cursor = conn.cursor()
@@ -1478,6 +1486,7 @@ def consultar_ganancias_por_dia():
 # ══════════════════════════════════════════════════════════════
 #  HISTORIAL DIARIO LOCAL
 # ══════════════════════════════════════════════════════════════
+# === HISTORIAL DIARIO ===
 def guardar_historial_diario_local(snapshot: dict) -> bool:
     """Guarda un snapshot diario en SQLite historial_diario."""
     conn = obtener_conexion()
@@ -1547,6 +1556,7 @@ def obtener_historial_detalle_local(fecha: str) -> dict:
         conn.close()
 
 
+# === LOGS Y AUDITORIA ===
 def agregar_log(mensaje, tipo="info", usuario=None):
     conn = obtener_conexion()
     try:

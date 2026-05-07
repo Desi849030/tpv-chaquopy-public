@@ -304,7 +304,7 @@ class Agent:
             msg = f"{g}{n}. Bienvenido a TPV Smart. Puede consultar productos, precios y ofertas. Si desea registrarse, solicite al administrador sus credenciales de acceso."
             if P.cache and len(P.cache)>0:
                 msg += f" Hoy tenemos {len(P.cache)} productos disponibles. Le recomiendo aprovechar las ofertas."
-            msg += " Escriba el nombre del producto que busca o consulte categorias."
+            msg += " Escriba el nombre del producto que busca o consulte categorías."
             return msg
         
         if role == 'vendedor':
@@ -335,7 +335,7 @@ class Agent:
     
     # ============================================================
     def _cli(self, t, m):
-        if self._fm(t, ["ayuda","que puedes","que haces","como funciona","menu","opciones"]):
+        if self._fm(t, ["ayuda","que puedes","que haces","como funciona","menú","opciones"]):
             return "Puedo ayudarte con muchas cosas:\n\n- Buscar productos y precios\n- Ver ofertas y descuentos\n- Consultar stock disponible\n- Ver categorías del catalogo\n- Información de puntos y lealtad\n- Historial de compras\n\nEscribe lo que necesites."
         if self._fm(t, ["puntos","lealtad","fidelidad","recompensa","beneficio"]):
             return "Sistema de puntos activo. Cada compra acumula puntos que puedes canjear por descuentos y productos. Consulta tus puntos en la sección de Lealtad."
@@ -343,7 +343,7 @@ class Agent:
             return "Puedes ver tu historial de compras en la sección de Registros. Allí encontrarás todos los recibos con fecha, productos, cantidades y totales."
         if self._fm(t, ["pago","pagar","efectivo","tarjeta","transferencia","metodo"]):
             return "Aceptamos múltiples metodos de pago: efectivo, tarjeta de crédito/debito, transferencia bancaria y código QR."
-        if self._fm(t, ["horario","abierto","cerrado","donde","ubicacion","direccion"]):
+        if self._fm(t, ["horario","abierto","cerrado","donde","ubicación","dirección"]):
             return "Consulte los detalles de horario y ubicación en la sección de Tienda."
         if self._fm(t, ["oferta","descuento","rebaja","mejor precio","barato","promo","promocion"]):
             of = O.mejores()
@@ -353,7 +353,7 @@ class Agent:
                 ahorro = o["p"] - o["d"]
                 msg += str(i) + ". " + o["n"] + ": " + fmt_money(o["d"]) + " (Normal: " + fmt_money(o["p"]) + " - Ahorras " + fmt_money(ahorro) + ")\n"
             return msg + "\nEscribe el nombre de cualquier producto para ver mas detalles."
-        if self._fm(t, ["categorias","catalogo","que tienen","secciones","que venden","departamento"]):
+        if self._fm(t, ["categorías","catalogo","que tienen","secciones","que venden","departamento"]):
             return "Contamos con " + str(len(P.cats)) + " categorías: " + ", ".join(P.cats[:15]) + ".\n\nEscribe el nombre de una categoria o producto."
         if self._fm(t, ["stock","disponible","cuanto hay","hay de","quedan","existencia"]):
             prods = P.search(t, 8)
@@ -393,7 +393,7 @@ class Agent:
     def _sup(self, t, m=None):
         d = F.diario(); w = F.semanal()
         low = sum(1 for p in P.cache if 0 < p["s"] <= 5)
-        if self._fm(t, ["ayuda","que puedes","menu","opciones"]):
+        if self._fm(t, ["ayuda","que puedes","menú","opciones"]):
             return "Como supervisor tienes acceso completo:\n\n- dashboard: KPIs\n- ventas: Resumen del dia\n- stock bajo: Alertas\n- top: Mas vendidos\n- finanzas: Balance y margen\n- gastos: Egresos\n- predicciones: Tendencias\n- rotacion: Indice\n- ABC: Clasificacion\n- ofertas: Promociones\n- Nombre de producto para info detallada"
         if self._fm(t, ["dashboard","resumen","estado","kpi"]):
             msg = "Dashboard:\n- Ventas hoy: " + fmt_money(d["r"]) + " (" + str(d["t"]) + " ops)\n- Ventas semana: " + fmt_money(w["r"]) + "\n- Ticket promedio: " + fmt_money(d["a"]) + "\n- Productos: " + str(len(P.cache)) + "\n- Stock bajo: " + str(low) + "\n- Categorias: " + str(len(P.cats))
@@ -427,12 +427,12 @@ class Agent:
             margen = (prof/d["r"]*100) if d["r"] > 0 else 0
             return "Finanzas:\n\n- Ingresos: " + fmt_money(d["r"]) + "\n- Gastos: " + fmt_money(d["g"]) + "\n- Ganancia: " + fmt_money(prof) + "\n- Margen: " + pct(margen) + "\n- Ticket: " + fmt_money(d["a"])
         if self._fm(t, ["gasto","egreso","gastos","costo"]):
-            rows = q("SELECT descripcion,monto,categoria FROM gastos WHERE DATE(fecha)=DATE('now','localtime') ORDER BY monto DESC")
+            rows = q("SELECT descripción,monto,categoria FROM gastos WHERE DATE(fecha)=DATE('now','localtime') ORDER BY monto DESC")
             if not rows: return "No hay gastos hoy."
             msg = "Gastos del día (" + str(len(rows)) + "):\n\n"
             total = 0
             for r in rows[:20]:
-                msg += "- " + r["descripcion"] + ": " + fmt_money(r["monto"]) + " (" + r["categoria"] + ")\n"
+                msg += "- " + r["descripción"] + ": " + fmt_money(r["monto"]) + " (" + r["categoria"] + ")\n"
                 total += r["monto"]
             return msg + "\nTotal: " + fmt_money(total)
         if self._fm(t, ["tendencia","prediccion","proyeccion","forecast","pronostico"]):
@@ -630,12 +630,12 @@ class Agent:
         
         # GASTOS
         if self._fm(t, ['gasto','egreso','costo fijo']):
-            rows = q("SELECT descripcion,monto,categoria FROM gastos WHERE DATE(fecha)=DATE('now','localtime') ORDER BY monto DESC")
+            rows = q("SELECT descripción,monto,categoria FROM gastos WHERE DATE(fecha)=DATE('now','localtime') ORDER BY monto DESC")
             if not rows: return "No hay gastos registrados hoy."
             msg = f"Gastos del día ({len(rows)}):\n\n"
             total = 0
             for r in rows:
-                msg += f"• {r['descripcion']}: {fmt_money(r['monto'])} ({r['categoria']})\n"
+                msg += f"• {r['descripción']}: {fmt_money(r['monto'])} ({r['categoria']})\n"
                 total += r['monto']
             msg += f"\nTotal gastos: {fmt_money(total)}"
             return msg

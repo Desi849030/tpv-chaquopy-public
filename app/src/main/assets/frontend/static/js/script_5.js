@@ -3601,6 +3601,16 @@
 
                 showToast(resultado.mensaje + ' — Ve a Catálogo › Productos para verificar.', "success");
                 console.log('✅ Importación completada exitosamente');
+
+            // v25: VERIFICACION FINAL - contar productos en servidor
+            try {
+                const rV = await fetch('/api/productos', {credentials:'same-origin'});
+                if (rV.ok) {
+                    const dV = await rV.json();
+                    const lista = Array.isArray(dV) ? dV : (dV.productos || dV.data || []);
+                    console.log('[v25] VERIFICACION: servidor tiene', lista.length, 'productos');
+                }
+            } catch(ev) { console.warn('[v25] verificacion fallo:', ev.message); }
                 
             } else {
                 showToast(resultado.mensaje, "danger");

@@ -107,6 +107,7 @@
   function init(){
     setTimeout(function(){
       initDarkMode();
+    setTimeout(function(){ var dm=document.getElementById("dark-mode-toggle"); if(dm && typeof makeDraggable==="function") makeDraggable(dm); },1000);
       initNetworkStatus();
       console.log('[v24] Dark mode + network status listo');
     }, 300);

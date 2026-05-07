@@ -5,9 +5,16 @@ from database import obtener_conexion, crear_tablas, reconstruir_desde_productos
 
 crear_tablas()
 
-ADMIN = "user-4fd3220f"
-
 class TestImportacion:
+    def _get_admin(self):
+        c = obtener_conexion()
+        cur = c.cursor()
+        cur.execute("SELECT usuario_id FROM usuarios LIMIT 1")
+        row = cur.fetchone()
+        c.close()
+        assert row, "No hay usuarios"
+        return row[0]
+
     def test_bd_conexion(self):
         c = obtener_conexion()
         cur = c.cursor()
@@ -16,18 +23,22 @@ class TestImportacion:
         c.close()
 
     def test_reconstruir_productos(self):
+        admin = self._get_admin()
         prods = [
             {"id": "T1", "nombre": "Test v25", "precio": 5.0, "costoUnitario": 2.0,
              "categoria": "General", "um": "C/U", "enOferta": False, "imagen": "", "stock_actual": 10},
             {"id": "T2", "nombre": "Test Dos", "precio": 8.0, "costoUnitario": 3.0,
              "categoria": "Bebidas", "um": "C/U", "enOferta": True, "imagen": "", "stock_actual": 20}
         ]
-        r = reconstruir_desde_productos(ADMIN, prods)
+        r = reconstruir_desde_productos(admin, prods)
+        assert r is not None, "reconstruir retorno None"
         assert r["ok"], r.get("mensaje", "fallo")
         assert r["total"] >= 2
 
     def test_importar_catalogo_inventario(self):
-        r = importar_catalogo_a_inventario(ADMIN)
+        admin = self._get_admin()
+        r = importar_catalogo_a_inventario(admin)
+        assert r is not None, "importar retorno None"
         assert r["ok"], r.get("mensaje", "fallo")
         assert r["total"] >= 0
 

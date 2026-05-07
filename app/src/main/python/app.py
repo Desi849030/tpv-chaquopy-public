@@ -253,7 +253,10 @@ def tpv_validate_db():
         print(f"[v24] ERROR BD: {e}")
         return False
 
-tpv_validate_db()
+try:
+    tpv_validate_db()
+except Exception as e:
+    print(f'[v24] Validacion BD omitida: {e}')
 
 if __name__ == "__main__":
     main()

@@ -232,6 +232,29 @@ def main():
     except Exception: pass
     app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)
 
+
+# ========== v24: Validación BD al inicio ==========
+def tpv_validate_db():
+    """Verificar que la BD existe y tiene datos al arrancar."""
+    from database import DB_FILE, get_connection
+    import os
+    if not os.path.exists(DB_FILE):
+        print("[v24] ADVERTENCIA: BD no encontrada en", DB_FILE)
+        return False
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM productos")
+        count = cur.fetchone()[0]
+        conn.close()
+        print(f"[v24] BD OK: {count} productos encontrados")
+        return count > 0
+    except Exception as e:
+        print(f"[v24] ERROR BD: {e}")
+        return False
+
+tpv_validate_db()
+
 if __name__ == "__main__":
     main()
 

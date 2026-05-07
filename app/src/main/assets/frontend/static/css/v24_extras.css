@@ -1,0 +1,124 @@
+/* ========== v24: Catalog Search ========== */
+#catalog-search-wrap {
+  padding: 10px 12px 6px;
+}
+#catalog-search {
+  width: 100%;
+  padding: 10px 14px 10px 38px;
+  border-radius: 12px;
+  border: 2px solid #e2e8f0;
+  font-size: 14px;
+  background: #f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.156a5 5 0 1 1 0-10 5 5 0 0 1 0 10z'/%3E%3C/svg%3E") 12px center no-repeat;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+#catalog-search:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102,126,234,0.2);
+}
+#catalog-search::placeholder { color: #94a3b8; }
+
+.product-row-hidden { display: none !important; }
+
+/* ========== v24: Swipe Actions on Order Items ========== */
+.orden-item {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.25s cubic-bezier(.4,0,.2,1);
+  touch-action: pan-y;
+}
+.orden-item-bg {
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+  font-size: 22px;
+  border-radius: 0 12px 12px 0;
+}
+.orden-item.swiped { transform: translateX(-80px); }
+.orden-qty-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.orden-qty-btn {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  border: 2px solid #667eea;
+  background: transparent;
+  color: #667eea;
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.orden-qty-btn:active {
+  background: #667eea;
+  color: #fff;
+  transform: scale(0.9);
+}
+
+/* ========== v24: Print Receipt ========== */
+@media print {
+  body * { visibility: hidden !important; }
+  #tpv-receipt-print, #tpv-receipt-print * {
+    visibility: visible !important;
+  }
+  #tpv-receipt-print {
+    position: absolute;
+    left: 0; top: 0;
+    width: 80mm;
+    padding: 4mm;
+    font-size: 12px;
+    color: #000 !important;
+    background: #fff !important;
+  }
+  #tpv-receipt-print .receipt-header {
+    text-align: center;
+    border-bottom: 1px dashed #000;
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: bold;
+  }
+  #tpv-receipt-print .receipt-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 0;
+  }
+  #tpv-receipt-print .receipt-total {
+    border-top: 1px dashed #000;
+    margin-top: 6px;
+    padding-top: 6px;
+    font-weight: bold;
+    font-size: 14px;
+  }
+  #tpv-receipt-print .receipt-footer {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 10px;
+    color: #555 !important;
+  }
+}
+.btn-print-receipt {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-print-receipt:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 8px rgba(99,102,241,0.4);
+}

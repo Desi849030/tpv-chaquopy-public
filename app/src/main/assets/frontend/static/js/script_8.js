@@ -1736,8 +1736,8 @@ async function _admin_asignarUno(pid) {
     const nombre      = cantEl.dataset.nombre||pid;
     const pv          = parseFloat(cantEl.dataset.pv)||0;
     const pc          = parseFloat(cantEl.dataset.pc)||0;
-    if (!vendedor_id) { alert('Selecciona un vendedor'); return; }
-    if (cantidad<=0)  { alert('Ingresa una cantidad mayor a 0'); cantEl.focus(); return; }
+    if (!vendedor_id) { _toast('Selecciona un vendedor','warning'); return; }
+    if (cantidad<=0)  { _toast('Ingresa una cantidad mayor a 0','warning'); cantEl.focus(); return; }
     if (cantidad>stock){ alert(`Stock insuficiente. Disponible: ${stock}`); return; }
     const btn = document.querySelector(`#agn-row-${pid} button`);
     if (btn) { btn.disabled=true; btn.innerHTML='<span class="spinner-border spinner-border-sm"></span>'; }
@@ -1933,7 +1933,7 @@ function _admin_limpiarInventariosUI() {
     let payload = {};
     if (opc.trim()==='1') payload={fecha:hoy};
     else if (opc.trim()==='2') payload={};
-    else { alert('Opción inválida'); return; }
+    else { _toast('Opción inválida','warning'); return; }
     const desc = opc.trim()==='1' ? `inventarios de HOY (${hoy})` : 'TODOS los inventarios';
     if (!confirm(`⛔ ¿Confirmar eliminación de ${desc}?\n\nLos vendedores quedarán sin stock asignado.`)) return;
     fetch('/api/inventario/diario/limpiar',{

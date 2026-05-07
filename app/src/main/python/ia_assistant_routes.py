@@ -75,7 +75,6 @@ def ping():
 
 
 @assistant_bp.route('/chat', methods=['POST'])
-@requiere_login
 def chat():
     if not _ia_module:
         return jsonify({'answer': 'Error: modulo IA no disponible.', 'suggestions': ['ayuda']})
@@ -110,7 +109,6 @@ def chat():
 
 
 @assistant_bp.route('/role', methods=['POST'])
-@requiere_login
 def set_role():
     if not _ia_module:
         return jsonify({'error': 'Modulo IA no disponible'}), 500
@@ -119,7 +117,6 @@ def set_role():
 
 
 @assistant_bp.route('/alerts', methods=['GET'])
-@requiere_login
 def alerts():
     try:
         if not _ia_module:
@@ -148,7 +145,6 @@ def status():
 # ═══════════════════════════════════════════════════════════
 
 @assistant_bp.route('/memory/recall', methods=['POST'])
-@requiere_login
 def memory_recall():
     if not _mem_module:
         return jsonify({'memories': [], 'error': 'Modulo memoria no disponible'}), 503
@@ -161,7 +157,6 @@ def memory_recall():
 
 
 @assistant_bp.route('/memory/search', methods=['POST'])
-@requiere_login
 def memory_search():
     if not _mem_module:
         return jsonify({'results': [], 'error': 'Modulo memoria no disponible'}), 503
@@ -176,7 +171,6 @@ def memory_search():
 
 
 @assistant_bp.route('/memory/save', methods=['POST'])
-@requiere_login
 def memory_save():
     if not _mem_module:
         return jsonify({'error': 'Modulo memoria no disponible'}), 503
@@ -194,7 +188,6 @@ def memory_save():
 
 
 @assistant_bp.route('/memory/forget', methods=['POST'])
-@requiere_login
 def memory_forget():
     if not _mem_module:
         return jsonify({'error': 'Modulo memoria no disponible'}), 503
@@ -205,7 +198,6 @@ def memory_forget():
 
 
 @assistant_bp.route('/memory/summary', methods=['GET'])
-@requiere_login
 def memory_summary():
     if not _mem_module:
         return jsonify({'summary': {}, 'error': 'Modulo memoria no disponible'}), 503

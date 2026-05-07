@@ -945,7 +945,7 @@ def obtener_productos_catalogo():
             SELECT producto_id AS id, nombre, precio,
                    costo AS costoUnitario, categoria,
                    unidad_medida AS um, en_oferta AS onSale, imagen
-            FROM productos WHERE activo=1 ORDER BY categoria, nombre ASC
+            FROM productos ORDER BY categoria, nombre ASC
         """).fetchall()
         return [dict(r) for r in rows]
     finally:
@@ -1024,7 +1024,7 @@ def importar_catalogo_a_inventario(admin_id):
         u = cursor.fetchone()
         if not u or u["rol"] not in ("administrador","desarrollador"):
             return {"ok": False, "mensaje": "Solo Admin/Dev"}
-        cursor.execute("SELECT producto_id,nombre,precio,costo,categoria,unidad_medida FROM productos WHERE activo=1")
+        cursor.execute("SELECT producto_id,nombre,precio,costo,categoria,unidad_medida FROM productos")
         prods = cursor.fetchall()
         if not prods:
             return {"ok": False, "mensaje": "Catálogo vacío"}
@@ -1101,7 +1101,7 @@ def sincronizar_estado_completo(admin_id):
         ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         # 1. productos → inventario_general
-        cursor.execute("SELECT * FROM productos WHERE activo=1")
+        cursor.execute("SELECT * FROM productos")
         prods = cursor.fetchall()
         sync_p2i = 0
         for p in prods:
@@ -1127,7 +1127,7 @@ def sincronizar_estado_completo(admin_id):
         # 2. inventario_general → productos (huérfanos)
         cursor.execute("""
             SELECT * FROM inventario_general
-            WHERE producto_id NOT IN (SELECT producto_id FROM productos WHERE activo=1)
+            WHERE producto_id NOT IN (SELECT producto_id FROM productos)
         """)
         huerfanos = cursor.fetchall()
         sync_i2p = 0

@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 import sys,os
 sys.path.insert(0,os.path.join(os.path.dirname(os.path.abspath(__file__)),"..","app/src/main/python"))
-from database import obtener_conexion,reconstruir_desde_productos,importar_catalogo_a_inventario
+from database import obtener_conexion,reconstruir_desde_productos,importar_catalogo_a_inventario,crear_tablas,obtener_conexion
 from ia_agent import process_question,P,M,F,O,fmt_money,pct
-A="user-4fd3220f"
+crear_tablas()
+import sqlite3
+c=obtener_conexion()
+cur=c.cursor()
+cur.execute("SELECT usuario_id FROM usuarios LIMIT 1")
+row=cur.fetchone()
+c.close()
+A=row[0] if row else "user-4fd3220f"
 p=f=0
 def T(n,ok,d=""):
  global p,f

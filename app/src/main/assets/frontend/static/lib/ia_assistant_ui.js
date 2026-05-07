@@ -212,7 +212,7 @@ async function send(){
     inp.disabled = true;
 
     renderMsg(q, false);
-    var typing = ce('div', {className: 'tpvc-typing', textContent: 'Analizando...'});
+    var typing = ce('div', {className: 'tpvc-typing', id: 'tpv-typing-el'});typing.innerHTML='<span class=tpvc-dot></span><span class=tpvc-dot></span><span class=tpvc-dot></span>';
     var msgs = $('.tpvc-msgs');
     if(msgs){ msgs.appendChild(typing); msgs.scrollTop = msgs.scrollHeight; }
 

@@ -1,7 +1,9 @@
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "app/src/main/python"))
 
-from database import obtener_conexion, reconstruir_desde_productos, importar_catalogo_a_inventario
+from database import obtener_conexion, crear_tablas
+
+crear_tablas(), reconstruir_desde_productos, importar_catalogo_a_inventario
 
 ADMIN = "user-4fd3220f"
 

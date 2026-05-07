@@ -221,7 +221,7 @@ async function send(){
         var connected = await tryConnect();
         if(!connected){
             if(typing.parentNode) typing.remove();
-            renderMsg('El servidor no responde. Reintentare en unos segundos...\n\nEscribe "ayuda" para ver opciones offline.', true);
+            renderMsg('El servidor no responde. Reintentaré en unos segundos...\n\nEscribe "ayuda" para ver opciones offline.', true);
             renderSuggestions(['ayuda', 'ventas de hoy', 'resumen']);
             sending = false;
             inp.disabled = false;
@@ -269,7 +269,7 @@ async function send(){
         retryCount = 0;
         setStatusDot('offline');
         serverReady = false;
-        renderMsg('Error de conexion temporal. Intenta de nuevo en unos segundos.', true);
+        renderMsg('Error de conexión temporal. Intenta de nuevo en unos segundos.', true);
         scheduleReconnect();
     } finally {
         sending = false;
@@ -309,7 +309,7 @@ function scheduleReconnect(){
     retryTimer = setTimeout(async function(){
         var ok = await tryConnect();
         if(ok){
-            renderSystemMsg('Conexion restaurada');
+            renderSystemMsg('Conexión restaurada');
             loadServerData();
         } else {
             scheduleReconnect();

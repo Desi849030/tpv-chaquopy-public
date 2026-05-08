@@ -1,16 +1,53 @@
-# Changelog
+# Registro de Cambios
 
-## v1.0.0 (2025-05-03)
-- Gestor IA Total: finanzas, ABC, regresión, EOQ, punto equilibrio
-- 25 módulos con privilegios configurables
-- Login biométrico (huella + reconocimiento facial)
-- Auto-login con biometría
-- Tokenización de pagos (PCI-DSS)
-- RLS multi-sucursal Supabase
-- 114 rutas API
-- 5 roles: Cliente, Vendedor, Supervisor, Admin, Desarrollador
-- Chat conversacional con memoria
-- Ofertas inteligentes y productos relacionados
-- Control de visibilidad por rol en frontend
-- Modo oscuro
-- Offline-first con SQLite + WAL
+## v6.9 (Mayo 2026)
+
+### Refactorizacion completa del frontend
+- Modularizacion de script_5.js (5,109 lineas) en 9 modulos
+- Modularizacion de script_8.js (3,022 lineas) en 8 modulos
+- Renombrado de script_N.js a tpv_* descriptivos
+- 27 modulos JS validados con node --check
+- Renombrado de 8 CSS a convencion tpv_*.css
+- Eliminacion de 17 archivos huerfanos y temporales
+
+### Correcciones
+- Fix permisos importacion catalogo (vendedor incluido)
+- Eliminacion de burbuja dark mode (obstruia UI)
+- Eliminacion de indicador offline flotante
+- Restauracion de index.html completo
+
+### Limpieza
+- Eliminacion CSS duplicados
+- Eliminacion backups residuales
+- Limpieza raiz del repositorio
+
+## v6.8 (Mayo 2026)
+
+### IA Assistant
+- Motor NLP con clasificacion de intents
+- Guardrails anti-abuso
+- Memoria contextual
+- Anti-slop para respuestas de calidad
+
+### Seguridad
+- Decoradores de rol en todos los endpoints
+- Autenticacion biometrica nativa
+- PCI compliance para pagos
+
+## v6.0-v6.5 (Abril-Mayo 2026)
+
+- Dashboard KPIs animados
+- Licencias con dias de prueba
+- Tienda online
+- Cola sincronizacion offline
+- Service Worker PWA
+- Traduccion ES/EN
+- Panel debug inteligente
+
+## v5.0 (Marzo 2026)
+
+- Arquitectura Chaquopy + Flask + WebView
+- Roles multinivel
+- Inventario diario
+- Import/export Excel
+- QR etiquetas

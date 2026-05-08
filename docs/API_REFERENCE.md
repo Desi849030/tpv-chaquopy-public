@@ -1,54 +1,45 @@
-# API Reference - TPV Ultra Smart v1.0
+# Referencia de API v6.9
 
-## Autenticación
-| Método | Ruta | Auth | Descripción |
-|--------|------|:---:|-------------|
-| POST | /api/auth/login | No | Iniciar sesión |
-| POST | /api/auth/logout | No | Cerrar sesión |
-| GET | /api/auth/me | No | Usuario actual |
+## Autenticacion
+| POST | /api/auth/login     | Publico  | Login usuario/contrasena |
+| POST | /api/auth/logout    | Todos    | Cerrar sesion             |
+| GET  | /api/auth/usuario   | Todos    | Datos usuario actual      |
 
-## Productos
-| Método | Ruta | Auth | Descripción |
-|--------|------|:---:|-------------|
-| GET | /api/catalogo | Sí | Listar productos |
-| POST | /api/catalogo/sync | Admin | Sincronizar catálogo |
-
-## Ventas
-| Método | Ruta | Auth | Descripción |
-|--------|------|:---:|-------------|
-| GET | /api/reportes/ventas | Sí | Reporte de ventas |
-| GET | /api/reportes/resumen | Sí | Resumen ejecutivo |
+## Catalogo
+| GET  | /api/catalogo                  | Login    | Productos activos     |
+| POST | /api/catalogo/sync             | Admin    | Sincronizar productos |
+| POST | /api/catalogo/sync-desde-inv   | Admin    | Catalogo desde inventario |
 
 ## Inventario
-| Método | Ruta | Auth | Descripción |
-|--------|------|:---:|-------------|
-| GET | /api/inventario/general | Admin | Inventario general |
-| POST | /api/inventario/entrada | Admin | Registrar entrada |
+| POST | /api/inventario/importar-catalogo | Admin,Vend | Catálogo a inventario |
+| GET  | /api/inventario/entradas          | Admin       | Historial entradas    |
 
-## IA Chat
-| Método | Ruta | Auth | Descripción |
-|--------|------|:---:|-------------|
-| POST | /api/ia/chat | No | Chat con agente IA |
-| GET | /api/ia/status | No | Estado del agente |
-| GET | /api/ia/alerts | No | Alertas proactivas |
+## Ventas
+| GET  | /api/ventas/diarias   | Admin,Vend | Ventas del dia |
+| POST | /api/ventas/registrar | Todos      | Nueva venta    |
+| GET  | /api/ventas/historial | Admin      | Historial completo |
 
-## Seguridad
-| Método | Ruta | Auth | Descripción |
-|--------|------|:---:|-------------|
-| GET | /api/biometric/check | No | Verificar biometría |
-| POST | /api/payment/tokenize | Sí | Tokenizar pago |
-| GET | /api/health | No | Health check |
+## Tienda Online
+| GET  | /api/tienda/productos | Publico  | Productos tienda |
+| POST | /api/tienda/pedido    | Clientes | Nuevo pedido     |
+| GET  | /api/tienda/pedidos   | Admin    | Pedidos pendientes|
 
-## Descuentos
-| Método | Ruta | Auth | Descripción |
-|--------|------|:---:|-------------|
-| GET | /api/descuentos | Sí | Listar descuentos |
-| POST | /api/descuentos | Admin | Crear descuento |
-| DELETE | /api/descuentos/:id | Admin | Eliminar descuento |
+## IA Assistant
+| POST | /api/ia/chat     | Todos | Chat con IA |
+| GET  | /api/ia/skills   | Todos | Habilidades |
 
-## Supabase
-| Método | Ruta | Auth | Descripción |
-|--------|------|:---:|-------------|
-| GET | /api/supabase/config | Admin | Ver configuración |
-| POST | /api/supabase/config | Admin | Guardar configuración |
-| POST | /api/supabase/sync-full | Admin | Sincronizar todo |
+## Licencias
+| POST | /api/licencias/activar | Admin | Activar licencia |
+| GET  | /api/licencias/estado  | Todos | Estado licencia  |
+
+## Usuarios
+| GET  | /api/usuarios/lista            | Admin | Lista usuarios    |
+| POST | /api/usuarios/crear             | Admin | Crear usuario     |
+| POST | /api/usuarios/desactivar        | Admin | Desactivar usuario|
+
+## Respuestas
+
+    {ok: true, datos: [...]}
+    {ok: false, mensaje: Error...}
+
+HTTP: 200 exito, 400 datos, 401 sin auth, 403 sin permisos.

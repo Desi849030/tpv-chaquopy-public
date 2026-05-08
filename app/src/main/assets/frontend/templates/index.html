@@ -1194,7 +1194,20 @@
 
     
     <!-- JavaScript Corregido -->
-    <script src="/static/js/script_5.js"></script>
+    <script src="/static/js/smart_excel_importer.js"></script>
+    {# === MODULOS script_5.js === #}
+    <script src="{{ url_for('static', filename='js/tpv_state.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tpv_utils_qr.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tpv_caja.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tpv_ventas.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tpv_inv_diario.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tpv_gestion.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/smart_excel_importer.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tpv_backup.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tpv_export.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tpv_licencias_ui.js') }}"></script>
+    
+    <script src="{{ url_for('static', filename='js/tpv_logs_ui.js') }}"></script>
 
 
 <!-- ================= EXPORTACIÓN UNIFICADA SEGURA ================= -->
@@ -1214,7 +1227,13 @@
 <script src="/static/js/script_7.js"></script>
 
 
-<script src="/static/js/script_8.js"></script>
+{# === MODULOS script_8.js === #}
+    <script src="{{ url_for('static', filename='js/tpv_auth_ui.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tpv_auth.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tpv_vendedor.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tpv_admin_inventario.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tpv_config_priv.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tpv_users_lic.js') }}"></script>
 
 
     <!-- CSS movido al final para no bloquear render -->

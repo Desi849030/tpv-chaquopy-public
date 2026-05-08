@@ -317,7 +317,6 @@ function _toast(msg, type) {
 // ══════════════════════════════════════════════════════════════
 const _LIC_DIAS = { diaria:1, mensual:30, anual:365, ilimitada:99999 };
 
-function licencias_admin
 function lic_abrir() {
     lic_tab('lista');
     new bootstrap.Modal(document.getElementById('modal-licencias')).show();
@@ -495,7 +494,7 @@ async function lic_revocar(licencia_id, nombre) {
 // ══════════════════════════════════════════════════════════════
 //  VISTA PREVIA DE IMAGEN EN MODAL PRODUCTO
 // ══════════════════════════════════════════════════════════════
-function imagenes_y_biometric
+
 function gestion_previewImagen(input) {
     const file = input?.files?.[0];
     const wrap = document.getElementById('gestion-img-preview-wrap');

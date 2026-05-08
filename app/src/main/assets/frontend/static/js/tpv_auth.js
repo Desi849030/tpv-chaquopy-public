@@ -7,7 +7,7 @@
 // ══════════════════════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════════════════════
-function autenticacion_y_login
+
 async function _auth_init(intentos = 0) {
     if (typeof bootstrap === 'undefined') {
         if (intentos < 30) setTimeout(() => _auth_init(intentos + 1), 150);

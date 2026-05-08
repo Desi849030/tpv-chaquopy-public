@@ -357,7 +357,7 @@ async function _vend_mostrarHistorial() {
 // ══════════════════════════════════════════════════════════════
 //  INVENTARIO ADMIN — Almacén General + Vista vendedores
 // ══════════════════════════════════════════════════════════════
-function admin_inventario
+
 function _setup_admin_inventario() {
     const pane = document.getElementById('inv-inventario-tab-pane');
     if (!pane || document.getElementById('inv-admin-btns')) return;

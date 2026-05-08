@@ -521,4 +521,4 @@
         }
         
         // ========== FUNCIONES DE BACKUP AUTOMÁTICO ==========
-        async         // ===== COPIAS SEGURIDAD =====
+        

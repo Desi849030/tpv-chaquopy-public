@@ -50,7 +50,15 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="TPV Smart">
     <meta name="mobile-web-app-capable" content="yes">
-    <script src="/static/js/script_1.js"></script>
+    <script>
+window.onerror=function(m,u,l,c,e){
+  var d=document.createElement('div');
+  d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc3545;color:#fff;padding:8px 12px;font-size:12px;word-break:break-all';
+  d.textContent='ERROR: '+m+' (linea '+l+')';
+  document.body.appendChild(d);
+};
+</script>
+<script src="/static/js/script_1.js"></script>
 
     <!-- Fin TPV Ultra Smart PWA -->
 <link rel="stylesheet" href="/static/css/ia_pro.css">  <link rel="stylesheet" href="static/css/v24_extras.css">

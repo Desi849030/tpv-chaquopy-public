@@ -1,6 +1,4 @@
-/* ═══════════════════════════════════════════════
-   v23 — Dashboard Animado + Dark Mode + Notificaciones
-   ═══════════════════════════════════════════════ */
+// tpv_ui_enhancements.js — Dark mode, animaciones KPIs, notificaciones stock, submenus
 
 (function(){
 "use strict";

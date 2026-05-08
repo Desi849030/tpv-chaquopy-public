@@ -50,7 +50,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="TPV Smart">
     <meta name="mobile-web-app-capable" content="yes">
-    <script src="/static/js/script_1.js"></script>
+    <script src="/static/js/tpv/tpv_pwa_register.js"></script>
 
     <!-- Fin TPV Ultra Smart PWA -->
 <link rel="stylesheet" href="/static/css/ia_pro.css">  <link rel="stylesheet" href="static/css/v24_extras.css">
@@ -70,11 +70,11 @@
         <div class="boot-status" id="boot-status">Inicializando...</div>
     </div>
 
-    <script src="/static/js/script_2.js"></script>
+    <script src="/static/js/tpv/tpv_boot_loader.js"></script>
 
 
     <!-- TPV Debug — panel nuevo en #dbg-v2, ver tpv_debugger.js al final del body -->
-    <script src="/static/js/script_3.js"></script>
+    <script src="/static/js/tpv/tpv_estado_shim.js"></script>
 <!-- Overlay de Licencia -->
     <div id="license-lock-overlay" class="d-none">
         <div class="text-center text-white p-5" style="max-width: 500px;">
@@ -1183,7 +1183,7 @@
     <script src="/static/lib/html5-qrcode.min.js" onerror="console.log('QR Scanner cargado desde cache')"></script>
     <script src="/static/lib/qrcode.min.js" onerror="console.log('QRCode cargado desde cache')"></script>
     <!-- Sistema de Configuración Centralizado -->
-    <script src="/static/js/script_4.js"></script>
+    <script src="/static/js/tpv/tpv_config_central.js"></script>
     <script src="/static/js/tpv/tpv_estado_sync.js"></script>
     <script src="/static/js/tpv/tpv_qr_etiquetas.js"></script>
     <script src="/static/js/tpv/tpv_punto_venta.js"></script>
@@ -1200,7 +1200,7 @@
 
 <!-- ================= EXPORTACIÓN UNIFICADA SEGURA ================= -->
 
-<script src="/static/js/script_6.js"></script>
+<script src="/static/js/tpv/tpv_export_helpers.js"></script>
 
 <!-- =============================================================== -->
 
@@ -1212,7 +1212,7 @@
 <link rel="stylesheet" href="/static/css/style_4.css">
 
 
-<script src="/static/js/script_7.js"></script>
+<script src="/static/js/tpv/tpv_tienda_cliente.js"></script>
     <script src="/static/js/tpv/tpv_autenticacion.js"></script>
     <script src="/static/js/tpv/tpv_vendedor_modulo.js"></script>
     <script src="/static/js/tpv/tpv_admin_inventario.js"></script>
@@ -1229,11 +1229,11 @@
 <!-- ══════════════════════════════════════════════════════════
      DASHBOARD — Gráficos y KPIs
 ══════════════════════════════════════════════════════════ -->
-<script src="/static/js/script_9.js"></script>
+<script src="/static/js/tpv/tpv_dashboard_supabase.js"></script>
 
 
 <!-- Google Translate + integración bidireccional ES/EN con persistencia offline -->
-<script src="/static/js/script_10.js"></script>
+<script src="/static/js/tpv/tpv_traduccion_i18n.js"></script>
 
 <script type="text/javascript"
     src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
@@ -1241,7 +1241,7 @@
 </script>
 
     <!-- TPV Debugger v6.1 — CRUD completo + mejoras -->
-    <script src="/static/js/script_11.js"></script>
+    <script src="/static/js/tpv/tpv_debugger.js"></script>
 
 <!-- ══════════════════════════════════════════════════════════
      SEGURIDAD — Panel de Blindajes v6.20.0
@@ -1419,6 +1419,6 @@ if(_rol === "administrador"){
   el = document.getElementById("dbg-v2"); if(el) el.style.display = "none";
 }
 </script>
-    <script src="/static/js/script_12.js"></script>
+    <script src="/static/js/tpv/tpv_ui_enhancements.js"></script>
 </body>
 </html>

@@ -1,16 +1,4 @@
-/**
- * ╔══════════════════════════════════════════════════════════════╗
- * ║  tpv_debugger.js — TPV ULTRA SMART  v6.0                   ║
- * ║  Sistema de Debug Inteligente + Monitor Supabase            ║
- * ╚══════════════════════════════════════════════════════════════╝
- *
- * FUNCIONES:
- *  • Panel de errores con categorización y soluciones automáticas
- *  • Diagnóstico de salud del sistema en tiempo real
- *  • Monitor de sincronización con Supabase (tablas, estado)
- *  • Historial diario de snapshots de la aplicación
- *  • Solo visible para el rol "desarrollador"
- */
+// tpv_debugger.js — Panel de debug inteligente + monitor Supabase + diagnóstico
 
 // ══════════════════════════════════════════════════════════════
 //  ESTADO INTERNO DEL DEBUGGER
@@ -1295,12 +1283,6 @@ async function _dbgCRUDDelete(tipo, idx) {
 //  PUNTO DE ENTRADA PÚBLICO — llamar tras login exitoso
 // ══════════════════════════════════════════════════════════════
 window.tpvDebugger = {
-    /**
-     * activar() — idempotente:
-     *  • Primera llamada: inicializa capturadores + construye panel + diagnóstico automático
-     *  • Llamadas siguientes: muestra/oculta el panel (toggle)
-     *  • El botón "Debug" de la barra siempre hace toggle
-     */
     activar() {
         const panelExiste = !!document.getElementById('dbg-v2');
 
@@ -1338,14 +1320,12 @@ window.tpvDebugger = {
         }, 2000);
     },
 
-    /** Añadir mensaje al log desde cualquier parte de la app */
     log:    _dbgLog,
     error:  (msg) => _dbgLog(msg, 'error', msg),
     warn:   (msg) => _dbgLog(msg, 'warning'),
     info:   (msg) => _dbgLog(msg, 'info'),
     ok:     (msg) => _dbgLog(msg, 'success'),
 
-    /** API pública para guardar snapshot desde botón Cerrar Día */
     guardarSnapshot: _dbgGuardarHistorialHoy,
 };
 

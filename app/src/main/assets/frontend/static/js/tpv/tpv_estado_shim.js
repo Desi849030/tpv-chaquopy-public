@@ -1,4 +1,4 @@
-// tpvState declarado aquí primero para que NUNCA sea "not defined"
+// tpv_estado_shim.js — Declaración inicial de tpvState (shim global)
     var tpvState = {
         config:{lang:'es',theme:'light',globalProfitPercent:20},
         productos:[],categorias:[],ordenActual:[],

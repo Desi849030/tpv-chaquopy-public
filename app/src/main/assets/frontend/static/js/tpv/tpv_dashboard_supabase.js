@@ -150,7 +150,7 @@ async function dashboard_cargar() {
     }
 }
 
-// ══════════════════════════════════════════════════════════
+// tpv_dashboard_supabase.js — Dashboard KPIs, gráficos, descuentos, config Supabase
 //  DESCUENTOS — gestión desde herramientas
 // ══════════════════════════════════════════════════════════
 async function descuentos_cargarLista() {

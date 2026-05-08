@@ -1,4 +1,4 @@
-// ── Clave de almacenamiento ──────────────────────────────────
+// tpv_traduccion_i18n.js — Google Translate bidireccional ES/EN con persistencia
 var TPV_LANG_KEY = 'tpv_idioma_seleccionado'; // 'es' | 'en'
 var _gtListo     = false;
 var _gtPendiente = null; // idioma pendiente de aplicar cuando GT cargue

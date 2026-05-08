@@ -5,7 +5,7 @@ function fechaEnRango(f,d,h){if(!f)return true;f=new Date(f);if(d&&f<new Date(d)
 
 async function exportarTPVCompleto(){
 try{
-// Validar que XLSX esté cargado
+// tpv_export_helpers.js — Utilidades: esMovil, csvSafe, descargar, fechaEnRango, exportarTPVCompleto
 if(typeof XLSX==='undefined'){
 showToast('Error: Biblioteca de Excel no cargada. Recarga la página.','danger');
 return;

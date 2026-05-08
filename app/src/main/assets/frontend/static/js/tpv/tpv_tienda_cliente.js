@@ -1,4 +1,4 @@
-// ══════════════════════════════════════════════════════════════
+// tpv_tienda_cliente.js — Tienda: clientes, pedidos, auth cliente, productos por tienda
 //  MÓDULO TIENDA — Estado global y constantes
 // ══════════════════════════════════════════════════════════════
 const TIENDA = {

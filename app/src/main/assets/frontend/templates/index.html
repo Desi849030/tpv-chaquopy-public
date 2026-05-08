@@ -50,15 +50,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="TPV Smart">
     <meta name="mobile-web-app-capable" content="yes">
-    <script>
-window.onerror=function(m,u,l,c,e){
-  var d=document.createElement('div');
-  d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc3545;color:#fff;padding:8px 12px;font-size:12px;word-break:break-all';
-  d.textContent='ERROR: '+m+' (linea '+l+')';
-  document.body.appendChild(d);
-};
-</script>
-<script src="/static/js/script_1.js"></script>
+    <script src="/static/js/script_1.js"></script>
 
     <!-- Fin TPV Ultra Smart PWA -->
 <link rel="stylesheet" href="/static/css/ia_pro.css">  <link rel="stylesheet" href="static/css/v24_extras.css">
@@ -1199,22 +1191,10 @@ window.onerror=function(m,u,l,c,e){
     <script src="/static/lib/qrcode.min.js" onerror="console.log('QRCode cargado desde cache')"></script>
     <!-- Sistema de Configuración Centralizado -->
     <script src="/static/js/script_4.js"></script>
+    <script src="/static/js/script_5.js"></script>
 
     
     <!-- JavaScript Corregido -->
-    <script src="/static/js/smart_excel_importer.js"></script>
-    <script src="{{ url_for('static', filename='js/tpv_state.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/tpv_utils_qr.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/tpv_caja.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/tpv_ventas.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/tpv_inv_diario.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/tpv_gestion.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/smart_excel_importer.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/tpv_backup.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/tpv_export.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/tpv_licencias_ui.js') }}"></script>
-    
-    <script src="{{ url_for('static', filename='js/tpv_logs_ui.js') }}"></script>
 
 
 <!-- ================= EXPORTACIÓN UNIFICADA SEGURA ================= -->
@@ -1232,14 +1212,7 @@ window.onerror=function(m,u,l,c,e){
 
 
 <script src="/static/js/script_7.js"></script>
-
-
-<script src="{{ url_for('static', filename='js/tpv_auth_ui.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/tpv_auth.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/tpv_vendedor.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/tpv_admin_inventario.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/tpv_config_priv.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/tpv_users_lic.js') }}"></script>
+    <script src="/static/js/script_8.js"></script>
 
 
     <!-- CSS movido al final para no bloquear render -->

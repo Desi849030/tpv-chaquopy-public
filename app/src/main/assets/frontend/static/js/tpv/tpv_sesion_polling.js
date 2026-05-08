@@ -1,4 +1,4 @@
-// tpv_session.js
+// tpv_sesion_polling.js — Sesión, logout, polling de pedidos
 async function auth_logout() {
     if (!confirm('¿Cerrar sesión?')) return;
 

@@ -1,4 +1,4 @@
-// tpv_utils.js
+// tpv_utilidades.js — Helpers: logs, copiar texto, eliminaciones
         function agregar_log(mensaje, tipo = 'info') {
             const timestamp = new Date().toISOString();
             systemLogs.push({ timestamp, tipo, mensaje });

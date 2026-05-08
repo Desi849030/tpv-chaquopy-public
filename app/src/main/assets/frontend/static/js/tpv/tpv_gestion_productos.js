@@ -1,4 +1,4 @@
-// tpv_gestion.js
+// tpv_gestion_productos.js — CRUD productos, categorías, import/export Excel
         function gestion_renderizarFiltrosProductos() {
             const select = document.getElementById('gestion-filtro-categoria');
             if (!select) return;

@@ -1,4 +1,4 @@
-// tpv_priv.js
+// tpv_privacidad.js — Configuración de privacidad y datos personales
 function priv_mostrarMenu(rol) {
     // Mostrar/ocultar el menú de Privilegios según el rol
     _priv_mi_rol = rol;  // Guardar rol del usuario actual

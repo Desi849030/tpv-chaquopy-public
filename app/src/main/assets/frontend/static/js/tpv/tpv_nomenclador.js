@@ -1,4 +1,4 @@
-// tpv_nomenclator.js
+// tpv_nomenclador.js — Denominaciones de moneda para caja
         async function nom_cargarDenominaciones(moneda) {
             const contenedor = document.getElementById("nom-contenedorDivisas");
             if (!contenedor) return;

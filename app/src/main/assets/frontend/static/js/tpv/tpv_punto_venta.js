@@ -1,4 +1,4 @@
-// tpv_pos.js
+// tpv_punto_venta.js — Catálogo, carrito, pagos, escáner QR
         function tpv_getStock(productoId) {
             const hoy = getTodayDateString();
             const inv = tpvState.inventarios?.[hoy] || [];

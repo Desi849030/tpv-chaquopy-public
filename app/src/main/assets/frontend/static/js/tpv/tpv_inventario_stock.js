@@ -1,4 +1,4 @@
-// tpv_inventario.js
+// tpv_inventario_stock.js — Inventario diario y control de stock
         function inv_cargarInventario(fecha){
             if(!tpvState.inventarios[fecha]){
                 tpvState.inventarios[fecha] = [];

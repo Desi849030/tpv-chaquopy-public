@@ -1,4 +1,4 @@
-// tpv_core.js
+// tpv_estado_sync.js — Estado global, IndexedDB, sincronización servidor, config UI
 // --- ESTADO GLOBAL Y VARIABLES ---
         // tpvState ya declarado en el shim — aquí lo sobreescribimos con getDefaultState()
         // cuando loadState() termine lo llenará con datos reales de IndexedDB

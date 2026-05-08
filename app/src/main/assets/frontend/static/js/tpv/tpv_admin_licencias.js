@@ -1,4 +1,4 @@
-// tpv_lic_admin.js
+// tpv_admin_licencias.js — Administración y revocación de licencias
 function lic_abrir() {
     lic_tab('lista');
     new bootstrap.Modal(document.getElementById('modal-licencias')).show();

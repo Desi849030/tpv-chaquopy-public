@@ -1,4 +1,4 @@
-// tpv_users.js
+// tpv_gestion_usuarios.js — CRUD de usuarios y roles
 async function auth_verNotificaciones() {
     const body = document.getElementById('notif-body');
     if (body) body.innerHTML = '<div class="text-center py-3 text-muted"><div class="spinner-border spinner-border-sm me-2"></div></div>';

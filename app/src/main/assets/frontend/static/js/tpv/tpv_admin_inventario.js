@@ -1,4 +1,4 @@
-// tpv_admin.js
+// tpv_admin_inventario.js — Admin: inventario, vendedores, gastos
 function _setup_admin_inventario() {
     const pane = document.getElementById('inv-inventario-tab-pane');
     if (!pane || document.getElementById('inv-admin-btns')) return;

@@ -1,4 +1,4 @@
-// tpv_ventas.js
+// tpv_ventas_registros.js — Ventas del día, registros, cierres de caja
         function ventas_renderizarTablaHoy(){
             const hoy = getTodayDateString();
             const tablaBody = document.getElementById("ventas-hoy-tabla");

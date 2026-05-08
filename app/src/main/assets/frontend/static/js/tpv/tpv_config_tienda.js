@@ -1,4 +1,4 @@
-// tpv_tienda.js
+// tpv_config_tienda.js — Configuración de datos de la tienda
 async function cfg_cargarTienda() {
     try {
         const res  = await fetch('/api/tiendas', { credentials: 'same-origin' });

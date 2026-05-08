@@ -1,4 +1,4 @@
-// tpv_licencias.js
+// tpv_licencias_activacion.js — Activación y validación de licencias
         function lic_getRemainingDays() {
             const { licencia } = tpvState;
             if (licencia.activada || !licencia.fechaActivacion) {

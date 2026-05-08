@@ -1,4 +1,4 @@
-// tpv_qr.js
+// tpv_qr_etiquetas.js — Generación QR y etiquetas para clientes
         function cliente_renderizarDropdownCategoriasQR() {
             const categorySelector = document.getElementById('cliente-qr-category-selector');
             if (!categorySelector) return;

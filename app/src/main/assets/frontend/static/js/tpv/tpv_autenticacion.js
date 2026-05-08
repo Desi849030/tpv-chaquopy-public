@@ -1,4 +1,4 @@
-// tpv_auth.js
+// tpv_autenticacion.js — Login, roles, tabs, biometría
 /**
  * tpv-auth.js — TPV ULTRA SMART v5.0
  * Autenticación + Control de pestañas por rol

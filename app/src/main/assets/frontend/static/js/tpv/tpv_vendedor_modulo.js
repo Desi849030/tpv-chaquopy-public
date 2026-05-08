@@ -1,4 +1,4 @@
-// tpv_vendedor.js
+// tpv_vendedor_modulo.js — Vista y funciones del rol vendedor
 function _setup_vendedor() {
     const pane = document.getElementById('inv-inventario-tab-pane');
     if (!pane) return;

@@ -1,7 +1,7 @@
 // tpv_tienda_cliente.js — Tienda: clientes, pedidos, auth cliente, productos por tienda
 //  MÓDULO TIENDA — Estado global y constantes
 // ══════════════════════════════════════════════════════════════
-const TIENDA = {
+const TPV_TIENDA = {
     // Usuario cliente autenticado en este dispositivo
     clienteActual: null,
     // Tienda seleccionada para comprar
@@ -103,45 +103,45 @@ async function tienda_init() {
         if (resp.ok) {
             const data = await resp.json();
             if (data.autenticado) {
-                TIENDA.rolSistema = data.usuario.rol;
-                TIENDA.usuarioSistema = data.usuario;
+                TPV_TIENDA.rolSistema = data.usuario.rol;
+                TPV_TIENDA.usuarioSistema = data.usuario;
             }
         }
     } catch(e) { /* offline, continuar */ }
 
     // Cargar cola offline
-    TIENDA.colaPendiente = await tiendaDB.getAll('cola');
+    TPV_TIENDA.colaPendiente = await tiendaDB.getAll('cola');
     tienda_mostrarBadgeOffline();
 
     // Intentar sincronizar cola si hay conexión
     if (navigator.onLine) tienda_sincronizarCola();
 
     // Renderizar vista según contexto
-    if (['administrador','supervisor','desarrollador','vendedor'].includes(TIENDA.rolSistema)) {
+    if (['administrador','supervisor','desarrollador','vendedor'].includes(TPV_TIENDA.rolSistema)) {
         await tienda_renderVendedor();
-    } else if (TIENDA.rolSistema === 'cliente') {
-        // Cliente autenticado via sistema principal — mapear AUTH.usuario a TIENDA.clienteActual
-        if (!TIENDA.clienteActual && window.AUTH?.usuario) {
-            TIENDA.clienteActual = {
+    } else if (TPV_TIENDA.rolSistema === 'cliente') {
+        // Cliente autenticado via sistema principal — mapear AUTH.usuario a TPV_TIENDA.clienteActual
+        if (!TPV_TIENDA.clienteActual && window.AUTH?.usuario) {
+            TPV_TIENDA.clienteActual = {
                 id: window.AUTH.usuario.id,
                 nombre: window.AUTH.usuario.nombre,
                 email: window.AUTH.usuario.email || window.AUTH.usuario.username,
                 rol: 'cliente'
             };
         }
-        if (TIENDA.clienteActual) {
+        if (TPV_TIENDA.clienteActual) {
             await tienda_renderCliente();
         } else {
             tienda_renderBienvenida();
         }
-    } else if (TIENDA.clienteActual) {
+    } else if (TPV_TIENDA.clienteActual) {
         await tienda_renderCliente();
     } else {
         tienda_renderBienvenida();
     }
 
     // Iniciar polling solo para roles con panel de gestión
-    if (['vendedor','administrador','desarrollador'].includes(TIENDA.rolSistema)) {
+    if (['vendedor','administrador','desarrollador'].includes(TPV_TIENDA.rolSistema)) {
         tienda_iniciarPolling();
     }
 
@@ -176,8 +176,8 @@ function tienda_renderBienvenida() {
 
 // ── Vista del cliente autenticado ────────────────────────────
 async function tienda_renderCliente() {
-    const c = TIENDA.clienteActual;
-    const carritoCount = TIENDA.carrito.reduce((s, i) => s + i.cantidad, 0);
+    const c = TPV_TIENDA.clienteActual;
+    const carritoCount = TPV_TIENDA.carrito.reduce((s, i) => s + i.cantidad, 0);
     document.getElementById('tienda-root').innerHTML = `
     <div class="tienda-hero">
         <div class="position-relative d-flex justify-content-between align-items-start flex-wrap gap-3">
@@ -254,7 +254,7 @@ async function tienda_renderCliente() {
 
 // ── Vista del vendedor / admin ────────────────────────────────
 async function tienda_renderVendedor() {
-    const u = TIENDA.usuarioSistema;
+    const u = TPV_TIENDA.usuarioSistema;
     document.getElementById('tienda-root').innerHTML = `
     <div class="tienda-hero" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
         <div class="position-relative d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -333,7 +333,7 @@ async function tienda_loginCliente() {
         });
         const data = await resp.json();
         if (data.ok) {
-            TIENDA.clienteActual = data.cliente;
+            TPV_TIENDA.clienteActual = data.cliente;
             tienda_guardarClienteLocal(data.cliente);
             bootstrap.Modal.getInstance(document.getElementById('clienteAuthModal'))?.hide();
             showToast(`¡Bienvenido, ${data.cliente.nombre}!`, 'success');
@@ -349,7 +349,7 @@ async function tienda_loginCliente() {
             c.password_plain === password   // Solo para modo demo offline
         );
         if (cliente) {
-            TIENDA.clienteActual = cliente;
+            TPV_TIENDA.clienteActual = cliente;
             bootstrap.Modal.getInstance(document.getElementById('clienteAuthModal'))?.hide();
             showToast(`¡Bienvenido (offline), ${cliente.nombre}!`, 'info');
             await tienda_renderCliente();
@@ -415,7 +415,7 @@ async function tienda_registrarCliente() {
         showToast('Sin conexión — se sincronizará luego.', 'info');
     }
 
-    TIENDA.clienteActual = clienteObj;
+    TPV_TIENDA.clienteActual = clienteObj;
     tienda_guardarClienteLocal(clienteObj);
     bootstrap.Modal.getInstance(document.getElementById('clienteAuthModal'))?.hide();
     showToast(`¡Bienvenido, ${nombre}!`, 'success');
@@ -432,9 +432,9 @@ function tienda_cargarClienteLocal() {
     } catch(e) { return null; }
 }
 function tienda_logoutCliente() {
-    TIENDA.clienteActual = null;
-    TIENDA.carrito = [];
-    TIENDA.tiendaSeleccionada = null;
+    TPV_TIENDA.clienteActual = null;
+    TPV_TIENDA.carrito = [];
+    TPV_TIENDA.tiendaSeleccionada = null;
     try { localStorage.removeItem('tienda_cliente_actual'); } catch(e) {}
     tienda_renderBienvenida();
     showToast('Sesión cerrada', 'info');
@@ -487,7 +487,7 @@ async function tienda_seleccionarTienda(tiendaId) {
     const tienda  = tiendas.find(t => t.id === tiendaId);
     if (!tienda) return;
 
-    TIENDA.tiendaSeleccionada = tienda;
+    TPV_TIENDA.tiendaSeleccionada = tienda;
 
     // Marcar visualmente
     document.querySelectorAll('.tienda-shop-card').forEach(c => c.classList.remove('selected'));
@@ -502,7 +502,7 @@ async function tienda_seleccionarTienda(tiendaId) {
 }
 
 function tienda_deseleccionarTienda() {
-    TIENDA.tiendaSeleccionada = null;
+    TPV_TIENDA.tiendaSeleccionada = null;
     document.getElementById('seccion-productos-tienda').classList.add('d-none');
     document.getElementById('seccion-mis-pedidos').classList.add('d-none');
     document.getElementById('seccion-elegir-tienda').classList.remove('d-none');
@@ -530,7 +530,7 @@ async function tienda_cargarProductosTienda(tienda) {
         }
     }
 
-    TIENDA._productosActuales = productos;
+    TPV_TIENDA._productosActuales = productos;
 
     // Llenar categorías
     const cats = [...new Set(productos.map(p => p.categoria).filter(Boolean))];
@@ -544,7 +544,7 @@ async function tienda_cargarProductosTienda(tienda) {
 function tienda_filtrarProductos() {
     const q   = (document.getElementById('tienda-buscador')?.value || '').toLowerCase();
     const cat = document.getElementById('tienda-filtro-cat')?.value || '';
-    const ps  = (TIENDA._productosActuales || []).filter(p => {
+    const ps  = (TPV_TIENDA._productosActuales || []).filter(p => {
         const matchQ   = !q   || p.nombre.toLowerCase().includes(q);
         const matchCat = !cat || p.categoria === cat;
         return matchQ && matchCat;
@@ -560,7 +560,7 @@ function tienda_renderProductosGrid(productos) {
         return;
     }
     grid.innerHTML = productos.map(p => {
-        const enCarrito = TIENDA.carrito.find(i => i.id === p.id);
+        const enCarrito = TPV_TIENDA.carrito.find(i => i.id === p.id);
         return `
         <div class="col">
             <div class="tienda-card h-100" onclick="tienda_abrirProducto('${p.id}')">
@@ -592,9 +592,9 @@ function tienda_emojiCategoria(cat) {
 }
 
 function tienda_abrirProducto(id) {
-    const p = (TIENDA._productosActuales || []).find(x => x.id === id);
+    const p = (TPV_TIENDA._productosActuales || []).find(x => x.id === id);
     if (!p) return;
-    const enCarrito = TIENDA.carrito.find(i => i.id === id);
+    const enCarrito = TPV_TIENDA.carrito.find(i => i.id === id);
     showToast(`${p.nombre} — ${tienda_fmt(p.precio)}. ${enCarrito ? `En carrito: ${enCarrito.cantidad}` : 'Toca el ícono + para agregar.'}`, 'info');
 }
 
@@ -603,15 +603,15 @@ function tienda_abrirProducto(id) {
 // ══════════════════════════════════════════════════════════════
 
 function tienda_toggleCarrito(prodId) {
-    if (!TIENDA.clienteActual) { tienda_abrirAuth(); return; }
-    const p = (TIENDA._productosActuales || []).find(x => x.id === prodId);
+    if (!TPV_TIENDA.clienteActual) { tienda_abrirAuth(); return; }
+    const p = (TPV_TIENDA._productosActuales || []).find(x => x.id === prodId);
     if (!p) return;
 
-    const idx = TIENDA.carrito.findIndex(i => i.id === prodId);
+    const idx = TPV_TIENDA.carrito.findIndex(i => i.id === prodId);
     if (idx >= 0) {
-        TIENDA.carrito[idx].cantidad++;
+        TPV_TIENDA.carrito[idx].cantidad++;
     } else {
-        TIENDA.carrito.push({ ...p, cantidad: 1 });
+        TPV_TIENDA.carrito.push({ ...p, cantidad: 1 });
     }
     tienda_actualizarBadgeCarrito();
     tienda_filtrarProductos(); // re-render para reflejar cambio
@@ -619,7 +619,7 @@ function tienda_toggleCarrito(prodId) {
 }
 
 function tienda_actualizarBadgeCarrito() {
-    const total = TIENDA.carrito.reduce((s, i) => s + i.cantidad, 0);
+    const total = TPV_TIENDA.carrito.reduce((s, i) => s + i.cantidad, 0);
     const btn   = document.getElementById('carrito-count-btn');
     if (btn) btn.textContent = total || '';
     // Badge en el nav
@@ -640,13 +640,13 @@ function tienda_renderCarrito() {
     const total = document.getElementById('carrito-total');
     if (!list) return;
 
-    if (!TIENDA.carrito.length) {
+    if (!TPV_TIENDA.carrito.length) {
         list.innerHTML = '<p class="text-center text-muted py-3"><i class="bi bi-cart-x fs-2 d-block mb-2"></i>Carrito vacío</p>';
         if (total) total.textContent = '$0.00';
         return;
     }
 
-    list.innerHTML = TIENDA.carrito.map((item, idx) => `
+    list.innerHTML = TPV_TIENDA.carrito.map((item, idx) => `
     <div class="carrito-item">
         <div class="flex-grow-1">
             <div class="fw-semibold">${item.nombre}</div>
@@ -660,26 +660,26 @@ function tienda_renderCarrito() {
         </div>
     </div>`).join('');
 
-    const sum = TIENDA.carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
+    const sum = TPV_TIENDA.carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
     if (total) total.textContent = tienda_fmt(sum);
 }
 
 function tienda_cambiarCantidad(idx, delta) {
-    TIENDA.carrito[idx].cantidad += delta;
-    if (TIENDA.carrito[idx].cantidad <= 0) TIENDA.carrito.splice(idx, 1);
+    TPV_TIENDA.carrito[idx].cantidad += delta;
+    if (TPV_TIENDA.carrito[idx].cantidad <= 0) TPV_TIENDA.carrito.splice(idx, 1);
     tienda_actualizarBadgeCarrito();
     tienda_renderCarrito();
 }
 
 function tienda_quitarItem(idx) {
-    TIENDA.carrito.splice(idx, 1);
+    TPV_TIENDA.carrito.splice(idx, 1);
     tienda_actualizarBadgeCarrito();
     tienda_renderCarrito();
 }
 
 function tienda_limpiarCarrito() {
     if (!confirm('¿Vaciar el carrito?')) return;
-    TIENDA.carrito = [];
+    TPV_TIENDA.carrito = [];
     tienda_actualizarBadgeCarrito();
     tienda_renderCarrito();
 }
@@ -689,18 +689,18 @@ function tienda_limpiarCarrito() {
 // ══════════════════════════════════════════════════════════════
 
 async function tienda_enviarPedido() {
-    if (!TIENDA.clienteActual)    return showToast('Debes iniciar sesión', 'warning');
-    if (!TIENDA.tiendaSeleccionada) return showToast('Selecciona una tienda primero', 'warning');
-    if (!TIENDA.carrito.length)   return showToast('El carrito está vacío', 'warning');
+    if (!TPV_TIENDA.clienteActual)    return showToast('Debes iniciar sesión', 'warning');
+    if (!TPV_TIENDA.tiendaSeleccionada) return showToast('Selecciona una tienda primero', 'warning');
+    if (!TPV_TIENDA.carrito.length)   return showToast('El carrito está vacío', 'warning');
 
     const pedido = {
         id:         tienda_uid(),
-        cliente_id: TIENDA.clienteActual.id,
-        cliente_nombre: TIENDA.clienteActual.nombre,
-        tienda_id:  TIENDA.tiendaSeleccionada.id,
-        tienda_nombre: TIENDA.tiendaSeleccionada.nombre,
-        items:      [...TIENDA.carrito],
-        total:      TIENDA.carrito.reduce((s, i) => s + i.precio * i.cantidad, 0),
+        cliente_id: TPV_TIENDA.clienteActual.id,
+        cliente_nombre: TPV_TIENDA.clienteActual.nombre,
+        tienda_id:  TPV_TIENDA.tiendaSeleccionada.id,
+        tienda_nombre: TPV_TIENDA.tiendaSeleccionada.nombre,
+        items:      [...TPV_TIENDA.carrito],
+        total:      TPV_TIENDA.carrito.reduce((s, i) => s + i.precio * i.cantidad, 0),
         estado:     'pendiente',
         fecha:      tienda_now(),
         sincronizado: false
@@ -730,7 +730,7 @@ async function tienda_enviarPedido() {
     }
 
     // Vaciar carrito
-    TIENDA.carrito = [];
+    TPV_TIENDA.carrito = [];
     tienda_actualizarBadgeCarrito();
     bootstrap.Modal.getInstance(document.getElementById('carritoModal'))?.hide();
 
@@ -754,14 +754,14 @@ async function tienda_verMisPedidos() {
 
     let pedidos = [];
     try {
-        const resp = await fetch(`/api/pedidos?cliente_id=${TIENDA.clienteActual?.id}`);
+        const resp = await fetch(`/api/pedidos?cliente_id=${TPV_TIENDA.clienteActual?.id}`);
         if (resp.ok) {
             const data = await resp.json();
             pedidos = data.pedidos || [];
         }
     } catch(e) {
         pedidos = (await tiendaDB.getAll('pedidos'))
-            .filter(p => p.cliente_id === TIENDA.clienteActual?.id)
+            .filter(p => p.cliente_id === TPV_TIENDA.clienteActual?.id)
             .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
     }
 
@@ -858,7 +858,7 @@ async function tienda_abrirDetallePedido(pedidoId) {
     if (!pedido) pedido = await tiendaDB.get('pedidos', pedidoId);
     if (!pedido) return showToast('Pedido no encontrado', 'warning');
 
-    TIENDA.pedidoEnDetalle = pedido;
+    TPV_TIENDA.pedidoEnDetalle = pedido;
     const body = document.getElementById('pedidoDetalleBody');
     body.innerHTML = `
     <div class="mb-3 p-3 rounded" style="background:rgba(99,102,241,.05);border:1px solid rgba(99,102,241,.15);">
@@ -889,14 +889,14 @@ async function tienda_abrirDetallePedido(pedidoId) {
 }
 
 function tienda_aceptarPedido() {
-    if (TIENDA.pedidoEnDetalle) {
-        tienda_cambiarEstadoPedido(TIENDA.pedidoEnDetalle.id, 'aceptado');
+    if (TPV_TIENDA.pedidoEnDetalle) {
+        tienda_cambiarEstadoPedido(TPV_TIENDA.pedidoEnDetalle.id, 'aceptado');
         bootstrap.Modal.getInstance(document.getElementById('pedidoDetalleModal'))?.hide();
     }
 }
 function tienda_rechazarPedido() {
-    if (TIENDA.pedidoEnDetalle) {
-        tienda_cambiarEstadoPedido(TIENDA.pedidoEnDetalle.id, 'rechazado');
+    if (TPV_TIENDA.pedidoEnDetalle) {
+        tienda_cambiarEstadoPedido(TPV_TIENDA.pedidoEnDetalle.id, 'rechazado');
         bootstrap.Modal.getInstance(document.getElementById('pedidoDetalleModal'))?.hide();
     }
 }
@@ -1065,13 +1065,13 @@ async function tienda_eliminarTienda(tiendaId) {
 async function tienda_agregarCola(accion) {
     const item = { id: tienda_uid(), ...accion, timestamp: tienda_now() };
     await tiendaDB.put('cola', item);
-    TIENDA.colaPendiente.push(item);
+    TPV_TIENDA.colaPendiente.push(item);
     tienda_mostrarBadgeOffline();
 }
 
 function tienda_mostrarBadgeOffline() {
     let badge = document.getElementById('tienda-offline-queue');
-    const n   = TIENDA.colaPendiente.length;
+    const n   = TPV_TIENDA.colaPendiente.length;
 
     if (!badge && n > 0) {
         badge = document.createElement('div');
@@ -1113,7 +1113,7 @@ async function tienda_sincronizarCola() {
         } catch(e) { /* mantener en cola */ }
     }
 
-    TIENDA.colaPendiente = await tiendaDB.getAll('cola');
+    TPV_TIENDA.colaPendiente = await tiendaDB.getAll('cola');
     tienda_mostrarBadgeOffline();
     if (sincronizados > 0) showToast(`✅ ${sincronizados} acción${sincronizados > 1 ? 'es' : ''} sincronizada${sincronizados > 1 ? 's' : ''}`, 'success');
 }
@@ -1123,8 +1123,8 @@ async function tienda_sincronizarCola() {
 // ══════════════════════════════════════════════════════════════
 
 function tienda_iniciarPolling() {
-    if (TIENDA.pollingId) return;
-    TIENDA.pollingId = setInterval(async () => {
+    if (TPV_TIENDA.pollingId) return;
+    TPV_TIENDA.pollingId = setInterval(async () => {
         if (document.visibilityState !== 'visible') return;
         const tabActivo = document.getElementById('tienda-tab-pane')?.classList.contains('show');
         // Siempre actualizar el badge aunque no esté en la pestaña
@@ -1151,7 +1151,7 @@ function tienda_iniciarPolling() {
 document.addEventListener('DOMContentLoaded', () => {
     // Restaurar cliente de sesión previa
     const clienteGuardado = tienda_cargarClienteLocal();
-    if (clienteGuardado) TIENDA.clienteActual = clienteGuardado;
+    if (clienteGuardado) TPV_TIENDA.clienteActual = clienteGuardado;
 
     // Sincronizar cuando vuelva la conexión
     window.addEventListener('online', () => {

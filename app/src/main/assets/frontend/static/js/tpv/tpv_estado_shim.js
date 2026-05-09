@@ -1,5 +1,5 @@
 // tpv_estado_shim.js — Declaración inicial de tpvState (shim global)
-    var tpvState = {
+    var tpvState = window.tpvState || {
         config:{lang:'es',theme:'light',globalProfitPercent:20},
         productos:[],categorias:[],ordenActual:[],
         ventasDiarias:{},historialVentas:[],inventarios:{},

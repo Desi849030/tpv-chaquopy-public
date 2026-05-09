@@ -2,6 +2,7 @@
 
 (function(){
 "use strict";
+try{
 
 /* ── DARK MODE ── */
 function initDarkMode(){
@@ -177,4 +178,5 @@ if(document.readyState === 'loading'){
 } else {
   init_v23();
 }
+}catch(e){console.error('[UI Enhancements]',e);}
 })();

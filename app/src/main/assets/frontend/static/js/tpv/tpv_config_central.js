@@ -1,6 +1,6 @@
 // tpv_config_central.js — Configuración centralizada TPV_CONFIG (claves, versiones)
         const TPV_CONFIG = {
-            VERSION: '6.9',
+            VERSION: '2.0.0',
             // ══ v6.9 PARCHE_6: Clave generada por Web Crypto en el dispositivo ══
             _deviceKey: null,
             _keyFetched: false,

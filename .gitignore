@@ -1,52 +1,63 @@
 # Python
 __pycache__/
 *.py[cod]
-*.so
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+venv/
 .venv/
 env/
-*.egg-info/
 
-# Android
+# Database
+*.db
+*.sqlite
+*.sqlite3
+tpv_datos.db
+
+# APK / Build artifacts
 *.apk
 *.aab
 *.keystore
-local.properties
-.gradle/
+*.jks
+Compilation/
+Run/
+Task/
 build/
-app/build/
 
 # IDE
-.vscode/
 .idea/
+.vscode/
 *.swp
 *.swo
+*~
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Backup
-*.bak
-*_backup*
-*_danado*
-
-# Logs
-*.log
-tpv.log
-
-# Env
+# Env & secrets
 .env
 .env.local
-storage/
+*.pem
+*.key
 
-# Database runtime (NO versionar)
-tpv_datos.db
-tpv_datos.db-shm
-tpv_datos.db-wal
-# Secrets (se generan en runtime)
-.tpv_secret_key
+# Temp files
+*.patch
+*.bak
+*.log
+*.tmp
+apply_*.py
+
+# Gradle
+.gradle/
+local.properties
+*.iml
+
+# Chaquopy cache
+app/src/main/assets/python/
+
+# Runtime secrets (auto-generated)
 .branch_id
-.supabase_config.json
-.tpv_secret
-*.db
-tpv_debug.log
+.tpv_secret_key

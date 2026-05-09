@@ -193,7 +193,31 @@ def error_404(e):
 
 @app.errorhandler(500)
 def error_500(e):
-    return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
+    import traceback
+    tb = traceback.format_exc()
+    print("=" * 60)
+    print("ERROR 500 - TRACEBACK:")
+    print(tb)
+    print("=" * 60)
+    return (
+        "<h1>Error 500</h1>"
+        "<p>Copia este traceback y envialo:</p>"
+        f"<pre style='background:#1e1e1e;color:#d4d4d4;padding:16px;overflow:auto;font-size:12px;white-space:pre-wrap'>{tb}</pre>"
+    ), 500
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    import traceback
+    tb = traceback.format_exc()
+    print("=" * 60)
+    print("EXCEPTION - TRACEBACK:")
+    print(tb)
+    print("=" * 60)
+    return (
+        "<h1>Error</h1>"
+        "<p>Excepcion no capturada:</p>"
+        f"<pre style='background:#1e1e1e;color:#d4d4d4;padding:16px;overflow:auto;font-size:12px;white-space:pre-wrap'>{tb}</pre>"
+    ), 500
 
 # ══════════════════════════════════════════════════════════════
 #  ARRANQUE

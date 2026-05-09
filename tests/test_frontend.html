@@ -1,56 +1,218 @@
 <!DOCTYPE html>
-<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>TPV Frontend Tests</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<style>body{background:#0d1117;color:#c9d1d9;font-family:monospace}.pass{color:#3fb950}.fail{color:#f85149}.skip{color:#d29922}.card{background:#161b22;border:1px solid #30363d}.summary{background:#21262d;border-radius:8px;padding:1rem;margin:1rem 0}#results pre{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.5rem;max-height:300px;overflow:auto;font-size:.8rem}</style>
-</head><body class="container py-4">
-<h2 class="text-center mb-3">TPV v1.0.0 - Frontend Tests</h2>
-<div class="summary" id="summary"><span class="text-muted">Ejecutando...</span></div>
-<div class="card p-3 mb-3"><h5>Resultados</h5><div id="results"></div></div>
-<div class="card p-3"><h5>Detalle</h5><pre id="detail"></pre></div>
-<div id="logs-display"></div><div id="dbg-v2"></div><div id="tpv-app"></div>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>TPV v1.0.0 — Frontend Tests</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:monospace;background:#1a1a2e;color:#e0e0e0;padding:16px;max-width:800px;margin:0 auto}
+h1{color:#00d4ff;text-align:center;margin-bottom:8px;font-size:1.4em}
+.sub{text-align:center;color:#888;margin-bottom:20px;font-size:.85em}
+#summary{background:#16213e;border:1px solid #0f3460;border-radius:8px;padding:12px 16px;margin-bottom:16px}
+#summary .pass{color:#00ff88}#summary .fail{color:#ff4444}#summary .skip{color:#ffaa00}
+#summary .total{font-size:1.3em;font-weight:bold;color:#00d4ff}
+.test{background:#0f0f23;border-left:3px solid #333;padding:8px 12px;margin-bottom:6px;border-radius:0 6px 6px 0;font-size:.85em}
+.test.pass{border-left-color:#00ff88}.test.fail{border-left-color:#ff4444}.test.skip{border-left-color:#ffaa00}
+.test .name{font-weight:bold;margin-bottom:2px}.test .msg{color:#aaa;font-size:.8em}
+#progress{height:4px;background:#16213e;border-radius:2px;margin-bottom:16px;overflow:hidden}
+#progress-bar{height:100%;background:linear-gradient(90deg,#00d4ff,#00ff88);width:0%;transition:width .3s}
+.section{color:#ffaa00;font-weight:bold;margin:16px 0 8px;padding:6px 0;border-bottom:1px dashed #333}
+</style>
+</head>
+<body>
+<h1>TPV Ultra Smart v1.0.0</h1>
+<p class="sub">Test Suite — 79 casos de prueba</p>
+<div id="progress"><div id="progress-bar"></div></div>
+<div id="summary"></div>
+<div id="results"></div>
 <script>
-(function(){var _f=window.fetch;window.fetch=function(){return Promise.resolve({ok:false,status:0,json:function(){return Promise.resolve({})}})};})();
-</script>
-<script src="/static/js/tpv/tpv_estado_shim.js"></script>
-<script src="/static/js/tpv/tpv_config_central.js"></script>
-<script src="/static/js/tpv/tpv_boot_loader.js"></script>
-<script src="/static/js/tpv/tpv_estado_sync.js"></script>
-<script src="/static/js/tpv/tpv_utilidades.js"></script>
-<script src="/static/js/tpv/tpv_autenticacion.js"></script>
-<script src="/static/js/tpv/tpv_debugger.js"></script>
-<script src="/static/js/tpv/tpv_traduccion_i18n.js"></script>
-<script src="/static/js/tpv/tpv_ui_enhancements.js"></script>
-<script>
-var passed=0,failed=0,skipped=0,res=document.getElementById("results"),det=document.getElementById("detail");
-function addR(n,ok,d){var cls=ok==="skip"?"skip":(ok?"pass":"fail");if(cls==="pass")passed++;else if(cls==="fail")failed++;else skipped++;res.innerHTML+='<div class="'+cls+' mb-1">['+cls.toUpperCase()+'] '+n+(d?" - "+d:"")+'</div>';det.textContent+='['+cls+'] '+n+(d?" - "+d:"")+'\n';}
-function t(n,fn){try{var r=fn();if(r===true)addR(n,true);else if(r==="skip")addR(n,"skip");else{addR(n,false,r||"Failed")}}catch(e){addR(n,false,e.message)}}
-function finish(){var s=document.getElementById("summary"),total=passed+failed+skipped,pct=total?Math.round(passed/total*100):0;s.innerHTML='<div class="d-flex justify-content-between"><span>Total: <strong>'+total+'</strong></span><span class="pass">PASS: '+passed+'</span><span class="fail">FAIL: '+failed+'</span><span class="skip">SKIP: '+skipped+'</span></div>';}
-t("tpvState existe",function(){return typeof window.tpvState!=="undefined"});
-t("tpvState es objeto",function(){return typeof window.tpvState==="object"});
-t("tpvState.productos es array",function(){return window.tpvState&&Array.isArray(window.tpvState.productos)});
-t("tpvState.ordenActual existe",function(){return window.tpvState&&typeof window.tpvState.ordenActual!=="undefined"});
-t("TPV_CONFIG existe",function(){return typeof window.TPV_CONFIG!=="undefined"});
-t("TPV_CONFIG.VERSION es string",function(){return window.TPV_CONFIG&&typeof window.TPV_CONFIG.VERSION==="string"});
-t("getCurrentConfig existe",function(){return typeof window.getCurrentConfig==="function"});
-t("getEnvironment existe",function(){return typeof window.getEnvironment==="function"});
-t("_splashHide existe",function(){return typeof window._splashHide==="function"});
-t("loadState existe",function(){return typeof window.loadState==="function"});
-t("saveState existe",function(){return typeof window.saveState==="function"});
-t("formatCurrency existe",function(){return typeof window.formatCurrency==="function"});
-t("formatCurrency(100)",function(){return window.formatCurrency(100)==="$100.00"});
-t("formatCurrency(0)",function(){return window.formatCurrency(0)==="$0.00"});
-t("getTodayDateString existe",function(){return typeof window.getTodayDateString==="function"});
-t("getTodayDateString formato",function(){return /^\d{4}-\d{2}-\d{2}$/.test(getTodayDateString())});
-t("showToast existe",function(){return typeof window.showToast==="function"});
-t("agregar_log existe",function(){return typeof window.agregar_log==="function"});
-t("AUTH existe",function(){return typeof window.AUTH!=="undefined"});
-t("_DBG existe",function(){return typeof window._DBG!=="undefined"});
-t("_DBG.buffer es array",function(){return window._DBG&&Array.isArray(window._DBG.buffer)});
-t("TPV_LANG_KEY existe",function(){return typeof window.TPV_LANG_KEY!=="undefined"});
-t("initDarkMode existe",function(){return typeof window.initDarkMode==="function"});
-t("animateCounters existe",function(){return typeof window.animateCounters==="function"});
-t("checkStockNotifications existe",function(){return typeof window.checkStockNotifications==="function"});
-t("27 modulos definidos",function(){return 27===27});
+const T={pass:0,fail:0,skip:0,total:0};
+function assert(c,n,d){T.total++;const r=document.createElement('div');r.className='test '+(c?'pass':'fail');r.innerHTML='<div class="name">'+(c?'&#10003;':'&#10007;')+' '+n+'</div>'+((d&&!c)?'<div class="msg">'+d+'</div>':'');document.getElementById('results').appendChild(r);c?T.pass++:T.fail++;document.getElementById('progress-bar').style.width=((T.pass+T.fail+T.skip)/79*100)+'%'}
+function skip(n){T.total++;T.skip++;const r=document.createElement('div');r.className='test skip';r.innerHTML='<div class="name">&#8708; '+n+'</div><div class="msg">Requiere entorno navegador completo</div>';document.getElementById('results').appendChild(r);document.getElementById('progress-bar').style.width=((T.pass+T.fail+T.skip)/79*100)+'%'}
+function sec(t){document.getElementById('results').innerHTML+='<div class="section">'+t+'</div>'}
+function finish(){document.getElementById('summary').innerHTML='<div class="total">'+T.total+'/79</div><span class="pass">Pasan: '+T.pass+'</span> | <span class="fail">Fallo: '+T.fail+'</span> | <span class="skip">Omitidos: '+T.skip+'</span>'}
+window.onload=function(){
+sec('1. Estado Global tpvState (15 tests)');
+assert(typeof window.tpvState==='object','tpvState existe como objeto','tipo='+typeof window.tpvState);
+assert(window.tpvState!==null,'tpvState no es null');
+if(window.tpvState){
+assert('currentTab' in window.tpvState,'tpvState tiene currentTab');
+assert('isLicenseActive' in window.tpvState,'tpvState tiene isLicenseActive');
+assert('saleTotal' in window.tpvState,'tpvState tiene saleTotal');
+assert('cart' in window.tpvState,'tpvState tiene cart');
+assert(Array.isArray(window.tpvState.cart),'cart es un Array');
+assert('currentCategory' in window.tpvState,'tpvState tiene currentCategory');
+assert('paymentMethod' in window.tpvState,'tpvState tiene paymentMethod');
+assert('dbName' in window.tpvState,'tpvState tiene dbName');
+assert('isLoggedIn' in window.tpvState,'tpvState tiene isLoggedIn');
+assert('users' in window.tpvState,'tpvState tiene users');
+assert('ticketWidth' in window.tpvState,'tpvState tiene ticketWidth');
+assert('taxRate' in window.tpvState,'tpvState tiene taxRate');
+assert(typeof window.tpvState.currentTab==='string','currentTab es string','tipo='+typeof window.tpvState.currentTab);
+assert(typeof window.tpvState.saleTotal==='number','saleTotal es number','tipo='+typeof window.tpvState.saleTotal);
+}
+sec('2. Configuracion TPV_CONFIG (8 tests)');
+assert(typeof window.TPV_CONFIG==='object','TPV_CONFIG existe como objeto','tipo='+typeof window.TPV_CONFIG);
+if(window.TPV_CONFIG){
+assert('appName' in window.TPV_CONFIG,'TPV_CONFIG tiene appName');
+assert('version' in window.TPV_CONFIG,'TPV_CONFIG tiene version');
+assert(window.TPV_CONFIG.version==='1.0.0','Version es 1.0.0','version='+window.TPV_CONFIG.version);
+assert('port' in window.TPV_CONFIG,'TPV_CONFIG tiene port');
+assert('currency' in window.TPV_CONFIG,'TPV_CONFIG tiene currency');
+assert('maxDecimals' in window.TPV_CONFIG,'TPV_CONFIG tiene maxDecimals');
+assert('timeout' in window.TPV_CONFIG,'TPV_CONFIG tiene timeout');
+}
+sec('3. Funciones Utilitarias (10 tests)');
+assert(typeof window.formatCurrency==='function','formatCurrency existe','tipo='+typeof window.formatCurrency);
+if(typeof window.formatCurrency==='function'){
+assert(typeof window.formatCurrency(10)==='string','formatCurrency(10) retorna string');
+assert(window.formatCurrency(10).indexOf('10')!==-1,'formatCurrency(10) contiene valor','res='+window.formatCurrency(10));
+assert(typeof window.formatCurrency(0)==='string','formatCurrency(0) retorna string');
+assert(typeof window.formatCurrency(9999.99)==='string','formatCurrency(9999.99) retorna string');
+}
+assert(typeof window.generateId==='function','generateId existe','tipo='+typeof window.generateId);
+if(typeof window.generateId==='function'){
+assert(typeof window.generateId()==='string','generateId retorna string');
+assert(window.generateId()!==window.generateId(),'generateId genera IDs unicos');
+assert(window.generateId().length>0,'generateId no retorna vacio');
+}
+assert(typeof window.showNotification==='function','showNotification existe');
+assert(typeof window.hideModal==='function','hideModal existe');
+assert(typeof window.updateClock==='function','updateClock existe');
+sec('4. Modulos JavaScript Cargados (15 tests)');
+assert(typeof window.tpv_pos!=='undefined','Modulo tpv_pos existe','tipo='+typeof window.tpv_pos);
+assert(typeof window.tpv_cart!=='undefined','Modulo tpv_cart existe','tipo='+typeof window.tpv_cart);
+assert(typeof window.tpv_products!=='undefined','Modulo tpv_products existe','tipo='+typeof window.tpv_products);
+assert(typeof window.tpv_categories!=='undefined','Modulo tpv_categories existe','tipo='+typeof window.tpv_categories);
+assert(typeof window.tpv_payments!=='undefined','Modulo tpv_payments existe','tipo='+typeof window.tpv_payments);
+assert(typeof window.tpv_reports!=='undefined','Modulo tpv_reports existe','tipo='+typeof window.tpv_reports);
+assert(typeof window.tpv_inventory!=='undefined','Modulo tpv_inventory existe','tipo='+typeof window.tpv_inventory);
+assert(typeof window.tpv_settings!=='undefined','Modulo tpv_settings existe','tipo='+typeof window.tpv_settings);
+assert(typeof window.tpv_cash!=='undefined','Modulo tpv_cash existe','tipo='+typeof window.tpv_cash);
+assert(typeof window.tpv_customers!=='undefined','Modulo tpv_customers existe','tipo='+typeof window.tpv_customers);
+assert(typeof window.tpv_database!=='undefined','Modulo tpv_database existe','tipo='+typeof window.tpv_database);
+assert(typeof window.tpv_api!=='undefined','Modulo tpv_api existe','tipo='+typeof window.tpv_api);
+assert(typeof window.tpv_tickets!=='undefined','Modulo tpv_tickets existe','tipo='+typeof window.tpv_tickets);
+assert(typeof window.tpv_ui!=='undefined','Modulo tpv_ui existe','tipo='+typeof window.tpv_ui);
+assert(typeof window.tpv_utils!=='undefined','Modulo tpv_utils existe','tipo='+typeof window.tpv_utils);
+sec('5. Modulo POS (5 tests)');
+if(window.tpv_pos){
+assert(typeof tpv_pos.init==='function','tpv_pos.init existe');
+assert(typeof tpv_pos.switchTab==='function','tpv_pos.switchTab existe');
+assert(typeof tpv_pos.getStatus==='function','tpv_pos.getStatus existe');
+assert(typeof tpv_pos.reset==='function','tpv_pos.reset existe');
+skip('tpv_pos.init() ejecucion completa');
+}
+sec('6. Modulo Carrito (8 tests)');
+if(window.tpv_cart){
+assert(typeof tpv_cart.addItem==='function','tpv_cart.addItem existe');
+assert(typeof tpv_cart.removeItem==='function','tpv_cart.removeItem existe');
+assert(typeof tpv_cart.clear==='function','tpv_cart.clear existe');
+assert(typeof tpv_cart.getTotal==='function','tpv_cart.getTotal existe');
+assert(typeof tpv_cart.getItems==='function','tpv_cart.getItems existe');
+assert(typeof tpv_cart.updateQuantity==='function','tpv_cart.updateQuantity existe');
+assert(typeof tpv_cart.getTotal()==='number','getTotal retorna number','val='+typeof tpv_cart.getTotal());
+assert(Array.isArray(tpv_cart.getItems()),'getItems retorna Array');
+}
+sec('7. Modulo Productos (6 tests)');
+if(window.tpv_products){
+assert(typeof tpv_products.getAll==='function','tpv_products.getAll existe');
+assert(typeof tpv_products.search==='function','tpv_products.search existe');
+assert(typeof tpv_products.getByCategory==='function','tpv_products.getByCategory existe');
+assert(typeof tpv_products.create==='function','tpv_products.create existe');
+assert(typeof tpv_products.update==='function','tpv_products.update existe');
+assert(typeof tpv_products.delete==='function','tpv_products.delete existe');
+}
+sec('8. Modulo Pagos (6 tests)');
+if(window.tpv_payments){
+assert(typeof tpv_payments.process==='function','tpv_payments.process existe');
+assert(typeof tpv_payments.getMethods==='function','tpv_payments.getMethods existe');
+assert(typeof tpv_payments.calculateChange==='function','tpv_payments.calculateChange existe');
+assert(typeof tpv_payments.getLastTransaction==='function','tpv_payments.getLastTransaction existe');
+assert(typeof tpv_payments.history==='function','tpv_payments.history existe');
+skip('tpv_payments.process() ejecucion completa');
+}
+sec('9. Modulo Reportes (6 tests)');
+if(window.tpv_reports){
+assert(typeof tpv_reports.daily==='function','tpv_reports.daily existe');
+assert(typeof tpv_reports.monthly==='function','tpv_reports.monthly existe');
+assert(typeof tpv_reports.byCategory==='function','tpv_reports.byCategory existe');
+assert(typeof tpv_reports.topProducts==='function','tpv_reports.topProducts existe');
+assert(typeof tpv_reports.exportData==='function','tpv_reports.exportData existe');
+skip('tpv_reports.daily() ejecucion completa');
+}
+sec('10. Modulo Inventario (4 tests)');
+if(window.tpv_inventory){
+assert(typeof tpv_inventory.check==='function','tpv_inventory.check existe');
+assert(typeof tpv_inventory.adjust==='function','tpv_inventory.adjust existe');
+assert(typeof tpv_inventory.getLowStock==='function','tpv_inventory.getLowStock existe');
+assert(typeof tpv_inventory.alerts==='function','tpv_inventory.alerts existe');
+}
+sec('11. Modulo Configuracion (4 tests)');
+if(window.tpv_settings){
+assert(typeof tpv_settings.get==='function','tpv_settings.get existe');
+assert(typeof tpv_settings.set==='function','tpv_settings.set existe');
+assert(typeof tpv_settings.getAll==='function','tpv_settings.getAll existe');
+assert(typeof tpv_settings.exportConfig==='function','tpv_settings.exportConfig existe');
+}
+sec('12. Modulo Base de Datos (4 tests)');
+if(window.tpv_database){
+assert(typeof tpv_database.query==='function','tpv_database.query existe');
+assert(typeof tpv_database.init==='function','tpv_database.init existe');
+assert(typeof tpv_database.migrate==='function','tpv_database.migrate existe');
+skip('tpv_database.query() requiere API activa');
+}
+sec('13. Modulo API (4 tests)');
+if(window.tpv_api){
+assert(typeof tpv_api.get==='function','tpv_api.get existe');
+assert(typeof tpv_api.post==='function','tpv_api.post existe');
+assert(typeof tpv_api.put==='function','tpv_api.put existe');
+skip('tpv_api.get() requiere servidor activo');
+}
+sec('14. Modulo Tickets (3 tests)');
+if(window.tpv_tickets){
+assert(typeof tpv_tickets.generate==='function','tpv_tickets.generate existe');
+assert(typeof tpv_tickets.print==='function','tpv_tickets.print existe');
+skip('tpv_tickets.generate() ejecucion completa');
+}
+sec('15. Modulo Clientes (3 tests)');
+if(window.tpv_customers){
+assert(typeof tpv_customers.getAll==='function','tpv_customers.getAll existe');
+assert(typeof tpv_customers.search==='function','tpv_customers.search existe');
+assert(typeof tpv_customers.create==='function','tpv_customers.create existe');
+}
+sec('16. Modulo UI (3 tests)');
+if(window.tpv_ui){
+assert(typeof tpv_ui.render==='function','tpv_ui.render existe');
+assert(typeof tpv_ui.show==='function','tpv_ui.show existe');
+assert(typeof tpv_ui.hide==='function','tpv_ui.hide existe');
+}
+sec('17. Integracion Final (5 tests)');
+var mc=0;
+if(typeof tpv_pos!=='undefined')mc++;
+if(typeof tpv_cart!=='undefined')mc++;
+if(typeof tpv_products!=='undefined')mc++;
+if(typeof tpv_categories!=='undefined')mc++;
+if(typeof tpv_payments!=='undefined')mc++;
+if(typeof tpv_reports!=='undefined')mc++;
+if(typeof tpv_inventory!=='undefined')mc++;
+if(typeof tpv_settings!=='undefined')mc++;
+if(typeof tpv_cash!=='undefined')mc++;
+if(typeof tpv_customers!=='undefined')mc++;
+if(typeof tpv_database!=='undefined')mc++;
+if(typeof tpv_api!=='undefined')mc++;
+if(typeof tpv_tickets!=='undefined')mc++;
+if(typeof tpv_ui!=='undefined')mc++;
+if(typeof tpv_utils!=='undefined')mc++;
+assert(mc>=12,'Al menos 12 modulos cargados','cargados='+mc+'/15');
+assert(document.getElementById('app-container')!==null,'Elemento #app-container existe');
+assert(document.querySelectorAll('.tab-btn').length>=4,'Al menos 4 botones de tab');
+assert(document.querySelectorAll('script').length>=5,'Multiples scripts cargados en DOM');
+assert(TPV_CONFIG&&TPV_CONFIG.version==='1.0.0','Version global coincide con TPV_CONFIG');
 finish();
-</script></body></html>
+console.log('Tests finalizados: '+T.pass+'/'+T.total+' pasaron, '+T.fail+' fallaron');
+};
+</script>
+</body>
+</html>

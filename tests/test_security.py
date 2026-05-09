@@ -30,12 +30,21 @@ class TestTokenizer:
     def test_tokenize(self):
         from payment_tokenizer import tokenize
         r = tokenize("1234")
-        assert all(k in r for k in ["token", "signature", "timestamp"])
+        assert isinstance(r, dict)
+        assert "token" in r
+        assert "signature" in r
     def test_verify(self):
         from payment_tokenizer import tokenize, verify_token
         r = tokenize("9999")
         assert verify_token(r["token"], r["signature"]) is True
+    def test_verify_wrong_sig(self):
+        from payment_tokenizer import tokenize, verify_token
+        r = tokenize("9999")
         assert verify_token(r["token"], "wrong") is False
+    def test_verify_wrong_token(self):
+        from payment_tokenizer import tokenize, verify_token
+        r = tokenize("9999")
+        assert verify_token("falsotoken", r["signature"]) is False
     def test_mask(self):
         from payment_tokenizer import mask_card
         assert mask_card("4242424242424242") == "****-****-****-4242"

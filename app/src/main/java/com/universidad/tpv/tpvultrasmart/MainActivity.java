@@ -92,7 +92,9 @@ public class MainActivity extends FragmentActivity {
         }).start();
     }
 
-    private Thread _serverThread = null;\n\n    private void initBiometricPrompt() {
+    private Thread _serverThread = null;
+
+    private void initBiometricPrompt() {
         biometricPrompt = new BiometricPrompt(this, executor,
             new BiometricPrompt.AuthenticationCallback() {
                 @Override public void onAuthenticationError(int errorCode, @NonNull CharSequence errString) {

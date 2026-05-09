@@ -1,3 +1,4 @@
+from reasoning_engine import ReActEngine
 from ia.nlp_engine import NLPEngine
 """ia_agent.py v1.0 - TPV Smart - Gestor Total Conversacional"""
 from ia.guardrails import Guardrails
@@ -40,6 +41,7 @@ except Exception:
     _HAS_MEM = False
 try:
     from ia.anti_slop import refine as _anti_slop
+
     _HAS_ANTI_SLOP = True
 except Exception:
     _HAS_ANTI_SLOP = False
@@ -705,4 +707,21 @@ def get_session_info(sid): return {'role':'cliente','role_label':'Cliente','role
 ROLES = {'cliente':{'label':'Cliente','color':'#2ecc71','icon':'C'},'vendedor':{'label':'Vendedor','color':'#3498db','icon':'V'},'supervisor':{'label':'Supervisor','color':'#f39c12','icon':'S'},'administrador':{'label':'Administrador','color':'#e74c3c','icon':'A'},'desarrollador':{'label':'Desarrollador','color':'#9b59b6','icon':'D'}}
 
 print("🚀 Gestor Total Conversacional v1.0 activo")
- 
+
+def _agentic_gateway(message: str, user_id: str = "default") -> dict:
+    """Gateway: decide si usar el razonamiento agentic o la respuesta clasica."""
+    try:
+        engine = ReActEngine(user_id=user_id)
+        result = engine.reason(message)
+        if result.get("tools_used") or result.get("tool_used"):
+            return {
+                "response": result.get("response", ""),
+                "mode": "agentic",
+                "reasoning_log": result.get("reasoning_log", []),
+                "tools_used": result.get("tools_used", []),
+                "session_id": result.get("session_id"),
+            }
+    except Exception as e:
+        pass
+    # Fallback al sistema clasico
+    return None

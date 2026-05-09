@@ -31,9 +31,9 @@ android {
     signingConfigs {
         release {
             storeFile file('tpv-ultrasmart.keystore')
-            storePassword System.getenv('KEYSTORE_PASSWORD') ?: "tpv2024secure"
+            storePassword System.getenv("KEYSTORE_PASSWORD") ?: ""
             keyAlias System.getenv('KEY_ALIAS') ?: "tpvultrasmart"
-            keyPassword System.getenv('KEY_PASSWORD') ?: "tpv2024secure"
+            keyPassword System.getenv("KEY_PASSWORD") ?: ""
             v1SigningEnabled true
             v2SigningEnabled true
         }

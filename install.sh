@@ -25,7 +25,7 @@ source venv/bin/activate
 # 4) Instalar dependencias Python
 echo "[4/6] Instalando dependencias Python..."
 pip install --upgrade pip
-pip install flask==2.0.3 werkzeug==2.0.3 jinja2==3.0.3 markupsafe==2.0.1 itsdangerous==2.0.1 click==8.0.4
+pip install flask==3.0.3 werkzeug==3.0.3 jinja2==3.1.4 markupsafe==2.1.5 itsdangerous==2.1.2 click==8.1.7
 
 # 5) Directorio del proyecto
 echo "[5/6] Verificando estructura..."
@@ -48,5 +48,5 @@ echo "  cd app/src/main/python/"
 echo "  python start_server.py"
 echo ""
 echo "Abrir en navegador: http://127.0.0.1:5050"
-echo "Usuario: desarrollador | Contraseña: dev2024"
+echo "Credenciales configuradas (ver .env.example)"
 echo ""

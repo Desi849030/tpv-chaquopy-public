@@ -228,31 +228,35 @@ def error_404(e):
 
 @app.errorhandler(500)
 def error_500(e):
-    import traceback
+    import traceback, os
     tb = traceback.format_exc()
     print("=" * 60)
     print("ERROR 500 - TRACEBACK:")
     print(tb)
     print("=" * 60)
-    return (
-        "<h1>Error 500</h1>"
-        "<p>Copia este traceback y envialo:</p>"
-        f"<pre style='background:#1e1e1e;color:#d4d4d4;padding:16px;overflow:auto;font-size:12px;white-space:pre-wrap'>{tb}</pre>"
-    ), 500
+    if os.environ.get("FLASK_DEBUG", "false").lower() == "true":
+        return (
+            "<h1>Error 500 (DEBUG)</h1>"
+            "<p>Traceback:</p>"
+            f"<pre style='background:#1e1e1e;color:#d4d4d4;padding:16px;overflow:auto;font-size:12px;white-space:pre-wrap'>{tb}</pre>"
+        ), 500
+    return {"error": "Error interno del servidor", "status": 500}, 500
 
 @app.errorhandler(Exception)
 def handle_exception(e):
-    import traceback
+    import traceback, os
     tb = traceback.format_exc()
     print("=" * 60)
     print("EXCEPTION - TRACEBACK:")
     print(tb)
     print("=" * 60)
-    return (
-        "<h1>Error</h1>"
-        "<p>Excepcion no capturada:</p>"
-        f"<pre style='background:#1e1e1e;color:#d4d4d4;padding:16px;overflow:auto;font-size:12px;white-space:pre-wrap'>{tb}</pre>"
-    ), 500
+    if os.environ.get("FLASK_DEBUG", "false").lower() == "true":
+        return (
+            "<h1>Error (DEBUG)</h1>"
+            "<p>Excepcion:</p>"
+            f"<pre style='background:#1e1e1e;color:#d4d4d4;padding:16px;overflow:auto;font-size:12px;white-space:pre-wrap'>{tb}</pre>"
+        ), 500
+    return {"error": "Error interno del servidor", "status": 500}, 500
 
 # ══════════════════════════════════════════════════════════════
 #  ARRANQUE

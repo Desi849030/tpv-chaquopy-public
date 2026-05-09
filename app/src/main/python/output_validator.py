@@ -40,7 +40,7 @@ class ValidationResult:
 # Patrones de inyeccion en texto
 _DANGEROUS_PATTERNS = re.compile(
     r"(?:UNION\s+SELECT|DROP\s+TABLE|INSERT\s+INTO|DELETE\s+FROM|"
-    r"<script|javascript:|onerror\s*=|onload\s*=|",
+    r"<script|javascript:|onerror\s*=|onload\s*=)",
     re.IGNORECASE,
 )
 

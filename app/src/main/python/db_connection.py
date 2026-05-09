@@ -8,10 +8,19 @@ DB_FILE = os.path.join(os.environ.get("TPV_FILES_DIR", os.getcwd()), "tpv_datos.
 DB_PATH = DB_FILE
 
 def _hash_password(password: str, salt: str = None) -> tuple:
+    """scrypt KDF (N=16384, r=8, p=1) — superior a SHA-256 para contrasenas."""
     if salt is None:
         salt = secrets.token_hex(16)
-    combined = f"{salt}{password}".encode("utf-8")
-    return hashlib.sha256(combined).hexdigest(), salt
+    if isinstance(salt, str):
+        salt_bytes = bytes.fromhex(salt)
+    else:
+        salt_bytes = salt
+    h = hashlib.scrypt(
+        password.encode("utf-8"),
+        salt=salt_bytes,
+        n=16384, r=8, p=1,
+    )
+    return h.hex(), salt
 
 
 def verificar_password(password, hash_guardado, salt):
@@ -42,21 +51,26 @@ def agregar_log(mensaje, tipo="info", usuario=None):
         conn.execute("INSERT INTO logs_sistema (tipo, usuario, mensaje) VALUES (?, ?, ?)",
                      (tipo, usuario, mensaje))
         conn.commit()
-    except sqlite3.Error:
-        pass
+    except sqlite3.Error as e:
+        import sys
+        print("[AUDIT ERROR] agregar_log: %s" % e, file=sys.stderr)
     finally:
         conn.close()
 
 
+
+TABLAS_PERMITIDAS = frozenset([
+    "app_state","usuarios","historial_ventas","productos",
+    "inventario_general","inventario_diario","entradas_productos",
+    "cierres_caja","inventarios","logs_sistema","licencias",
+])
 
 def obtener_info_db():
     conn   = obtener_conexion()
     cursor = conn.cursor()
     try:
         info   = {"archivo": DB_FILE, "tablas": {}}
-        tablas = ["app_state","usuarios","historial_ventas","productos",
-                  "inventario_general","inventario_diario","entradas_productos",
-                  "cierres_caja","inventarios","logs_sistema","licencias"]
+        tablas = list(TABLAS_PERMITIDAS)
         for t in tablas:
             try:
                 cursor.execute(f"SELECT COUNT(*) AS total FROM {t}")
@@ -87,7 +101,9 @@ def crear_tabla_audit():
             )
         ''')
         conn.commit()
-    except: pass
+    except Exception as e:
+        import sys
+        print("[AUDIT ERROR] audit_log: %s" % e, file=sys.stderr)
     finally: conn.close()
 
 
@@ -99,6 +115,8 @@ def audit_log(usuario, accion, tabla, registro_id="", valor_anterior="", valor_n
             (usuario, accion, tabla, registro_id, str(valor_anterior)[:500], str(valor_nuevo)[:500])
         )
         conn.commit()
-    except: pass
+    except Exception as e:
+        import sys
+        print("[AUDIT ERROR] audit_log: %s" % e, file=sys.stderr)
     finally: conn.close()
 

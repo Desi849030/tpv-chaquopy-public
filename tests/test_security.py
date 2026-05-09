@@ -5,7 +5,7 @@ class TestPassword:
     def test_hash_tuple(self):
         from database import _hash_password
         h, s = _hash_password("test")
-        assert isinstance(h, str) and len(h) == 64
+        assert isinstance(h, str) and len(h) == 128
     def test_verify_ok(self):
         from database import _hash_password, verificar_password
         h, s = _hash_password("pass")

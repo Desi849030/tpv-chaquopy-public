@@ -336,7 +336,7 @@ class Agent:
         return "Gestor completo a su servicio:\n\n💰 Finanzas: ingresos, gastos, ganancias, márgenes\n📊 Análisis: ABC, rotación, punto equilibrio\n🔮 Predicciones: regresión, proyecciones\n📦 Inventario: stock bajo, críticos\n🏷️ Ofertas inteligentes\n\nEjemplos: 'finanzas', 'ABC', 'predicciones', 'ofertas'"
     
     # ============================================================
-    def _cli(self, t, m):
+    def _cli(self, t, m, role="cliente"):
         if self._fm(t, ["ayuda","que puedes","que haces","como funciona","menú","opciones"]):
             return "Puedo ayudarte con muchas cosas:\n\n- Buscar productos y precios\n- Ver ofertas y descuentos\n- Consultar stock disponible\n- Ver categorías del catalogo\n- Información de puntos y lealtad\n- Historial de compras\n\nEscribe lo que necesites."
         if self._fm(t, ["puntos","lealtad","fidelidad","recompensa","beneficio"]):
@@ -364,7 +364,7 @@ class Agent:
                 for p in prods[:10]:
                     estado = str(p["s"]) + " " + p["u"] if p["s"] > 0 else "AGOTADO"
                     msg += "- " + p["n"] + ": " + estado + " - " + fmt_money(p["p"]) + "\n"
-                return msg + "\n\n" + self._follow("cliente")
+                return msg + "\n\n" + self._follow(role)
         prods = P.search(t, 8)
         if prods:
             m["p"] = prods[0]["n"]
@@ -386,7 +386,7 @@ class Agent:
             for p in prods[:10]:
                 stock_info = " | " + str(int(p["s"])) + " " + p["u"] if p["s"] > 0 else " | AGOTADO"
                 msg += "- " + p["n"] + ": " + fmt_money(p["p"]) + stock_info + "\n"
-            return msg + "\n\n" + self._follow("cliente")
+            return msg + "\n\n" + self._follow(role)
         if self._fm(t, ["hola","buenas","buenos dias","buenas tardes","buenas noches","hey"]):
             return "Hola! Soy tu asistente y estoy aquí para ayudarte. Puedes preguntarme sobre productos, precios, ofertas, stock o cualquier cosa que necesites."
         return "Con gusto te ayudo. Puedes preguntarme sobre productos, precios, ofertas, stock, categorías o escribir ayuda para ver todo lo que puedo hacer."

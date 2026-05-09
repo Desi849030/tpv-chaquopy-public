@@ -178,7 +178,7 @@ public class MainActivity extends FragmentActivity {
     public class TpvNativeBridge {
         @android.webkit.JavascriptInterface
         public String getBiometricStatus() {
-            if (Build.VERSION.SDK_INT < 23) return "{'supported':false,'status':'NOT_AVAILABLE','methods':[]}";
+            if (Build.VERSION.SDK_INT < 23) return "{\"supported\":false,\"status\":\"NOT_AVAILABLE\",\"methods\":[]}";
             int status = BiometricManager.from(MainActivity.this).canAuthenticate();
             String s; boolean ok;
             switch (status) {
@@ -188,7 +188,7 @@ public class MainActivity extends FragmentActivity {
                 case BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED: s = "NOT_ENROLLED"; ok = true; break;
                 default: s = "UNKNOWN"; ok = false;
             }
-            return "{'supported':" + ok + ",'status':'" + s + "','methods':['fingerprint','face'],'sdk':" + Build.VERSION.SDK_INT + "}";
+            return "{\"supported\":" + ok + ",\"status\":\"" + s + ",\"methods\":[\"fingerprint\",\"face\"],\"sdk\":" + Build.VERSION.SDK_INT + "}";
         }
         @android.webkit.JavascriptInterface
         public boolean canAuthenticate() {
@@ -212,7 +212,7 @@ public class MainActivity extends FragmentActivity {
         }
         @android.webkit.JavascriptInterface
         public String getDeviceInfo() {
-            return "{'sdk':" + Build.VERSION.SDK_INT + ",'model':'" + Build.MODEL + "','brand':'" + Build.BRAND + "'}";
+            return "{\"sdk\":" + Build.VERSION.SDK_INT + ",\"model\":\"" + Build.MODEL + ",\"brand\":\"" + Build.BRAND + "}";
         }
         @android.webkit.JavascriptInterface public void vibrate(int ms) {
             if (Build.VERSION.SDK_INT >= 26) {

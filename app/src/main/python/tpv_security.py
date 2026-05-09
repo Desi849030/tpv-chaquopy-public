@@ -78,13 +78,6 @@ def check_sql_injection(data):
         d = data.upper()
         return any(p.upper() in d for p in _SQLI_PATTERNS)
     return False
-    if isinstance(data, dict):
-        return any(check_sql_injection(v) for v in data.values())
-    elif isinstance(data, list):
-        return any(check_sql_injection(i) for i in data)
-    elif isinstance(data, str):
-        return bool(_SQLI.search(data))
-    return False
 
 # ══════════════════════════════════════════════════════════════
 #  GENERACION DE IDS

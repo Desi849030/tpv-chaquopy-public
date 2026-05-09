@@ -7,7 +7,21 @@ import hashlib, hmac, os, json, time, uuid
 from datetime import datetime
 
 # Clave secreta para HMAC (generada por dispositivo)
-_SECRET = hashlib.sha256(os.urandom(64)).digest()
+_SECRET_FILE = os.path.join(os.environ.get("TPV_FILES_DIR", os.getcwd()), ".tpv_hmac_secret")
+def _load_or_create_secret():
+    if os.path.exists(_SECRET_FILE):
+        with open(_SECRET_FILE, "rb") as f:
+            data = f.read()
+        if len(data) == 64:
+            return data
+    secret = hashlib.sha256(os.urandom(64)).digest()
+    try:
+        with open(_SECRET_FILE, "wb") as f:
+            f.write(secret)
+    except Exception:
+        pass
+    return secret
+_SECRET = _load_or_create_secret()
 
 def tokenize(card_data: str) -> dict:
     """

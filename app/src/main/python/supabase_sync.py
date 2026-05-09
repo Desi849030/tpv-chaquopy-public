@@ -44,8 +44,8 @@ def _guardar_config_a_archivo():
 #  CONFIGURACIÓN
 # ══════════════════════════════════════════════════════════════
 # Valores por defecto (se sobreescriben con lo persistido en disco)
-_DEFAULT_URL = "https://cclafrwdqentvxgpmdbn.supabase.co"
-_DEFAULT_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjbGFmcndkcWVudHZ4Z3BtZGJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwMDA4MjIsImV4cCI6MjA4ODU3NjgyMn0.***REMOVED***"
+_DEFAULT_URL = os.environ.get("SUPABASE_URL", "")
+_DEFAULT_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
 
 # Intentar cargar config persistida desde disco
 _persisted = _cargar_config_desde_archivo()

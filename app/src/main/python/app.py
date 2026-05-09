@@ -170,6 +170,19 @@ def serve_static(filename):
                 }
     return '', 404
 
+
+@app.route('/api/health')
+def health_check():
+    return jsonify({'status':'ok','version':'1.0.0'})
+
+@app.route('/api/config/publica')
+def config_publica():
+    try:
+        e=cargar_estado()
+        n=e.get('nombre_tienda','TPV Ultra Smart')
+    except: n='TPV Ultra Smart'
+    return jsonify({'nombre_tienda':n,'nombre':n})
+
 # ══════════════════════════════════════════════════════════════
 #  ERROR HANDLERS
 # ══════════════════════════════════════════════════════════════

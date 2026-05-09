@@ -364,7 +364,7 @@ class Agent:
                 for p in prods[:10]:
                     estado = str(p["s"]) + " " + p["u"] if p["s"] > 0 else "AGOTADO"
                     msg += "- " + p["n"] + ": " + estado + " - " + fmt_money(p["p"]) + "\n"
-                return msg + "\n\n" + self._follow(role)
+                return msg + "\n\n" + self._follow("cliente")
         prods = P.search(t, 8)
         if prods:
             m["p"] = prods[0]["n"]
@@ -386,7 +386,7 @@ class Agent:
             for p in prods[:10]:
                 stock_info = " | " + str(int(p["s"])) + " " + p["u"] if p["s"] > 0 else " | AGOTADO"
                 msg += "- " + p["n"] + ": " + fmt_money(p["p"]) + stock_info + "\n"
-            return msg + "\n\n" + self._follow(role)
+            return msg + "\n\n" + self._follow("cliente")
         if self._fm(t, ["hola","buenas","buenos dias","buenas tardes","buenas noches","hey"]):
             return "Hola! Soy tu asistente y estoy aquí para ayudarte. Puedes preguntarme sobre productos, precios, ofertas, stock o cualquier cosa que necesites."
         return "Con gusto te ayudo. Puedes preguntarme sobre productos, precios, ofertas, stock, categorías o escribir ayuda para ver todo lo que puedo hacer."

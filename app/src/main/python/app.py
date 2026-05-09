@@ -123,9 +123,44 @@ print("Blueprints registrados: auth + admin + inventory + ventas + settings + ti
 #  SERVIR ARCHIVOS ESTÁTICOS E INDEX
 # ══════════════════════════════════════════════════════════════
 
+def _find_template(name):
+    """Buscar archivo de plantilla en multiples rutas (igual que serve_static)."""
+    _assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'assets', 'frontend')
+    candidates = [
+        os.path.join(_CARPETA, 'frontend', 'templates', name),
+        os.path.join(_assets_dir, 'templates', name),
+        os.path.join(os.getcwd(), 'frontend', 'templates', name),
+        os.path.join(_CARPETA, name),
+        os.path.join(_assets_dir, name),
+        os.path.join(os.getcwd(), name),
+    ]
+    for ruta in candidates:
+        if os.path.exists(ruta):
+            return ruta
+    return None
+
+def _render_html(base_name):
+    """Cargar HTML y procesar {% include %} manualmente."""
+    def load(name):
+        path = _find_template(name)
+        if not path:
+            return f"<!-- TEMPLATE NOT FOUND: {name} -->"
+        with open(path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        import re
+        content = re.sub(
+            r'\{%\s*include\s+"([^"]+)"\s*%\}',
+            lambda m: load(m.group(1)), content
+        )
+        return content
+    return load(base_name)
+
 @app.route("/")
 def index():
-    return render_template('index.html')
+    try:
+        return render_template('index.html')
+    except Exception:
+        return _render_html('index.html')
 
 @app.route("/<path:filename>")
 def serve_static(filename):

@@ -1,6 +1,6 @@
+from __future__ import annotations
 from models import Producto, Venta, Usuario, Cliente, DetalleVenta
 from typing import Optional, List, Dict, Any, Tuple
-from __future__ import annotations
 """
 ╔══════════════════════════════════════════════════════════════╗
 ║   database.py  —  TPV ULTRA SMART  v5.0                     ║

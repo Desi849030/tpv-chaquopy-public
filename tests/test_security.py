@@ -1,45 +1,42 @@
-"""Tests de seguridad"""
-import sys, os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'app', 'src', 'main', 'python'))
+"""Tests de seguridad."""
+import pytest
 
-def test_tokenizer():
-    try:
+class TestPassword:
+    def test_hash_tuple(self):
+        from database import _hash_password
+        h, s = _hash_password("test")
+        assert isinstance(h, str) and len(h) == 64
+    def test_verify_ok(self):
+        from database import _hash_password, verificar_password
+        h, s = _hash_password("pass")
+        assert verificar_password("pass", h, s) is True
+    def test_verify_fail(self):
+        from database import _hash_password, verificar_password
+        h, s = _hash_password("pass")
+        assert verificar_password("wrong", h, s) is False
+
+class TestSQLi:
+    def test_clean(self):
+        from tpv_security import check_sql_injection
+        assert check_sql_injection("texto normal") is False
+    def test_union(self):
+        from tpv_security import check_sql_injection
+        assert check_sql_injection("UNION SELECT") is True
+    def test_dict(self):
+        from tpv_security import check_sql_injection
+        assert check_sql_injection({"q": "DROP TABLE"}) is True
+
+class TestTokenizer:
+    def test_tokenize(self):
+        from payment_tokenizer import tokenize
+        r = tokenize("1234")
+        assert all(k in r for k in ["token", "signature", "timestamp"])
+    def test_verify(self):
         from payment_tokenizer import tokenize, verify_token
-        t = tokenize("1234")
-        assert 'token' in t
-        assert 'signature' in t
-        print("✅ Tokenización OK")
-
-    except Exception as e:
-        print(f"❌ Tokenización: {e}")
-
-def test_biometric():
-    try:
-        from biometric_auth import check_biometric_availability
-        r = check_biometric_availability()
-        assert 'available' in r
-        print("✅ Biométrico OK")
-
-    except Exception as e:
-        print(f"❌ Biométrico: {e}")
-
-def test_rls():
-    try:
-        from supabase_rls import get_branch_id, get_rls_headers
-        bid = get_branch_id()
-        assert bid.startswith('branch-')
-        h = get_rls_headers()
-        assert 'X-Branch-ID' in h
-        print("✅ RLS OK")
-
-    except Exception as e:
-        print(f"❌ RLS: {e}")
-
-if __name__ == '__main__':
-    print("=" * 40)
-    print("TPV Smart - Security Tests")
-    print("=" * 40)
-    r = [test_tokenizer(), test_biometric(), test_rls()]
-    passed = sum(r)
-    print("=" * 40)
-    print(f"Resultado: {passed}/{len(r)} tests pasados")
+        r = tokenize("9999")
+        assert verify_token(r["token"], r["signature"]) is True
+        assert verify_token(r["token"], "wrong") is False
+    def test_mask(self):
+        from payment_tokenizer import mask_card
+        assert mask_card("4242424242424242") == "****-****-****-4242"
+        assert mask_card(None) == "****"

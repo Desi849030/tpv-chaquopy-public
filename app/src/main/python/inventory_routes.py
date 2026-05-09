@@ -3,7 +3,7 @@ import json as _json
 from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify
 from decorators import requiere_login, requiere_rol, usuario_actual
-from database import (
+from validacion_productos import validar_productos_lote, importar_productos_validados\nfrom database import (
     registrar_entrada_producto, obtener_inventario_general,
     importar_catalogo_a_inventario, eliminar_producto_inventario_general,
     obtener_productos_catalogo, sincronizar_productos_catalogo,
@@ -296,4 +296,24 @@ def api_historial_cierres(vendedor_id):
         """, (vendedor_id,)).fetchall()
         return jsonify({"historial": [dict(r) for r in rows]})
     finally:
-        conn.close()
+        conn.close()\n
+
+@inv_bp.route("/api/importar-validado", methods=["POST"])
+@requiere_rol("administrador", "desarrollador", "vendedor")
+def api_importar_validado():
+    """Pipeline v4: Dry Run + Transaccion Atomica."""
+    try:
+        u = usuario_actual()
+        datos = request.get_json(force=True, silent=True) or {}
+        productos = datos.get("productos", [])
+        ejecutar = datos.get("ejecutar", False)
+        resultado = validar_productos_lote(productos)
+        if not resultado.valido:
+            return jsonify({"ok": False, "fase": "validacion", "validacion": resultado.to_dict()}), 400
+        if not ejecutar:
+            return jsonify({"ok": True, "fase": "validacion_ok", "validacion": resultado.to_dict(),
+                "mensaje": f"Validacion exitosa: {len(resultado.productos_validos)} productos listos."})
+        r = importar_productos_validados(u["usuario_id"], resultado.productos_validos)
+        return jsonify(r), (200 if r["ok"] else 400)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

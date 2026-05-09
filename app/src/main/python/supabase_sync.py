@@ -11,6 +11,11 @@ import urllib.request
 import urllib.error
 import urllib.parse
 from datetime import datetime
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 # ══════════════════════════════════════════════════════════════
 #  PERSISTENCIA DE CONFIGURACION A DISCO

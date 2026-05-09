@@ -3,7 +3,8 @@ import json as _json
 from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify
 from decorators import requiere_login, requiere_rol, usuario_actual
-from validacion_productos import validar_productos_lote, importar_productos_validados\nfrom database import (
+from validacion_productos import validar_productos_lote, importar_productos_validados
+from database import (
     registrar_entrada_producto, obtener_inventario_general,
     importar_catalogo_a_inventario, eliminar_producto_inventario_general,
     obtener_productos_catalogo, sincronizar_productos_catalogo,
@@ -296,7 +297,8 @@ def api_historial_cierres(vendedor_id):
         """, (vendedor_id,)).fetchall()
         return jsonify({"historial": [dict(r) for r in rows]})
     finally:
-        conn.close()\n
+        conn.close()
+
 
 @inv_bp.route("/api/importar-validado", methods=["POST"])
 @requiere_rol("administrador", "desarrollador", "vendedor")

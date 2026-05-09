@@ -53,7 +53,7 @@ _MAX_TEXTO = 500
 _PATERNES_PELIGROSOS = re.compile(
     r"(?:--|;|/\*|\*/|xp_|0x|char\(|nchar\(|varchar\(|"
     r"exec\s*\(|execute\s*\(|cast\s*\(|convert\s*\(|"
-    r"drop\s+|delete\s+|insert\s+|update\s+|alter\s+)", re.IGNORECASE)
+    r"union\s+select|drop\s+|delete\s+|insert\s+|update\s+|alter\s+)", re.IGNORECASE)
 
 
 def _sanitizar_texto(valor: Any, max_len: int = _MAX_TEXTO) -> str:

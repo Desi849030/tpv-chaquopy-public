@@ -1,4 +1,4 @@
-# Arquitectura TPV Ultra Smart v6.9
+# Arquitectura TPV Ultra Smart v1.0.0
 
 ## Vision General
 
@@ -42,3 +42,15 @@ App Android hibrida: WebView + Flask via Chaquopy. Python corre embebido en el A
 - Decoradores Python por rol en todos los endpoints
 - PCI compliance para pagos
 - Attestation de integridad del dispositivo
+
+
+## Sistema de Templates (Jinja2)
+
+- index.html: Template principal (19 lineas)
+- partials/_head.html: Meta, CSS, PWA
+- partials/_splash.html: Pantalla de carga
+- partials/_license_overlay.html: Overlay de licencia
+- partials/_nav_header.html: Header y navegacion
+- partials/_tab_content.html: Contenido de pestanas (814 lineas)
+- partials/_modals.html: Dialogos modales (6)
+- partials/_scripts.html: Carga de 27 modulos JS + scripts inline

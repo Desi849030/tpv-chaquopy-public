@@ -1,6 +1,6 @@
 # Registro de Cambios
 
-## v6.9 (Mayo 2026)
+## v1.0.0 (Mayo 2026)
 
 ### Refactorizacion completa del frontend
 - Modularizacion de script_5.js (5,109 lineas) en 9 modulos
@@ -9,6 +9,11 @@
 - 27 modulos JS validados con node --check
 - Renombrado de 8 CSS a convencion tpv_*.css
 - Eliminacion de 17 archivos huerfanos y temporales
+
+### Template Split
+- index.html dividido en 7 partials Jinja2
+- app.py actualizado a render_template()
+- Template reducido de 1423 a 19 lineas
 
 ### Correcciones
 - Fix permisos importacion catalogo (vendedor incluido)

@@ -1,4 +1,4 @@
-"""TPV ULTRA SMART v5.0 — Arquitectura modular"""
+"""TPV ULTRA SMART v1.0.0 — Arquitectura modular"""
 import sys, os
 
 # ── FIX PATH PYDROID3 / ANDROID ──
@@ -42,7 +42,7 @@ except Exception:
     _SECRET_KEY = _secrets.token_hex(32)
 # ── Flask ──
 try:
-    from flask import Flask, request, jsonify, session, Response
+    from flask import Flask, request, jsonify, session, Response, render_template
 except ImportError:
     print("Instala Flask: pip install flask"); exit(1)
 
@@ -84,7 +84,10 @@ except ImportError:
 _CARPETA = os.environ.get("TPV_FRONTEND_DIR") or _CARPETA_DETECTADA or os.getcwd()
 
 # ── Flask App ──
-app = Flask(__name__, static_folder=None)
+_TD = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'assets', 'frontend', 'templates')
+if not os.path.isdir(_TD):
+    _TD = 'templates'
+app = Flask(__name__, static_folder=None, template_folder=_TD)
 app.secret_key = _SECRET_KEY
 app.config["JSON_ENSURE_ASCII"] = False
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
@@ -122,22 +125,7 @@ print("Blueprints registrados: auth + admin + inventory + ventas + settings + ti
 
 @app.route("/")
 def index():
-    candidatos = [
-        os.path.join(_CARPETA, 'index.html'),
-        os.path.join(os.getcwd(), 'index.html'),
-        os.path.join(_CARPETA, 'frontend', 'templates', 'index.html'),
-        os.path.join(_CARPETA, 'templates', 'index.html'),
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'assets', 'frontend', 'templates', 'index.html'),
-    ]
-    try:
-        candidatos.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'index.html'))
-    except NameError:
-        pass
-    for ruta in candidatos:
-        if os.path.exists(ruta):
-            with open(ruta, 'r', encoding='utf-8') as f:
-                return f.read(), 200, {'Content-Type': 'text/html; charset=utf-8'}
-    return '<h3>No se encontro index.html</h3>', 500
+    return render_template('index.html')
 
 @app.route("/<path:filename>")
 def serve_static(filename):
@@ -205,7 +193,7 @@ def abrir_navegador():
 
 def main():
     print("\n" + "="*58)
-    print("   TPV ULTRA SMART v5.0 — MODULAR")
+    print("   TPV ULTRA SMART v1.0.0 — MODULAR")
     print("="*58)
     crear_tablas()
     crear_tablas_tienda()
@@ -225,7 +213,7 @@ def main():
             if i[4][0].startswith(('192.168.','10.','172.')) and ':' not in i[4][0]
         ]))
         print("\n" + "="*48)
-        print("  TPV ULTRA SMART v6.0 - Modular")
+        print("  TPV ULTRA SMART v1.0.0 - Modular")
         print("  Local : http://localhost:5000")
         for ip in ips: print(f"  WiFi  : http://{ip}:5000")
         print("="*48 + "\n")

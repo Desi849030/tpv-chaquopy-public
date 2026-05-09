@@ -1,4 +1,4 @@
-# Referencia de API v6.9
+# Referencia de API v1.0.0
 
 ## Autenticacion
 | POST | /api/auth/login     | Publico  | Login usuario/contrasena |

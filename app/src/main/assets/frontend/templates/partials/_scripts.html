@@ -1,0 +1,245 @@
+    <!-- Dependencias de Scripts Externas con manejo de errores offline -->
+    <script defer src="/static/lib/bootstrap.bundle.min.js" onerror="console.log('Bootstrap cargado desde cache del navegador')"></script>
+    <script src="/static/lib/xlsx.full.min.js"></script>
+    <script src="/static/lib/chart.umd.min.js"></script>
+    <script src="/static/lib/html5-qrcode.min.js" onerror="console.log('QR Scanner cargado desde cache')"></script>
+    <script src="/static/lib/qrcode.min.js" onerror="console.log('QRCode cargado desde cache')"></script>
+    <!-- Sistema de Configuración Centralizado -->
+    <script src="/static/js/tpv/tpv_config_central.js"></script>
+    <script src="/static/js/tpv/tpv_estado_sync.js"></script>
+    <script src="/static/js/tpv/tpv_qr_etiquetas.js"></script>
+    <script src="/static/js/tpv/tpv_punto_venta.js"></script>
+    <script src="/static/js/tpv/tpv_ventas_registros.js"></script>
+    <script src="/static/js/tpv/tpv_inventario_stock.js"></script>
+    <script src="/static/js/tpv/tpv_gestion_productos.js"></script>
+    <script src="/static/js/tpv/tpv_nomenclador.js"></script>
+    <script src="/static/js/tpv/tpv_licencias_activacion.js"></script>
+    <script src="/static/js/tpv/tpv_utilidades.js"></script>
+
+    
+    <!-- JavaScript Corregido -->
+
+
+<!-- ================= EXPORTACIÓN UNIFICADA SEGURA ================= -->
+
+<script src="/static/js/tpv/tpv_export_helpers.js"></script>
+
+<!-- =============================================================== -->
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     MÓDULO TIENDA — Clientes, Carrito, Pedidos, Notificaciones
+     Funciona offline (WiFi local) con cola de sincronización
+══════════════════════════════════════════════════════════════════ -->
+<link rel="stylesheet" href="/static/css/tpv_tienda_estilos.css">
+
+
+<script src="/static/js/tpv/tpv_tienda_cliente.js"></script>
+    <script src="/static/js/tpv/tpv_autenticacion.js"></script>
+    <script src="/static/js/tpv/tpv_vendedor_modulo.js"></script>
+    <script src="/static/js/tpv/tpv_admin_inventario.js"></script>
+    <script src="/static/js/tpv/tpv_config_tienda.js"></script>
+    <script src="/static/js/tpv/tpv_privacidad.js"></script>
+    <script src="/static/js/tpv/tpv_sesion_polling.js"></script>
+    <script src="/static/js/tpv/tpv_gestion_usuarios.js"></script>
+    <script src="/static/js/tpv/tpv_admin_licencias.js"></script>
+
+
+    <!-- CSS movido al final para no bloquear render -->
+<link rel="stylesheet" href="/static/css/tpv_componentes.css">
+
+<!-- ══════════════════════════════════════════════════════════
+     DASHBOARD — Gráficos y KPIs
+══════════════════════════════════════════════════════════ -->
+<script src="/static/js/tpv/tpv_dashboard_supabase.js"></script>
+
+
+<!-- Google Translate + integración bidireccional ES/EN con persistencia offline -->
+<script src="/static/js/tpv/tpv_traduccion_i18n.js"></script>
+
+<script type="text/javascript"
+    src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
+    onerror="(function(){ console.warn('Google Translate no disponible (sin conexión)'); var s=_langGuardado(); _actualizarBotonesLang(s); })()">
+</script>
+
+    <!-- TPV Debugger v6.1 — CRUD completo + mejoras -->
+    <script src="/static/js/tpv/tpv_debugger.js"></script>
+
+<!-- ══════════════════════════════════════════════════════════
+     SEGURIDAD — Panel de Blindajes v6.20.0
+══════════════════════════════════════════════════════════ -->
+<script>
+(function() {
+    'use strict';
+
+    function seguridad_cargarDashboard() {
+        fetch('/api/security/dashboard')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                seguridad_renderOverall(data);
+                seguridad_renderBlindajes(data.blindajes || {});
+                seguridad_cargarDetalles(data);
+            })
+            .catch(function(err) {
+                document.getElementById('seguridad-overall').innerHTML =
+                    '<i class="bi bi-exclamation-triangle-fill me-2"></i>Error cargando dashboard: ' + err.message;
+                document.getElementById('seguridad-overall').className = 'alert alert-danger mb-4 text-center';
+            });
+    }
+
+    function seguridad_renderOverall(data) {
+        var el = document.getElementById('seguridad-overall');
+        var isSecure = data.overall_status === 'SECURE';
+        var icon = isSecure ? 'shield-fill-check' : 'shield-fill-exclamation';
+        var cls = isSecure ? 'alert-success' : 'alert-warning';
+        var text = isSecure
+            ? 'Todos los blindajes estan activos y operativos'
+            : 'Algunos blindajes no estan completamente activos';
+        el.className = 'alert mb-4 text-center ' + cls;
+        el.innerHTML = '<i class="bi bi-' + icon + ' me-2"></i><strong>' +
+            (isSecure ? 'ESTADO SEGURO' : 'ESTADO PARCIAL') + '</strong> — ' + text +
+            '<br><small class="text-muted">Version ' + data.version + ' | ' + data.timestamp + '</small>';
+    }
+
+    function seguridad_renderBlindajes(blindajes) {
+        var cards = {
+            pci_dss: { el: 'seguridad-pci', name: 'PCI-DSS' },
+            het: { el: 'seguridad-het', name: 'HET' },
+            websocket: { el: 'seguridad-ws', name: 'WebSocket' }
+        };
+        Object.keys(cards).forEach(function(key) {
+            var info = cards[key];
+            var data = blindajes[key] || {};
+            var el = document.getElementById(info.el);
+            if (!el) return;
+            var active = data.active;
+            if (active) {
+                var details = '';
+                if (data.audit_entries !== undefined) {
+                    details = ' | ' + data.audit_entries + ' auditorias';
+                } else if (data.active_threats !== undefined) {
+                    details = ' | Amenazas: ' + data.active_threats + ' | Warnings: ' + (data.warnings || 0) + ' | RPM: ' + (data.requests_per_minute || 0);
+                } else if (data.active_terminals !== undefined) {
+                    details = ' | ' + data.active_terminals + ' terminales';
+                } else if (data.status) {
+                    details = ' | ' + data.status;
+                }
+                el.innerHTML = '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>ACTIVO</span><span class="text-muted small ms-2">' + details + '</span>';
+            } else {
+                el.innerHTML = '<span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>INACTIVO</span>';
+            }
+        });
+        var apiEl = document.getElementById('seguridad-api');
+        if (apiEl) {
+            var hasBlindajes = Object.keys(blindajes).length > 0;
+            apiEl.innerHTML = hasBlindajes
+                ? '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>' + Object.keys(blindajes).length + ' endpoints activos</span>'
+                : '<span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>No disponibles</span>';
+        }
+    }
+
+    function seguridad_cargarDetalles(data) {
+        var blindajes = data.blindajes || {};
+
+        if (blindajes.pci_dss && blindajes.pci_dss.active) {
+            fetch('/api/security/pci/audit?limit=10')
+                .then(function(r) { return r.json(); })
+                .then(function(audit) {
+                    var container = document.getElementById('seguridad-pci-audit');
+                    var logEl = document.getElementById('seguridad-pci-log');
+                    if (!container || !logEl) return;
+                    container.style.display = 'block';
+                    var entries = audit.entries || [];
+                    if (entries.length === 0) {
+                        logEl.innerHTML = '<span class="text-muted">Sin registros de auditoria aun.</span>';
+                    } else {
+                        logEl.innerHTML = entries.map(function(e) {
+                            var cls = e.success ? 'text-success' : 'text-danger';
+                            return '<div class="d-flex justify-content-between border-bottom py-1">' +
+                                '<span class="' + cls + '"><i class="bi bi-' + (e.success ? 'check' : 'x') + '-circle me-1"></i>' + e.action + '</span>' +
+                                '<span class="text-muted">' + (e.identifier || '') + '</span></div>';
+                        }).join('');
+                    }
+                }).catch(function() {});
+        }
+
+        if (blindajes.het && blindajes.het.active) {
+            fetch('/api/security/het/alerts?limit=10')
+                .then(function(r) { return r.json(); })
+                .then(function(alerts) {
+                    var container = document.getElementById('seguridad-het-alerts');
+                    var listEl = document.getElementById('seguridad-het-list');
+                    if (!container || !listEl) return;
+                    container.style.display = 'block';
+                    var list = alerts.alerts || [];
+                    if (list.length === 0) {
+                        listEl.innerHTML = '<span class="text-success"><i class="bi bi-check-circle me-1"></i>Sin alertas. Todo limpio.</span>';
+                    } else {
+                        listEl.innerHTML = list.map(function(a) {
+                            var cls = a.level === 'CRITICAL' ? 'danger' : 'warning';
+                            return '<div class="border-bottom py-1"><span class="badge bg-' + cls + ' me-1">' + a.type + '</span>' +
+                                '<small class="text-muted">' + a.details + '</small>' +
+                                '<br><small class="text-muted fst-italic">' + a.source + ' — ' + a.timestamp + '</small></div>';
+                        }).join('');
+                    }
+                }).catch(function() {});
+        }
+
+        if (blindajes.websocket && blindajes.websocket.active) {
+            fetch('/api/security/ws/status')
+                .then(function(r) { return r.json(); })
+                .then(function(ws) {
+                    var container = document.getElementById('seguridad-ws-terminals');
+                    var listEl = document.getElementById('seguridad-ws-list');
+                    if (!container || !listEl) return;
+                    container.style.display = 'block';
+                    var terminals = ws.terminals || [];
+                    if (terminals.length === 0) {
+                        listEl.innerHTML = '<span class="text-muted">Sin terminales conectadas.</span>';
+                    } else {
+                        listEl.innerHTML = terminals.map(function(t) {
+                            return '<div class="border-bottom py-1"><strong>' + t.id + '</strong> ' +
+                                '<span class="text-muted">— Ultimo seen: ' + Math.round(t.last_seen || 0) + 's</span></div>';
+                        }).join('');
+                    }
+                }).catch(function() {});
+        }
+    }
+
+    window.seguridad_cargarDashboard = seguridad_cargarDashboard;
+
+    // Auto-cargar seguridad cuando se active la pestaña
+    document.addEventListener('shown.bs.tab', function(e) {
+        if (e.target && e.target.id === 'seguridad-tab') {
+            seguridad_cargarDashboard();
+        }
+    });
+})();
+</script>
+
+<!-- ══════════════════════════════════════════════════════════
+</script>
+
+<!-- IA Assistant v10.0 - Chat flotante (burbuja) REESCRITO DESDE CERO -->
+<script src="/static/lib/ia_assistant_ui.js"></script>
+
+<script>
+// Control de visibilidad por rol - v1.0
+var _rol = localStorage.getItem("tpv_rol") || sessionStorage.getItem("tpv_rol") || "cliente";
+
+// Solo desarrollador ve Supabase y Descuentos
+if(_rol !== "desarrollador"){
+  var el;
+  el = document.getElementById("cfg-descuentos-wrap"); if(el) el.style.display = "none";
+  el = document.getElementById("cfg-supabase-config-wrap"); if(el) el.style.display = "none";
+  el = document.getElementById("cfg-supabase-sync-wrap"); if(el) el.style.display = "none";
+  el = document.getElementById("cfg-licencias-tab"); if(el) el.style.display = "none";
+}
+
+// Admin no ve debug ni privilegios
+if(_rol === "administrador"){
+  el = document.getElementById("dbg-v2"); if(el) el.style.display = "none";
+}
+</script>
+    <script src="/static/js/tpv/tpv_ui_enhancements.js"></script>
+</body>

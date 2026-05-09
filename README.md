@@ -1,4 +1,4 @@
-# TPV Ultra Smart v6.9
+# TPV Ultra Smart v1.0.0
 
 Sistema de Punto de Venta Profesional con IA integrada, biometria, roles multinivel y sincronizacion offline.
 
@@ -33,7 +33,8 @@ Push a main dispara build automatico en GitHub Actions.
 
     app/src/main/python/     Backend Flask (50+ archivos, ~10,400 lineas)
     app/src/main/assets/frontend/
-      templates/index.html   Template principal Jinja2
+      templates/index.html   Template Jinja2 (19 lineas, 7 partials)
+      templates/partials/    7 partials HTML ({% include %})
       static/css/tpv/        8 archivos CSS (~1,200 lineas)
       static/js/tpv/         27 modulos JavaScript (~11,600 lineas)
     app/src/main/java/       Android (Chaquopy + WebView)

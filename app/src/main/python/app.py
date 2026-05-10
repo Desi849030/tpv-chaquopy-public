@@ -322,6 +322,43 @@ try:
 except Exception as e:
     print(f'[v24] Validacion BD omitida: {e}')
 
+
+# ── API: Importación Inteligente de Excel ──
+@app.route('/api/reconstruir-desde-productos', methods=['POST'])
+def api_reconstruir_productos():
+    """Recibe lista de productos y sincroniza con BD."""
+    try:
+        from db_products import sincronizar_productos_catalogo
+        data = request.get_json(silent=True) or {}
+        productos = data.get('productos', [])
+        if not productos:
+            return jsonify({'ok': False, 'mensaje': 'No se recibieron productos'})
+        admin_id = data.get('admin_id', 'system')
+        resultado = sincronizar_productos_catalogo(productos, admin_id)
+        return jsonify(resultado)
+    except Exception as e:
+        return jsonify({'ok': False, 'mensaje': str(e)}), 500
+
+@app.route('/api/inventario/importar-catalogo', methods=['POST'])
+def api_importar_catalogo():
+    """Importa productos del catalogo al inventario general."""
+    try:
+        from db_products import importar_catalogo_a_inventario
+        resultado = importar_catalogo_a_inventario('system')
+        return jsonify(resultado)
+    except Exception as e:
+        return jsonify({'ok': False, 'mensaje': str(e)}), 500
+
+@app.route('/api/productos', methods=['GET'])
+def api_productos():
+    """Retorna productos del catalogo."""
+    try:
+        from db_products import obtener_productos_catalogo
+        productos = obtener_productos_catalogo()
+        return jsonify(productos)
+    except Exception as e:
+        return jsonify([])
+
 if __name__ == "__main__":
     main()
 

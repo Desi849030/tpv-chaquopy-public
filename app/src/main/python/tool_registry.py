@@ -4,7 +4,7 @@ Registra las 144 rutas API del TPV como "tools" con descripcion,
 parametros y tipo de acceso. El reasoning_engine consulta este
 catalogo para decidir que herramienta usar.
 
-Industrialization v5 — Agentic AI Layer (144 herramientas)
+Industrialization v5 — Agentic AI Layer (147 herramientas)
 """
 from __future__ import annotations
 from typing import Dict, Any, List, Optional
@@ -680,6 +680,27 @@ TOOL_CATALOG: Dict[str, ToolDefinition] = {
     "biometric_check": _t("biometric_check",
         "Verifica disponibilidad de biometria en el dispositivo",
         "general", "/api/biometric/check", "GET", [], auth=False),
+    # ══════════════════════════════════════════════════════════
+    #  IMPORTACION INTELIGENTE (app.py) — 3 herramientas
+    # ══════════════════════════════════════════════════════════
+    "reconstruir_productos": _t("reconstruir_productos",
+        "Sincroniza una lista de productos con la base de datos SQLite. Reemplaza el catalogo completo y actualiza inventario_general.",
+        "importacion", "/api/reconstruir-desde-productos", "POST",
+        [{"name": "productos", "type": "list", "description": "Lista de productos con id, nombre, precio, costoUnitario, categoria, um", "required": True},
+         {"name": "admin_id", "type": "str", "description": "ID del administrador (default: system)", "required": False}],
+        role="administrador"),
+
+    "importar_catalogo_inventario": _t("importar_catalogo_inventario",
+        "Importa todos los productos del catalogo al inventario general. Nuevos: stock 0. Existentes: conserva stock actual.",
+        "importacion", "/api/inventario/importar-catalogo", "POST",
+        [],
+        role="administrador"),
+
+    "obtener_productos_catalogo": _t("obtener_productos_catalogo",
+        "Retorna todos los productos del catalogo desde la base de datos SQLite.",
+        "importacion", "/api/productos", "GET",
+        [],
+        role="administrador"),
 }
 
 

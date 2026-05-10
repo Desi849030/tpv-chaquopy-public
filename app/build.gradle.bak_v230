@@ -41,12 +41,12 @@ android {
     buildTypes {
         release {
             debuggable false
-            minifyEnabled true
-            shrinkResources true
+            minifyEnabled false
+            shrinkResources false
             signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
-        debug { debuggable true; minifyEnabled true }
+        debug { debuggable true; minifyEnabled false }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8

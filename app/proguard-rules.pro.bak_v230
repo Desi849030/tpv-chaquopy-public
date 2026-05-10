@@ -1,0 +1,6 @@
+-keep class com.chaquo.python.** { *; }
+-keep class com.universidad.tpv.tpvultrasmart.** { *; }
+-keepclassmembers class com.universidad.tpv.tpvultrasmart.** { *; }
+-keepclassnames class com.universidad.tpv.tpvultrasmart.** { *; }
+-dontnote com.chaquo.python.**
+-dontwarn com.chaquo.python.**

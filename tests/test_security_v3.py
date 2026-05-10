@@ -1,0 +1,297 @@
+"""test_security_v3.py — Tests completos de seguridad v2.3.0"""
+import os, sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "app", "src", "main", "python"))
+
+class TestSecurity:
+    """Tests del modulo de seguridad."""
+
+    def test_import_security(self):
+        from security import hash_password, verify_password, sanitize_input
+        assert callable(hash_password)
+        assert callable(verify_password)
+        assert callable(sanitize_input)
+
+    def test_hash_format(self):
+        from security import hash_password
+        h = hash_password("test123")
+        assert "$" in h
+        parts = h.split("$")
+        assert len(parts) >= 2, "Hash debe contener salt$hash"
+        assert len(parts[0]) > 10, "Salt debe tener longitud significativa"
+        assert len(parts[1]) > 20, "Hash debe tener longitud significativa"
+
+    def test_verify_correct(self):
+        from security import hash_password, verify_password
+        stored = hash_password("password123")
+        result = verify_password("password123", stored)
+        assert result is True, "verify_password debe retornar True para password correcto"
+
+    def test_verify_incorrect(self):
+        from security import hash_password, verify_password
+        stored = hash_password("correct")
+        assert verify_password("wrong", stored) is False
+
+    def test_different_salts(self):
+        from security import hash_password
+        h1 = hash_password("same_password")
+        h2 = hash_password("same_password")
+        assert h1 != h2, "Dos hashes del mismo password deben ser diferentes"
+
+    def test_verify_empty(self):
+        from security import verify_password
+        assert verify_password("", "") is False
+        assert verify_password(None, None) is False
+
+    def test_sanitize_string(self):
+        from security import sanitize_input
+        assert sanitize_input("  hola  ") == "hola"
+        assert sanitize_input(None) == "None"
+        assert sanitize_input(42) == "42"
+
+    def test_sanitize_control_chars(self):
+        from security import sanitize_input
+        result = sanitize_input("hello\x00world\x1f")
+        assert "\x00" not in result
+        assert result == "helloworld"
+
+    def test_validate_email(self):
+        from security import validate_email
+        assert validate_email("user@domain.com") is True
+        assert validate_email("user.name@sub.domain.co") is True
+        assert validate_email("bad") is False
+        assert validate_email("") is False
+        assert validate_email("@nodomain.com") is False
+        assert validate_email("noatsymbol") is False
+
+    def test_generate_api_key(self):
+        from security import generate_api_key
+        key1 = generate_api_key()
+        key2 = generate_api_key()
+        assert len(key1) > 20
+        assert key1 != key2
+        assert isinstance(key1, str)
+
+    def test_rate_limit_key(self):
+        from security import rate_limit_key
+        key = rate_limit_key("client1", "login")
+        assert "rl:login:client1" == key
+
+    def test_dynamic_secrets(self):
+        from security import get_hmac_key, get_jwt_secret, get_csrf_token, get_session_salt
+        for fn in [get_hmac_key, get_jwt_secret, get_csrf_token, get_session_salt]:
+            val = fn()
+            assert val is not None
+            assert len(val) > 10
+
+
+class TestErrorHandlers:
+    """Tests del modulo de error handlers."""
+
+    def test_import(self):
+        from error_handlers import APIError, NotFoundError, ValidationError, AuthError, ForbiddenError
+        assert issubclass(NotFoundError, APIError)
+        assert issubclass(ValidationError, APIError)
+        assert issubclass(AuthError, APIError)
+        assert issubclass(ForbiddenError, APIError)
+
+    def test_api_error_attributes(self):
+        from error_handlers import APIError
+        e = APIError("Error de prueba", 400, {"field": "name"})
+        assert e.message == "Error de prueba"
+        assert e.status_code == 400
+        assert e.details == {"field": "name"}
+
+    def test_not_found(self):
+        from error_handlers import NotFoundError
+        assert NotFoundError("producto").status_code == 404
+        assert NotFoundError().status_code == 404
+
+    def test_auth_error(self):
+        from error_handlers import AuthError
+        assert AuthError().status_code == 401
+        assert AuthError("Token expirado").message == "Token expirado"
+
+    def test_forbidden(self):
+        from error_handlers import ForbiddenError
+        assert ForbiddenError().status_code == 403
+
+    def test_validation_error(self):
+        from error_handlers import ValidationError
+        e = ValidationError("Datos invalidos", {"campo": "precio"})
+        assert e.status_code == 422
+        assert "precio" in e.details["campo"]
+
+    def test_api_response(self):
+        from error_handlers import api_response
+        try:
+            resp, status = api_response(success=True, message="ok", data={"k": "v"})
+            assert status == 200
+        except RuntimeError:
+            # jsonify necesita contexto Flask, validar que la funcion existe y se puede llamar
+            import flask
+            app = flask.Flask(__name__)
+            with app.app_context():
+                resp, status = api_response(success=True, message="ok", data={"k": "v"})
+                assert status == 200
+
+
+class TestValidators:
+    """Tests del modulo de validadores."""
+
+    def test_import(self):
+        from validators import validate_product_name, validate_price, validate_quantity
+        assert callable(validate_product_name)
+
+    def test_product_name_valid(self):
+        from validators import validate_product_name
+        ok, msg = validate_product_name("Arroz Blanco 1kg")
+        assert ok is True
+        assert msg == ""
+
+    def test_product_name_empty(self):
+        from validators import validate_product_name
+        ok, msg = validate_product_name("")
+        assert ok is False
+
+    def test_product_name_long(self):
+        from validators import validate_product_name
+        ok, msg = validate_product_name("X" * 201)
+        assert ok is False
+        assert "largo" in msg
+
+    def test_price_valid(self):
+        from validators import validate_price
+        assert validate_price(100)[0] is True
+        assert validate_price("99.99")[0] is True
+        assert validate_price(0)[0] is True
+
+    def test_price_negative(self):
+        from validators import validate_price
+        ok, msg = validate_price(-1)
+        assert ok is False
+        assert "negativo" in msg.lower() or "negativ" in msg.lower()
+
+    def test_price_invalid(self):
+        from validators import validate_price
+        assert validate_price("abc")[0] is False
+        assert validate_price(None)[0] is False
+
+    def test_price_excessive(self):
+        from validators import validate_price
+        ok, msg = validate_price(1000000000)
+        assert ok is False
+
+    def test_quantity_valid(self):
+        from validators import validate_quantity
+        assert validate_quantity(10)[0] is True
+        assert validate_quantity(0)[0] is True
+        assert validate_quantity("5")[0] is True
+
+    def test_quantity_negative(self):
+        from validators import validate_quantity
+        ok, msg = validate_quantity(-1)
+        assert ok is False
+
+    def test_quantity_invalid(self):
+        from validators import validate_quantity
+        assert validate_quantity("abc")[0] is False
+
+    def test_sanitize_string(self):
+        from validators import sanitize_string
+        assert sanitize_string("  hola  ") == "hola"
+        assert sanitize_string(123) == "123"
+        assert len(sanitize_string("x" * 1000)) == 500
+
+    def test_validate_phone(self):
+        from validators import validate_phone
+        assert validate_phone("+5355551234")[0] is True
+        assert validate_phone("")[0] is False
+        assert validate_phone("123")[0] is False
+
+
+class TestLazyLoader:
+    """Tests del modulo de carga diferida."""
+
+    def test_import(self):
+        from lazy_loader import LazyModule, get_loaded_modules
+        assert callable(LazyModule)
+
+    def test_lazy_creation(self):
+        from lazy_loader import LazyModule
+        lm = LazyModule("nonexistent_module_xyz_12345")
+        assert lm.loaded is False
+
+    def test_lazy_access_raises(self):
+        from lazy_loader import LazyModule
+        lm = LazyModule("nonexistent_module_xyz_12345")
+        try:
+            _ = lm.some_method
+            assert False, "Deberia lanzar AttributeError"
+        except AttributeError:
+            pass
+
+    def test_get_loaded_modules(self):
+        from lazy_loader import get_loaded_modules
+        mods = get_loaded_modules()
+        assert isinstance(mods, dict)
+        assert "ai_analytics" in mods
+        assert "ai_fraud" in mods
+        assert "ai_predictor" in mods
+        assert "diccionario" in mods
+
+    def test_lazy_module_bool(self):
+        from lazy_loader import LazyModule
+        lm = LazyModule("nonexistent_module_xyz_12345")
+        assert bool(lm) is False  # Not loaded, not available
+
+
+class TestArchitectureFiles:
+    """Verifica que los archivos de la nueva arquitectura existen."""
+
+    def test_security_py_exists(self):
+        path = os.path.join(os.path.dirname(__file__), "..", "app", "src", "main", "python", "security.py")
+        assert os.path.exists(path), "security.py debe existir"
+
+    def test_error_handlers_py_exists(self):
+        path = os.path.join(os.path.dirname(__file__), "..", "app", "src", "main", "python", "error_handlers.py")
+        assert os.path.exists(path), "error_handlers.py debe existir"
+
+    def test_validators_py_exists(self):
+        path = os.path.join(os.path.dirname(__file__), "..", "app", "src", "main", "python", "validators.py")
+        assert os.path.exists(path), "validators.py debe existir"
+
+    def test_lazy_loader_py_exists(self):
+        path = os.path.join(os.path.dirname(__file__), "..", "app", "src", "main", "python", "lazy_loader.py")
+        assert os.path.exists(path), "lazy_loader.py debe existir"
+
+    def test_no_secrets_in_repo(self):
+        py_dir = os.path.join(os.path.dirname(__file__), "..", "app", "src", "main", "python")
+        for name in [".tpv_secret", ".tpv_hmac_secret"]:
+            path = os.path.join(py_dir, name)
+            assert not os.path.exists(path), "%s no debe estar en el repo" % name
+
+    def test_gitignore_has_secrets(self):
+        gitignore = os.path.join(os.path.dirname(__file__), "..", ".gitignore")
+        if os.path.exists(gitignore):
+            with open(gitignore) as f:
+                content = f.read()
+            assert ".tpv_secret" in content or ".tpv_hmac_secret" in content
+
+    def test_proguard_rules_exist(self):
+        path = os.path.join(os.path.dirname(__file__), "..", "app", "proguard-rules.pro")
+        assert os.path.exists(path), "proguard-rules.pro debe existir"
+
+    def test_network_security_config(self):
+        path = os.path.join(os.path.dirname(__file__), "..", "app", "src", "main", "res", "xml", "network_security_config.xml")
+        assert os.path.exists(path), "network_security_config.xml debe existir"
+
+    def test_material3_css_exists(self):
+        path = os.path.join(os.path.dirname(__file__), "..", "app", "src", "main", "assets",
+                           "frontend", "static", "css", "tpv_material3.css")
+        assert os.path.exists(path), "tpv_material3.css debe existir"
+
+    def test_java_managers_exist(self):
+        java_dir = os.path.join(os.path.dirname(__file__), "..", "app", "src", "main", "java", "com", "tpv", "pos")
+        for name in ["ServerManager.java", "WebViewManager.java", "AuthManager.java", "PermissionManager.java"]:
+            path = os.path.join(java_dir, name)
+            assert os.path.exists(path), "%s debe existir" % name

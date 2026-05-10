@@ -1,6 +1,5 @@
 """TPV ULTRA SMART v1.0.0 — Arquitectura modular"""
 import sys, os
-from error_handlers import setup_error_handlers, api_response
 
 # ── FIX PATH PYDROID3 / ANDROID ──
 try:
@@ -26,6 +25,7 @@ except ImportError:
 
 import json, threading, webbrowser, time, pathlib, secrets as _secrets
 from datetime import datetime
+from error_handlers import setup_error_handlers, api_response
 
 # ── Clave secreta ──
 import pathlib as _pathlib
@@ -300,7 +300,7 @@ def main():
         for ip in ips: print(f"  WiFi  : http://{ip}:5000")
         print("="*48 + "\n")
     except Exception: pass
-    setup_error_handlers(app)
+setup_error_handlers(app)
     app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)
 
 

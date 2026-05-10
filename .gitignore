@@ -61,3 +61,5 @@ app/src/main/assets/python/
 # Runtime secrets (auto-generated)
 .branch_id
 .tpv_secret_key
+.tpv_hmac_secret
+.tpv_secrets_v2

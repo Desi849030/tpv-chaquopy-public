@@ -347,7 +347,7 @@ class Agent:
             return "Aceptamos múltiples metodos de pago: efectivo, tarjeta de crédito/debito, transferencia bancaria y código QR."
         if self._fm(t, ["horario","abierto","cerrado","donde","ubicación","dirección"]):
             return "Consulte los detalles de horario y ubicación en la sección de Tienda."
-        if self._fm(t, ["oferta","descuento","rebaja","mejor precio","barato","promo","promocion"]):
+        if self._fm(t, ["oferta","descuento","rebaja","mejor precio","barato","promo","promoción"]):
             of = O.mejores()
             if not of: return "Hoy todos nuestros precios son muy competitivos. Escribe el nombre de un producto."
             msg = "Ofertas disponibles:\n\n"
@@ -382,7 +382,7 @@ class Agent:
                 rel = O.relacionados(p["n"],2)
                 if rel: msg += "Te puede interesar: " + rel[0]["nombre"] + "."
                 return msg
-            msg = "Encontre " + str(len(prods)) + " resultados:\n\n"
+            msg = "Encontré " + str(len(prods)) + " resultados:\n\n"
             for p in prods[:10]:
                 stock_info = " | " + str(int(p["s"])) + " " + p["u"] if p["s"] > 0 else " | AGOTADO"
                 msg += "- " + p["n"] + ": " + fmt_money(p["p"]) + stock_info + "\n"
@@ -396,7 +396,7 @@ class Agent:
         d = F.diario(); w = F.semanal()
         low = sum(1 for p in P.cache if 0 < p["s"] <= 5)
         if self._fm(t, ["ayuda","que puedes","menú","opciones"]):
-            return "Como supervisor tienes acceso completo:\n\n- dashboard: KPIs\n- ventas: Resumen del dia\n- stock bajo: Alertas\n- top: Mas vendidos\n- finanzas: Balance y margen\n- gastos: Egresos\n- predicciones: Tendencias\n- rotacion: Indice\n- ABC: Clasificacion\n- ofertas: Promociones\n- Nombre de producto para info detallada"
+            return "Como supervisor tienes acceso completo:\n\n- dashboard: KPIs\n- ventas: Resumen del dia\n- stock bajo: Alertas\n- top: Más vendidos\n- finanzas: Balance y margen\n- gastos: Egresos\n- predicciones: Tendencias\n- rotacion: Indice\n- ABC: Clasificacion\n- ofertas: Promociónes\n- Nombre de producto para info detallada"
         if self._fm(t, ["dashboard","resumen","estado","kpi"]):
             msg = "Dashboard:\n- Ventas hoy: " + fmt_money(d["r"]) + " (" + str(d["t"]) + " ops)\n- Ventas semana: " + fmt_money(w["r"]) + "\n- Ticket promedio: " + fmt_money(d["a"]) + "\n- Productos: " + str(len(P.cache)) + "\n- Stock bajo: " + str(low) + "\n- Categorias: " + str(len(P.cats))
             if d["t"] > 0:
@@ -404,8 +404,8 @@ class Agent:
                 proy = d["r"]/h*24 if h > 0 else d["r"]
                 msg += "\n- Proyección cierre: " + fmt_money(proy)
             return msg
-        if self._fm(t, ["ventas","caja","recaude","cuanto vendi","como voy"]):
-            if d["t"] == 0: return "Aun no hay ventas hoy."
+        if self._fm(t, ["ventas","caja","recaudó","cuanto vendi","como voy"]):
+            if d["t"] == 0: return "Aún no hay ventas hoy."
             h = datetime.now().hour
             proy = d["r"]/h*24 if h > 0 else d["r"]
             return "Ventas del dia:\n- Ops: " + str(d["t"]) + "\n- Facturado: " + fmt_money(d["r"]) + "\n- Ticket: " + fmt_money(d["a"]) + "\n- Proyeccion: " + fmt_money(proy) + "\n- Gastos: " + fmt_money(d["g"]) + "\n- Ganancia: " + fmt_money(d["r"]-d["g"])
@@ -417,10 +417,10 @@ class Agent:
                 icon = "X" if r["stock_actual"] == 0 else "!"
                 msg += " [" + icon + "] " + r["nombre"] + ": " + str(int(r["stock_actual"])) + " uds\n"
             return msg + "\nDesea generar orden de pedido?"
-        if self._fm(t, ["top","mas vendido","popular","ranking","mejor","vendidos"]):
+        if self._fm(t, ["top","más vendido","popular","ranking","mejor","vendidos"]):
             top = F.top(7, 5)
-            if not top: return "Aun no hay suficiente historial."
-            msg = "Mas vendidos (7 días):\n\n"
+            if not top: return "Aún no hay suficiente historial."
+            msg = "Más vendidos (7 días):\n\n"
             for i, r in enumerate(top, 1):
                 msg += str(i) + ". " + r["nombre"] + ": " + str(int(r["q"])) + " uds (" + fmt_money(r["t"]) + ")\n"
             return msg
@@ -447,11 +447,11 @@ class Agent:
             msg = "Rotación (30 días): " + str(round(rot, 2)) + " veces"
             if rot > 4: msg += "\nExcelente: inventario se renueva rapido."
             elif rot > 1: msg += "\nNormal: buen ritmo."
-            else: msg += "\nBaja: considere promociones."
+            else: msg += "\nBaja: considere promociónes."
             return msg
         if self._fm(t, ["abc","pareto","clasificacion"]):
             abc = F.abc()
-            if not abc["A"]: return "Necesito al menos 30 días para analisis ABC."
+            if not abc["A"]: return "Necesito al menos 30 días para análisis ABC."
             msg = "Análisis ABC:\n\n- A (80%): " + str(len(abc["A"])) + " productos"
             if abc["A"]: msg += "\n  Top: " + abc["A"][0]
             msg += "\n- B (15%): " + str(len(abc["B"])) + " productos"
@@ -463,7 +463,7 @@ class Agent:
                 demanda = top[0]["q"]*12
                 eoq = M.eoq(demanda, 50, 10)
                 return "Lote óptimo " + top[0]["nombre"] + ":\n- EOQ: " + str(int(eoq)) + " uds/pedido\n- Demanda anual: " + str(int(demanda)) + " uds"
-            return "Necesito mas datos de ventas para EOQ."
+            return "Necesito más datos de ventas para EOQ."
         if self._fm(t, ["oferta","descuento","rebaja","promo"]):
             of = O.mejores()
             if not of: return "No hay productos con margen para ofertas."
@@ -484,7 +484,7 @@ class Agent:
         return "Escriba: ventas, stock bajo, top, finanzas, gastos, predicciones, ABC, rotacion, ofertas, EOQ, o nombre de producto.\n\n" + self._follow("supervisor")
 
     def _ven(self, t, m):
-        if self._fm(t, ["ventas","caja","recaude","cuanto vendi","como voy"]):
+        if self._fm(t, ["ventas","caja","recaudó","cuanto vendi","como voy"]):
             d = F.diario()
             if d["t"] == 0: return "Todavía no hay ventas hoy."
             h = datetime.now().hour
@@ -498,10 +498,10 @@ class Agent:
                     msg += "- " + r["nombre"] + ": " + str(int(r["stock_actual"])) + " uds\n"
                 return msg + "\nDesea generar orden de pedido?"
             return "Todo en orden. No hay stock bajo."
-        if self._fm(t, ["top","mas vendido","popular","ranking"]):
+        if self._fm(t, ["top","más vendido","popular","ranking"]):
             top = F.top(7, 5)
-            if not top: return "Aun no hay historial suficiente esta semana."
-            msg = "Mas vendidos (7 días):\n"
+            if not top: return "Aún no hay historial suficiente esta semana."
+            msg = "Más vendidos (7 días):\n"
             for i, r in enumerate(top, 1):
                 msg += str(i) + ". " + r["nombre"] + ": " + str(int(r["q"])) + " uds (" + fmt_money(r["t"]) + ")\n"
             return msg
@@ -525,17 +525,17 @@ class Agent:
         n = f", {name}" if name else ""
         
         # FINANZAS COMPLETO
-        if self._fm(t, ['finanza','margen','gasto','ingreso','balance','ganancia','comision','rentabilidad']):
+        if self._fm(t, ['finanza','margen','gasto','ingreso','balance','ganancia','comisión','rentabilidad']):
             prof = d['r'] - d['g']
             margen = (prof/d['r']*100) if d['r']>0 else 0
-            comision = d['r']*0.05 if d['r']>0 else 0
+            comisión = d['r']*0.05 if d['r']>0 else 0
             
             msg = f"Estimado administrador{n}, aquí tiene el balance del día:\n\n"
             msg += f"💰 Ingresos por ventas: {fmt_money(d['r'])}\n"
             msg += f"🧾 Gastos registrados: {fmt_money(d['g'])}\n"
             msg += f"📊 Ganancia bruta: {fmt_money(prof)}\n"
             msg += f"📈 Margen neto: {pct(margen)}\n"
-            msg += f"👥 Comisión estimada (5%): {fmt_money(comision)}\n\n"
+            msg += f"👥 Comisión estimada (5%): {fmt_money(comisión)}\n\n"
             
             if prof > d['g']*2:
                 msg += "¡Excelente rentabilidad hoy! El negocio está generando buenas ganancias."
@@ -627,7 +627,7 @@ class Agent:
             msg = f"Índice de rotación (30 días): {rot:.2f} veces\n\n"
             if rot > 4: msg += "Excelente. El inventario se renueva rápidamente."
             elif rot > 1: msg += "Rotación normal. El inventario se mueve a buen ritmo."
-            else: msg += "Rotación baja. Considere promociones para mover el stock."
+            else: msg += "Rotación baja. Considere promociónes para mover el stock."
             return msg
         
         # GASTOS
@@ -692,7 +692,7 @@ def process_question(sid, question, role='cliente', user_name=''):
 
 def get_status():
     P.refresh()
-    return {'version':'1.0.0','model':'Gestor Total Conversacional','status':'active','features':['ABC','Regresión','EOQ','Punto Equilibrio','Rotación','Ofertas','Gastos','Comisiones','Predicciones']}
+    return {'version':'1.0.0','model':'Gestor Total Conversacional','status':'active','features':['ABC','Regresión','EOQ','Punto Equilibrio','Rotación','Ofertas','Gastos','Comisiónes','Predicciones']}
 
 def get_conversation_history(sid='0'): return []
 def get_proactive_alerts(sid='0'):

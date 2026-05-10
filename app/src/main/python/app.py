@@ -65,6 +65,7 @@ from loyalty_routes import loyalty_bp
 from api_routes import api_bp
 from license_routes import lic_bp
 from dev_metrics import dev_metrics_bp
+from diccionario_tpv import diccionario_bp
 try:
     from validacion_routes import val_bp
 except ImportError:
@@ -113,6 +114,7 @@ if val_bp: app.register_blueprint(val_bp)
 if ai_bp: app.register_blueprint(ai_bp)
 if analytics_bp: app.register_blueprint(analytics_bp)
 if dev_metrics_bp: app.register_blueprint(dev_metrics_bp)
+if diccionario_bp: app.register_blueprint(diccionario_bp)
 
 try:
     from tpv_security import registrar_auditoria

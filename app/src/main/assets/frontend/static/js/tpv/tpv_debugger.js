@@ -3,6 +3,9 @@
 // ══════════════════════════════════════════════════════════════
 //  ESTADO INTERNO DEL DEBUGGER
 // ══════════════════════════════════════════════════════════════
+// Acceso directo a métricas del sistema
+window._DBG_METRICAS = function(){ window.open('/dev/metricas','_blank'); };
+
 window._DBG = {
     activo:     false,
     buffer:     [],          // Todos los mensajes

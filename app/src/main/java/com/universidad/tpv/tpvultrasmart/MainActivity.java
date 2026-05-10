@@ -150,7 +150,6 @@ public class MainActivity extends FragmentActivity {
         s.setAllowFileAccess(true); s.setAllowContentAccess(true);
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setCacheMode(WebSettings.LOAD_NO_CACHE);
-        s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         webView.addJavascriptInterface(new TpvNativeBridge(), "TPVNative");
         webView.setWebChromeClient(new WebChromeClient() {
             @Override public boolean onJsAlert(WebView v, String u, String m, JsResult r) { mostrarAlertDialog(m, r); return true; }

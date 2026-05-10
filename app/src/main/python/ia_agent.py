@@ -70,12 +70,20 @@ class P:
         c = _db()
         if not c: return
         prods = []
-        for r in c.execute("SELECT nombre,precio_venta as precio,precio_compra as costo,categoria,stock_actual,unidad_medida FROM inventario_general").fetchall():
+        rows = c.execute(
+            "SELECT nombre, precio_venta as precio, precio_compra as costo, "
+            "categoria, stock_actual, unidad_medida FROM inventario_general"
+        ).fetchall()
+        if not rows:
+            rows = c.execute(
+                "SELECT nombre, precio as precio, costoUnitario as costo, "
+                "categoria, stock_actual, unidad_medida as um FROM productos WHERE activo=1"
+            ).fetchall()
+        for r in rows:
             prods.append({'n':r[0] or '','p':float(r[1] or 0),'c':float(r[2] or 0),'cat':r[3] or 'General','s':float(r[4] or 0),'u':r[5] or 'Un'})
+
         names = {p['n'].lower() for p in prods}
-        for r in c.execute("SELECT nombre,precio_venta,precio_compra,categoria,stock_actual,unidad_medida FROM inventario_general").fetchall():
-            if (r[0] or '').lower() not in names:
-                prods.append({'n':r[0] or '','p':float(r[1] or 0),'c':float(r[2] or 0),'cat':r[3] or 'General','s':float(r[4] or 0),'u':r[5] or 'Un'})
+
         cls.cache = prods; cls.ct = time.time()
         cls.cats = sorted(set(p['cat'] for p in prods))
     
@@ -270,10 +278,11 @@ class Agent:
             return self._r('Detecto que algo no va bien. Estoy aquí para ayudarle. Que problema tiene?', role, primary, ['ayuda'])
 
         # EJECUTAR SEGUN ROL (sin limites)
-        if role == 'cliente': result = self._cli(t, m)
-        elif role == 'vendedor': result = self._ven(t, m)
-        elif role == 'supervisor': result = self._sup(t, m)
-        else: result = self._adm(t, name)
+        if role == 'cliente':        result = self._cli(t, m)
+        elif role == 'vendedor':     result = self._ven(t, m)
+        elif role == 'supervisor':   result = self._sup(t, m)
+        elif role == 'administrador': result = self._adm(t, name)
+        else:                         result = self._dev(t, name)  # desarrollador
 
         # Actualizar memoria contextual
         if ctx:
@@ -518,6 +527,26 @@ class Agent:
         return "Dime que necesitas: ventas, stock bajo, top, o nombre de un producto.\n\n" + self._follow(role)
 
 
+
+    
+    def _dev(self, texto, nombre=None):
+        """Handler para rol desarrollador - acceso total + metricas + debug."""
+        t = texto.lower()
+        # Primero intentar con el handler de administrador
+        base = self._adm(texto, nombre)
+        # Capacidades adicionales del desarrollador
+        if any(w in t for w in ["metrica", "rendimiento", "servidor", "cpu", "ram", "disco", "memoria"]):
+            try:
+                import dev_metrics
+                base += "\n\n📊 **Métricas del sistema (solo desarrollador):**"
+                base += "\nUsa el panel de métricas en /dev/metrics para detalles en tiempo real."
+            except Exception:
+                pass
+        if any(w in t for w in ["licencia", "license", "activacion"]):
+            base += "\n\n🔑 **Licencias:** Usa /admin/licencias para gestionar."
+        if any(w in t for w in ["usuario", "users", "cuentas"]):
+            base += "\n\n👥 **Usuarios:** Usa /admin/usuarios para gestionar cuentas del sistema."
+        return base
 
     def _adm(self, t, name):
         d = F.diario()

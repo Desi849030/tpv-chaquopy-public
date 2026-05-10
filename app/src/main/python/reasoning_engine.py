@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 try:
-    from tool_registry import get_tool, list_tools_by_category, search_tools, get_catalog_stats
+    from tool_registry import get_tool, get_tools_by_category as list_tools_by_category, search_tools, get_catalog_stats
 except ImportError:
     get_tool = None
     list_tools_by_category = None
@@ -112,7 +112,7 @@ PREDEFINED_PLANS = {
 class ReActEngine:
     """Motor ReAct: ejecuta herramientas del tool_registry via Flask test_client()."""
 
-    def __init__(self, app=None, session_id=None):
+    def __init__(self, app=None, session_id=None, user_session=None):
         self.app = app
         self.session_id = session_id
         self.client = None
@@ -123,6 +123,9 @@ class ReActEngine:
         if app is not None:
             try:
                 self.client = app.test_client()
+                if self._user_session:
+                    with self.client.session_transaction() as sess:
+                        sess['usuario'] = self._user_session
             except Exception as exc:
                 print("[ReActEngine] test_client error: %s" % exc)
         self._load_catalog()

@@ -93,7 +93,8 @@ def chat():
             # Se podria inyectar contexto extra en el futuro
             data['_memory'] = mem_ctx
 
-        result = _process_question(sid, q, role=role, user_name=user_name)
+        user_session = session.get("usuario", {})
+        result = _process_question(sid, q, role=role, user_name=user_name, user_session=user_session)
 
         # Extraer y guardar datos clave de esta conversacion
         if _mem_module:

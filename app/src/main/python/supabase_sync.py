@@ -671,11 +671,44 @@ def sincronizar_todo() -> dict:
         resultados["estado"] = guardar_en_supabase(estado)
     resultados["usuarios"] = sincronizar_usuarios_a_supabase()
     resultados["clientes"] = sincronizar_todos_clientes()
+
+    # Sync ventas
+    try:
+        from database import obtener_conexion
+        conn = obtener_conexion()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM ventas ORDER BY fecha DESC LIMIT 100")
+        ventas = [dict(r) for r in cursor.fetchall()]
+        conn.close()
+        if ventas:
+            from supabase_sync import guardar_en_supabase
+            resultados["ventas"] = guardar_en_supabase({"ventas": ventas})
+            print("  Ventas sincronizadas")
+    except Exception as e:
+        print(f"  Error sync ventas: {e}")
+
+    # Sync inventario/stock
+    try:
+        from database import obtener_conexion
+        conn = obtener_conexion()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM inventario_general ORDER BY producto_id")
+        stock = [dict(r) for r in cursor.fetchall()]
+        conn.close()
+        if stock:
+            from supabase_sync import guardar_en_supabase
+            resultados["inventario"] = guardar_en_supabase({"inventario": stock})
+            print("  Inventario sincronizado")
+    except Exception as e:
+        print(f"  Error sync inventario: {e}")
+
     return {
-        "ok":       True,
-        "estado":   resultados.get("estado", False),
-        "usuarios": resultados.get("usuarios", {}),
-        "clientes": resultados.get("clientes", {}),
+        "ok":         True,
+        "estado":     resultados.get("estado", False),
+        "usuarios":   resultados.get("usuarios", {}),
+        "clientes":   resultados.get("clientes", {}),
+        "ventas":     resultados.get("ventas", False),
+        "inventario": resultados.get("inventario", False),
     }
 
 # ══════════════════════════════════════════════════════════════

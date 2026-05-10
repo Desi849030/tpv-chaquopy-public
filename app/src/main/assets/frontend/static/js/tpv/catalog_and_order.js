@@ -153,16 +153,15 @@
   };
 
   /* ----- INIT ----- */
-  function init(){
-    setTimeout(function(){
-      initCatalogSearch();
-      initSwipeActions();
-      console.log('[v24] Catalog search + swipe + receipt listo');
-    }, 800);
-  }
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
+/* ----- INIT ----- */
+function tryInit(){
+  initCatalogSearch();
+  initSwipeActions();
+  console.log('[v24] Catalog search + swipe + receipt listo');
+}
+if(document.readyState === 'complete'){
+  tryInit();
+} else {
+  document.addEventListener('DOMContentLoaded', tryInit);
+}
 })();

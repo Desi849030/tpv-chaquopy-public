@@ -687,7 +687,7 @@
                     mensaje += `🎯 Confianza: ${(estructura.confianza * 100).toFixed(0)}%`;
             
                     // Invalidar cache de catálogo para forzar recarga desde servidor
-    try { localStorage.removeItem('tpv_catalog_cache'); localStorage.removeItem('tpv_last_sync'); console.log('[Import] Cache invalidado'); } catch(e){}
+    try { if(window.tpv_invalidarCache) window.tpv_invalidarCache(); localStorage.removeItem('tpv_last_sync'); console.log('[Import] Cache invalidado'); } catch(e){}
     onProgress({ paso: 6, total: 6, mensaje: '✅ Completado!' });
             
                     return {

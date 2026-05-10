@@ -1,88 +1,150 @@
-/* ========== v24: Catálogo Cache + Sync Status ========== */
+/* ========== v25: Catálogo Cache IndexedDB + Sync Status ========== */
+/* Migración de localStorage (5MB, síncrono) a IndexedDB (sin límite, asíncrono) */
 (function(){
-"use strict";
+  "use strict";
 
-var CACHE_KEY = 'tpv_catalog_cache';
-var SYNC_KEY = 'tpv_last_sync';
-var CACHE_TTL = 30 * 60 * 1000; /* 30 minutos */
+  var DB_NAME    = 'tpv_cache_db';
+  var DB_VERSION = 1;
+  var STORE_NAME = 'catalog';
+  var CACHE_KEY  = 'productos';
+  var SYNC_KEY   = 'tpv_last_sync';
+  var CACHE_TTL  = 30 * 60 * 1000; /* 30 minutos */
 
-function saveCache(data){
-    try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({
-            data: data,
-            timestamp: Date.now()
-        }));
-        localStorage.setItem(SYNC_KEY, new Date().toLocaleTimeString());
-        console.log('[v24] Catálogo cacheado:', data.length, 'productos');
-    } catch(e){}
-}
+  var _db = null;
 
-function loadCache(){
-    try {
-        var raw = localStorage.getItem(CACHE_KEY);
-        if(!raw) return null;
-        var parsed = JSON.parse(raw);
-        if(Date.now() - parsed.timestamp > CACHE_TTL){
-            return null; /* Expirado */
+  /* ── Abrir / crear la base IndexedDB ── */
+  function openDB(){
+    return new Promise(function(resolve, reject){
+      if(_db){ resolve(_db); return; }
+      var req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = function(e){
+        var db = e.target.result;
+        if(!db.objectStoreNames.contains(STORE_NAME)){
+          db.createObjectStore(STORE_NAME, { keyPath: 'key' });
         }
-        return parsed.data;
-    } catch(e){ return null; }
-}
-
-/* Interceptar fetch de productos para cachear */
-var origFetch = window.fetch;
-window.fetch = function(url, opts){
-    return origFetch.apply(this, arguments).then(function(resp){
-        if(url && (!opts || !opts.method || opts.method==='GET') && (url.indexOf('/api/productos') !== -1 || url.indexOf('/api/catalogo') !== -1 || url.indexOf('/api/inventario') !== -1)){
-            resp.clone().json().then(function(data){
-                if(Array.isArray(data)) saveCache(data);
-                else if(data && data.productos) saveCache(data.productos);
-                else if(data && data.data) saveCache(data.data);
-            }).catch(function(){});
-        }
-        return resp;
-    }).catch(function(err){
-        /* Si falla, intentar usar caché local — RETORNA datos cacheados */
-        if(url && (url.indexOf('/api/productos') !== -1 || url.indexOf('/api/catalogo') !== -1 || url.indexOf('/api/inventario') !== -1)){
-            var cached = loadCache();
-            if(cached){
-                console.log('[v24] Usando catálogo cacheado offline:', cached.length, 'productos');
-                if(window._toast) window._toast('Sin conexión — mostrando datos locales', 'warning');
-                /* Retornar datos cacheados en vez de error */
-                var body = JSON.stringify(Array.isArray(cached) ? cached : (cached.productos || []));
-                return new Response(body, {status: 200, headers: {'Content-Type':'application/json'}});
-            }
-        }
-        throw err;
+      };
+      req.onsuccess = function(e){
+        _db = e.target.result;
+        resolve(_db);
+      };
+      req.onerror = function(e){
+        reject(e.target.error);
+      };
     });
-};
+  }
 
-/* Mostrar último sync en el UI — MutationObserver en vez de setTimeout */
-function showSyncStatus(){
-    var bar = document.getElementById('user-bar');
-    if(!bar){
-        /* Esperar a que el DOM esté listo */
-        var obs = new MutationObserver(function(){
-            bar = document.getElementById('user-bar');
-            if(bar){ obs.disconnect(); showSyncStatus(); }
+  /* ── Guardar en IndexedDB ── */
+  function saveCache(data){
+    openDB().then(function(db){
+      var tx    = db.transaction(STORE_NAME, 'readwrite');
+      var store = tx.objectStore(STORE_NAME);
+      store.put({ key: CACHE_KEY, data: data, timestamp: Date.now() });
+      try{ localStorage.setItem(SYNC_KEY, new Date().toLocaleTimeString()); }catch(e){}
+      console.log('[v25] IndexedDB: catálogo guardado (' + data.length + ' productos)');
+    }).catch(function(e){
+      console.warn('[v25] IndexedDB save falló:', e);
+    });
+  }
+
+  /* ── Leer de IndexedDB ── */
+  function loadCache(){
+    return openDB().then(function(db){
+      return new Promise(function(resolve){
+        var tx    = db.transaction(STORE_NAME, 'readonly');
+        var store = tx.objectStore(STORE_NAME);
+        var req   = store.get(CACHE_KEY);
+        req.onsuccess = function(e){
+          var rec = e.target.result;
+          if(!rec){ resolve(null); return; }
+          if(Date.now() - rec.timestamp > CACHE_TTL){ resolve(null); return; }
+          resolve(rec.data);
+        };
+        req.onerror = function(){ resolve(null); };
+      });
+    }).catch(function(){ return null; });
+  }
+
+  /* ── Invalidar cache (llamar tras importación Excel) ── */
+  window.tpv_invalidarCache = function(){
+    openDB().then(function(db){
+      var tx = db.transaction(STORE_NAME, 'readwrite');
+      tx.objectStore(STORE_NAME).delete(CACHE_KEY);
+      console.log('[v25] Cache invalidado tras importación');
+    }).catch(function(){});
+  };
+
+  /* ── Interceptar fetch para cachear y hacer fallback offline ── */
+  var origFetch = window.fetch;
+  window.fetch = function(url, opts){
+    var isProductUrl = url && (
+      url.indexOf('/api/productos')  !== -1 ||
+      url.indexOf('/api/catalogo')   !== -1 ||
+      url.indexOf('/api/inventario') !== -1
+    );
+    var isGET = !opts || !opts.method || opts.method === 'GET';
+
+    return origFetch.apply(this, arguments).then(function(resp){
+      if(isProductUrl && isGET){
+        resp.clone().json().then(function(data){
+          var lista = Array.isArray(data) ? data
+                    : (data && data.productos) ? data.productos
+                    : (data && data.data)      ? data.data
+                    : null;
+          if(lista) saveCache(lista);
+        }).catch(function(){});
+      }
+      return resp;
+    }).catch(function(err){
+      /* ── FALLBACK OFFLINE REAL ── */
+      if(isProductUrl && isGET){
+        return loadCache().then(function(cached){
+          if(cached){
+            console.log('[v25] Offline: sirviendo', cached.length, 'productos desde IndexedDB');
+            if(window._toast) window._toast('Sin conexión — datos locales', 'warning');
+            return new Response(JSON.stringify(cached), {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' }
+            });
+          }
+          throw err;
         });
-        obs.observe(document.body, {childList:true, subtree:true});
-        return;
-    }
-    if(document.getElementById('sync-status')) return; /* ya existe */
+      }
+      throw err;
+    });
+  };
+
+  /* ── Estado de sync en el UI (con MutationObserver) ── */
+  function showSyncStatus(){
+    var existing = document.getElementById('sync-status');
+    if(existing) return;
+    var bar = document.getElementById('user-bar');
+    if(!bar) return;
     var last = localStorage.getItem(SYNC_KEY) || 'Nunca';
     var span = document.createElement('span');
     span.id = 'sync-status';
     span.style.cssText = 'font-size:10px;color:#94a3b8;margin-left:6px;';
     span.textContent = '\uD83D\uDD04 ' + last;
     bar.appendChild(span);
-    /* Actualizar cada minuto */
     setInterval(function(){
-        var l = localStorage.getItem(SYNC_KEY);
-        if(l) span.textContent = '\uD83D\uDD04 ' + l;
+      var l = localStorage.getItem(SYNC_KEY);
+      if(l) span.textContent = '\uD83D\uDD04 ' + l;
     }, 60000);
-}
+  }
 
-showSyncStatus();
-console.log('[v24] Catalog cache + sync status listo');
+  /* Esperar a que user-bar exista */
+  var _obs = new MutationObserver(function(){
+    var bar = document.getElementById('user-bar');
+    if(bar){ showSyncStatus(); _obs.disconnect(); }
+  });
+  _obs.observe(document.body || document.documentElement, { childList: true, subtree: true });
+
+  /* Verificar soporte */
+  if(!window.indexedDB){
+    console.warn('[v25] IndexedDB no disponible — sin cache offline');
+  } else {
+    openDB().then(function(){
+      console.log('[v25] IndexedDB lista — cache offline activo');
+    });
+  }
+
 })();

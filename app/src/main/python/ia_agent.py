@@ -491,6 +491,18 @@ class Agent:
                 msg += "\n"
             return msg
         return "Escriba: ventas, stock bajo, top, finanzas, gastos, predicciones, ABC, rotación, ofertas, EOQ, o nombre de producto.\n\n" + self._follow("supervisor")
+        if self._fm(t, ["login","iniciar sesion","acceder","entrar","contrase","password","usuario","credenciales","cuenta"]):
+            return ("Para acceder al sistema necesitas usuario y contrasena.\n"
+                    "Solicita tus credenciales al administrador del negocio.\n"
+                    "Mientras tanto, puedo ayudarte a buscar productos y precios.")
+        if self._fm(t, ["registrarme","nueva cuenta","crear cuenta","soy nuevo"]):
+            return ("Las cuentas se crean desde el panel de administracion.\n"
+                    "Comunica al administrador que necesitas acceso.")
+        if self._fm(t, ["no funciona","no puedo entrar","error","acceso denegado","bloqueado"]):
+            return ("Si no puedes iniciar sesion:\n"
+                    "1. Verifica usuario y contrasena\n"
+                    "2. Espera 10 min si fallaste 5 veces\n"
+                    "3. Pide al admin que resetee tu contrasena")
 
     def _ven(self, t, m):
         if self._fm(t, ["ventas","caja","recaudó","cuanto vendi","como voy"]):

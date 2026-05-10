@@ -75,6 +75,21 @@ def ping():
         return jsonify({'status': 'error', 'error': str(e)})
 
 
+
+@assistant_bp.route("/public-chat", methods=["POST"])
+def public_chat():
+    try:
+        if not _ia_module:
+            return jsonify({"answer": "IA no disponible.", "suggestions": ["productos", "precios"]})
+        data = request.get_json(force=True, silent=True) or {}
+        q = data.get("question", "").strip()
+        if not q:
+            return jsonify({"answer": "Escribe algo para ayudarte.", "suggestions": ["productos", "precios", "ofertas"]})
+        result = _process_question("public", q, role="cliente", user_name="Cliente", user_session={})
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"answer": f"Error: {e}", "suggestions": ["productos"]})
+
 @assistant_bp.route('/chat', methods=['POST'])
 def chat():
     if not _ia_module:

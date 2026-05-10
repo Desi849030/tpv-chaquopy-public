@@ -47,6 +47,14 @@
                 if (resultadoEncabezados.confianza > 0.6) {
                     console.log('✅ Encabezados explícitos detectados');
                     return resultadoEncabezados;
+
+                // Estrategia 1.5: Fuzzy matching (Levenshtein)
+                // Activa cuando los encabezados no son exactos pero son parecidos
+                const resultadoFuzzy = this.buscarEncabezadosFuzzy(rawData);
+                if (resultadoFuzzy.confianza > 0.5) {
+                    if (this.DEBUG) console.log('[Import] Estrategia 1.5 (fuzzy) seleccionada');
+                    return resultadoFuzzy;
+                }
                 }
         
                 // Estrategia 2: Análisis por contenido (cuando no hay encabezados claros)
@@ -102,7 +110,7 @@
                         resultado.filaEncabezado = i;
                         resultado.filaInicioDatos = i + 1;
                         resultado.columnas = colsEncontradas;
-                        resultado.confianza = Math.min(coincidencias / 4, 1.0); // Máximo 6 columnas esperadas
+                        resultado.confianza = Math.min(0.4 + (coincidencias / 6), 1.0); // Base 0.4 + bonus por campo
                 
                         if (this.DEBUG) {
                             console.log(`✓ Encabezados encontrados en fila ${i+1} (${coincidencias} columnas, confianza: ${resultado.confianza.toFixed(2)})`);
@@ -117,6 +125,173 @@
             /**
              * Analiza el contenido de las columnas para inferir su tipo
              */
+
+            /* ══════════════════════════════════════════════════════
+             * LEVENSHTEIN + FUZZY MATCHING + SINONIMOS EXPANDIDOS
+             * ══════════════════════════════════════════════════════ */
+
+            /**
+             * Distancia Levenshtein para matching fuzzy de encabezados
+             */
+            levenshtein(a, b) {
+                a = String(a).toLowerCase().trim();
+                b = String(b).toLowerCase().trim();
+                if (a === b) return 0;
+                const m = a.length, n = b.length;
+                const dp = Array.from({length: m+1}, (_, i) => [i, ...Array(n).fill(0)]);
+                for (let j = 0; j <= n; j++) dp[0][j] = j;
+                for (let i = 1; i <= m; i++)
+                    for (let j = 1; j <= n; j++)
+                        dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1]
+                            : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+                return dp[m][n];
+            },
+
+            /**
+             * Normaliza texto: quita tildes y no-alfanumericos para comparacion
+             */
+            normalizarTexto(txt) {
+                if (!txt) return '';
+                return String(txt).toLowerCase().trim()
+                    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^a-z0-9]/g, '');
+            },
+
+            /**
+             * Matching fuzzy de encabezado contra lista de sinonimos
+             * Retorna confianza 0-1
+             */
+            matchFuzzy(celda, sinonimos) {
+                const norm = this.normalizarTexto(celda);
+                if (!norm) return 0;
+                for (const s of sinonimos) {
+                    if (this.normalizarTexto(s) === norm) return 1.0;
+                }
+                for (const s of sinonimos) {
+                    const sn = this.normalizarTexto(s);
+                    if (norm.includes(sn) || sn.includes(norm)) return 0.85;
+                }
+                let mejorScore = 0;
+                for (const s of sinonimos) {
+                    const sn = this.normalizarTexto(s);
+                    const maxLen = Math.max(norm.length, sn.length);
+                    if (maxLen === 0) continue;
+                    const dist = this.levenshtein(norm, sn);
+                    const score = 1 - (dist / maxLen);
+                    if (score > mejorScore) mejorScore = score;
+                }
+                return mejorScore > 0.6 ? mejorScore * 0.8 : 0;
+            },
+
+            // Sinonimos expandidos por campo (normalizacion fuzzy)
+            SINONIMOS: {
+                nombre:    ['nombre','producto','descripcion','articulo','item','mercancia',
+                            'detalle','concepto','bien','referencia','prod','art','desc',
+                            'denominacion','denominacion del producto','nombre del articulo'],
+                precio:    ['precio','precio venta','p.venta','pventa','venta','valor',
+                            'precio de venta','precio al publico','p/venta','importe',
+                            'tarifa','monto','precio unitario','pu','p.u','price'],
+                costo:     ['costo','precio compra','p.compra','pcompra','coste',
+                            'precio de compra','costo unitario','cu','c.u','cost',
+                            'precio costo','pc'],
+                cantidad:  ['cantidad','cant','stock','existencia','existencias','qty',
+                            'inventario','unidades','und','uds','quantity','disponible',
+                            'en almacen','almacen','stock actual'],
+                categoria: ['categoria','categoría','tipo','clasificacion','clasificación',
+                            'grupo','familia','linea','línea','departamento','seccion',
+                            'seccion','cat','category','rubro'],
+                unidad:    ['unidad','um','u/m','unidad medida','und','uds','medida',
+                            'presentacion','presentación','empaque','envase','unit'],
+                codigo:    ['codigo','código','referencia','ref','sku','id','cod',
+                            'clave','barcode','code','num','numero']
+            },
+
+            /**
+             * Buscar encabezados con fuzzy matching (Levenshtein)
+             * Fallback cuando buscarEncabezadosExplicitos no encuentra nada
+             */
+            buscarEncabezadosFuzzy(rawData) {
+                const resultado = {
+                    filaEncabezado: -1,
+                    filaInicioDatos: -1,
+                    columnas: {},
+                    confianza: 0,
+                    metodo: 'headers-fuzzy'
+                };
+
+                for (let i = 0; i < Math.min(15, rawData.length); i++) {
+                    const fila = rawData[i];
+                    if (!fila) continue;
+
+                    const colsEncontradas = {};
+                    let coincidencias = 0;
+                    let scoreTotal = 0;
+
+                    for (let j = 0; j < fila.length; j++) {
+                        const celda = fila[j];
+                        if (celda === null || celda === undefined || celda === '') continue;
+
+                        for (const [campo, sinonimos] of Object.entries(this.SINONIMOS)) {
+                            if (colsEncontradas[campo] !== undefined) continue;
+                            const score = this.matchFuzzy(String(celda), sinonimos);
+                            if (score >= 0.7) {
+                                colsEncontradas[campo] = j;
+                                coincidencias++;
+                                scoreTotal += score;
+                                if (this.DEBUG) console.log('  [fuzzy] Col ' + (j+1) + ' "' + celda + '" -> ' + campo + ' (' + score.toFixed(2) + ')');
+                                break;
+                            }
+                        }
+                    }
+
+                    if (colsEncontradas['nombre'] !== undefined && coincidencias >= 2) {
+                        resultado.filaEncabezado = i;
+                        resultado.filaInicioDatos = i + 1;
+                        resultado.columnas = colsEncontradas;
+                        const camposCriticos = ['nombre','precio','cantidad','costo'].filter(c => colsEncontradas[c] !== undefined).length;
+                        resultado.confianza = Math.min(0.5 + (camposCriticos * 0.15) + (scoreTotal / (coincidencias * 10)), 1.0);
+                        if (this.DEBUG) console.log('* Encabezados fuzzy fila ' + (i+1) + ': ' + coincidencias + ' campos, confianza ' + resultado.confianza.toFixed(2));
+                        return resultado;
+                    }
+                }
+                return resultado;
+            },
+
+            /**
+             * Valida y limpia una fila antes de insertar
+             * Retorna null si la fila es invalida
+             */
+            validarFila(fila, columnas) {
+                const nombre = fila[columnas.nombre];
+                if (!nombre || String(nombre).trim().length < 2) return null;
+                if (/^[\d\.\s,]+$/.test(String(nombre).trim())) return null;
+
+                const precioRaw = fila[columnas.precio];
+                let precio = 0;
+                if (precioRaw !== undefined && precioRaw !== null) {
+                    precio = parseFloat(String(precioRaw).replace(/[^0-9.-]/g, '')) || 0;
+                    if (precio < 0) precio = 0;
+                }
+
+                const cantRaw = fila[columnas.cantidad];
+                let cantidad = 0;
+                if (cantRaw !== undefined) {
+                    cantidad = Math.max(0, Math.floor(parseFloat(String(cantRaw).replace(/[^0-9.-]/g,'')) || 0));
+                }
+
+                const costoRaw = fila[columnas.costo];
+                let costo = parseFloat(String(costoRaw||'').replace(/[^0-9.-]/g,'')) || 0;
+                if (costo < 0) costo = 0;
+
+                return {
+                    nombre: String(nombre).trim().substring(0, 200),
+                    precio: precio,
+                    cantidad: cantidad,
+                    costo: costo,
+                    valida: true
+                };
+            },
+
             analizarPorContenido(rawData) {
                 const resultado = {
                     filaEncabezado: -1,
@@ -259,7 +434,7 @@
                         .filter(v => typeof v === 'string')
                         .reduce((sum, v) => sum + v.length, 0) / Math.max(textos, 1);
             
-                    if (textoPromedio > 5) { // Nombres típicamente tienen más de 5 caracteres
+                    if (textoPromedio > 3) { // Nombres: mínimo 3 chars ('Sal','Pan')
                         analisis.tipo = 'producto';
                         analisis.confianza = 0.8;
                         return analisis;

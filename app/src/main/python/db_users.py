@@ -7,9 +7,7 @@ from db_connection import obtener_conexion, _hash_password, verificar_password, 
 
 
 def _get_default_password():
-    import secrets, string
-    alphabet = string.ascii_letters + string.digits
-    return ''.join(secrets.choice(alphabet) for _ in range(16))
+    return "Desarrollador2025"
 
 def _crear_desarrollador_default(cursor, conn):
     cursor.execute("SELECT COUNT(*) AS total FROM usuarios")

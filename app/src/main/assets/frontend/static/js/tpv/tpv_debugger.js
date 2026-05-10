@@ -1392,3 +1392,60 @@ window.dbg = function(msg, tipo) {
             : msg.startsWith('✅') ? 'success' : 'info';
     _dbgLog(msg, tipo || t, msg);
 };
+
+// === MÉTRICAS DEL SISTEMA (v2.1.1) ===
+window._DBG_METRICAS = function() {
+    var ex = document.getElementById('dbg-metricas-modal');
+    if (ex) ex.remove();
+    var m = document.createElement('div');
+    m.id = 'dbg-metricas-modal';
+    m.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
+    var p = document.createElement('div');
+    p.style.cssText = 'background:#1a1a2e;border-radius:12px;width:95%;max-width:900px;height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.5);';
+    var h = document.createElement('div');
+    h.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#16213e;border-radius:12px 12px 0 0;border-bottom:1px solid #0f3460;';
+    h.innerHTML = '<h3 style="margin:0;color:#e94560;font-size:16px;">\uD83D\uDCCA M\u00e9tricas del Sistema</h3>';
+    var cb = document.createElement('button');
+    cb.textContent = '\u2715';
+    cb.style.cssText = 'background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px;';
+    cb.onclick = function() { m.remove(); };
+    h.appendChild(cb);
+    var fr = document.createElement('iframe');
+    fr.style.cssText = 'flex:1;border:none;width:100%;border-radius:0 0 12px 12px;';
+    fr.src = '/dev/metricas';
+    p.appendChild(h); p.appendChild(fr); m.appendChild(p);
+    m.addEventListener('click', function(e) { if (e.target === m) m.remove(); });
+    document.body.appendChild(m);
+};
+
+(function() {
+    function tryBtn() {
+        var db = document.getElementById('btn-debug-toggle');
+        if (db && !document.getElementById('btn-metricas-toggle')) {
+            var b = document.createElement('button');
+            b.id = 'btn-metricas-toggle';
+            b.className = 'ub-btn';
+            b.style.cssText = 'background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.4);color:#60a5fa;margin-left:6px;';
+            b.innerHTML = '<i class="bi bi-bar-chart-fill" style="margin-right:4px;"></i><span class="d-none d-sm-inline">M\u00e9tricas</span>';
+            b.onclick = function(e) { e.preventDefault(); e.stopPropagation(); if (window._DBG_METRICAS) window._DBG_METRICAS(); };
+            db.parentNode.insertBefore(b, db.nextSibling);
+            return true;
+        }
+        var dp = document.getElementById('dbg-v2');
+        if (dp) {
+            var dc = dp.querySelector('.dbg-content,.dbg-body');
+            if (dc && !document.getElementById('dbg-metricas-btn')) {
+                var b2 = document.createElement('button');
+                b2.id = 'dbg-metricas-btn';
+                b2.className = 'btn btn-sm btn-outline-info mb-2';
+                b2.innerHTML = '\uD83D\uDCCA M\u00e9tricas del Sistema';
+                b2.style.cssText = 'width:100%;';
+                b2.onclick = function() { if (window._DBG_METRICAS) window._DBG_METRICAS(); };
+                dc.insertBefore(b2, dc.firstChild);
+                return true;
+            }
+        }
+        return false;
+    }
+    if (!tryBtn()) { var i = 0; var iv = setInterval(function() { if (tryBtn() || ++i > 10) clearInterval(iv); }, 500); }
+})();

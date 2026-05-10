@@ -165,7 +165,7 @@ class O:
         return sorted(deals, key=lambda x:x['m'], reverse=True)[:5]
     
     @staticmethod
-    def relacionados(prod, lim=3):
+    def relaciónados(prod, lim=3):
         return q(f"SELECT b.nombre,COUNT(*) f FROM historial_ventas a JOIN historial_ventas b ON a.venta_id=b.venta_id AND a.nombre!=b.nombre WHERE a.nombre LIKE ? AND DATE(a.fecha)>=DATE('now','-30 days') GROUP BY b.nombre ORDER BY f DESC LIMIT {lim}",('%'+prod+'%',))
 
 def fmt_money(v): return f"${float(v):,.2f}" if v else "$0.00"
@@ -203,7 +203,7 @@ class Agent:
         ]
         if role == "cliente":
             frases.extend([
-                "Quieres que te muestre productos relacionados?",
+                "Quieres que te muestre productos relaciónados?",
                 "Te puedo ayudar a encontrar algo especifico.",
             ])
         return "\n\n" + frases[hash(str(frases)) % len(frases)]
@@ -259,7 +259,7 @@ class Agent:
 
         # DESPEDIDAS
         if primary == 'FAREWELL':
-            return self._r('Ha sido un placer. Estoy aquí cuando me necesite.', role, primary, sug)
+            return self._r('Ha sido un placer. Estoy aquí cuándo me necesite.', role, primary, sug)
 
         # AYUDA
         if primary == 'HELP':
@@ -337,7 +337,7 @@ class Agent:
     
     # ============================================================
     def _cli(self, t, m, role="cliente"):
-        if self._fm(t, ["ayuda","que puedes","que haces","como funciona","menú","opciones"]):
+        if self._fm(t, ["ayuda","que puedes","que haces","como funcióna","menú","opciónes"]):
             return "Puedo ayudarte con muchas cosas:\n\n- Buscar productos y precios\n- Ver ofertas y descuentos\n- Consultar stock disponible\n- Ver categorías del catalogo\n- Información de puntos y lealtad\n- Historial de compras\n\nEscribe lo que necesites."
         if self._fm(t, ["puntos","lealtad","fidelidad","recompensa","beneficio"]):
             return "Sistema de puntos activo. Cada compra acumula puntos que puedes canjear por descuentos y productos. Consulta tus puntos en la sección de Lealtad."
@@ -373,13 +373,13 @@ class Agent:
                 msg = p["n"] + ": " + fmt_money(p["p"]) + " por " + p["u"] + ".\n"
                 if p["s"]==0:
                     msg += "Momentáneamente agotado. "
-                    rel = O.relacionados(p["n"],2)
+                    rel = O.relaciónados(p["n"],2)
                     if rel: msg += "Te sugiero: " + rel[0]["nombre"] + "."
                 elif p["s"]<=3:
                     msg += "Útimas " + str(int(p["s"])) + " unidades disponibles."
                 else:
                     msg += "Stock: " + str(int(p["s"])) + " " + p["u"] + ".\n"
-                rel = O.relacionados(p["n"],2)
+                rel = O.relaciónados(p["n"],2)
                 if rel: msg += "Te puede interesar: " + rel[0]["nombre"] + "."
                 return msg
             msg = "Encontré " + str(len(prods)) + " resultados:\n\n"
@@ -395,7 +395,7 @@ class Agent:
     def _sup(self, t, m=None):
         d = F.diario(); w = F.semanal()
         low = sum(1 for p in P.cache if 0 < p["s"] <= 5)
-        if self._fm(t, ["ayuda","que puedes","menú","opciones"]):
+        if self._fm(t, ["ayuda","que puedes","menú","opciónes"]):
             return "Como supervisor tienes acceso completo:\n\n- dashboard: KPIs\n- ventas: Resumen del dia\n- stock bajo: Alertas\n- top: Más vendidos\n- finanzas: Balance y margen\n- gastos: Egresos\n- predicciones: Tendencias\n- rotacion: Indice\n- ABC: Clasificacion\n- ofertas: Promociónes\n- Nombre de producto para info detallada"
         if self._fm(t, ["dashboard","resumen","estado","kpi"]):
             msg = "Dashboard:\n- Ventas hoy: " + fmt_money(d["r"]) + " (" + str(d["t"]) + " ops)\n- Ventas semana: " + fmt_money(w["r"]) + "\n- Ticket promedio: " + fmt_money(d["a"]) + "\n- Productos: " + str(len(P.cache)) + "\n- Stock bajo: " + str(low) + "\n- Categorias: " + str(len(P.cats))
@@ -692,7 +692,7 @@ def process_question(sid, question, role='cliente', user_name=''):
 
 def get_status():
     P.refresh()
-    return {'version':'1.0.0','model':'Gestor Total Conversacional','status':'active','features':['ABC','Regresión','EOQ','Punto Equilibrio','Rotación','Ofertas','Gastos','Comisiónes','Predicciones']}
+    return {'versión':'1.0.0','model':'Gestor Total Conversacional','status':'active','features':['ABC','Regresión','EOQ','Punto Equilibrio','Rotación','Ofertas','Gastos','Comisiónes','Predicciones']}
 
 def get_conversation_history(sid='0'): return []
 def get_proactive_alerts(sid='0'):

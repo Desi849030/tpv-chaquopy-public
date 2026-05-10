@@ -92,12 +92,12 @@ ROLES = {
         "label": "Desarrollador", "icon": "D", "color": "#9b59b6",
         "access": ["all"],
         "focus": "control total del sistema, blindajes, debug, seguridad avanzada",
-        "greeting": "Tienes acceso completo al sistema. Debug, seguridad avanzada, API, configuracion y todo lo demas."
+        "greeting": "Tienes acceso completo al sistema. Debug, seguridad avanzada, API, configuración y todo lo demas."
     },
     "administrador": {
         "label": "Administrador", "icon": "A", "color": "#e74c3c",
         "access": ["ventas","inventario","empleados","reportes","predicciones","fraude",
-                   "recomendaciones","márgenes","gastos","seguridad","configuracion",
+                   "recomendaciónes","márgenes","gastos","seguridad","configuración",
                    "usuarios","lealtad","cross_selling","analisis_abc"],
         "focus": "gestion completa del negocio, seguridad, equipo, finanzas",
         "greeting": "Gestionas todo el negocio: ventas, inventario, equipo, seguridad y finanzas."
@@ -105,9 +105,9 @@ ROLES = {
     "supervisor": {
         "label": "Supervisor", "icon": "S", "color": "#f39c12",
         "access": ["ventas","inventario","productos","reportes_basicos","stock_rapido",
-                   "recomendaciones","predicciones","lealtad","empleados"],
+                   "recomendaciónes","predicciones","lealtad","empleados"],
         "focus": "supervision de ventas, inventario, equipo, metricas",
-        "greeting": "Supervisas ventas, inventario y equipo. Accedes a predicciones y recomendaciones."
+        "greeting": "Supervisas ventas, inventario y equipo. Accedes a predicciones y recomendaciónes."
     },
     "vendedor": {
         "label": "Vendedor", "icon": "V", "color": "#3498db",
@@ -195,7 +195,7 @@ def _get_db_paths():
     return paths
 
 def _db():
-    """Obtiene conexion a la DB. CACHEA y REUTILIZA."""
+    """Obtiene conexión a la DB. CACHEA y REUTILIZA."""
     global _db_conn, _db_path, _db_init_done
     if _db_conn is not None:
         try:
@@ -321,13 +321,13 @@ def _search_products(query, limit=8):
     all_rows = []
     for word in words:
         rows = _safe_q(
-            "SELECT nombre, precio_venta, stock_actual, categoria, unidad_medida FROM productos WHERE UNACCENT(nombre) LIKE ? LIMIT ?",
+            "SELECT nombre, precio_venta, stock_actual, categoría, unidad_medida FROM productos WHERE UNACCENT(nombre) LIKE ? LIMIT ?",
             ('%'+word+'%', limit))
         if rows:
             all_rows.extend(rows)
-        # Tambien buscar por categoria
+        # También buscar por categoría
         rows2 = _safe_q(
-            "SELECT nombre, precio_venta, stock_actual, categoria, unidad_medida FROM productos WHERE UNACCENT(categoria) LIKE ? LIMIT ?",
+            "SELECT nombre, precio_venta, stock_actual, categoría, unidad_medida FROM productos WHERE UNACCENT(categoría) LIKE ? LIMIT ?",
             ('%'+word+'%', limit))
         if rows2:
             all_rows.extend(rows2)
@@ -335,7 +335,7 @@ def _search_products(query, limit=8):
     # ESTRATEGIA 2: Si no hay resultados, buscar coincidencia total sin activo
     if not all_rows:
         rows = _safe_q(
-            "SELECT nombre, precio_venta, stock_actual, categoria, unidad_medida FROM productos WHERE UNACCENT(nombre) LIKE ? LIMIT ?",
+            "SELECT nombre, precio_venta, stock_actual, categoría, unidad_medida FROM productos WHERE UNACCENT(nombre) LIKE ? LIMIT ?",
             ('%'+_normalize_search(ql)+'%', limit))
         if rows:
             all_rows.extend(rows)
@@ -344,7 +344,7 @@ def _search_products(query, limit=8):
     if not all_rows:
         for word in words:
             rows = _safe_q(
-                "SELECT nombre, precio_venta, stock_actual, categoria, unidad_medida FROM inventario_general WHERE UNACCENT(nombre) LIKE ? LIMIT ??",
+                "SELECT nombre, precio_venta, stock_actual, categoría, unidad_medida FROM inventario_general WHERE UNACCENT(nombre) LIKE ? LIMIT ??",
                 ('%'+word+'%', limit))
             if rows:
                 all_rows.extend(rows)
@@ -353,7 +353,7 @@ def _search_products(query, limit=8):
     if not all_rows:
         for word in words:
             rows = _safe_q(
-                "SELECT nombre, precio, stock, categoria, unidad FROM items WHERE UNACCENT(nombre) LIKE ? LIMIT ?",
+                "SELECT nombre, precio, stock, categoría, unidad FROM items WHERE UNACCENT(nombre) LIKE ? LIMIT ?",
                 ('%'+word+'%', limit))
             if rows:
                 all_rows.extend(rows)
@@ -369,7 +369,7 @@ def _search_products(query, limit=8):
                     "nombre": nombre,
                     "precio": (r[1] or 0) if len(r) > 1 else 0,
                     "stock": (r[2] or 0) if len(r) > 2 else 0,
-                    "categoria": _clean_text(r[3]) if len(r) > 3 else "",
+                    "categoría": _clean_text(r[3]) if len(r) > 3 else "",
                     "unidad": _clean_text(r[4]) if len(r) > 4 else "ud",
                     "source": "local"
                 })
@@ -389,7 +389,7 @@ def _extract_product_name(text):
     patterns = [
         r"(?:cuanto(?:| cuesta| vale| es)|precio (?:de|del?|la))\s+(?:el |la |los |las )?(.+?)[\?\.]?$",
         r"(?:tiene|hay|busco|necesito|quiero|deme|dame)\s+(?:el |la |los |las )?(.+?)[\?\.]?$",
-        r"(?:donde esta|ubicacion de|donde encuentro)\s+(?:el |la |los |las )?(.+?)[\?\.]?$",
+        r"(?:dónde está|ubicación de|donde encuentro)\s+(?:el |la |los |las )?(.+?)[\?\.]?$",
         r"^(.+?)(?:\s+cuanto|cuesta|vale|precio|stock|hay|tiene|disponible)",
     ]
     for pat in patterns:
@@ -413,14 +413,14 @@ _TABLE_KEYWORDS = {
         "table": "productos", "fallback_table": "inventario_general",
         "words": ["producto","articulo","item","mercancia","catalogo",
                   "inventario","que tengo","cuantos productos","lista de"],
-        "select": "nombre, precio_venta, stock_actual, categoria",
+        "select": "nombre, precio_venta, stock_actual, categoría",
         "count_sql": "SELECT COUNT(*) FROM {table}",
         "list_sql": "SELECT nombre, precio_venta, stock_actual FROM {table} ORDER BY nombre LIMIT {limit}",
         "count_label": "productos registrados"
     },
     "ventas": {
         "table": "historial_ventas",
-        "words": ["venta","vendido","factura","ticket","cobro","transaccion",
+        "words": ["venta","vendido","factura","ticket","cobro","transacción",
                   "recaudado","ingreso","facturacion","cuanto vendi"],
         "select": "fecha, total, cantidad, nombre, vendedor_nombre",
         "count_sql": "SELECT COUNT(*), COALESCE(SUM(total),0) FROM {table} WHERE DATE(fecha)=DATE('now','localtime')",
@@ -437,8 +437,8 @@ _TABLE_KEYWORDS = {
     },
     "gastos": {
         "table": "gastos",
-        "words": ["gasto","egreso","pago","costo operacion","pago proveedor"],
-        "select": "fecha, monto, concepto, categoria",
+        "words": ["gasto","egreso","pago","costo operación","pago proveedor"],
+        "select": "fecha, monto, concepto, categoría",
         "count_sql": "SELECT COUNT(*), COALESCE(SUM(monto),0) FROM {table} WHERE DATE(fecha)=DATE('now','localtime')",
         "list_sql": "SELECT fecha, monto, concepto FROM {table} WHERE DATE(fecha)=DATE('now','localtime') ORDER BY monto DESC LIMIT {limit}",
         "count_label": "gastos del dia"
@@ -451,17 +451,17 @@ _TABLE_KEYWORDS = {
         "list_sql": "SELECT nombre, rol FROM {table} LIMIT {limit}",
         "count_label": "empleados registrados"
     },
-    "categorias": {
-        "table": "categorias",
-        "words": ["categoria","clasificacion","departamento","seccion","tipo de producto"],
-        "select": "nombre, descripcion",
+    "categorías": {
+        "table": "categorías",
+        "words": ["categoría","clasificacion","departamento","seccion","tipo de producto"],
+        "select": "nombre, descripción",
         "count_sql": "SELECT COUNT(*) FROM {table}",
         "list_sql": "SELECT nombre FROM {table} ORDER BY nombre LIMIT {limit}",
-        "count_label": "categorias"
+        "count_label": "categorías"
     }
 }
 
-_COUNT_WORDS = ["cuantos","cuantas","cantidad","total de","numero de","contar","hay",
+_COUNT_WORDS = ["cuantos","cuantas","cantidad","total de","número de","contar","hay",
                 "cuanto hay","existen","tenemos"]
 
 def _smart_sqlite_query(text, role):
@@ -511,7 +511,7 @@ def _smart_sqlite_query(text, role):
     return None
 
 # ============================================================
-# NLU - Deteccion de intencion
+# NLU - Deteccion de intención
 # ============================================================
 _SALUDOS = ["hola","buenos dias","buenas tardes","buenas noches","hey","saludos",
             "que tal","como estas","buen dia","que onda","buenas","hi","hello"]
@@ -519,7 +519,7 @@ _SALUDOS = ["hola","buenos dias","buenas tardes","buenas noches","hey","saludos"
 _EDGE_KW_PREDICCION = ["prediccion","pronostico","predecir","tendencia",
                        "proyeccion","futuro","estimacion","holt","suavizado"]
 _EDGE_KW_FRAUDE = ["fraude","anomalia","benford","alerta fraude","deteccion fraude"]
-_EDGE_KW_ABC = ["abc","pareto","analisis abc","categoria abc","clasificacion abc"]
+_EDGE_KW_ABC = ["abc","pareto","analisis abc","categoría abc","clasificacion abc"]
 _EDGE_KW_CROSS = ["cross selling","cross-selling","venta cruzada","combinacion","conjunto"]
 _EDGE_KW_PRECIOS = ["optimización de precios","precio sugerido","precio optimo","mejor precio","oportunidad precio"]
 _EDGE_KW_KPI = ["kpi","indicador","metrica","rendimiento","health score","salud negocio"]
@@ -527,12 +527,12 @@ _EDGE_KW_DASHBOARD = ["dashboard","tablero","panel ia","ia edge","todo actualiza
 _AGRADECIMIENTOS = ["gracias","genial","perfecto","excelente","listo","vale",
                      "bien hecho","cool","ok","entendido"]
 _DESPEDIDAS = ["adios","chao","bye","hasta luego","nos vemos","hasta manana","me voy"]
-_AYUDA = ["ayuda","que puedes","funciones","que haces","help","que sabes",
-          "como funciona","que puedo preguntar","para que sirves"]
+_AYUDA = ["ayuda","que puedes","funciónes","que haces","help","que sabes",
+          "como funcióna","que puedo preguntar","para que sirves"]
 
 _ROLE_KEYWORDS = {
     "desarrollador": ["debug","configurar","base de datos","error","logs","servidor","deploy","git","compilar","api"],
-    "administrador": ["finanzas","empleados","seguridad","permisos","usuarios","licencias","configuracion del sistema"],
+    "administrador": ["finanzas","empleados","seguridad","permisos","usuarios","licencias","configuración del sistema"],
     "supervisor": ["equipo","supervisar","metricas","reporte","rendimiento","horario","turno"],
     "vendedor": ["vender","cliente","caja","cobrar","facturar","ticket"],
     "cliente": ["comprar","precio","oferta","descuento","promocion","puntos"],
@@ -588,8 +588,8 @@ def _detect_intent(text, role):
                                "cuanto vendi","cuanto hecho","recaudado"]):
         sub = None
         if any(w in tl for w in ["hoy","dia","hoy dia"]): sub="hoy"
-        elif any(w in tl for w in ["semana","7 dias","ultima semana"]): sub="semana"
-        elif any(w in tl for w in ["mes","30 dias","ultimo mes","mensual"]): sub="mes"
+        elif any(w in tl for w in ["semana","7 dias","última semana"]): sub="semana"
+        elif any(w in tl for w in ["mes","30 dias","último mes","mensual"]): sub="mes"
         if any(w in tl for w in ["top","mas vendido","mejor","lider","estrella"]):
             sub="top_"+(sub or "hoy")
         elif any(w in tl for w in ["vendedor","equipo","quien vendio"]): sub="vendedor"
@@ -608,16 +608,16 @@ def _detect_intent(text, role):
         return "inventario","general"
     # 10. Seguridad
     if any(w in tl for w in ["seguridad","alerta","amenaza","bloqueado","ip",
-                               "hack","intruso","proteccion","ataque","fraude"]):
+                               "hack","intruso","protección","ataque","fraude"]):
         if any(w in tl for w in ["fraude","anomalia","benford"]): return "seguridad","fraude"
         return "seguridad","general"
     # 11. Recomendaciones
     if any(w in tl for w in ["recomend","sugerencia","que me sugieres","que deberia",
                                "consejo","mejorar","optimizar"]):
-        return "recomendacion", None
+        return "recomendación", None
     # 12. Resumen (general, no por rol)
     if any(w in tl for w in ["resumen","estado general","como va","dashboard",
-                               "como estamos","situacion","overview","como vamos"]):
+                               "como estamos","situación","overview","como vamos"]):
         return "resumen", None
     # 13. Finanzas
     if any(w in tl for w in ["gasto","egreso","costo","margen","rentabilidad",
@@ -629,7 +629,7 @@ def _detect_intent(text, role):
                                "mis puntos","cuántos puntos"]):
         return "lealtad", None
     # 15. Info app
-    if any(w in tl for w in ["aplicacion","app","tpv","version","sistema","software"]):
+    if any(w in tl for w in ["aplicación","app","tpv","versión","sistema","software"]):
         return "app_info", None
     # 16. IA Edge Functions
     if any(w in tl for w in ["kpi","indicador","metrica","rendimiento del negocio","health score",
@@ -642,7 +642,7 @@ def _detect_intent(text, role):
         return "edge_dashboard", None
     if any(w in tl for w in ["cross selling","cross-selling","venta cruzada","combinacion de productos","conjunto de productos","que combina con"]):
         return "edge_cross_selling", None
-    if any(w in tl for w in ["abc","pareto","analisis abc","categoria abc","clasificacion abc"]):
+    if any(w in tl for w in ["abc","pareto","analisis abc","categoría abc","clasificacion abc"]):
         return "edge_abc", None
     if any(w in tl for w in ["optimización de precios","precio sugerido","precio optimo","mejor precio","oportunidad precio"]):
         return "edge_precios", None
@@ -666,18 +666,18 @@ _INTENT_SUGGESTIONS = {
     "thanks": ["ventas de hoy", "resumen", "stock bajo"],
     "farewell": [],
     "help": ["ventas de hoy", "cuánto cuesta X", "resumen", "KPIs del día", "predicciones", "análisis ABC"],
-    "product_price": ["stock bajo", "ventas de hoy", "recomendaciones"],
+    "product_price": ["stock bajo", "ventas de hoy", "recomendaciónes"],
     "product_search": ["ventas de hoy", "stock bajo", "resumen"],
     "ventas": ["top productos", "stock bajo", "finanzas del dia"],
     "ventas_hoy": ["top productos", "ventas de la semana", "finanzas del dia"],
     "inventario": ["stock bajo", "que productos tengo", "reorden"],
     "seguridad": ["resumen", "ventas de hoy", "estado de seguridad", "fraude"],
-    "recomendacion": ["ventas de hoy", "stock bajo", "predicciones", "cross-selling"],
+    "recomendación": ["ventas de hoy", "stock bajo", "predicciones", "cross-selling"],
     "resumen": ["ventas de hoy", "stock bajo", "KPIs del día", "predicciones"],
     "financiero": ["ventas de hoy", "gastos", "márgenes"],
-    "lealtad": ["cuántos puntos tengo", "ventas de hoy", "recomendaciones"],
+    "lealtad": ["cuántos puntos tengo", "ventas de hoy", "recomendaciónes"],
     "app_info": ["ventas de hoy", "resumen", "ayuda"],
-    "prediccion": ["stock bajo", "recomendaciones", "ventas de hoy", "KPIs del día"],
+    "prediccion": ["stock bajo", "recomendaciónes", "ventas de hoy", "KPIs del día"],
     "edge_kpis": ["predicciones", "ventas de hoy", "dashboard"],
     "edge_dashboard": ["KPIs del día", "predicciones", "fraude"],
     "edge_abc": ["cross-selling", "optimización de precios", "resumen"],
@@ -692,7 +692,7 @@ def _get_suggestions(intent):
     return _INTENT_SUGGESTIONS.get(intent, ["ayuda", "ventas de hoy", "resumen"])
 
 # ============================================================
-# HANDLERS - Respuestas por intencion
+# HANDLERS - Respuestas por intención
 # ============================================================
 
 def _handle_greeting(role, user_name=""):
@@ -711,7 +711,7 @@ def _handle_greeting(role, user_name=""):
     elif role == "vendedor":
         parts.extend(["- \"cuánto cuesta X\" o \"hay stock de Y\"","- \"ventas de hoy\"","- Escribe un nombre de producto"])
     else:
-        parts.extend(["- \"ventas de hoy\" / \"top productos\" / \"stock bajo\"","- \"cuánto cuesta X\" / \"predicciones\" / \"recomendaciones\"","- Escribe cualquier cosa en lenguaje natural"])
+        parts.extend(["- \"ventas de hoy\" / \"top productos\" / \"stock bajo\"","- \"cuánto cuesta X\" / \"predicciones\" / \"recomendaciónes\"","- Escribe cualquier cosa en lenguaje natural"])
     return _clean_text("\n".join(parts))
 
 def _handle_resumen_rol(role, user_name=""):
@@ -739,7 +739,7 @@ def _handle_resumen_rol(role, user_name=""):
                 parts.append("Productos: %d" % (batch[0] or 0))
                 parts.append("Usuarios: %d" % (batch[1] or 0))
                 parts.append("Ventas hoy: %s" % _fmt(batch[2]))
-                parts.append("Transacciones: %d" % (batch[3] or 0))
+                parts.append("Transacciónes: %d" % (batch[3] or 0))
             parts.append("")
             parts.append("Comandos: estado sistema | blindajes | ventas | debug")
         elif role == "administrador":
@@ -747,7 +747,7 @@ def _handle_resumen_rol(role, user_name=""):
             if batch:
                 parts.append("Total productos: %d" % (batch[0] or 0))
                 parts.append("Ventas hoy: %s" % _fmt(batch[2]))
-                parts.append("Transacciones hoy: %d" % (batch[3] or 0))
+                parts.append("Transacciónes hoy: %d" % (batch[3] or 0))
                 if batch[4] and batch[4] > 0:
                     parts.append("ALERTA: %d productos con stock bajo" % batch[4])
             parts.append("")
@@ -756,7 +756,7 @@ def _handle_resumen_rol(role, user_name=""):
             parts.append("== Panel de Supervision ==")
             if batch:
                 parts.append("Ventas hoy: %s" % _fmt(batch[2]))
-                parts.append("Transacciones: %d" % (batch[3] or 0))
+                parts.append("Transacciónes: %d" % (batch[3] or 0))
                 if batch[4] and batch[4] > 0:
                     parts.append("ALERTA: %d productos con stock bajo" % batch[4])
             parts.append("")
@@ -785,11 +785,11 @@ def _handle_thanks():
         "Con gusto! Si necesitas algo mas, aqui estoy.",
         "Me alegra poder ayudar! Preguntame lo que necesites.",
         "Excelente! Estoy aqui para lo que haga falta.",
-        "Listo! No dudes en consultarme cuando quieras.",
+        "Listo! No dudes en consultarme cuándo quieras.",
     ])
 
 def _handle_farewell():
-    return "Hasta luego! Que tengas un excelente dia. Vuelve cuando necesites."
+    return "Hasta luego! Que tengas un excelente dia. Vuelve cuándo necesites."
 
 def _handle_help(role):
     try:
@@ -799,7 +799,7 @@ def _handle_help(role):
         elif role == "vendedor":
             return _clean_text("Qué puedo hacer por ti (Rol: %s):\n\nProductos y Precios:\n  - \"cuánto cuesta el café\" / \"precio de pan\"\n  - \"hay stock de arroz\" / \"busco gaseosa\"\n\nVentas:\n  - \"ventas de hoy\" / \"cuánto he vendido\"\n\nInventario:\n  - \"stock bajo\" / \"que productos tengo\"\n\nIA Edge (todo desde aquí):\n  - \"predicciones\" / \"KPIs del día\" / \"dashboard\"\n  - \"análisis ABC\" / \"cross-selling\" / \"optimización de precios\"\n\nTodo en lenguaje natural!" % r["label"])
         else:
-            return _clean_text("Qué puedo hacer por ti (Rol: %s):\n\nVentas: \"ventas de hoy/semana/mes\", \"top productos\", \"hora pico\"\nProductos: \"cuánto cuesta X\", \"hay Y\", nombre de producto\nInventario: \"stock bajo\", \"que debo reordenar\"\nFinanzas: \"gastos\", \"márgenes\", \"ganancia bruta\"\nIA: \"predicciones\", \"recomendaciones\", \"cross-selling\"\nSeguridad: \"estado de seguridad\", \"fraude\"\nLealtad: \"puntos\", \"programa de lealtad\"\n\nEscribe lo que quieras saber, sin comandos!" % r["label"])
+            return _clean_text("Qué puedo hacer por ti (Rol: %s):\n\nVentas: \"ventas de hoy/semana/mes\", \"top productos\", \"hora pico\"\nProductos: \"cuánto cuesta X\", \"hay Y\", nombre de producto\nInventario: \"stock bajo\", \"que debo reordenar\"\nFinanzas: \"gastos\", \"márgenes\", \"ganancia bruta\"\nIA: \"predicciones\", \"recomendaciónes\", \"cross-selling\"\nSeguridad: \"estado de seguridad\", \"fraude\"\nLealtad: \"puntos\", \"programa de lealtad\"\n\nEscribe lo que quieras saber, sin comandos!" % r["label"])
     except:
         return "Puedo ayudarte con productos, precios, ventas, inventario y mas."
 
@@ -816,8 +816,8 @@ def _handle_product_price(data, role):
             lines.append("  Stock: %d %s" % (p["stock"], p["unidad"]))
             if p["precio"] > 0 and p["stock"] > 0:
                 lines.append("  Valor en stock: %s" % _fmt(p["precio"] * p["stock"]))
-            if p["categoria"]:
-                lines.append("  Categoria: %s" % p["categoria"])
+            if p["categoría"]:
+                lines.append("  Categoria: %s" % p["categoría"])
             if p["stock"] == 0: lines.append("  [Producto agotado]")
             elif p["stock"] <= 5: lines.append("  [Pocas unidades disponibles]")
             return _clean_text("\n".join(lines))
@@ -845,13 +845,13 @@ def _handle_product_search(products):
 
 def _handle_app_info(role):
     try:
-        lines = ["TPV Smart - Informacion del Sistema:",""]
-        lines.append("  Version: v1.0")
+        lines = ["TPV Smart - Información del Sistema:",""]
+        lines.append("  Versión: v1.0")
         lines.append("  Motor IA: NLU v13.0 Role-Aware ON-DEVICE")
         lines.append("  Base de datos: SQLite local (prioridad) + Supabase (respaldo)")
         lines.append("  Busqueda: 100% local, por palabras, 3 tablas SQLite")
         lines.append("  Blindajes: PCI-DSS, HET, WebSockets, SSE, MPOC Attestation")
-        if _has_access(role,"all") or _has_access(role,"configuracion"):
+        if _has_access(role,"all") or _has_access(role,"configuración"):
             lines.extend(["","Modulos activos:","  - 5 paneles: Seguridad, IA Edge, Lealtad, Inventario, Ventas","  - Sistema de roles con privilegios por modulo","  - Lealtad omnicanal con 4 niveles","  - Inteligencia periferica SQLite (Smart Query)"])
         else:
             lines.append("Tu rol (%s) permite consultar productos, precios, stock y mas." % _get_role_perms(role)["label"])
@@ -867,17 +867,17 @@ def _handle_ventas(sub, role):
             r = _safe_q("SELECT COUNT(*), COALESCE(SUM(total),0), COALESCE(SUM(cantidad),0) FROM historial_ventas WHERE DATE(fecha)=DATE('now','localtime')", one=True)
             if not r or r[0]==0: return "No hay ventas registradas hoy."
             avg = r[1]/r[0] if r[0]>0 else 0
-            return _clean_text("Ventas de hoy:\n  Transacciones: %d\n  Ingresos: %s\n  Unidades: %d\n  Ticket promedio: %s" % (r[0], _fmt(r[1]), int(r[2] or 0), _fmt(avg)))
+            return _clean_text("Ventas de hoy:\n  Transacciónes: %d\n  Ingresos: %s\n  Unidades: %d\n  Ticket promedio: %s" % (r[0], _fmt(r[1]), int(r[2] or 0), _fmt(avg)))
         elif sub == "semana":
             r = _safe_q("SELECT COUNT(*), COALESCE(SUM(total),0), COALESCE(SUM(cantidad),0) FROM historial_ventas WHERE fecha >= DATE('now','localtime','-7 days')", one=True)
-            if not r or r[0]==0: return "No hay ventas en los ultimos 7 dias."
+            if not r or r[0]==0: return "No hay ventas en los últimos 7 dias."
             avg = r[1]/r[0] if r[0]>0 else 0
-            return _clean_text("Ventas de la semana:\n  Transacciones: %d\n  Ingresos: %s\n  Ticket promedio: %s" % (r[0], _fmt(r[1]), _fmt(avg)))
+            return _clean_text("Ventas de la semana:\n  Transacciónes: %d\n  Ingresos: %s\n  Ticket promedio: %s" % (r[0], _fmt(r[1]), _fmt(avg)))
         elif sub == "mes":
             r = _safe_q("SELECT COUNT(*), COALESCE(SUM(total),0), COALESCE(SUM(cantidad),0) FROM historial_ventas WHERE fecha >= DATE('now','localtime','-30 days')", one=True)
-            if not r or r[0]==0: return "No hay ventas en los ultimos 30 dias."
+            if not r or r[0]==0: return "No hay ventas en los últimos 30 dias."
             avg = r[1]/r[0] if r[0]>0 else 0
-            return _clean_text("Ventas del mes:\n  Transacciones: %d\n  Ingresos: %s\n  Ticket promedio: %s\n  Promedio diario: %s" % (r[0], _fmt(r[1]), _fmt(avg), _fmt(r[1]/30)))
+            return _clean_text("Ventas del mes:\n  Transacciónes: %d\n  Ingresos: %s\n  Ticket promedio: %s\n  Promedio diario: %s" % (r[0], _fmt(r[1]), _fmt(avg), _fmt(r[1]/30)))
         elif sub and sub.startswith("top_"):
             period = sub.replace("top_","")
             if period=="hoy": sql="DATE(fecha)=DATE('now','localtime')"; label="Hoy"
@@ -918,7 +918,7 @@ def _handle_ventas(sub, role):
             r = _safe_q("SELECT COUNT(*), COALESCE(SUM(total),0), COALESCE(SUM(cantidad),0) FROM historial_ventas WHERE DATE(fecha)=DATE('now','localtime')", one=True)
             if not r or r[0]==0: return "No hay ventas hoy."
             avg = r[1]/r[0] if r[0]>0 else 0
-            return _clean_text("Ventas de hoy:\n  Transacciones: %d\n  Ingresos: %s\n  Unidades: %d\n  Ticket promedio: %s" % (r[0], _fmt(r[1]), int(r[2] or 0), _fmt(avg)))
+            return _clean_text("Ventas de hoy:\n  Transacciónes: %d\n  Ingresos: %s\n  Unidades: %d\n  Ticket promedio: %s" % (r[0], _fmt(r[1]), int(r[2] or 0), _fmt(avg)))
     except:
         return "Error al consultar ventas. Intenta de nuevo."
 
@@ -989,7 +989,7 @@ def _handle_seguridad(sub, role):
     except:
         return "Error al consultar seguridad."
 
-def _handle_recomendacion(role):
+def _handle_recomendación(role):
     try:
         r = _get_role_perms(role)
         lines = ["Recomendaciones para %s:" % r["label"],""]
@@ -1011,7 +1011,7 @@ def _handle_recomendacion(role):
         else: lines.append("Tip del dia: Revisa el cierre de caja y prepara el resumen del dia.")
         return _clean_text("\n".join(lines))
     except:
-        return "No pude generar recomendaciones ahora."
+        return "No pude generar recomendaciónes ahora."
 
 def _handle_resumen(role):
     try:
@@ -1112,7 +1112,7 @@ def _handle_edge_kpis(role):
         lines = ["== KPIs del día ==",""]
         r = _safe_q("SELECT COUNT(*), COALESCE(SUM(total),0), COALESCE(AVG(total),0), MAX(total), MIN(total) FROM historial_ventas WHERE DATE(fecha)=DATE('now','localtime')", one=True)
         if r and r[0] > 0:
-            lines.append("Transacciones: %d" % r[0])
+            lines.append("Transacciónes: %d" % r[0])
             lines.append("Ingresos: %s" % _fmt(r[1]))
             lines.append("Ticket promedio: %s" % _fmt(r[2]))
             lines.append("Ticket max: %s" % _fmt(r[3]))
@@ -1190,7 +1190,7 @@ def _handle_unknown(text, role):
         r = _get_role_perms(role)
         return _clean_text("No entendí tu pregunta. Prueba con:\n  - \"cuánto cuesta X\" para precios\n  - \"ventas de hoy\" para estadísticas\n  - \"ayuda\" para ver todo lo que puedo hacer")
     except:
-        return "No entendí. Escribe \"ayuda\" para ver opciones."
+        return "No entendí. Escribe \"ayuda\" para ver opciónes."
 
 # ============================================================
 # MAIN PROCESS - Entrada principal
@@ -1223,7 +1223,7 @@ def process_question(sid, question, role="vendedor", user_name=""):
         elif intent=="ventas": answer = _handle_ventas(data, role)
         elif intent=="inventario": answer = _handle_inventario(data, role)
         elif intent=="seguridad": answer = _handle_seguridad(data, role)
-        elif intent=="recomendacion": answer = _handle_recomendacion(role)
+        elif intent=="recomendación": answer = _handle_recomendación(role)
         elif intent=="resumen": answer = _handle_resumen(role)
         elif intent=="financiero": answer = _handle_financiero(data, role)
         elif intent=="lealtad": answer = _handle_lealtad(role)
@@ -1254,7 +1254,7 @@ def process_question(sid, question, role="vendedor", user_name=""):
         return result
     except Exception as e:
         return {
-            "answer": "Error interno. Intenta de nuevo.\nEscribe \"ayuda\" para ver opciones.",
+            "answer": "Error interno. Intenta de nuevo.\nEscribe \"ayuda\" para ver opciónes.",
             "role": role, "role_label": ROLES.get(role,ROLES["vendedor"])["label"],
             "role_color": ROLES.get(role,ROLES["vendedor"])["color"],
             "intent": "error", "error": _clean_text(str(e)),
@@ -1295,7 +1295,7 @@ def get_status():
             learning = {"total": total[0] if total else 0, "roles": total[1] if total else 0}
         except Exception as _e: _log.debug("[IA] excepcion: %s", _e)
         return {
-            "version": "12.0.0",
+            "versión": "12.0.0",
             "model": "NLU Rule-based ON-DEVICE + Smart Query SQLite 100% local",
             "features": ["rol dinamico instantaneo","inteligencia periferica SQLite",
                 "aprendizaje persistente","texto 100% ASCII (sin tildes)",
@@ -1307,10 +1307,10 @@ def get_status():
             "sessions": len(_sessions)
         }
     except:
-        return {"version": "12.0.0", "error": True}
+        return {"versión": "12.0.0", "error": True}
 
 def cleanup_old_sessions():
-    """Limpia sesiones inactivas despues de 2 horas."""
+    """Limpia sesiónes inactivas despues de 2 horas."""
     try:
         now = datetime.now()
         with _sessions_lock:

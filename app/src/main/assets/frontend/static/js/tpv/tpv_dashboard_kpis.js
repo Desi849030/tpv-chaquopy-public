@@ -1,6 +1,6 @@
 // tpv_dashboard_kpis.js — Dashboard: KPIs, gráficos de ventas, resumen del día
 let _dashChartVentas = null;
- = null;
+let _dashChartVentasDia = null;
 let _dashChartCat    = null;
 
 async function dashboard_cargar() {

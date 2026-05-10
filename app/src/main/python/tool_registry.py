@@ -722,6 +722,24 @@ TOOL_CATALOG: Dict[str, ToolDefinition] = {
         [],
         role="desarrollador"),
 
+    # ══════════════════════════════════════════════
+    #  DICCIONARIO (diccionario_bp) — 3 herramientas
+    # ══════════════════════════════════════════════
+    "diccionario_sinonimos": _t("diccionario_sinonimos",
+        "Busca sinonimos de una palabra o producto. Parametro q= palabra a buscar",
+        "diccionario", "/api/diccionario/sinonimos", "GET",
+        [{"name": "q", "type": "str", "description": "Palabra a buscar sinonimos", "required": True}]),
+
+    "diccionario_definicion": _t("diccionario_definicion",
+        "Define terminos comerciales: margen, ganancia, inventario, KPI, cross-selling, ABC, etc",
+        "diccionario", "/api/diccionario/definicion", "GET",
+        [{"name": "q", "type": "str", "description": "Termino comercial a definir", "required": True}]),
+
+    "diccionario_corregir": _t("diccionario_corregir",
+        "Corrige ortografia de palabras en consultas del usuario",
+        "diccionario", "/api/diccionario/corregir", "GET",
+        [{"name": "q", "type": "str", "description": "Palabra a corregir", "required": True}]),
+
     "dev_metricas_inventario": _t("dev_metricas_inventario",
         "Calcula formulas de inventario: margen bruto, cobertura de stock, ganancia potencial, top 5 por valor",
         "dev", "/api/dev/metrics/inventario", "GET",

@@ -64,6 +64,7 @@ from tienda_routes import tienda_bp, crear_tablas_tienda
 from loyalty_routes import loyalty_bp
 from api_routes import api_bp
 from license_routes import lic_bp
+from dev_metrics import dev_metrics_bp
 try:
     from validacion_routes import val_bp
 except ImportError:
@@ -95,6 +96,7 @@ app.config["SESSION_COOKIE_SECURE"] = False
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_DOMAIN"] = None
 app.config["PERMANENT_SESSION_LIFETIME"] = 86400 * 7
+app.config["SERVER_START_TIME"] = time.time()
 
 # ══════════════════════════════════════════════════════════════
 #  REGISTRAR BLUEPRINTS
@@ -110,6 +112,7 @@ if assistant_bp: app.register_blueprint(assistant_bp)
 if val_bp: app.register_blueprint(val_bp)
 if ai_bp: app.register_blueprint(ai_bp)
 if analytics_bp: app.register_blueprint(analytics_bp)
+if dev_metrics_bp: app.register_blueprint(dev_metrics_bp)
 
 try:
     from tpv_security import registrar_auditoria
@@ -358,6 +361,11 @@ def api_productos():
         return jsonify(productos)
     except Exception as e:
         return jsonify([])
+
+
+@app.route("/dev/metricas")
+def dev_metricas_page():
+    return render_template("dev/dev_panel_metricas.html")
 
 if __name__ == "__main__":
     main()

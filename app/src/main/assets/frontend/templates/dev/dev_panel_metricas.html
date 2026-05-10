@@ -1,0 +1,383 @@
+<!--
+  dev_panel_metricas.html - Panel de metricas en tiempo real
+  Integrar dentro del panel de desarrollador existente.
+  Requiere: dev_metrics.py registrado en Flask
+-->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dev Metrics - TPV Ultra Smart</title>
+<style>
+:root {
+  --bg: #0d1117; --bg2: #161b22; --bg3: #21262d; --border: #30363d;
+  --text: #e6edf3; --muted: #8b949e;
+  --green: #3fb950; --green-dim: #1a4a22;
+  --yellow: #d29922; --yellow-dim: #3d2f00;
+  --red: #f85149; --red-dim: #4a1010;
+  --blue: #58a6ff; --blue-dim: #0d2a4a;
+  --purple: #bc8cff; --cyan: #39c5cf;
+  --radius: 8px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); font-size: 13px; line-height: 1.5; }
+#dev-metrics-panel { padding: 12px; max-width: 100%; }
+
+.dm-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+.dm-title { font-family: monospace; font-size: 12px; font-weight: 600; color: var(--cyan); letter-spacing: 0.05em; }
+.dm-status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+.dm-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); transition: background 0.25s; }
+.dm-dot.live { background: var(--green); animation: pulse 2s infinite; }
+.dm-dot.error { background: var(--red); }
+.dm-dot.loading { background: var(--yellow); }
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+
+.dm-controls { display: flex; gap: 6px; align-items: center; }
+.dm-btn { background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 4px 10px; border-radius: 5px; font-size: 11px; cursor: pointer; font-family: monospace; }
+.dm-btn:hover { background: var(--bg2); border-color: var(--blue); color: var(--blue); }
+.dm-btn.active { background: var(--blue-dim); border-color: var(--blue); color: var(--blue); }
+.dm-interval { background: var(--bg3); border: 1px solid var(--border); color: var(--muted); padding: 4px 8px; border-radius: 5px; font-size: 11px; font-family: monospace; }
+
+.dm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.dm-grid.full { grid-template-columns: 1fr; }
+@media (max-width: 480px) { .dm-grid { grid-template-columns: 1fr; } }
+
+.dm-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.dm-card:hover { border-color: var(--blue); }
+.dm-card-head { display: flex; align-items: center; gap: 7px; padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--muted); letter-spacing: 0.04em; }
+.dm-card-body { padding: 10px 12px; }
+
+.dm-stat-big { font-family: monospace; font-size: 26px; font-weight: 700; line-height: 1; margin-bottom: 3px; }
+.dm-stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.dm-stat-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+.dm-bar-wrap { margin-top: 10px; }
+.dm-bar-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-bottom: 3px; }
+.dm-bar-track { height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+.dm-bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; min-width: 2px; }
+.dm-bar-fill.green { background: linear-gradient(90deg, #2ea043, #3fb950); }
+.dm-bar-fill.yellow { background: linear-gradient(90deg, #a56100, #d29922); }
+.dm-bar-fill.red { background: linear-gradient(90deg, #b91c1c, #f85149); }
+
+.dm-row { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 0; border-bottom: 1px solid var(--bg3); }
+.dm-row:last-child { border-bottom: none; }
+.dm-row-key { font-size: 11px; color: var(--muted); }
+.dm-row-val { font-family: monospace; font-size: 12px; font-weight: 600; }
+.dm-row-val.green { color: var(--green); } .dm-row-val.yellow { color: var(--yellow); }
+.dm-row-val.red { color: var(--red); } .dm-row-val.blue { color: var(--blue); }
+.dm-row-val.purple { color: var(--purple); }
+
+.dm-formula { background: var(--bg3); border: 1px solid var(--border); border-left: 3px solid var(--cyan); border-radius: 4px; padding: 7px 10px; font-family: monospace; font-size: 10.5px; color: var(--cyan); margin-top: 8px; word-break: break-all; line-height: 1.6; }
+.dm-formula-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
+
+.dm-top-item { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--bg3); }
+.dm-top-item:last-child { border-bottom: none; }
+.dm-top-nombre { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dm-top-cant { font-family: monospace; font-size: 10px; color: var(--muted); text-align: right; }
+.dm-top-valor { font-family: monospace; font-size: 11px; font-weight: 700; color: var(--green); text-align: right; }
+
+.dm-cat-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+.dm-cat-name { font-size: 10px; color: var(--muted); width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0; }
+.dm-cat-track { flex: 1; height: 5px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+.dm-cat-fill { height: 100%; background: linear-gradient(90deg, var(--blue-dim), var(--blue)); border-radius: 3px; transition: width 0.7s ease; }
+.dm-cat-val { font-family: monospace; font-size: 10px; text-align: right; min-width: 28px; }
+
+.dm-badge { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 10px; font-size: 10px; font-weight: 600; font-family: monospace; }
+.dm-badge.ok { background: var(--green-dim); color: var(--green); }
+.dm-badge.warn { background: var(--yellow-dim); color: var(--yellow); }
+.dm-badge.danger { background: var(--red-dim); color: var(--red); }
+
+.dm-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 8px; font-size: 10px; color: var(--muted); font-family: monospace; flex-wrap: wrap; gap: 4px; }
+.dm-error { background: var(--red-dim); border: 1px solid var(--red); border-radius: var(--radius); padding: 10px 14px; color: var(--red); font-size: 12px; margin-bottom: 10px; font-family: monospace; display: none; }
+.dm-skeleton { background: linear-gradient(90deg, var(--bg3) 25%, var(--border) 50%, var(--bg3) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 3px; height: 14px; margin: 4px 0; }
+@keyframes shimmer { 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
+</style>
+</head>
+<body>
+<div id="dev-metrics-panel">
+  <div class="dm-header">
+    <div class="dm-title">DEV METRICS</div>
+    <div class="dm-status"><div class="dm-dot loading" id="dm-dot"></div><span id="dm-status-text">Iniciando...</span></div>
+    <div class="dm-controls">
+      <select class="dm-interval" id="dm-interval"><option value="3000">3s</option><option value="5000" selected>5s</option><option value="10000">10s</option><option value="30000">30s</option></select>
+      <button class="dm-btn active" id="dm-btn-pause" onclick="dmTogglePause()">Pausar</button>
+      <button class="dm-btn" onclick="dmFetch()">Ahora</button>
+    </div>
+  </div>
+  <div class="dm-error" id="dm-error"></div>
+
+  <div class="dm-grid">
+    <div class="dm-card">
+      <div class="dm-card-head"><span>MEM</span> RAM</div>
+      <div class="dm-card-body">
+        <div class="dm-stat-big" id="dm-ram-proceso">--</div>
+        <div class="dm-stat-label">MB proceso Flask/Python</div>
+        <div class="dm-stat-sub" id="dm-ram-fuente">fuente: --</div>
+        <div class="dm-bar-wrap" id="dm-ram-sys-wrap" style="display:none">
+          <div class="dm-bar-label"><span>Sistema</span><span id="dm-ram-sys-pct">0%</span></div>
+          <div class="dm-bar-track"><div class="dm-bar-fill green" id="dm-ram-bar" style="width:0%"></div></div>
+        </div>
+        <div style="margin-top:10px">
+          <div class="dm-row"><span class="dm-row-key">Total sistema</span><span class="dm-row-val blue" id="dm-ram-total">--</span></div>
+          <div class="dm-row"><span class="dm-row-key">Usado</span><span class="dm-row-val yellow" id="dm-ram-usado">--</span></div>
+          <div class="dm-row"><span class="dm-row-key">Disponible</span><span class="dm-row-val green" id="dm-ram-libre">--</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="dm-card">
+      <div class="dm-card-head"><span>DISK</span> Almacenamiento</div>
+      <div class="dm-card-body">
+        <div class="dm-stat-big" id="dm-db-size">--</div>
+        <div class="dm-stat-label">KB - Base de datos SQLite</div>
+        <div class="dm-stat-sub" id="dm-db-path" style="font-size:9px;word-break:break-all">--</div>
+        <div class="dm-bar-wrap">
+          <div class="dm-bar-label"><span>Disco interno</span><span id="dm-disco-pct">0%</span></div>
+          <div class="dm-bar-track"><div class="dm-bar-fill green" id="dm-disco-bar" style="width:0%"></div></div>
+        </div>
+        <div style="margin-top:10px">
+          <div class="dm-row"><span class="dm-row-key">Total disco</span><span class="dm-row-val blue" id="dm-disco-total">--</span></div>
+          <div class="dm-row"><span class="dm-row-key">Usado</span><span class="dm-row-val yellow" id="dm-disco-usado">--</span></div>
+          <div class="dm-row"><span class="dm-row-key">Libre</span><span class="dm-row-val green" id="dm-disco-libre">--</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dm-grid">
+    <div class="dm-card">
+      <div class="dm-card-head"><span>INV</span> Inventario</div>
+      <div class="dm-card-body">
+        <div class="dm-row"><span class="dm-row-key">Total productos</span><span class="dm-row-val blue" id="dm-inv-total">--</span></div>
+        <div class="dm-row"><span class="dm-row-key">Total unidades</span><span class="dm-row-val" id="dm-inv-unidades">--</span></div>
+        <div class="dm-row"><span class="dm-row-key">Sin stock</span><span class="dm-row-val" id="dm-inv-sin-stock">--</span></div>
+        <div class="dm-row"><span class="dm-row-key">Sin precio</span><span class="dm-row-val" id="dm-inv-sin-precio">--</span></div>
+        <div class="dm-row"><span class="dm-row-key">Precio &lt; costo</span><span class="dm-row-val" id="dm-inv-invalidos">--</span></div>
+      </div>
+    </div>
+    <div class="dm-card">
+      <div class="dm-card-head"><span>VAL</span> Valor del Inventario</div>
+      <div class="dm-card-body">
+        <div class="dm-row"><span class="dm-row-key">Valor venta</span><span class="dm-row-val green" id="dm-inv-valor-venta">--</span></div>
+        <div class="dm-row"><span class="dm-row-key">Valor costo</span><span class="dm-row-val yellow" id="dm-inv-valor-costo">--</span></div>
+        <div class="dm-row"><span class="dm-row-key">Ganancia potencial</span><span class="dm-row-val green" id="dm-inv-ganancia">--</span></div>
+        <div class="dm-row"><span class="dm-row-key">Margen bruto</span><span class="dm-row-val" id="dm-inv-margen-pct">--</span></div>
+        <div class="dm-row"><span class="dm-row-key">Alertas</span><span id="dm-inv-alertas">--</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dm-grid full">
+    <div class="dm-card">
+      <div class="dm-card-head"><span>FX</span> Formulas en Vivo</div>
+      <div class="dm-card-body">
+        <div class="dm-grid" style="margin:0;gap:8px">
+          <div><div class="dm-formula-label">Rentabilidad</div><div class="dm-formula" id="dm-formula-rent">calculando...</div></div>
+          <div><div class="dm-formula-label">Cobertura stock</div><div class="dm-formula" id="dm-formula-cob">calculando...</div></div>
+          <div><div class="dm-formula-label">Margen bruto</div><div class="dm-formula" id="dm-formula-margen">--</div></div>
+          <div><div class="dm-formula-label">RAM proceso</div><div class="dm-formula" id="dm-formula-ram">calculando...</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dm-grid">
+    <div class="dm-card">
+      <div class="dm-card-head"><span>TOP5</span> Mayor valor</div>
+      <div class="dm-card-body" id="dm-top5"><div class="dm-skeleton"></div><div class="dm-skeleton"></div></div>
+    </div>
+    <div class="dm-card">
+      <div class="dm-card-head"><span>CAT</span> Categorias</div>
+      <div class="dm-card-body" id="dm-cats"><div class="dm-skeleton"></div><div class="dm-skeleton"></div></div>
+    </div>
+  </div>
+
+  <div class="dm-footer">
+    <span id="dm-timestamp">--</span>
+    <span id="dm-uptime">--</span>
+    <span id="dm-ciclo">ciclo #0</span>
+  </div>
+</div>
+
+<script>
+var DM = {
+  endpoint: "/api/dev/metrics",
+  intervalId: null,
+  paused: false,
+  ciclo: 0,
+  init: function() {
+    document.getElementById("dm-interval").addEventListener("change", function() { if (!DM.paused) DM.start(); });
+    DM.start();
+    DM.fetch();
+  },
+  start: function() {
+    if (DM.intervalId) clearInterval(DM.intervalId);
+    var ms = parseInt(document.getElementById("dm-interval").value);
+    DM.intervalId = setInterval(DM.fetch, ms);
+  },
+  toggle: function() {
+    DM.paused = !DM.paused;
+    var btn = document.getElementById("dm-btn-pause");
+    if (DM.paused) {
+      clearInterval(DM.intervalId);
+      btn.textContent = "Reanudar";
+      btn.classList.remove("active");
+      DM.setStatus("pausado", "dot");
+    } else {
+      btn.textContent = "Pausar";
+      btn.classList.add("active");
+      DM.start();
+      DM.fetch();
+    }
+  },
+  fetch: function() {
+    DM.setStatus("cargando...", "loading");
+    fetch(DM.endpoint, { cache: "no-store" }).then(function(res) {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    }).then(function(data) {
+      if (!data.ok) throw new Error(data.error || "Respuesta invalida");
+      DM.render(data);
+      DM.ciclo++;
+      document.getElementById("dm-ciclo").textContent = "ciclo #" + DM.ciclo;
+      document.getElementById("dm-error").style.display = "none";
+      DM.setStatus("en vivo", "live");
+    }).catch(function(err) {
+      DM.setStatus("error", "error");
+      var el = document.getElementById("dm-error");
+      el.textContent = "Error: " + err.message;
+      el.style.display = "block";
+    });
+  },
+  render: function(d) {
+    DM.renderRam(d.ram);
+    DM.renderStorage(d.storage);
+    DM.renderInventario(d.inventario);
+    DM.renderFormulas(d);
+    DM.renderFooter(d);
+  },
+  fmt: function(n) { return new Intl.NumberFormat("es", {minimumFractionDigits:2}).format(n); },
+  el: function(id) { return document.getElementById(id); },
+  renderRam: function(r) {
+    if (!r) return;
+    this.el("dm-ram-proceso").textContent = r.proceso_mb > 0 ? r.proceso_mb + " MB" : "--";
+    this.el("dm-ram-fuente").textContent = "fuente: " + r.fuente;
+    if (r.sistema_total_mb > 0) {
+      this.el("dm-ram-sys-wrap").style.display = "block";
+      var pct = r.sistema_pct || 0;
+      this.el("dm-ram-sys-pct").textContent = pct + "%";
+      var bar = this.el("dm-ram-bar");
+      bar.style.width = pct + "%";
+      bar.className = "dm-bar-fill " + (pct < 60 ? "green" : pct < 85 ? "yellow" : "red");
+      this.el("dm-ram-total").textContent = r.sistema_total_mb + " MB";
+      this.el("dm-ram-usado").textContent = r.sistema_usado_mb + " MB";
+      this.el("dm-ram-libre").textContent = r.sistema_libre_mb + " MB";
+    }
+  },
+  renderStorage: function(s) {
+    if (!s) return;
+    this.el("dm-db-size").textContent = s.db_size_kb > 0 ? s.db_size_kb + " KB" : "--";
+    this.el("dm-db-path").textContent = s.db_path || "--";
+    var pct = s.disco_pct || 0;
+    this.el("dm-disco-pct").textContent = pct + "%";
+    var bar = this.el("dm-disco-bar");
+    bar.style.width = pct + "%";
+    bar.className = "dm-bar-fill " + (pct < 60 ? "green" : pct < 85 ? "yellow" : "red");
+    if (s.disco_total_mb > 0) {
+      this.el("dm-disco-total").textContent = s.disco_total_mb + " MB";
+      this.el("dm-disco-usado").textContent = s.disco_usado_mb + " MB";
+      this.el("dm-disco-libre").textContent = s.disco_libre_mb + " MB";
+    }
+  },
+  renderInventario: function(inv) {
+    if (!inv) return;
+    var fmt = DM.fmt;
+    this.el("dm-inv-total").textContent = inv.total_productos;
+    this.el("dm-inv-unidades").textContent = inv.total_unidades;
+    var ss = inv.productos_sin_stock;
+    var ssEl = this.el("dm-inv-sin-stock");
+    ssEl.textContent = ss;
+    ssEl.className = "dm-row-val " + (ss === 0 ? "green" : ss < 5 ? "yellow" : "red");
+    var sp = inv.productos_sin_precio;
+    var spEl = this.el("dm-inv-sin-precio");
+    spEl.textContent = sp;
+    spEl.className = "dm-row-val " + (sp === 0 ? "green" : "red");
+    var iv = inv.productos_precio_invalido;
+    var ivEl = this.el("dm-inv-invalidos");
+    ivEl.textContent = iv;
+    ivEl.className = "dm-row-val " + (iv === 0 ? "green" : "red");
+    this.el("dm-inv-valor-venta").textContent = fmt(inv.valor_venta_total) + " CUP";
+    this.el("dm-inv-valor-costo").textContent = fmt(inv.valor_costo_total) + " CUP";
+    this.el("dm-inv-ganancia").textContent = fmt(inv.ganancia_potencial) + " CUP";
+    var mg = inv.margen_bruto_pct;
+    var mgEl = this.el("dm-inv-margen-pct");
+    mgEl.textContent = mg + "%";
+    mgEl.className = "dm-row-val " + (mg >= 20 ? "green" : mg >= 10 ? "yellow" : "red");
+    var alertas = [];
+    if (ss > 0) alertas.push('<span class="dm-badge warn">' + ss + " sin stock</span>");
+    if (iv > 0) alertas.push('<span class="dm-badge danger">' + iv + " p&lt;c</span>");
+    if (sp > 0) alertas.push('<span class="dm-badge danger">' + sp + " sin precio</span>");
+    if (!alertas.length) alertas.push('<span class="dm-badge ok">Todo OK</span>');
+    this.el("dm-inv-alertas").innerHTML = alertas.join(" ");
+    DM.renderTop5(inv.top5_valor || []);
+    DM.renderCats(inv.categorias || []);
+  },
+  renderTop5: function(items) {
+    var c = this.el("dm-top5");
+    if (!items.length) { c.innerHTML = "<div style=\'color:var(--muted);font-size:11px\'>Sin datos</div>"; return; }
+    var fmt = DM.fmt;
+    c.innerHTML = items.map(function(p, i) {
+      return "<div class=\"dm-top-item\"><span class=\"dm-top-nombre\">" + (i+1) + ". " + p.nombre + "</span><span class=\"dm-top-cant\">" + p.cantidad + "u</span><span class=\"dm-top-valor\">" + fmt(p.valor_total) + "</span></div>";
+    }).join("");
+  },
+  renderCats: function(cats) {
+    var c = this.el("dm-cats");
+    if (!cats.length) { c.innerHTML = "<div style=\'color:var(--muted);font-size:11px\'>Sin datos</div>"; return; }
+    var mx = Math.max.apply(null, cats.map(function(x){return x.valor;})) || 1;
+    c.innerHTML = cats.map(function(cat) {
+      var pct = Math.round((cat.valor / mx) * 100);
+      return "<div class=\"dm-cat-row\"><span class=\"dm-cat-name\" title=\"" + cat.nombre + "\">" + cat.nombre + "</span><div class=\"dm-cat-track\"><div class=\"dm-cat-fill\" style=\"width:" + pct + "%\"></div></div><span class=\"dm-cat-val\">" + cat.productos + "</span></div>";
+    }).join("");
+  },
+  renderFormulas: function(d) {
+    var inv = d.inventario || {};
+    var ram = d.ram || {};
+    this.el("dm-formula-rent").textContent = inv.formula_rentabilidad || "N/D";
+    this.el("dm-formula-cob").textContent = inv.formula_cobertura || "N/D";
+    var vv = inv.valor_venta_total || 0;
+    var vc = inv.valor_costo_total || 0;
+    var pct = inv.margen_bruto_pct || 0;
+    this.el("dm-formula-margen").textContent = "(" + vv.toFixed(2) + " - " + vc.toFixed(2) + ") / " + vv.toFixed(2) + " x 100 = " + pct + "%";
+    var proc = ram.proceso_mb || 0;
+    var total = ram.sistema_total_mb || 0;
+    var ramPct = total > 0 ? ((proc / total) * 100).toFixed(2) : "N/D";
+    this.el("dm-formula-ram").textContent = "Proceso: " + proc + " MB / Sistema: " + total + " MB = " + ramPct + "%";
+  },
+  renderFooter: function(d) {
+    this.el("dm-timestamp").textContent = "Actualizado: " + (d.timestamp || "--");
+    if (d.uptime_s !== null && d.uptime_s !== undefined) {
+      var h = Math.floor(d.uptime_s / 3600);
+      var m = Math.floor((d.uptime_s % 3600) / 60);
+      var s = Math.floor(d.uptime_s % 60);
+      this.el("dm-uptime").textContent = "Uptime: " + h + "h " + m + "m " + s + "s";
+    }
+  },
+  setStatus: function(text, type) {
+    this.el("dm-status-text").textContent = text;
+    var dot = this.el("dm-dot");
+    dot.className = "dm-dot";
+    if (type) dot.classList.add(type);
+  }
+};
+
+function dmTogglePause() { DM.toggle(); }
+function dmFetch() { DM.fetch(); }
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", function() { DM.init(); });
+} else {
+  DM.init();
+}
+</script>
+</body>
+</html>

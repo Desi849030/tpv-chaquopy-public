@@ -701,6 +701,33 @@ TOOL_CATALOG: Dict[str, ToolDefinition] = {
         "importacion", "/api/productos", "GET",
         [],
         role="administrador"),
+    # ══════════════════════════════════════════════
+    #  DEV METRICS (dev_metrics_bp) — 4 herramientas
+    # ══════════════════════════════════════════════
+    "dev_metricas_completas": _t("dev_metricas_completas",
+        "Obtiene todas las metricas del sistema: RAM, almacenamiento y formulas de inventario en tiempo real",
+        "dev", "/api/dev/metrics", "GET",
+        [],
+        role="desarrollador"),
+
+    "dev_metricas_ram": _t("dev_metricas_ram",
+        "Obtiene metricas de memoria RAM del proceso Flask y del sistema",
+        "dev", "/api/dev/metrics/ram", "GET",
+        [],
+        role="desarrollador"),
+
+    "dev_metricas_almacenamiento": _t("dev_metricas_almacenamiento",
+        "Obtiene metricas de almacenamiento: tamano de BD SQLite y uso de disco",
+        "dev", "/api/dev/metrics/storage", "GET",
+        [],
+        role="desarrollador"),
+
+    "dev_metricas_inventario": _t("dev_metricas_inventario",
+        "Calcula formulas de inventario: margen bruto, cobertura de stock, ganancia potencial, top 5 por valor",
+        "dev", "/api/dev/metrics/inventario", "GET",
+        [],
+        role="desarrollador"),
+
 }
 
 

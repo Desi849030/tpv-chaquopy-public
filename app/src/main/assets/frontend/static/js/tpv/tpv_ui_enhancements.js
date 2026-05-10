@@ -1,5 +1,4 @@
 // tpv_ui_enhancements.js — Dark mode, animaciones KPIs, notificaciones stock, submenus
-
 (function(){
 "use strict";
 try{
@@ -24,6 +23,7 @@ function initDarkMode(){
   btn.style.cssText = 'position:fixed!important;top:auto!important;bottom:80px!important;right:16px;z-index:1040!important;width:40px;height:40px;border-radius:50%;border:none;background:var(--bs-secondary,#6c757d);color:#fff;font-size:18px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);';
   btn.style.cssText = 'position:fixed;bottom:80px;right:16px;z-index:9990;width:40px;height:40px;border-radius:50%;border:none;background:var(--bs-secondary,#6c757d);color:#fff;font-size:18px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);';
   document.body.appendChild(btn);
+}
 }
 
 /* ── ANIMATED COUNTERS ── */

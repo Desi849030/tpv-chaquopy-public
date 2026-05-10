@@ -104,5 +104,5 @@ ON tpv_productos FOR SELECT
 USING (branch_id = current_setting('request.headers')::json->>'x-branch-id' OR branch_id IS NULL);
 """
 
-print("✅ supabase_rls.py v1.0 listo - RLS multi-sucursal activo")
-print(f"   Sucursal ID: {get_branch_id()}")
+# logging: RLS listo
+# logging: branch_id

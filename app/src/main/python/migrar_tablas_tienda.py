@@ -10,14 +10,14 @@ def obtener_supabase():
         archivos = [f for f in os.listdir(os.environ.get("TPV_FILES_DIR","."))
                     if f.endswith(".json") and "supabase" in f.lower()]
         if not archivos:
-            print("[MIGRACION] No se encontro config de Supabase")
+            import logging; logging.warning("[MIGRACION] No se encontro config de Supabase")
             return None, None
         with open(os.path.join(os.environ.get("TPV_FILES_DIR","."), archivos[0]), "r") as f:
             cfg = json.load(f)
         url = cfg.get("supabase_url","")
         key = cfg.get("supabase_key","")
         if not url or not key:
-            print("[MIGRACION] URL o key de Supabase faltante")
+            import logging; logging.warning("[MIGRACION] URL o key de Supabase faltante")
             return None, None
         return url, key
     except Exception as e:

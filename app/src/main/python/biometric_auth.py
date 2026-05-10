@@ -65,5 +65,5 @@ def quick_login_setup(username: str) -> dict:
         "timeout_seconds": 30
     }
 
-print("✅ biometric_auth.py v1.0 listo - Login biométrico activo")
+# logging: biometric ok
 

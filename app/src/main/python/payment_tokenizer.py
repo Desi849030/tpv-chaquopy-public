@@ -79,4 +79,4 @@ def create_payment_record(amount: float, method: str, card_ref: str = "") -> dic
         "verified": False
     }
 
-print("✅ payment_tokenizer.py v1.0 listo - Tokenización MPOC activa")
+# logging: tokenizer listo

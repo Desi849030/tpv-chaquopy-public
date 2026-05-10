@@ -23,7 +23,7 @@ try:
     _set_session_role = set_session_role
     _get_session_info = get_session_info
     _ia_module = True
-    print("[IA Routes v1.2] ia_agent.py cargado correctamente")
+    # logging: ia_agent ok
 except Exception as e:
     try:
         from ia_assistant import (
@@ -58,7 +58,7 @@ try:
         search as mem_search, forget as mem_forget, get_summary as mem_summary,
         extract_and_save as mem_extract, get_enriched_context as mem_context)
     _mem_module = True
-    print("[IA Routes v1.2] Modulo memoria persistente cargado")
+    # logging: memoria ok
 except Exception:
     _mem_module = False
 
@@ -206,4 +206,4 @@ def memory_summary():
     return jsonify({'ok': True, 'summary': summary})
 
 
-print("[ia_assistant_routes.py v1.2] Listo + memoria persistente")
+# logging: assistant ok

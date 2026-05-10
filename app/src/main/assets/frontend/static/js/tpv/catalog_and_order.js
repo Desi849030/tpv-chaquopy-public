@@ -27,7 +27,7 @@
           var text = (row.textContent || '').toLowerCase();
           if(q === '' || text.indexOf(q) !== -1){
             row.classList.remove('product-row-hidden');
-          } else {
+          } else { // 'interactive' o 'complete'
             row.classList.add('product-row-hidden');
           }
         });
@@ -76,7 +76,7 @@
         var diff = startX - currentX;
         if(diff > 50){
           item.classList.add('swiped');
-        } else {
+        } else { // 'interactive' o 'complete'
           item.style.transform = '';
           item.classList.remove('swiped');
         }
@@ -159,9 +159,9 @@ function tryInit(){
   initSwipeActions();
   console.log('[v24] Catalog search + swipe + receipt listo');
 }
-if(document.readyState === 'complete'){
-  tryInit();
-} else {
+if(document.readyState === 'loading'){
   document.addEventListener('DOMContentLoaded', tryInit);
+} else { // 'interactive' o 'complete' — DOM ya listo
+  tryInit();
 }
 })();

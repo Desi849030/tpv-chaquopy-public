@@ -2,7 +2,7 @@
 migrar_tablas_tienda.py - Crea las 3 tablas faltantes en Supabase
 tpv_tiendas, tpv_pedidos_tienda, tpv_items_pedido
 """
-import json, os, sys
+import json, os, sys, logging
 
 def obtener_supabase():
     try:
@@ -10,14 +10,12 @@ def obtener_supabase():
         archivos = [f for f in os.listdir(os.environ.get("TPV_FILES_DIR","."))
                     if f.endswith(".json") and "supabase" in f.lower()]
         if not archivos:
-            import logging; logging.warning("[MIGRACION] No se encontro config de Supabase")
             return None, None
         with open(os.path.join(os.environ.get("TPV_FILES_DIR","."), archivos[0]), "r") as f:
             cfg = json.load(f)
         url = cfg.get("supabase_url","")
         key = cfg.get("supabase_key","")
         if not url or not key:
-            import logging; logging.warning("[MIGRACION] URL o key de Supabase faltante")
             return None, None
         return url, key
     except Exception as e:

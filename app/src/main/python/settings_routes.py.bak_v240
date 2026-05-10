@@ -68,22 +68,16 @@ def get_status():
         return jsonify({"error": str(e)}), 500
 
 @settings_bp.route("/api/ping", methods=["GET"])
-@settings_bp.route("/api/ping", methods=["GET"])
 def api_ping():
-    """Health check usando config dinamica de Supabase."""
     try:
-        from supabase_sync import SUPABASE_CONFIG, SUPABASE_OK
-        if not SUPABASE_OK:
-            return jsonify({"online": False, "error": "Supabase no configurado"})
-        import urllib.request
-        url = SUPABASE_CONFIG.get("url", "") + "/rest/v1/tpv_estado?limit=0"
-        req = urllib.request.Request(url)
-        req.add_header("apikey", SUPABASE_CONFIG.get("anon_key", ""))
-        req.add_header("Authorization", "Bearer " + SUPABASE_CONFIG.get("anon_key", ""))
-        with urllib.request.urlopen(req, timeout=5) as resp:
-            return jsonify({"online": resp.status == 200})
+        req = urllib.request.Request(
+            "https://cclafrwdqentvxgpmdbn.supabase.co/rest/v1/tpv_estado?limit=0")
+        req.add_header("apikey","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjbGFmcndkcWVudHZ4Z3BtZGJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwMDA4MjIsImV4cCI6MjA4ODU3NjgyMn0.***REMOVED***")
+        urllib.request.urlopen(req, timeout=5)
+        return jsonify({"online": True})
     except Exception:
         return jsonify({"online": False})
+
 @settings_bp.route("/api/health/full", methods=["GET"])
 def api_health_full():
     info = obtener_info_db()
@@ -169,7 +163,7 @@ def api_supabase_sync_full():
         from database import obtener_conexion
         conn = obtener_conexion()
         ventas = [dict(r) for r in conn.execute(
-            "SELECT * FROM historial_ventas WHERE 1=1 ORDER BY fecha DESC LIMIT 500"
+            "SELECT * FROM historial_ventas WHERE fecha >= date('now') ORDER BY fecha DESC LIMIT 500"
         ).fetchall()]
         productos = [dict(r) for r in conn.execute(
             "SELECT producto_id,nombre,precio,costo,categoria,unidad_medida,en_oferta,activo FROM productos WHERE activo=1"
@@ -178,7 +172,7 @@ def api_supabase_sync_full():
             "SELECT producto_id,nombre,stock_actual,precio_venta,categoria FROM inventario_general"
         ).fetchall()]
         gastos = [dict(r) for r in conn.execute(
-            "SELECT * FROM gastos WHERE 1=1"
+            "SELECT * FROM gastos WHERE fecha >= date('now')"
         ).fetchall()]
         conn.close()
         url = _sb.SUPABASE_CONFIG["url"]

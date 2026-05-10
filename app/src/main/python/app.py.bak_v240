@@ -1,4 +1,4 @@
-"""TPV ULTRA SMART v2.4.0 — Arquitectura modular"""
+"""TPV ULTRA SMART v1.0.0 — Arquitectura modular"""
 import sys, os
 from error_handlers import setup_error_handlers, api_response
 
@@ -24,7 +24,6 @@ except ImportError:
         return os.getcwd()
     _CARPETA_DETECTADA = _fix_path_fallback()
 
-from decorators import requiere_login, requiere_rol
 import json, threading, webbrowser, time, pathlib, secrets as _secrets
 from datetime import datetime
 
@@ -271,12 +270,12 @@ def handle_exception(e):
 
 def abrir_navegador():
     time.sleep(1.5)
-    try: webbrowser.open("http://localhost:5050")
+    try: webbrowser.open("http://localhost:5000")
     except Exception: pass
 
 def main():
     print("\n" + "="*58)
-    print("   TPV ULTRA SMART v2.4.0 — MODULAR")
+    print("   TPV ULTRA SMART v1.0.0 — MODULAR")
     print("="*58)
     crear_tablas()
     crear_tablas_tienda()
@@ -284,8 +283,8 @@ def main():
     if estado:
         print(f" {len(estado.get('productos',[]))} productos | {len(estado.get('historialVentas',[]))} ventas")
     print(f" Supabase: {'Activo' if _sb.SUPABASE_OK else 'Solo local'}")
-    print(" Servidor: http://localhost:5050")
-    # FIX: no imprimir password en consola
+    print(" Servidor: http://localhost:5000")
+    print(" Login:    desarrollador / dev2024\n")
     threading.Thread(target=abrir_navegador, daemon=True).start()
     import logging
     logging.getLogger('werkzeug').setLevel(logging.ERROR)
@@ -296,13 +295,13 @@ def main():
             if i[4][0].startswith(('192.168.','10.','172.')) and ':' not in i[4][0]
         ]))
         print("\n" + "="*48)
-        print("  TPV ULTRA SMART v2.4.0 - Modular")
-        print("  Local : http://localhost:5050")
+        print("  TPV ULTRA SMART v1.0.0 - Modular")
+        print("  Local : http://localhost:5000")
         for ip in ips: print(f"  WiFi  : http://{ip}:5000")
         print("="*48 + "\n")
     except Exception: pass
     setup_error_handlers(app)
-    app.run(host="0.0.0.0", port=_TPV_PORT, debug=False, use_reloader=False)
+    app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)
 
 
 # ========== v24: Validación BD al inicio ==========
@@ -332,8 +331,6 @@ except Exception as e:
 
 
 # ── API: Importación Inteligente de Excel ──
-@requiere_login
-@requiere_rol("administrador", "desarrollador")
 @app.route('/api/reconstruir-desde-productos', methods=['POST'])
 def api_reconstruir_productos():
     """Recibe lista de productos y sincroniza con BD."""
@@ -349,8 +346,6 @@ def api_reconstruir_productos():
     except Exception as e:
         return jsonify({'ok': False, 'mensaje': str(e)}), 500
 
-@requiere_login
-@requiere_rol("administrador", "desarrollador")
 @app.route('/api/inventario/importar-catalogo', methods=['POST'])
 def api_importar_catalogo():
     """Importa productos del catalogo al inventario general."""

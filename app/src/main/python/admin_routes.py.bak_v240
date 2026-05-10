@@ -65,7 +65,7 @@ def _guardar_privilegios_rol(rol, priv):
     finally: conn.close()
 
 @admin_bp.route("/api/privilegios/<rol>", methods=["GET"])
-@requiere_rol("desarrollador","administrador","supervisor")
+@requiere_rol("desarrollador","administrador")
 def api_get_privilegios(rol):
     u = usuario_actual()
     if rol == "desarrollador" and u["rol"] != "desarrollador":
@@ -76,7 +76,7 @@ def api_get_privilegios(rol):
     return jsonify({"ok":True,"rol":rol,"privilegios":p,"modulos":_MODULOS_DISPONIBLES,"default":_PRIVILEGIOS_DEFAULT.get(rol,{})})
 
 @admin_bp.route("/api/privilegios/<rol>", methods=["PUT"])
-@requiere_rol("desarrollador","administrador","supervisor")
+@requiere_rol("desarrollador","administrador")
 def api_set_privilegios(rol):
     u = usuario_actual()
     d = request.get_json(force=True, silent=True) or {}
@@ -92,7 +92,7 @@ def api_set_privilegios(rol):
     return jsonify({"error": "No se pudieron guardar"}), 500
 
 @admin_bp.route("/api/privilegios/<rol>/restablecer", methods=["POST"])
-@requiere_rol("desarrollador","administrador","supervisor")
+@requiere_rol("desarrollador","administrador")
 def api_reset_privilegios(rol):
     u = usuario_actual()
     if rol == "desarrollador" and u["rol"] != "desarrollador": return jsonify({"error": "Sin permisos"}), 403

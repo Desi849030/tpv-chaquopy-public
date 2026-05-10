@@ -1,4 +1,4 @@
-# TPV Ultra Smart v2.4.0
+# TPV Ultra Smart v2.1.0
 
 Sistema de Punto de Venta Profesional con IA integrada, biometria, roles multinivel y sincronizacion offline. Compilado 100% desde Android con Termux + Chaquopy.
 
@@ -99,7 +99,7 @@ Push a main dispara build automatico en GitHub Actions.
 - **Cloud**: Supabase (opcional)
 - **Testing**: pytest (95 tests)
 
-## Cambios Recientes (v2.0.0 - v2.4.0)
+## Cambios Recientes (v2.0.0 - v2.1.0)
 
 - feat: Modulo diccionario_tpv con sinonimos, definiciones y correccion ortografica
 - feat: 150 herramientas IA en 17 categorias (9 nuevas desde v2.0.0)

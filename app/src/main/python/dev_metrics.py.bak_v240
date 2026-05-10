@@ -430,12 +430,12 @@ td{padding:5px;border-bottom:1px solid #1a1a2e}
 <script>
 function cargar(){var s=document.getElementById('status');s.textContent='Cargando...';
 fetch('/api/dev/metrics').then(function(r){if(!r.ok)throw new Error(r.status);return r.json();}).then(function(d){
-document.getElementById('ram-val').textContent=d.ram && d.ram.sistema_pct ? d.ram.sistema_pct : 0+'%';
-var rb=document.getElementById('ram-bar');rb.style.width=d.ram && d.ram.sistema_pct ? d.ram.sistema_pct : 0+'%';rb.className='bar-fill'+(d.ram && d.ram.sistema_pct ? d.ram.sistema_pct : 0>80?' err':d.ram && d.ram.sistema_pct ? d.ram.sistema_pct : 0>60?' warn':'');
-document.getElementById('ram-val').className='val'+(d.ram && d.ram.sistema_pct ? d.ram.sistema_pct : 0>80?' err':d.ram && d.ram.sistema_pct ? d.ram.sistema_pct : 0>60?' warn':'');
-document.getElementById('stor-val').textContent=d.storage && d.storage.disco_pct ? d.storage.disco_pct : 0+'%';
-var sb=document.getElementById('stor-bar');sb.style.width=d.storage && d.storage.disco_pct ? d.storage.disco_pct : 0+'%';sb.className='bar-fill'+(d.storage && d.storage.disco_pct ? d.storage.disco_pct : 0>80?' err':d.storage && d.storage.disco_pct ? d.storage.disco_pct : 0>60?' warn':'');
-document.getElementById('stor-val').className='val'+(d.storage && d.storage.disco_pct ? d.storage.disco_pct : 0>80?' err':d.storage && d.storage.disco_pct ? d.storage.disco_pct : 0>60?' warn':'');
+document.getElementById('ram-val').textContent=d.ram_pct+'%';
+var rb=document.getElementById('ram-bar');rb.style.width=d.ram_pct+'%';rb.className='bar-fill'+(d.ram_pct>80?' err':d.ram_pct>60?' warn':'');
+document.getElementById('ram-val').className='val'+(d.ram_pct>80?' err':d.ram_pct>60?' warn':'');
+document.getElementById('stor-val').textContent=d.storage_pct+'%';
+var sb=document.getElementById('stor-bar');sb.style.width=d.storage_pct+'%';sb.className='bar-fill'+(d.storage_pct>80?' err':d.storage_pct>60?' warn':'');
+document.getElementById('stor-val').className='val'+(d.storage_pct>80?' err':d.storage_pct>60?' warn':'');
 document.getElementById('detail').textContent=JSON.stringify(d,null,2);
 s.textContent='Actualizado: '+new Date().toLocaleTimeString();
 }).catch(function(e){s.textContent='Error: '+e.message;});}

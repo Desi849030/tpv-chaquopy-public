@@ -20,7 +20,7 @@ except ImportError:
 # ══════════════════════════════════════════════════════════════
 #  PERSISTENCIA DE CONFIGURACION A DISCO
 # ══════════════════════════════════════════════════════════════
-_CONFIG_FILE = os.path.join(os.environ.get("TPV_FILES_DIR", os.getcwd()), ".supabase_config.json")
+_CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.supabase_config.json')
 
 def _cargar_config_desde_archivo():
     """Carga config persistida desde JSON. Retorna dict o None."""

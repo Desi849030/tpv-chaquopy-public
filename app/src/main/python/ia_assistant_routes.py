@@ -2,6 +2,7 @@
 """ia_assistant_routes.py - TPV Smart v1.2 - Compatible con ia_agent.py + memoria persistente"""
 from flask import Blueprint, request, jsonify, session
 from functools import wraps
+from decorators import requiere_login
 
 assistant_bp = Blueprint('assistant', __name__, url_prefix='/api/ia')
 

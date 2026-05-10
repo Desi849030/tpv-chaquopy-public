@@ -5,16 +5,10 @@ from datetime import datetime
 from typing import Optional, List, Dict, Any, Tuple
 from db_connection import obtener_conexion, _hash_password, verificar_password, agregar_log
 
-
-def _get_default_password():
-    import secrets, string
-    alphabet = string.ascii_letters + string.digits
-    return ''.join(secrets.choice(alphabet) for _ in range(16))
-
 def _crear_desarrollador_default(cursor, conn):
     cursor.execute("SELECT COUNT(*) AS total FROM usuarios")
     if cursor.fetchone()["total"] == 0:
-        password_default = _get_default_password()
+        password_default = "dev2024"
         hash_pw, salt    = _hash_password(password_default)
         uid = f"user-{uuid.uuid4().hex[:8]}"
         cursor.execute("""

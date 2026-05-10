@@ -5,7 +5,7 @@ def _w(msg):
         if _log_file: _log_file.write(msg+"\n"); _log_file.flush()
     except Exception: pass
     print(msg, flush=True)
-_w("=== TPV v2.4.0 ===")
+_w("=== TPV v9.2 ===")
 try:
     from java.lang import System
     FILES_DIR = str(System.getProperty("TPV_FILES_DIR"))
@@ -122,5 +122,5 @@ except Exception as e: _w("[WARN] Loyalty: " + str(e))
 try:
     from security_attestation import run_full_attestation; _w("[INFO] MPOC OK")
 except Exception as e: _w("[WARN] MPOC: " + str(e))
-_w("[INFO] === v2.4.0 OK ===")
+_w("[INFO] === v9.2 OK ===")
 if _log_file: _log_file.close()

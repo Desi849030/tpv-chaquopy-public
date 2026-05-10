@@ -92,7 +92,7 @@ if not os.path.isdir(_TD):
     _TD = 'templates'
 app = Flask(__name__, static_folder=None, template_folder=_TD)
 app.secret_key = _SECRET_KEY
-app.config["JSON_ENSURE_ASCII"] = False
+app.json.ensure_ascii = False  # FIX: Flask >= 2.2
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = False
 app.config["SESSION_COOKIE_HTTPONLY"] = True

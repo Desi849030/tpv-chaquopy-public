@@ -329,7 +329,9 @@ def _dev_only(f):
     def decorated(*args, **kwargs):
         try:
             from flask import session
-            rol = session.get("rol", "")
+            # FIX: el rol esta dentro del objeto usuario
+            usuario = session.get("usuario", {})
+            rol = usuario.get("rol", "") if isinstance(usuario, dict) else str(session.get("rol", ""))
             if rol not in ("desarrollador", "administrador"):
                 return jsonify({"ok": False, "error": "Acceso restringido al panel de desarrollador"}), 403
         except Exception:

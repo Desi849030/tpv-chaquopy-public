@@ -204,7 +204,7 @@ class Agent:
         if role == "cliente":
             frases.extend([
                 "Quieres que te muestre productos relaciónados?",
-                "Te puedo ayudar a encontrar algo especifico.",
+                "Te puedo ayudar a encontrar algo específico.",
             ])
         return "\n\n" + frases[hash(str(frases)) % len(frases)]
 

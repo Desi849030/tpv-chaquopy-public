@@ -13,7 +13,7 @@ function initDarkMode(){
   // Crear toggle
   var btn = document.createElement('button');
   btn.className = 'dark-mode-toggle';
-  btn.id = 'dark-mode-btn';
+  btn.id = 'dark-mode-toggle';
   btn.innerHTML = document.body.classList.contains('dark-mode') ? '&#9790;' : '&#9728;';
   btn.title = 'Modo oscuro/claro';
   btn.onclick = function(){
@@ -22,6 +22,7 @@ function initDarkMode(){
     localStorage.setItem('tpv_darkmode', isDark);
     btn.innerHTML = isDark ? '&#9790;' : '&#9728;';
   };
+  btn.style.cssText = 'position:fixed;bottom:80px;right:16px;z-index:9990;width:40px;height:40px;border-radius:50%;border:none;background:var(--bs-secondary,#6c757d);color:#fff;font-size:18px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);';
   document.body.appendChild(btn);
 }
 

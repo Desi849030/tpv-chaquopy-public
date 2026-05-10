@@ -184,10 +184,10 @@
 /* ========== v24: Network Status Indicator ========== */
 #tpv-network-badge {
   position: fixed;
-  top: 60px;
+  bottom: 80px;
   left: 50%;
   transform: translateX(-50%) translateY(-100px);
-  z-index: 99998;
+  z-index: 9990;
   padding: 8px 20px;
   border-radius: 20px;
   font-size: 13px;

@@ -15,18 +15,36 @@ v1.0 ULTRA-OPTIMIZADO:
   - PERF: Busqueda en 3 tablas SQLite con UNICO fallback entre ellas
   - PERF: Conexion SQLite persistente con WAL y cache 4MB
 """
-import sqlite3, json, math, random, re, os, time, unicodedata
+import sqlite3, json, math, random, re, os, time, unicodedata, logging
+_log = logging.getLogger("ia_assistant")
 from datetime import datetime, timedelta
 from collections import defaultdict
 
 def _clean_text(text):
-    """Elimina caracteres no-ASCII. Garantiza que el texto nunca se corrompa."""
+    """Normaliza texto: minusculas, sin puntuacion extra. Preserva tildes y ñ."""
     if not text:
         return ""
     text = str(text)
-    text = unicodedata.normalize('NFKD', text)
-    text = text.encode('ascii', 'replace').decode('ascii')
-    return text
+    text = unicodedata.normalize('NFC', text)
+    text = re.sub(r'[\x00-\x1f\x7f]', '', text)
+    return text.strip()
+
+def _normalize_search(text):
+    """Para busqueda: quita tildes para comparacion flexible."""
+    if not text:
+        return ""
+    text = str(text).lower().strip()
+    nfkd = unicodedata.normalize('NFKD', text)
+    sin_tildes = ''.join(c for c in nfkd if unicodedata.category(c) != 'Mn')
+    return sin_tildes
+
+def _unaccent_sql(text):
+    """Funcion SQLite custom: elimina tildes para LIKE insensible a acentos.
+    Registro: conn.create_function('UNACCENT', 1, _unaccent_sql)"""
+    if not text:
+        return ""
+    nfkd = unicodedata.normalize('NFKD', str(text))
+    return ''.join(c for c in nfkd if unicodedata.category(c) != 'Mn').lower()
 
 _sessions = {}
 _sessions_lock = __import__('threading').Lock()
@@ -184,6 +202,7 @@ def _db():
             conn.execute("PRAGMA journal_mode=WAL")
             conn.execute("PRAGMA busy_timeout=3000")
             conn.execute("PRAGMA cache_size=-8000")
+            conn.create_function('UNACCENT', 1, _unaccent_sql)
             conn.row_factory = sqlite3.Row
             _db_conn = conn
             _db_path = path
@@ -192,7 +211,7 @@ def _db():
                     conn.execute("CREATE TABLE IF NOT EXISTS ia_learning (id INTEGER PRIMARY KEY AUTOINCREMENT, rol TEXT NOT NULL, pregunta TEXT NOT NULL, respuesta TEXT NOT NULL, intent TEXT, hits INTEGER DEFAULT 1, fecha TEXT NOT NULL)")
                     conn.commit()
                     _db_init_done = True
-                except: pass
+                except Exception as _e: _log.debug("[IA] excepcion: %s", _e)
             return conn
         except:
             continue
@@ -281,7 +300,7 @@ def _search_products(query, limit=8):
     if len(ql) < 2:
         return []
     # Separar en palabras y quitar stop words
-    words = [w for w in re.split(r'[\s,;:]+', ql) if len(w) > 1 and w not in _STOP_WORDS]
+    words = [_normalize_search(w) for w in re.split(r'[\s,;:]+', ql) if len(w) > 1 and w not in _STOP_WORDS]
     if not words:
         return []
     results = []
@@ -292,13 +311,13 @@ def _search_products(query, limit=8):
     all_rows = []
     for word in words:
         rows = _safe_q(
-            "SELECT nombre, precio_venta, stock_actual, categoria, unidad_medida FROM productos WHERE LOWER(nombre) LIKE ? LIMIT ?",
+            "SELECT nombre, precio_venta, stock_actual, categoria, unidad_medida FROM productos WHERE UNACCENT(nombre) LIKE ? LIMIT ?",
             ('%'+word+'%', limit))
         if rows:
             all_rows.extend(rows)
         # Tambien buscar por categoria
         rows2 = _safe_q(
-            "SELECT nombre, precio_venta, stock_actual, categoria, unidad_medida FROM productos WHERE LOWER(categoria) LIKE ? LIMIT ?",
+            "SELECT nombre, precio_venta, stock_actual, categoria, unidad_medida FROM productos WHERE UNACCENT(categoria) LIKE ? LIMIT ?",
             ('%'+word+'%', limit))
         if rows2:
             all_rows.extend(rows2)
@@ -306,8 +325,8 @@ def _search_products(query, limit=8):
     # ESTRATEGIA 2: Si no hay resultados, buscar coincidencia total sin activo
     if not all_rows:
         rows = _safe_q(
-            "SELECT nombre, precio_venta, stock_actual, categoria, unidad_medida FROM productos WHERE LOWER(nombre) LIKE ? LIMIT ?",
-            ('%'+ql+'%', limit))
+            "SELECT nombre, precio_venta, stock_actual, categoria, unidad_medida FROM productos WHERE UNACCENT(nombre) LIKE ? LIMIT ?",
+            ('%'+_normalize_search(ql)+'%', limit))
         if rows:
             all_rows.extend(rows)
 
@@ -315,7 +334,7 @@ def _search_products(query, limit=8):
     if not all_rows:
         for word in words:
             rows = _safe_q(
-                "SELECT nombre, precio_venta, stock_actual, categoria, unidad_medida FROM inventario_general WHERE LOWER(nombre) LIKE ? LIMIT ?",
+                "SELECT nombre, precio_venta, stock_actual, categoria, unidad_medida FROM inventario_general WHERE UNACCENT(nombre) LIKE ? LIMIT ??",
                 ('%'+word+'%', limit))
             if rows:
                 all_rows.extend(rows)
@@ -324,7 +343,7 @@ def _search_products(query, limit=8):
     if not all_rows:
         for word in words:
             rows = _safe_q(
-                "SELECT nombre, precio, stock, categoria, unidad FROM items WHERE LOWER(nombre) LIKE ? LIMIT ?",
+                "SELECT nombre, precio, stock, categoria, unidad FROM items WHERE UNACCENT(nombre) LIKE ? LIMIT ?",
                 ('%'+word+'%', limit))
             if rows:
                 all_rows.extend(rows)
@@ -1208,7 +1227,7 @@ def process_question(sid, question, role="vendedor", user_name=""):
         elif intent=="smart_query": answer = data
         else: answer = _handle_unknown(question, role)
         try: _learn(role, question, answer, intent)
-        except: pass
+        except Exception as _e: _log.debug("[IA] excepcion: %s", _e)
 
         elapsed = int((time.time() - t0) * 1000)
         suggestions = _get_suggestions(intent_used)
@@ -1264,7 +1283,7 @@ def get_status():
         try:
             total = _safe_q("SELECT COUNT(*), COUNT(DISTINCT rol) FROM ia_learning", one=True)
             learning = {"total": total[0] if total else 0, "roles": total[1] if total else 0}
-        except: pass
+        except Exception as _e: _log.debug("[IA] excepcion: %s", _e)
         return {
             "version": "12.0.0",
             "model": "NLU Rule-based ON-DEVICE + Smart Query SQLite 100% local",
@@ -1290,7 +1309,7 @@ def cleanup_old_sessions():
                 try:
                     last = datetime.fromisoformat(sess.get("ts",""))
                     if (now - last).total_seconds() > 7200: to_remove.append(sid)
-                except: pass
+                except Exception as _e: _log.debug("[IA] excepcion: %s", _e)
             for sid in to_remove: del _sessions[sid]
     except: pass
 

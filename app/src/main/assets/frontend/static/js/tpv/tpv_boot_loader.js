@@ -1,4 +1,6 @@
+// tpv_boot_loader.js — Arranque de la app: inicialización, splash, carga de módulos
 (function(){
+
         var bar=document.getElementById('boot-bar');
         var status=document.getElementById('boot-status');
         var nameEl=document.getElementById('boot-store-name');

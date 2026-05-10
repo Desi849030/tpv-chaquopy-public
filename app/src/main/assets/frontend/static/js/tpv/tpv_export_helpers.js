@@ -1,4 +1,6 @@
+// tpv_export_helpers.js — Exportación TPV completo: CSV, Excel, descarga de archivos
 function esMovil(){return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)}
+(){return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)}
 function csvSafe(v){return `"${String(v??'').replace(/"/g,'""')}"`}
 function descargar(n,b){const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=n;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u)}
 function fechaEnRango(f,d,h){if(!f)return true;f=new Date(f);if(d&&f<new Date(d))return false;if(h&&f>new Date(h+'T23:59:59'))return false;return true}

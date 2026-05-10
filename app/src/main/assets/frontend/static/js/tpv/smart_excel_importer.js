@@ -1,4 +1,4 @@
-        class SmartExcelImporter {
+// smart_excel_importer.js — Importación inteligente Excel: análisis automático, auto-categorización, memoria de aprendizaje
             constructor() {
                 this.DEBUG = true;
                 this.MAX_FILE_SIZE = 10 * 1024 * 1024;

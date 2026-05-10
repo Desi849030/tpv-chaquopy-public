@@ -30,7 +30,7 @@ def _clean_text(text):
     return text.strip()
 
 def _normalize_search(text):
-    """Para busqueda: quita tildes para comparacion flexible."""
+    """Para busqueda: quita tildes para comparación flexible."""
     if not text:
         return ""
     text = str(text).lower().strip()
@@ -49,7 +49,7 @@ def _var(texto, variantes=None):
 
 
 def _unaccent_sql(text):
-    """Funcion SQLite custom: elimina tildes para LIKE insensible a acentos.
+    """Función SQLite custom: elimina tildes para LIKE insensible a acentos.
     Registro: conn.create_function('UNACCENT', 1, _unaccent_sql)"""
     if not text:
         return ""
@@ -221,7 +221,7 @@ def _db():
                     conn.execute("CREATE TABLE IF NOT EXISTS ia_learning (id INTEGER PRIMARY KEY AUTOINCREMENT, rol TEXT NOT NULL, pregunta TEXT NOT NULL, respuesta TEXT NOT NULL, intent TEXT, hits INTEGER DEFAULT 1, fecha TEXT NOT NULL)")
                     conn.commit()
                     _db_init_done = True
-                except Exception as _e: _log.debug("[IA] excepcion: %s", _e)
+                except Exception as _e: _log.debug("[IA] excepción: %s", _e)
             return conn
         except:
             continue
@@ -670,7 +670,7 @@ _INTENT_SUGGESTIONS = {
     "product_search": ["ventas de hoy", "stock bajo", "resumen"],
     "ventas": ["top productos", "stock bajo", "finanzas del dia"],
     "ventas_hoy": ["top productos", "ventas de la semana", "finanzas del dia"],
-    "inventario": ["stock bajo", "que productos tengo", "reorden"],
+    "inventario": ["stock bajo", "qué productos tengo", "reorden"],
     "seguridad": ["resumen", "ventas de hoy", "estado de seguridad", "fraude"],
     "recomendación": ["ventas de hoy", "stock bajo", "predicciones", "cross-selling"],
     "resumen": ["ventas de hoy", "stock bajo", "KPIs del día", "predicciones"],
@@ -699,7 +699,7 @@ def _handle_greeting(role, user_name=""):
     """v13: GREETING 100% INSTANTANEO - CERO queries a la DB."""
     h = datetime.now().hour
     tc_name, tmsg = _time_context()
-    s = "Buenos dias" if h < 12 else "Buenas tardes" if h < 18 else "Buenas noches"
+    s = "Buenos días" if h < 12 else "Buenas tardes" if h < 18 else "Buenas noches"
     r = _get_role_perms(role)
     name_str = ", %s" % _clean_text(user_name) if user_name else ""
     parts = ["%s%s! Soy TPV Smart v13.0. %s." % (s, name_str, tmsg), "",
@@ -707,7 +707,7 @@ def _handle_greeting(role, user_name=""):
              _time_recommendation(role), "",
              "Escribe lo que necesites. Ejemplos:"]
     if role == "cliente":
-        parts.extend(["- \"cuánto cuesta el arroz\"","- \"que productos tienen\"","- \"cuántos puntos tengo\""])
+        parts.extend(["- \"cuánto cuesta el arroz\"","- \"qué productos tienen\"","- \"cuántos puntos tengo\""])
     elif role == "vendedor":
         parts.extend(["- \"cuánto cuesta X\" o \"hay stock de Y\"","- \"ventas de hoy\"","- Escribe un nombre de producto"])
     else:
@@ -718,7 +718,7 @@ def _handle_resumen_rol(role, user_name=""):
     """v13: BATCH QUERY - 1 sola query en vez de 4-5 separadas. 5x mas rapido."""
     h = datetime.now().hour
     tc_name, tmsg = _time_context()
-    s = "Buenos dias" if h < 12 else "Buenas tardes" if h < 18 else "Buenas noches"
+    s = "Buenos días" if h < 12 else "Buenas tardes" if h < 18 else "Buenas noches"
     name_str = ", %s" % _clean_text(user_name) if user_name else ""
     r = _get_role_perms(role)
     parts = ["%s%s! TPV Smart v13.0" % (s, name_str), "",
@@ -772,7 +772,7 @@ def _handle_resumen_rol(role, user_name=""):
             parts.append("Comandos: precio de X | stock de Y | ventas de hoy")
         else:
             parts.append("Busca productos y consulta precios rapidamente.")
-            parts.append("Comandos: cuánto cuesta X | que productos tienen")
+            parts.append("Comandos: cuánto cuesta X | qué productos tienen")
     except Exception as e:
         parts.append(r["greeting"])
     parts.append("")
@@ -795,9 +795,9 @@ def _handle_help(role):
     try:
         r = _get_role_perms(role)
         if role == "cliente":
-            return _clean_text("Qué puedo hacer por ti:\n\nProductos:\n  - \"cuánto cuesta el arroz\" / \"precio de leche\"\n  - \"que productos tienen\" / \"hay gaseosas\"\n\nLealtad:\n  - \"cuántos puntos tengo\" / \"mis puntos\"\n\nEscribe en lenguaje natural, sin comandos!")
+            return _clean_text("Qué puedo hacer por ti:\n\nProductos:\n  - \"cuánto cuesta el arroz\" / \"precio de leche\"\n  - \"qué productos tienen\" / \"hay gaseosas\"\n\nLealtad:\n  - \"cuántos puntos tengo\" / \"mis puntos\"\n\nEscribe en lenguaje natural, sin comandos!")
         elif role == "vendedor":
-            return _clean_text("Qué puedo hacer por ti (Rol: %s):\n\nProductos y Precios:\n  - \"cuánto cuesta el café\" / \"precio de pan\"\n  - \"hay stock de arroz\" / \"busco gaseosa\"\n\nVentas:\n  - \"ventas de hoy\" / \"cuánto he vendido\"\n\nInventario:\n  - \"stock bajo\" / \"que productos tengo\"\n\nIA Edge (todo desde aquí):\n  - \"predicciones\" / \"KPIs del día\" / \"dashboard\"\n  - \"análisis ABC\" / \"cross-selling\" / \"optimización de precios\"\n\nTodo en lenguaje natural!" % r["label"])
+            return _clean_text("Qué puedo hacer por ti (Rol: %s):\n\nProductos y Precios:\n  - \"cuánto cuesta el café\" / \"precio de pan\"\n  - \"hay stock de arroz\" / \"busco gaseosa\"\n\nVentas:\n  - \"ventas de hoy\" / \"cuánto he vendido\"\n\nInventario:\n  - \"stock bajo\" / \"qué productos tengo\"\n\nIA Edge (todo desde aquí):\n  - \"predicciones\" / \"KPIs del día\" / \"dashboard\"\n  - \"análisis ABC\" / \"cross-selling\" / \"optimización de precios\"\n\nTodo en lenguaje natural!" % r["label"])
         else:
             return _clean_text("Qué puedo hacer por ti (Rol: %s):\n\nVentas: \"ventas de hoy/semana/mes\", \"top productos\", \"hora pico\"\nProductos: \"cuánto cuesta X\", \"hay Y\", nombre de producto\nInventario: \"stock bajo\", \"que debo reordenar\"\nFinanzas: \"gastos\", \"márgenes\", \"ganancia bruta\"\nIA: \"predicciones\", \"recomendaciónes\", \"cross-selling\"\nSeguridad: \"estado de seguridad\", \"fraude\"\nLealtad: \"puntos\", \"programa de lealtad\"\n\nEscribe lo que quieras saber, sin comandos!" % r["label"])
     except:
@@ -1237,7 +1237,7 @@ def process_question(sid, question, role="vendedor", user_name=""):
         elif intent=="smart_query": answer = data
         else: answer = _handle_unknown(question, role)
         try: _learn(role, question, answer, intent)
-        except Exception as _e: _log.debug("[IA] excepcion: %s", _e)
+        except Exception as _e: _log.debug("[IA] excepción: %s", _e)
 
         elapsed = int((time.time() - t0) * 1000)
         suggestions = _get_suggestions(intent_used)
@@ -1293,7 +1293,7 @@ def get_status():
         try:
             total = _safe_q("SELECT COUNT(*), COUNT(DISTINCT rol) FROM ia_learning", one=True)
             learning = {"total": total[0] if total else 0, "roles": total[1] if total else 0}
-        except Exception as _e: _log.debug("[IA] excepcion: %s", _e)
+        except Exception as _e: _log.debug("[IA] excepción: %s", _e)
         return {
             "versión": "12.0.0",
             "model": "NLU Rule-based ON-DEVICE + Smart Query SQLite 100% local",
@@ -1319,7 +1319,7 @@ def cleanup_old_sessions():
                 try:
                     last = datetime.fromisoformat(sess.get("ts",""))
                     if (now - last).total_seconds() > 7200: to_remove.append(sid)
-                except Exception as _e: _log.debug("[IA] excepcion: %s", _e)
+                except Exception as _e: _log.debug("[IA] excepción: %s", _e)
             for sid in to_remove: del _sessions[sid]
     except: pass
 

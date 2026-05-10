@@ -136,7 +136,7 @@ class F:
         return {'t':d['t'] if d else 0,'r':d['r'] if d else 0}
     
     @staticmethod
-    def top(dias=7, lim=5):
+    def top(días=7, lim=5):
         return q(f"SELECT nombre,SUM(cantidad) q,SUM(total) t FROM historial_ventas WHERE fecha>=DATE('now','-{dias} days') GROUP BY nombre ORDER BY q DESC LIMIT {lim}")
     
     @staticmethod
@@ -197,7 +197,7 @@ class Agent:
         frases = [
             "Necesitas algo mas?",
             "En que mas te puedo ayudar?",
-            "Te gustaria ver las ofertas del dia?",
+            "Te gustaria ver las ofertas del día?",
             "Puedo buscar otro producto si deseas.",
             "Tienes alguna otra consulta?",
         ]
@@ -356,7 +356,7 @@ class Agent:
                 msg += str(i) + ". " + o["n"] + ": " + fmt_money(o["d"]) + " (Normal: " + fmt_money(o["p"]) + " - Ahorras " + fmt_money(ahorro) + ")\n"
             return msg + "\nEscribe el nombre de cualquier producto para ver mas detalles."
         if self._fm(t, ["categorías","catalogo","que tienen","secciones","que venden","departamento"]):
-            return "Contamos con " + str(len(P.cats)) + " categorías: " + ", ".join(P.cats[:15]) + ".\n\nEscribe el nombre de una categoria o producto."
+            return "Contamos con " + str(len(P.cats)) + " categorías: " + ", ".join(P.cats[:15]) + ".\n\nEscribe el nombre de una categoría o producto."
         if self._fm(t, ["stock","disponible","cuanto hay","hay de","quedan","existencia"]):
             prods = P.search(t, 8)
             if prods:
@@ -387,7 +387,7 @@ class Agent:
                 stock_info = " | " + str(int(p["s"])) + " " + p["u"] if p["s"] > 0 else " | AGOTADO"
                 msg += "- " + p["n"] + ": " + fmt_money(p["p"]) + stock_info + "\n"
             return msg + "\n\n" + self._follow(role)
-        if self._fm(t, ["hola","buenas","buenos dias","buenas tardes","buenas noches","hey"]):
+        if self._fm(t, ["hola","buenas","buenos días","buenas tardes","buenas noches","hey"]):
             return "Hola! Soy tu asistente y estoy aquí para ayudarte. Puedes preguntarme sobre productos, precios, ofertas, stock o cualquier cosa que necesites."
         return "Con gusto te ayudo. Puedes preguntarme sobre productos, precios, ofertas, stock, categorías o escribir ayuda para ver todo lo que puedo hacer."
 
@@ -396,7 +396,7 @@ class Agent:
         d = F.diario(); w = F.semanal()
         low = sum(1 for p in P.cache if 0 < p["s"] <= 5)
         if self._fm(t, ["ayuda","que puedes","menú","opciónes"]):
-            return "Como supervisor tienes acceso completo:\n\n- dashboard: KPIs\n- ventas: Resumen del dia\n- stock bajo: Alertas\n- top: Más vendidos\n- finanzas: Balance y margen\n- gastos: Egresos\n- predicciones: Tendencias\n- rotacion: Indice\n- ABC: Clasificacion\n- ofertas: Promociónes\n- Nombre de producto para info detallada"
+            return "Como supervisor tienes acceso completo:\n\n- dashboard: KPIs\n- ventas: Resumen del día\n- stock bajo: Alertas\n- top: Más vendidos\n- finanzas: Balance y margen\n- gastos: Egresos\n- predicciones: Tendencias\n- rotación: Indice\n- ABC: Clasificacion\n- ofertas: Promociónes\n- Nombre de producto para info detallada"
         if self._fm(t, ["dashboard","resumen","estado","kpi"]):
             msg = "Dashboard:\n- Ventas hoy: " + fmt_money(d["r"]) + " (" + str(d["t"]) + " ops)\n- Ventas semana: " + fmt_money(w["r"]) + "\n- Ticket promedio: " + fmt_money(d["a"]) + "\n- Productos: " + str(len(P.cache)) + "\n- Stock bajo: " + str(low) + "\n- Categorias: " + str(len(P.cats))
             if d["t"] > 0:
@@ -408,7 +408,7 @@ class Agent:
             if d["t"] == 0: return "Aún no hay ventas hoy."
             h = datetime.now().hour
             proy = d["r"]/h*24 if h > 0 else d["r"]
-            return "Ventas del dia:\n- Ops: " + str(d["t"]) + "\n- Facturado: " + fmt_money(d["r"]) + "\n- Ticket: " + fmt_money(d["a"]) + "\n- Proyeccion: " + fmt_money(proy) + "\n- Gastos: " + fmt_money(d["g"]) + "\n- Ganancia: " + fmt_money(d["r"]-d["g"])
+            return "Ventas del día:\n- Ops: " + str(d["t"]) + "\n- Facturado: " + fmt_money(d["r"]) + "\n- Ticket: " + fmt_money(d["a"]) + "\n- Proyeccion: " + fmt_money(proy) + "\n- Gastos: " + fmt_money(d["g"]) + "\n- Ganancia: " + fmt_money(d["r"]-d["g"])
         if self._fm(t, ["stock bajo","agotado","critico","reabastecer","faltante"]):
             rows = q("SELECT nombre,stock_actual FROM inventario_general WHERE stock_actual<=5 AND stock_actual>=0 ORDER BY stock_actual LIMIT 500")
             if not rows: return "Todo en orden. No hay productos con stock bajo."
@@ -434,13 +434,13 @@ class Agent:
             msg = "Gastos del día (" + str(len(rows)) + "):\n\n"
             total = 0
             for r in rows[:20]:
-                msg += "- " + r["descripción"] + ": " + fmt_money(r["monto"]) + " (" + r["categoria"] + ")\n"
+                msg += "- " + r["descripción"] + ": " + fmt_money(r["monto"]) + " (" + r["categoría"] + ")\n"
                 total += r["monto"]
             return msg + "\nTotal: " + fmt_money(total)
         if self._fm(t, ["tendencia","prediccion","proyeccion","forecast","pronostico"]):
             proy = d["r"]*7 if d["r"] > 0 else w["r"]
             return "Proyección semanal: " + fmt_money(proy) + "\n- Ritmo diario: " + fmt_money(d["r"]) + "\n- Semana: " + fmt_money(w["r"])
-        if self._fm(t, ["rotacion","indice"]):
+        if self._fm(t, ["rotación","indice"]):
             cv = q("SELECT COALESCE(SUM(cantidad*costo),0) cv FROM historial_ventas WHERE fecha>=DATE('now','-30 days')", one=True)
             ip = sum(p["c"]*p["s"] for p in P.cache)/len(P.cache) if P.cache else 1
             rot = (cv["cv"]/ip) if ip > 0 else 0
@@ -481,7 +481,7 @@ class Agent:
                 if mrg > 0: msg += " | Margen: " + pct(mrg)
                 msg += "\n"
             return msg
-        return "Escriba: ventas, stock bajo, top, finanzas, gastos, predicciones, ABC, rotacion, ofertas, EOQ, o nombre de producto.\n\n" + self._follow("supervisor")
+        return "Escriba: ventas, stock bajo, top, finanzas, gastos, predicciones, ABC, rotación, ofertas, EOQ, o nombre de producto.\n\n" + self._follow("supervisor")
 
     def _ven(self, t, m):
         if self._fm(t, ["ventas","caja","recaudó","cuanto vendi","como voy"]):
@@ -620,7 +620,7 @@ class Agent:
             return msg
         
         # ROTACIÓN
-        if self._fm(t, ['rotacion','indice rotacion']):
+        if self._fm(t, ['rotación','indice rotación']):
             cv = q("SELECT COALESCE(SUM(cantidad*costo),0) cv FROM historial_ventas WHERE fecha>=DATE('now','-30 days')", one=True)
             ip = sum(p['c']*p['s'] for p in P.cache)/len(P.cache) if P.cache else 1
             rot = (cv['cv']/ip) if ip>0 else 0
@@ -637,7 +637,7 @@ class Agent:
             msg = f"Gastos del día ({len(rows)}):\n\n"
             total = 0
             for r in rows:
-                msg += f"• {r['descripción']}: {fmt_money(r['monto'])} ({r['categoria']})\n"
+                msg += f"• {r['descripción']}: {fmt_money(r['monto'])} ({r['categoría']})\n"
                 total += r['monto']
             msg += f"\nTotal gastos: {fmt_money(total)}"
             return msg

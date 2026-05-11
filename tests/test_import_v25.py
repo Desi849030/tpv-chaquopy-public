@@ -14,9 +14,17 @@ class TestImportacion:
         if row:
             c.close()
             return row[0]
-        cur.execute("INSERT OR IGNORE INTO usuarios (usuario_id, nombre, rol, password_hash) VALUES (?, ?, ?, ?)",
-                    ("test_admin_v25", "Test Admin", "administrador", "hash_dummy"))
-        c.commit()
+        # Crear usuario de prueba (CI arranca con BD vacia)
+        try:
+            cur.execute(
+                "INSERT INTO usuarios (usuario_id, username, nombre, rol, password_hash, password_salt) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                ("test_admin_v25", "test_admin_v25", "Test Admin", "administrador",
+                 "sha256$dummy", "salt_dummy")
+            )
+            c.commit()
+        except Exception:
+            pass
         cur.execute("SELECT usuario_id FROM usuarios LIMIT 1")
         row = cur.fetchone()
         c.close()
@@ -55,7 +63,7 @@ class TestImportacion:
         cur = c.cursor()
         cur.execute("SELECT COUNT(*) FROM productos")
         count = cur.fetchone()[0]
-        assert count >= 0, f"Conteo de productos negativo: {count}"
+        assert count >= 0, f"Conteo negativo: {count}"
         c.close()
 
     def test_inventario_general_poblado(self):
@@ -63,7 +71,7 @@ class TestImportacion:
         cur = c.cursor()
         cur.execute("SELECT COUNT(*) FROM inventario_general")
         count = cur.fetchone()[0]
-        assert count >= 0, f"Conteo de inventario negativo: {count}"
+        assert count >= 0, f"Conteo negativo: {count}"
         if count > 0:
             cur.execute("SELECT producto_id, stock_actual FROM inventario_general LIMIT 2")
             rows = cur.fetchall()

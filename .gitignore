@@ -63,3 +63,4 @@ app/src/main/assets/python/
 .tpv_secret_key
 .tpv_hmac_secret
 .tpv_secrets_v2
+.tpv_secret

@@ -15,9 +15,3 @@ from database import (
 )
 
 inv_bp = Blueprint('inventory', __name__)
-from routes.inventory_bp import inv_bp
-from routes.inventory_helpers import *
-from routes.inventory_crud import *
-from routes.inventory_catalogo import *
-from routes.inventory_diario import *
-from routes.inventory_other import *

@@ -6,16 +6,291 @@ from typing import Optional, List, Dict, Any
 from db_connection import obtener_conexion, agregar_log, DB_FILE
 from db_users import _crear_desarrollador_default
 
-from db.schema import crear_tablas_schema
-from db_connection import obtener_conexion
-from db_users import _crear_desarrollador_default
-
 def crear_tablas():
-    conn = obtener_conexion()
-    crear_tablas_schema(conn)
-    try: _crear_desarrollador_default(conn)
+    conn   = obtener_conexion()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS app_state (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            clave       TEXT    NOT NULL UNIQUE,
+            valor       TEXT    NOT NULL,
+            actualizado TEXT    DEFAULT (datetime('now','localtime'))
+        )""")
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            usuario_id    TEXT    NOT NULL UNIQUE,
+            username      TEXT    NOT NULL UNIQUE,
+            nombre        TEXT    NOT NULL,
+            rol           TEXT    NOT NULL CHECK(rol IN
+                          ('desarrollador','administrador','supervisor','vendedor')),
+            password_hash TEXT    NOT NULL,
+            password_salt TEXT    NOT NULL,
+            creado_por    TEXT    DEFAULT NULL,
+            activo        INTEGER DEFAULT 1,
+            ultimo_acceso TEXT    DEFAULT NULL,
+            creado        TEXT    DEFAULT (datetime('now','localtime'))
+        )""")
+
+    # ── LICENCIAS (generadas por el desarrollador) ────────────
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS licencias (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            licencia_id   TEXT    NOT NULL UNIQUE,
+            admin_id      TEXT    NOT NULL,
+            admin_nombre  TEXT    NOT NULL,
+            tipo          TEXT    NOT NULL DEFAULT 'anual'
+                          CHECK(tipo IN ('diaria','mensual','anual','personalizada','ilimitada')),
+            dias          INTEGER NOT NULL DEFAULT 365,
+            fecha_inicio  TEXT    NOT NULL,
+            fecha_expira  TEXT    NOT NULL,
+            activa        INTEGER DEFAULT 1,
+            notas         TEXT    DEFAULT '',
+            creado_por    TEXT    NOT NULL,
+            creado        TEXT    DEFAULT (datetime('now','localtime'))
+        )""")
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS historial_ventas (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            venta_id        TEXT    NOT NULL UNIQUE,
+            producto_id     TEXT    NOT NULL,
+            nombre          TEXT    NOT NULL,
+            cantidad        REAL    NOT NULL DEFAULT 1,
+            precio_unit     REAL    NOT NULL DEFAULT 0,
+            total           REAL    NOT NULL DEFAULT 0,
+            metodo_pago     TEXT    DEFAULT 'efectivo',
+            vendedor_id     TEXT    DEFAULT NULL,
+            vendedor_nombre TEXT    DEFAULT NULL,
+            fecha           TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
+        )""")
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS productos (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            producto_id   TEXT    NOT NULL UNIQUE,
+            nombre        TEXT    NOT NULL,
+            precio        REAL    NOT NULL DEFAULT 0,
+            costo         REAL    NOT NULL DEFAULT 0,
+            categoria     TEXT    DEFAULT 'General',
+            unidad_medida TEXT    DEFAULT 'C/U',
+            en_oferta     INTEGER DEFAULT 0,
+            imagen        TEXT    DEFAULT '',
+            activo        INTEGER DEFAULT 1,
+            creado        TEXT    DEFAULT (datetime('now','localtime'))
+        )""")
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS inventario_general (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            producto_id   TEXT    NOT NULL UNIQUE,
+            nombre        TEXT    NOT NULL,
+            stock_actual  REAL    NOT NULL DEFAULT 0,
+            stock_minimo  REAL    DEFAULT 5,
+            precio_compra REAL    DEFAULT 0,
+            precio_venta  REAL    DEFAULT 0,
+            categoria     TEXT    DEFAULT 'General',
+            unidad_medida TEXT    DEFAULT 'C/U',
+            actualizado   TEXT    DEFAULT (datetime('now','localtime'))
+        )""")
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS entradas_productos (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            entrada_id    TEXT    NOT NULL UNIQUE,
+            producto_id   TEXT    NOT NULL,
+            nombre        TEXT    NOT NULL,
+            cantidad      REAL    NOT NULL DEFAULT 0,
+            precio_compra REAL    DEFAULT 0,
+            proveedor     TEXT    DEFAULT '',
+            nota          TEXT    DEFAULT '',
+            registrado_por TEXT   NOT NULL,
+            fecha         TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
+        )""")
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS inventario_diario (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            fecha         TEXT    NOT NULL,
+            vendedor_id   TEXT    NOT NULL,
+            producto_id   TEXT    NOT NULL,
+            nombre        TEXT    NOT NULL,
+            cant_asignada REAL    NOT NULL DEFAULT 0,
+            cant_vendida  REAL    DEFAULT 0,
+            cant_devuelta REAL    DEFAULT 0,
+            cant_final    REAL    DEFAULT 0,
+            precio_venta  REAL    DEFAULT 0,
+            precio_costo  REAL    DEFAULT 0,
+            activo        INTEGER DEFAULT 1,
+            UNIQUE(fecha, vendedor_id, producto_id)
+        )""")
+    # Migración: columnas nuevas en BD existente
+    for col, tipo in [
+        ('cant_final',    'REAL DEFAULT 0'),
+        ('precio_costo',  'REAL DEFAULT 0'),
+        ('unidad_medida', "TEXT DEFAULT 'Un'"),
+    ]:
+        try: cursor.execute(f'ALTER TABLE inventario_diario ADD COLUMN {col} {tipo}')
+        except Exception: pass
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS cierres_diario (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            vendedor_id   TEXT    NOT NULL,
+            fecha         TEXT    NOT NULL,
+            total_ventas  REAL    DEFAULT 0,
+            total_costo   REAL    DEFAULT 0,
+            ganancia_neta REAL    DEFAULT 0,
+            items_json    TEXT    DEFAULT '[]',
+            creado_en     TEXT    DEFAULT (datetime('now','localtime')),
+            UNIQUE(vendedor_id, fecha)
+        )""")
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS gastos (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            gasto_id     TEXT    NOT NULL UNIQUE,
+            descripcion  TEXT    NOT NULL,
+            monto        REAL    NOT NULL DEFAULT 0,
+            categoria    TEXT    DEFAULT 'Otros',
+            fecha        TEXT    NOT NULL,
+            nota         TEXT    DEFAULT '',
+            registrado_por TEXT  DEFAULT '',
+            creado_en    TEXT    DEFAULT (datetime('now','localtime'))
+        )""")
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS cierres_caja (
+            id                INTEGER PRIMARY KEY AUTOINCREMENT,
+            fecha             TEXT    NOT NULL UNIQUE,
+            total_ventas      REAL    DEFAULT 0,
+            total_costos      REAL    DEFAULT 0,
+            total_comisiones  REAL    DEFAULT 0,
+            ganancia_total    REAL    DEFAULT 0,
+            num_transacciones INTEGER DEFAULT 0,
+            cerrado_por       TEXT    DEFAULT NULL,
+            creado            TEXT    DEFAULT (datetime('now','localtime'))
+        )""")
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS inventarios (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            fecha         TEXT    NOT NULL,
+            producto_id   TEXT    NOT NULL,
+            nombre        TEXT    NOT NULL,
+            cant_inicial  REAL    DEFAULT 0,
+            cant_final    REAL    DEFAULT 0,
+            vendido       REAL    DEFAULT 0,
+            precio_venta  REAL    DEFAULT 0,
+            precio_costo  REAL    DEFAULT 0,
+            importe       REAL    DEFAULT 0,
+            comision      REAL    DEFAULT 0,
+            ganancia_neta REAL    DEFAULT 0,
+            UNIQUE(fecha, producto_id)
+        )""")
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS logs_sistema (
+            id        INTEGER PRIMARY KEY AUTOINCREMENT,
+            tipo      TEXT    DEFAULT 'info',
+            usuario   TEXT    DEFAULT NULL,
+            mensaje   TEXT    NOT NULL,
+            timestamp TEXT    DEFAULT (datetime('now','localtime'))
+        )""")
+
+    # ── TABLAS v5.1: seguridad, auditoría y descuentos ────────
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS login_intentos (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            username   TEXT    NOT NULL,
+            ip         TEXT    DEFAULT '',
+            exito      INTEGER DEFAULT 0,
+            timestamp  TEXT    DEFAULT (datetime('now','localtime'))
+        )""")
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS auditoria (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            tabla       TEXT    NOT NULL,
+            accion      TEXT    NOT NULL,
+            registro_id TEXT    NOT NULL,
+            campo       TEXT    DEFAULT '',
+            valor_antes TEXT    DEFAULT '',
+            valor_nuevo TEXT    DEFAULT '',
+            usuario_id  TEXT    NOT NULL,
+            timestamp   TEXT    DEFAULT (datetime('now','localtime'))
+        )""")
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS descuentos_config (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre      TEXT    NOT NULL DEFAULT 'Descuento',
+            tipo        TEXT    NOT NULL DEFAULT 'porcentaje'
+                        CHECK(tipo IN ('porcentaje','fijo')),
+            valor       REAL    NOT NULL DEFAULT 0,
+            activo      INTEGER DEFAULT 1,
+            creado      TEXT    DEFAULT (datetime('now','localtime'))
+        )""")
+
+    conn.commit()
+
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS historial_diario (
+            id                INTEGER PRIMARY KEY AUTOINCREMENT,
+            fecha             TEXT    NOT NULL UNIQUE,
+            total_ventas      REAL    DEFAULT 0,
+            num_transacciones INTEGER DEFAULT 0,
+            productos_activos INTEGER DEFAULT 0,
+            inventario_items  INTEGER DEFAULT 0,
+            ventas_data       TEXT    DEFAULT '[]',
+            inventario_data   TEXT    DEFAULT '[]',
+            config_snapshot   TEXT    DEFAULT '{}',
+            ts_guardado       TEXT    DEFAULT (datetime('now','localtime'))
+        )""")
+    try: cursor.execute("CREATE INDEX IF NOT EXISTS idx_hist_fecha ON historial_diario(fecha DESC)")
     except Exception: pass
+
+    # ── ÍNDICES DE RENDIMIENTO ─────────────────────────────────
+    _indices = [
+        "CREATE INDEX IF NOT EXISTS idx_hv_fecha    ON historial_ventas(fecha)",
+        "CREATE INDEX IF NOT EXISTS idx_hv_vend     ON historial_ventas(vendedor_id)",
+        "CREATE INDEX IF NOT EXISTS idx_hv_prod     ON historial_ventas(producto_id)",
+        "CREATE INDEX IF NOT EXISTS idx_inv_dia     ON inventario_diario(fecha, vendedor_id)",
+        "CREATE INDEX IF NOT EXISTS idx_prod_cat    ON productos(categoria, activo)",
+        "CREATE INDEX IF NOT EXISTS idx_gastos_f    ON gastos(fecha)",
+        "CREATE INDEX IF NOT EXISTS idx_login_ts    ON login_intentos(username, timestamp)",
+    ]
+    for idx in _indices:
+        try: cursor.execute(idx)
+        except Exception: pass
+
+    # ── AUTO-EXPIRAR LOGS > 30 días ────────────────────────────
+    try:
+        cursor.execute("DELETE FROM logs_sistema WHERE timestamp < datetime('now','-30 days')")
+    except Exception: pass
+
+    conn.commit()
+
+    # Migraciones seguras: añadir columnas nuevas a DBs existentes
+    _migraciones = [
+        ("licencias", "cliente_id",       "TEXT DEFAULT ''"),
+        ("licencias", "clave_activacion", "TEXT DEFAULT ''"),
+    ]
+    for tabla, col, tipo_col in _migraciones:
+        try:
+            conn.execute(f"ALTER TABLE {tabla} ADD COLUMN {col} {tipo_col}")
+            conn.commit()
+        except Exception:
+            pass  # Columna ya existe, ignorar
+
+    _crear_desarrollador_default(cursor, conn)
     conn.close()
+    print(f"✅ Base de datos lista: {DB_FILE}")
+
+
 
 def crear_licencia(admin_id, tipo, dias, notas, dev_id, cliente_id="", clave_activacion=""):
     """Crea una licencia para un administrador. Solo el desarrollador puede hacerlo."""

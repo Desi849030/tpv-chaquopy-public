@@ -22,8 +22,9 @@ from payment_tokenizer import create_payment_record
 from supabase_rls import get_branch_id, get_rls_headers
 
 settings_bp = Blueprint('settings', __name__)
-from routes.settings_bp import settings_bp
-from routes.settings_helpers import *
-from routes.settings_state import *
-from routes.settings_supabase import *
-from routes.settings_other import *
+
+
+# ══════════════════════════════════════════════════════════════
+#  ESTADO TPV
+# ══════════════════════════════════════════════════════════════
+

@@ -15,9 +15,3 @@ from database import (
 )
 
 tienda_bp = Blueprint('tienda', __name__)
-from routes.tienda_bp import tienda_bp
-from routes.tienda_helpers import *
-from routes.tienda_clientes import *
-from routes.tienda_productos import *
-from routes.tienda_tiendas import *
-from routes.tienda_other import *

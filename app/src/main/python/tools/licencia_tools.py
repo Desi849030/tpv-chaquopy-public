@@ -1,0 +1,25 @@
+from tools.base import _t
+
+LICENCIA_TOOLS = {
+    "lic_validate": _t("lic_validate",
+        "Verifica el estado de la licencia del dispositivo actual",
+        "licencia", "/validate", "GET", [], auth=False),
+    "lic_activate": _t("lic_activate",
+        "Activa una licencia con una clave proporcionada",
+        "licencia", "/activate", "POST",
+        [{"name": "clave", "type": "str", "description": "Clave de activacion", "required": True}]),
+    "lic_deactivate": _t("lic_deactivate",
+        "Desactiva la licencia actual (solo desarrollador)",
+        "licencia", "/deactivate", "POST", [], role="desarrollador"),
+    "lic_generate": _t("lic_generate",
+        "Genera una nueva licencia (solo desarrollador)",
+        "licencia", "/generate", "POST",
+        [{"name": "tipo", "type": "str", "description": "Tipo de licencia", "required": False}],
+        role="desarrollador"),
+    "lic_list": _t("lic_list",
+        "Lista todas las licencias (solo desarrollador)",
+        "licencia", "/list", "GET", [], role="desarrollador"),
+    "lic_device_id": _t("lic_device_id",
+        "Devuelve el device_id generado para este dispositivo",
+        "licencia", "/device-id", "GET", [], auth=False),
+}

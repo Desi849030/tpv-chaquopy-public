@@ -14,6 +14,8 @@ from db_users import _crear_desarrollador_default
 
 # === INVENTARIO GENERAL ===
 
+
+__all__ = ['sincronizar_estado_completo', 'limpiar_tablas_completo', 'reconstruir_desde_productos']
 def sincronizar_estado_completo(admin_id):
     """
     Sincronización en cascada:

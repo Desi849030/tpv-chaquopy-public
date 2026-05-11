@@ -14,6 +14,8 @@ from db_users import _crear_desarrollador_default
 
 # === ESTADO Y SINCRONIZACION ===
 
+
+__all__ = ['cargar_estado', 'guardar_estado', '_sincronizar_tablas_relacionales']
 def cargar_estado():
     conn   = obtener_conexion()
     cursor = conn.cursor()

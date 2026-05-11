@@ -23,6 +23,8 @@ from db.schema import crear_tablas_schema
 from db_connection import obtener_conexion
 from db_users import _crear_desarrollador_default
 
+
+__all__ = ['crear_tablas', 'crear_licencia', 'listar_licencias', 'verificar_licencia_activa', 'desactivar_licencia']
 def crear_tablas():
     conn = obtener_conexion()
     crear_tablas_schema(conn)

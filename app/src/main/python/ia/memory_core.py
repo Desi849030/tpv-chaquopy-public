@@ -33,6 +33,8 @@ _DB_PATH = None
 _DB_LOCK = threading.Lock()
 
 
+
+__all__ = ['_get_db', 'init', 'save', 'recall', 'search', 'forget', 'get_summary']
 def _get_db():
     global _DB_PATH
     if not _DB_PATH:

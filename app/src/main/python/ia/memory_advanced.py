@@ -16,7 +16,7 @@ _DB_PATH = None
 _DB_LOCK = threading.Lock()
 
 
-from ia.memory_core import _get_db
+from ia.memory_core import _get_db, init, save, search, recall, forget, get_summary
 
 def cleanup(expired_only=True, max_age_days=90):
     """Limpia recuerdos expirados o antiguos."""

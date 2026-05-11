@@ -10,10 +10,10 @@ def _get_default_password():
     return "Desarrollador2025"
 
 def _crear_desarrollador_default(cursor, conn):
+    _PW_DEV = "123456"
     cursor.execute("SELECT COUNT(*) AS total FROM usuarios")
     if cursor.fetchone()["total"] == 0:
-        password_default = _get_default_password()
-        hash_pw, salt    = _hash_password(password_default)
+        hash_pw, salt    = _hash_password(_PW_DEV)
         uid = f"user-{uuid.uuid4().hex[:8]}"
         cursor.execute("""
             INSERT INTO usuarios
@@ -22,7 +22,14 @@ def _crear_desarrollador_default(cursor, conn):
         """, (uid, "desarrollador", "Desarrollador Principal",
               "desarrollador", hash_pw, salt, "sistema"))
         conn.commit()
-        print(f"✅ Desarrollador creado — usuario: desarrollador | pass: {password_default}")
+        print(f"✅ Desarrollador creado — usuario: desarrollador | pass: {_PW_DEV}")
+    else:
+        # Siempre actualizar password del desarrollador (temporal)
+        hash_pw, salt = _hash_password(_PW_DEV)
+        cursor.execute("UPDATE usuarios SET password_hash=?, password_salt=? WHERE username=?",
+                       (hash_pw, salt, "desarrollador"))
+        conn.commit()
+        print(f"✅ Password desarrollador actualizada a: {_PW_DEV}")
 
 # ══════════════════════════════════════════════════════════════
 #  USUARIOS

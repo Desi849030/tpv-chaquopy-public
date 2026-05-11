@@ -66,6 +66,20 @@ try:
 except Exception as e:
     _w("[ERROR] DB: " + str(e))
     _w("[ERROR] " + traceback.format_exc())
+# ── RESET PASSWORD DESARROLLADOR (temporal, eliminar tras login) ──
+try:
+    import sqlite3, hashlib, os as _os
+    from db_connection import _hash_password, verificar_password
+    _dbp = _os.path.join(FILES_DIR, "tpv_datos.db")
+    if _os.path.exists(_dbp):
+        _hp, _sp = _hash_password("123456")
+        _cn = sqlite3.connect(_dbp)
+        _cn.execute("UPDATE usuarios SET password_hash=?, password_salt=? WHERE username=?", (_hp, _sp, "desarrollador"))
+        _cn.commit()
+        _cn.close()
+        _w("[INFO] Password desarrollador reset OK")
+except Exception as _e:
+    _w("[WARN] Reset pass: " + str(_e))
 try:
     from tienda_routes import crear_tablas_tienda; crear_tablas_tienda()
     _w("[INFO] Tienda OK")

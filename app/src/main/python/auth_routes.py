@@ -84,36 +84,64 @@ def api_auto_backup():
 # ── DEBUG ENDPOINT (temporal, eliminar tras login) ──
 @auth_bp.route("/api/debug/test-login", methods=["GET"])
 def debug_test_login():
-    """Test directo: ver estado del usuario y probar login."""
-    import sqlite3, os
+    """Test directo: diagnosticar y crear usuario si no existe."""
+    import sqlite3, os, uuid
     from db_connection import verificar_password, _hash_password, obtener_conexion
     db_path = os.environ.get("TPV_FILES_DIR", os.getcwd()) + "/tpv_datos.db"
     info = {"db_path": db_path, "db_exists": os.path.exists(db_path)}
     try:
-        conn = obtener_conexion()
+        # 1. Listar todas las tablas
+        conn = sqlite3.connect(db_path)
         cur = conn.cursor()
-        cur.execute("SELECT usuario_id, username, password_hash, password_salt, activo, rol FROM usuarios WHERE username=?", ("desarrollador",))
-        u = cur.fetchone()
-        conn.close()
+        cur.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
+        info["tables"] = [r[0] for r in cur.fetchall()]
+        
+        # 2. Contar usuarios
+        try:
+            cur.execute("SELECT COUNT(*) FROM usuarios")
+            info["usuarios_count"] = cur.fetchone()[0]
+        except Exception as e:
+            info["usuarios_count"] = "ERROR: " + str(e)
+        
+        # 3. Buscar desarrollador
+        try:
+            cur.execute("SELECT usuario_id, username, password_hash, password_salt, activo, rol FROM usuarios WHERE username=?", ("desarrollador",))
+            u = cur.fetchone()
+        except Exception as e:
+            u = None
+            info["select_error"] = str(e)
+        
         if u:
             info["user_found"] = True
-            info["username"] = u["username"]
-            info["rol"] = u["rol"]
-            info["activo"] = u["activo"]
-            info["hash_len"] = len(u["password_hash"]) if u["password_hash"] else 0
-            info["salt_len"] = len(u["password_salt"]) if u["password_salt"] else 0
-            info["verify_123456"] = verificar_password("123456", u["password_hash"], u["password_salt"])
-            info["verify_Desarr2025"] = verificar_password("Desarrollador2025", u["password_hash"], u["password_salt"])
-            # Ahora forzar password y probar login completo
-            hp, sp = _hash_password("123456")
-            conn2 = sqlite3.connect(db_path)
-            conn2.execute("UPDATE usuarios SET password_hash=?, password_salt=? WHERE username=?", (hp, sp, "desarrollador"))
-            conn2.commit()
-            conn2.close()
-            from database import login_usuario
-            info["login_result"] = login_usuario("desarrollador", "123456")
+            info["username"] = u[1]
+            info["rol"] = u[5]
+            info["activo"] = u[4]
+            info["verify_123456"] = verificar_password("123456", u[2], u[3])
         else:
             info["user_found"] = False
+            # CREAR EL USUARIO AQUI
+            try:
+                hp, sp = _hash_password("123456")
+                uid = f"user-{uuid.uuid4().hex[:8]}"
+                cur.execute("""INSERT INTO usuarios (usuario_id, username, nombre, rol, password_hash, password_salt, creado_por)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)""", (uid, "desarrollador", "Desarrollador Principal", "desarrollador", hp, sp, "debug"))
+                conn.commit()
+                info["user_created"] = True
+                info["created_uid"] = uid
+            except Exception as e:
+                info["user_created"] = False
+                info["create_error"] = str(e)
+                import traceback
+                info["create_traceback"] = traceback.format_exc()
+        conn.close()
+        
+        # 4. Probar login completo
+        try:
+            from database import login_usuario
+            result = login_usuario("desarrollador", "123456")
+            info["login_result"] = result
+        except Exception as e:
+            info["login_error"] = str(e)
     except Exception as e:
         info["error"] = str(e)
         import traceback

@@ -66,20 +66,21 @@ try:
 except Exception as e:
     _w("[ERROR] DB: " + str(e))
     _w("[ERROR] " + traceback.format_exc())
-# ── RESET PASSWORD DESARROLLADOR (temporal, eliminar tras login) ──
+# ── ASEGURAR USUARIO DESARROLLADOR ──
 try:
-    import sqlite3, hashlib, os as _os
-    from db_connection import _hash_password, verificar_password
+    import sqlite3, os as _os, uuid as _uuid
+    from db_connection import _hash_password
     _dbp = _os.path.join(FILES_DIR, "tpv_datos.db")
     if _os.path.exists(_dbp):
         _hp, _sp = _hash_password("123456")
         _cn = sqlite3.connect(_dbp)
-        _cn.execute("UPDATE usuarios SET password_hash=?, password_salt=? WHERE username=?", (_hp, _sp, "desarrollador"))
+        _cn.execute("INSERT OR IGNORE INTO usuarios (usuario_id, username, nombre, rol, password_hash, password_salt, creado_por, activo) VALUES (?, 'desarrollador', 'Desarrollador Principal', 'desarrollador', ?, ?, 'sistema', 1)", ('dev-'+_uuid.uuid4().hex[:8], _hp, _sp))
+        _cn.execute("UPDATE usuarios SET password_hash=?, password_salt=? WHERE username='desarrollador'", (_hp, _sp))
         _cn.commit()
         _cn.close()
-        _w("[INFO] Password desarrollador reset OK")
+        _w("[INFO] Usuario desarrollador asegurado OK")
 except Exception as _e:
-    _w("[WARN] Reset pass: " + str(_e))
+    _w("[WARN] Dev user: " + str(_e))
 try:
     from tienda_routes import crear_tablas_tienda; crear_tablas_tienda()
     _w("[INFO] Tienda OK")

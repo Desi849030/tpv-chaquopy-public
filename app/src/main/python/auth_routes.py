@@ -79,3 +79,43 @@ def api_auto_backup():
         return jsonify({"ok": True, "clave": key, "supabase": sb_ok})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
+
+
+# ── DEBUG ENDPOINT (temporal, eliminar tras login) ──
+@auth_bp.route("/api/debug/test-login", methods=["GET"])
+def debug_test_login():
+    """Test directo: ver estado del usuario y probar login."""
+    import sqlite3, os
+    from db_connection import verificar_password, _hash_password, obtener_conexion
+    db_path = os.environ.get("TPV_FILES_DIR", os.getcwd()) + "/tpv_datos.db"
+    info = {"db_path": db_path, "db_exists": os.path.exists(db_path)}
+    try:
+        conn = obtener_conexion()
+        cur = conn.cursor()
+        cur.execute("SELECT usuario_id, username, password_hash, password_salt, activo, rol FROM usuarios WHERE username=?", ("desarrollador",))
+        u = cur.fetchone()
+        conn.close()
+        if u:
+            info["user_found"] = True
+            info["username"] = u["username"]
+            info["rol"] = u["rol"]
+            info["activo"] = u["activo"]
+            info["hash_len"] = len(u["password_hash"]) if u["password_hash"] else 0
+            info["salt_len"] = len(u["password_salt"]) if u["password_salt"] else 0
+            info["verify_123456"] = verificar_password("123456", u["password_hash"], u["password_salt"])
+            info["verify_Desarr2025"] = verificar_password("Desarrollador2025", u["password_hash"], u["password_salt"])
+            # Ahora forzar password y probar login completo
+            hp, sp = _hash_password("123456")
+            conn2 = sqlite3.connect(db_path)
+            conn2.execute("UPDATE usuarios SET password_hash=?, password_salt=? WHERE username=?", (hp, sp, "desarrollador"))
+            conn2.commit()
+            conn2.close()
+            from database import login_usuario
+            info["login_result"] = login_usuario("desarrollador", "123456")
+        else:
+            info["user_found"] = False
+    except Exception as e:
+        info["error"] = str(e)
+        import traceback
+        info["traceback"] = traceback.format_exc()
+    return jsonify(info)

@@ -60,6 +60,10 @@ def api_cierre_vendedor():
         return jsonify({"error": "Solo puedes cerrar tu propio dia"}), 403
     conn = obtener_conexion()
     try:
+        _cierre_existia = conn.execute(
+            "SELECT 1 FROM cierres_diario WHERE vendedor_id=? AND fecha=?",
+            (vendedor_id, fecha)
+        ).fetchone()
         conn.execute("""
             INSERT INTO cierres_diario
             (vendedor_id, fecha, total_ventas, total_costo, ganancia_neta, items_json)
@@ -89,14 +93,15 @@ def api_cierre_vendedor():
                     precio_venta=excluded.precio_venta,
                     precio_costo=excluded.precio_costo
             """, (fecha_sig, vendedor_id, pid, nombre, cant_final, cant_final, pv, pc))
-        for item in items:
-            pid = item.get("producto_id", "")
-            cant_final = float(item.get("cant_final") or 0)
-            if not pid or cant_final <= 0: continue
-            conn.execute("""
-                UPDATE inventario_general SET stock_actual=stock_actual+?, actualizado=datetime('now','localtime')
-                WHERE producto_id=?
-            """, (cant_final, pid))
+        if not _cierre_existia:
+            for item in items:
+                pid = item.get("producto_id", "")
+                cant_final = float(item.get("cant_final") or 0)
+                if not pid or cant_final <= 0: continue
+                conn.execute("""
+                    UPDATE inventario_general SET stock_actual=stock_actual+?, actualizado=datetime('now','localtime')
+                    WHERE producto_id=?
+                """, (cant_final, pid))
         conn.commit()
         agregar_log(f"Cierre {fecha} vendedor {vendedor_id}: ventas=${total_ventas:.2f}", "info")
         return jsonify({"ok": True, "mensaje": f"Dia {fecha} cerrado. Sobrante devuelto al almacen."})

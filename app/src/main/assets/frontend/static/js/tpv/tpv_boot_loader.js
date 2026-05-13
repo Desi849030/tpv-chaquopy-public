@@ -38,7 +38,7 @@
             fetch('/api/health',{signal:ctrl.signal,cache:'no-store'})
                 .then(function(r){clearTimeout(t);
                     // v6.9 FIX: Aceptar también 404 (endpoint puede no existir pero el servidor responde)
-                    if(r.ok||r.status===401||(r.status===404&&r.headers.get('content-type')?.includes('json'))){
+                    if(r.ok){
                         clearInterval(iv);setB(100);setS('Cargando pantalla de acceso...');
                         fetch('/api/config/publica',{cache:'no-store'})
                             .then(function(rc){return rc.json();})

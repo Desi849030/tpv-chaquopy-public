@@ -10,6 +10,32 @@ def requiere_login(f):
             if request.is_json or request.path.startswith("/api/"):
                 return jsonify({"error": "No autenticado"}), 401
             return redirect("/")
+        u = session.get("usuario", {})
+        uid = u.get("usuario_id")
+        last_chk = session.get("_active_check_ts", 0)
+        import time as _t
+        if uid and _t.time() - last_chk > 300:
+            try:
+                from db.users import login_usuario
+                _conn = None
+                try:
+                    from database import obtener_conexion as _oc
+                    _conn = _oc()
+                    _row = _conn.execute(
+                        "SELECT activo FROM usuarios WHERE usuario_id=?",
+                        (uid,)
+                    ).fetchone()
+                    if _row and _row[0] == 1:
+                        session["_active_check_ts"] = _t.time()
+                    else:
+                        session.clear()
+                        return jsonify({"error": "Sesion revocada"}), 401
+                finally:
+                    if _conn:
+                        try: _conn.close()
+                        except: pass
+            except Exception:
+                pass
         return f(*args, **kwargs)
     return decorated
 

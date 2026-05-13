@@ -5,7 +5,7 @@ def _w(msg):
         if _log_file: _log_file.write(msg+"\n"); _log_file.flush()
     except Exception: pass
     print(msg, flush=True)
-_w("=== TPV v2.4.0 ===")
+_w("=== TPV v2.5.5 ===")
 try:
     from java.lang import System
     FILES_DIR = str(System.getProperty("TPV_FILES_DIR"))
@@ -109,33 +109,12 @@ for i in range(30):
         if i==29: _w("[ERROR] Flask TIMEOUT 15s")
 time.sleep(1)
 _w("[INFO] Cargando IA...")
-try:
-    from ia_assistant import _init_learning_table; _init_learning_table()
-    _w("[INFO] IA OK")
-except Exception as e: _w("[WARN] IA: " + str(e))
-try:
-    from ia_assistant_routes import assistant_bp
-    already = any('/api/ia/chat' in str(r) for r in flask_app.url_map.iter_rules())
-    if not already: flask_app.register_blueprint(assistant_bp)
-    _w("[INFO] IA Routes OK")
-except Exception as e: _w("[WARN] IA Routes: " + str(e))
-try:
-    from ai_routes import ai_bp, analytics_bp
-    ai_reg = any('/api/ai/' in str(r) for r in flask_app.url_map.iter_rules())
-    an_reg = any('/api/analytics/' in str(r) for r in flask_app.url_map.iter_rules())
-    if not ai_reg: flask_app.register_blueprint(ai_bp)
-    if not an_reg: flask_app.register_blueprint(analytics_bp)
-    _w("[INFO] IA Edge OK")
-except Exception as e: _w("[WARN] IA Edge: " + str(e))
-try:
-    from loyalty_routes import loyalty_bp
-    _loyalty_already = any('/api/loyalty' in str(r) for r in flask_app.url_map.iter_rules())
-    if not _loyalty_already:
-        flask_app.register_blueprint(loyalty_bp)
-    _w("[INFO] Loyalty OK")
-except Exception as e: _w("[WARN] Loyalty: " + str(e))
+# IA: learning table via app.py
+# assistant_bp via app.py
+# ai_bp + analytics_bp via app.py
+# loyalty_bp via app.py
 try:
     from security_attestation import run_full_attestation; _w("[INFO] MPOC OK")
 except Exception as e: _w("[WARN] MPOC: " + str(e))
-_w("[INFO] === v2.4.0 OK ===")
+_w("[INFO] === v2.5.5 OK ===")
 if _log_file: _log_file.close()

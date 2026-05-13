@@ -1,4 +1,4 @@
-"""TPV ULTRA SMART v2.4.0 — Arquitectura modular"""
+"""TPV ULTRA SMART v2.5.5 — Arquitectura modular"""
 import sys, os
 from error_handlers import setup_error_handlers, api_response
 
@@ -26,6 +26,9 @@ except ImportError:
 
 from decorators import requiere_login, requiere_rol
 import json, threading, webbrowser, time, pathlib, secrets as _secrets
+_TPV_PORT = int(os.environ.get("TPV_PORT", 5050))
+_TPV_HOST = os.environ.get("TPV_HOST", "127.0.0.1")
+
 from datetime import datetime
 
 # ── Clave secreta ──
@@ -264,7 +267,7 @@ def abrir_navegador():
 
 def main():
     print("\n" + "="*58)
-    print("   TPV ULTRA SMART v2.4.0 — MODULAR")
+    print("   TPV ULTRA SMART v2.5.5 — MODULAR")
     print("="*58)
     crear_tablas()
     crear_tablas_tienda()
@@ -284,13 +287,13 @@ def main():
             if i[4][0].startswith(('192.168.','10.','172.')) and ':' not in i[4][0]
         ]))
         print("\n" + "="*48)
-        print("  TPV ULTRA SMART v2.4.0 - Modular")
+        print("  TPV ULTRA SMART v2.5.5 - Modular")
         print("  Local : http://localhost:5050")
         for ip in ips: print(f"  WiFi  : http://{ip}:5050")
         print("="*48 + "\n")
     except Exception: pass
     setup_error_handlers(app)
-    app.run(host="0.0.0.0", port=_TPV_PORT, debug=False, use_reloader=False)
+    app.run(host=_TPV_HOST, port=_TPV_PORT, debug=False, use_reloader=False)
 
 
 # ========== v24: Validación BD al inicio ==========

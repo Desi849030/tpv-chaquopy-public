@@ -18,6 +18,32 @@ def best_match(query, options, threshold=60):
         return best, best_score
     return None, 0
 
+
+_WORD_INDEX = {}
+
+def build_index(names):
+    """Construir indice invertido de palabras para busqueda rapida O(1)"""
+    global _WORD_INDEX
+    _WORD_INDEX = {}
+    for name in names:
+        for w in name.lower().split():
+            if len(w) > 2:
+                _WORD_INDEX.setdefault(w, set()).add(name)
+
+def quick_search(query, threshold=60):
+    """Busqueda rapida usando indice invertido"""
+    global _WORD_INDEX
+    if not _WORD_INDEX:
+        return best_match(query, list({n for s in _WORD_INDEX.values() for n in s}), threshold)
+    words = query.lower().split()
+    candidates = set()
+    for w in words:
+        for name in _WORD_INDEX.get(w, []):
+            candidates.add(name)
+    if not candidates:
+        return best_match(query, list({n for s in _WORD_INDEX.values() for n in s}), threshold)
+    return best_match(query, list(candidates), threshold)
+
 def contains_frustration(text):
     """Detecta si el usuario está frustrado"""
     frustration_words = [

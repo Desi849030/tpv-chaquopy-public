@@ -36,7 +36,7 @@ public class MainActivity extends FragmentActivity {
     private static final int CAMERA_PERMISSION_REQUEST = 100;
     private ValueCallback<Uri[]> filePathCallback;
     private WebView webView;
-    private View splashRoot;
+    private FrameLayout splashRoot;
     private boolean cameraPermissionGranted = false;
     private BiometricPrompt biometricPrompt;
     private Executor executor;

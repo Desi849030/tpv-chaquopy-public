@@ -213,19 +213,7 @@ def serve_static(filename):
     return '', 404
 
 
-@app.route('/api/health')
-def health_check():
-    return jsonify({'status':'ok','version':'1.0.0'})
 
-@app.route('/api/config/publica')
-def config_publica():
-    try:
-        e=cargar_estado()
-        n=e.get('nombre_tienda','TPV Ultra Smart')
-    except: n='TPV Ultra Smart'
-    return jsonify({'nombre_tienda':n,'nombre':n})
-
-# ══════════════════════════════════════════════════════════════
 #  ERROR HANDLERS
 # ══════════════════════════════════════════════════════════════
 
@@ -334,28 +322,7 @@ except Exception as e:
 # ── API: Importación Inteligente de Excel ──
 # /api/reconstruir-desde-productos movido a routes/inventory_crud.py
 
-@requiere_login
-@requiere_rol("administrador", "desarrollador")
-@app.route('/api/inventario/importar-catalogo', methods=['POST'])
-def api_importar_catalogo():
-    """Importa productos del catalogo al inventario general."""
-    try:
-        from db_products import importar_catalogo_a_inventario
-        resultado = importar_catalogo_a_inventario('system')
-        return jsonify(resultado)
-    except Exception as e:
-        return jsonify({'ok': False, 'mensaje': str(e)}), 500
 
-@app.route('/api/productos', methods=['GET'])
-@requiere_login
-def api_productos():
-    """Retorna productos del catalogo."""
-    try:
-        from db_products import obtener_productos_catalogo
-        productos = obtener_productos_catalogo()
-        return jsonify(productos)
-    except Exception as e:
-        return jsonify([])
 
 
 @app.route("/dev/metricas")

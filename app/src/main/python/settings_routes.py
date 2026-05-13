@@ -8,7 +8,7 @@ from database import (
     cargar_estado, guardar_estado, agregar_log, crear_tablas,
     obtener_info_db, DB_FILE,
 )
-from supabase_sync import (
+from sync.supabase_sync import (
     obtener_config_actual, actualizar_config,
     cargar_desde_supabase, guardar_en_supabase,
     sincronizar_todo, sincronizar_subida, probar_conexion,
@@ -16,7 +16,7 @@ from supabase_sync import (
     guardar_historial_diario, obtener_historial_diario,
     obtener_historial_detalle, TABLAS_SQL,
 )
-import supabase_sync as _sb
+import sync.supabase_sync as _sb
 from biometric_auth import check_biometric_availability, quick_login_setup
 from payment_tokenizer import create_payment_record
 from supabase_rls import get_branch_id, get_rls_headers

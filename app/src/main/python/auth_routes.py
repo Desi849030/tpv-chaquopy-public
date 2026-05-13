@@ -7,7 +7,7 @@ from database import (
     login_usuario, cambiar_password, cargar_estado,
     guardar_estado, agregar_log
 )
-import supabase_sync as _sb
+import sync.supabase_sync as _sb
 
 auth_bp = Blueprint('auth', __name__)
 

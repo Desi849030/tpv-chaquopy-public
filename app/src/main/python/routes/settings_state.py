@@ -46,7 +46,7 @@ def get_status():
 def api_ping():
     """Health check usando config dinamica de Supabase."""
     try:
-        from supabase_sync import SUPABASE_CONFIG, SUPABASE_OK
+        from sync.supabase_sync import SUPABASE_CONFIG, SUPABASE_OK
         if not SUPABASE_OK:
             return jsonify({"online": False, "error": "Supabase no configurado"})
         import urllib.request

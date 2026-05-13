@@ -9,14 +9,14 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'app', 'src', '
 
 def test_import():
     """Verifica que el agente importe correctamente"""
-    from ia_agent import process_question, get_status, ROLES
+    from ia.agent import process_question, get_status, ROLES
     assert 'cliente' in ROLES
     assert 'administrador' in ROLES
 
 
 def test_greeting():
     """Verifica saludo por rol"""
-    from ia_agent import process_question
+    from ia.agent import process_question
     r = process_question('test', 'hola', 'cliente', 'Test')
     assert 'answer' in r
     assert r['role'] == 'cliente'
@@ -25,7 +25,7 @@ def test_greeting():
 
 def test_product_search():
     """Verifica busqueda de productos"""
-    from ia_agent import process_question
+    from ia.agent import process_question
     r = process_question('test', 'cafe', 'cliente')
     assert 'answer' in r
     assert len(r['answer']) > 5
@@ -33,7 +33,7 @@ def test_product_search():
 
 def test_finanzas():
     """Verifica finanzas admin"""
-    from ia_agent import process_question
+    from ia.agent import process_question
     r = process_question('test', 'finanzas', 'administrador')
     assert 'answer' in r
     answer_lower = r['answer'].lower()
@@ -42,7 +42,7 @@ def test_finanzas():
 
 def test_abc():
     """Verifica clasificacion ABC"""
-    from ia_agent import process_question
+    from ia.agent import process_question
     r = process_question('test', 'abc', 'administrador')
     assert 'answer' in r
     assert len(r['answer']) > 5
@@ -50,7 +50,7 @@ def test_abc():
 
 def test_roles():
     """Verifica los 5 roles"""
-    from ia_agent import ROLES
+    from ia.agent import ROLES
     assert len(ROLES) == 5
     for rol in ['cliente', 'vendedor', 'supervisor', 'administrador', 'desarrollador']:
         assert rol in ROLES, "Rol faltante: %s" % rol

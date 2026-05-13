@@ -53,8 +53,8 @@ from database import (
     crear_tablas, cargar_estado, guardar_estado,
     agregar_log, obtener_info_db, DB_FILE,
 )
-from supabase_sync import sincronizar_subida
-import supabase_sync as _sb
+from sync.supabase_sync import sincronizar_subida
+import sync.supabase_sync as _sb
 
 # ── Blueprint modules ──
 from auth_routes import auth_bp

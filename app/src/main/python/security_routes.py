@@ -28,7 +28,7 @@ def het_alerts():
 @sec_bp.route("/omnichannel/status",methods=["GET"])
 def omnichannel_status():
     try:
-        from supabase_sync import obtener_config_actual,probar_conexion
+        from sync.supabase_sync import obtener_config_actual,probar_conexion
         c=obtener_config_actual()
         return jsonify({"ok":True,"connected":probar_conexion(),"url":(c.get("url","")[:30]+"...") if c.get("url") else ""})
     except: return jsonify({"ok":False})

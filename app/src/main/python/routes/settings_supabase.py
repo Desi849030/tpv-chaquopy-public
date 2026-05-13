@@ -77,7 +77,7 @@ def api_supabase_sync_full():
         url = _sb.SUPABASE_CONFIG["url"]
         def upsert(tabla, datos):
             if not datos: return 0
-            from supabase_sync import _peticion, _headers
+            from sync.supabase_sync import _peticion, _headers
             import urllib.request as _ur, json as _j
             req = _ur.Request(f"{url}/rest/v1/{tabla}",
                 data=_j.dumps(datos, ensure_ascii=False, default=str).encode(), method="POST")

@@ -29,6 +29,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.Executor;
+import android.view.View;
 
 public class MainActivity extends FragmentActivity {
     private static final int FILE_CHOOSER_REQUEST = 1;

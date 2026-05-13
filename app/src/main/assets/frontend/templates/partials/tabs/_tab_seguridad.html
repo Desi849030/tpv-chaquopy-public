@@ -1,0 +1,94 @@
+            <div class="tab-pane fade" id="seguridad-tab-pane" role="tabpanel">
+                <div class="glass-card">
+                    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                        <h4 class="mb-0"><i class="bi bi-shield-shaded me-2 text-success"></i>Panel de Blindajes de Seguridad</h4>
+                        <button class="btn btn-outline-primary btn-sm" onclick="seguridad_cargarDashboard()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+                        </button>
+                    </div>
+                    <p class="text-muted small mb-4">Monitor en tiempo real de los 4 blindajes de seguridad activos: PCI-DSS, HET, WebSockets y API Routes.</p>
+
+                    <!-- Estado General -->
+                    <div id="seguridad-overall" class="alert mb-4 text-center">
+                        <span class="spinner-border spinner-border-sm me-2"></span>Cargando estado de seguridad...
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <!-- PCI-DSS -->
+                        <div class="col-12 col-md-6">
+                            <div class="card h-100 border-start border-4 border-primary">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="bi bi-credit-card me-2 text-primary"></i>PCI-DSS</h5>
+                                    <p class="text-muted small">Tokenizacion de PAN, enmascaramiento, validacion Luhn, auditoria de pagos.</p>
+                                    <div id="seguridad-pci" class="mt-2">
+                                        <span class="badge bg-secondary">Esperando...</span>
+                                    </div>
+                                    <div class="mt-3" id="seguridad-pci-audit" style="display:none">
+                                        <h6 class="small fw-bold">Ultimas auditorias:</h6>
+                                        <div id="seguridad-pci-log" class="small" style="max-height:150px;overflow-y:auto;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- HET -->
+                        <div class="col-12 col-md-6">
+                            <div class="card h-100 border-start border-4 border-warning">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="bi bi-bug me-2 text-warning"></i>HET (Threat Engine)</h5>
+                                    <p class="text-muted small">Deteccion SQLi, XSS, rate-limiting, proteccion brute-force, sanitizacion.</p>
+                                    <div id="seguridad-het" class="mt-2">
+                                        <span class="badge bg-secondary">Esperando...</span>
+                                    </div>
+                                    <div class="mt-3" id="seguridad-het-alerts" style="display:none">
+                                        <h6 class="small fw-bold">Alertas recientes:</h6>
+                                        <div id="seguridad-het-list" class="small" style="max-height:150px;overflow-y:auto;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- WebSocket -->
+                        <div class="col-12 col-md-6">
+                            <div class="card h-100 border-start border-4 border-info">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="bi bi-broadcast me-2 text-info"></i>WebSocket Terminal</h5>
+                                    <p class="text-muted small">Registro de terminales, heartbeat, notificacion de ventas y eventos en tiempo real.</p>
+                                    <div id="seguridad-ws" class="mt-2">
+                                        <span class="badge bg-secondary">Esperando...</span>
+                                    </div>
+                                    <div class="mt-3" id="seguridad-ws-terminals" style="display:none">
+                                        <h6 class="small fw-bold">Terminales activas:</h6>
+                                        <div id="seguridad-ws-list" class="small" style="max-height:150px;overflow-y:auto;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- API Routes -->
+                        <div class="col-12 col-md-6">
+                            <div class="card h-100 border-start border-4 border-success">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="bi bi-hdd-network me-2 text-success"></i>API Routes</h5>
+                                    <p class="text-muted small">Endpoints /api/security/* para dashboard, tokenizacion, auditoria y estado de blindajes.</p>
+                                    <div id="seguridad-api" class="mt-2">
+                                        <span class="badge bg-secondary">Esperando...</span>
+                                    </div>
+                                    <div class="mt-3">
+                                        <h6 class="small fw-bold">Endpoints disponibles:</h6>
+                                        <ul class="small text-muted mb-0">
+                                            <li><code>/api/security/dashboard</code> - Estado general</li>
+                                            <li><code>/api/security/pci/tokenize</code> - Tokenizar PAN</li>
+                                            <li><code>/api/security/pci/audit</code> - Auditoria</li>
+                                            <li><code>/api/security/het/status</code> - Estado HET</li>
+                                            <li><code>/api/security/het/alerts</code> - Alertas HET</li>
+                                            <li><code>/api/security/ws/status</code> - Terminales WS</li>
+                                            <li><code>/api/security/omnichannel/status</code> - Supabase</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>

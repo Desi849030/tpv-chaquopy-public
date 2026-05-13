@@ -1,0 +1,22 @@
+            <div class="tab-pane fade" id="dev-logs-tab-pane" role="tabpanel">
+                <div class="glass-card">
+                    <h4 class="mb-4"><i class="bi bi-terminal me-2"></i>Registros del Sistema</h4>
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Logs de Actividad</h5>
+                            <div class="mb-3">
+                                <button class="btn btn-primary btn-sm" onclick="actualizar_logs()">
+                                    <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+                                </button>
+                                <button class="btn btn-danger btn-sm" onclick="limpiar_logs()">
+                                    <i class="bi bi-trash me-1"></i>Limpiar Logs
+                                </button>
+                            </div>
+                            <div id="logs-display" style="background: #000; color: #0f0; padding: 1rem; border-radius: 0.5rem; max-height: 400px; overflow-y: auto; font-family: monospace;">
+                                <p>Sistema iniciado correctamente...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- ══════════ PESTAÑA TIENDA ══════════ -->

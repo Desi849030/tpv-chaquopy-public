@@ -35,6 +35,7 @@ public class MainActivity extends FragmentActivity {
     private static final int CAMERA_PERMISSION_REQUEST = 100;
     private ValueCallback<Uri[]> filePathCallback;
     private WebView webView;
+    private View splashRoot;
     private boolean cameraPermissionGranted = false;
     private BiometricPrompt biometricPrompt;
     private Executor executor;
@@ -51,7 +52,7 @@ public class MainActivity extends FragmentActivity {
         String frontendDir = filesDir + "/frontend";
         copyAssets("frontend", frontendDir);
         System.setProperty("TPV_FRONTEND_DIR", frontendDir);
-        FrameLayout splashRoot = new FrameLayout(this);
+        splashRoot = new FrameLayout(this);
         splashRoot.setBackgroundColor(Color.parseColor("#0a0e1a"));
         LinearLayout splash = new LinearLayout(this);
         splash.setOrientation(LinearLayout.VERTICAL);
@@ -174,8 +175,8 @@ public class MainActivity extends FragmentActivity {
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 runOnUiThread(() -> {
-                    if (splashScreen != null) {
-                        splashScreen.setAlpha(0f);
+                    if (splashRoot != null) {
+                        splashRoot.setAlpha(0f);
                     }
                 });
             }

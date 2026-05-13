@@ -21,7 +21,7 @@ jobs:
           pip install flask pytest
       - name: Run tests
         env:
-          PYTHONPATH: { github.workspace }/app/src/main/python
+          PYTHONPATH: ${{ github.workspace }}/app/src/main/python
         run: |
           rm -f app/src/main/python/.tpv_secret app/src/main/python/.tpv_hmac_secret
           python -m pytest tests/ -v --tb=short

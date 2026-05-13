@@ -1,7 +1,7 @@
 """Rutas de inventario y catálogo — /api/inventario/*, /api/catalogo/*, /api/stock/*, /api/sincronizar-*"""
 import json as _json
 from datetime import datetime, timedelta
-from flask import Blueprint, request, jsonify
+from flask import request, jsonify
 from decorators import requiere_login, requiere_rol, usuario_actual
 from validacion_productos import validar_productos_lote, importar_productos_validados
 from database import (
@@ -14,7 +14,6 @@ from database import (
     limpiar_inventarios_diarios, agregar_log, obtener_conexion
 )
 
-inv_bp = Blueprint('inventory', __name__)
 from routes.inventory_bp import inv_bp
 from routes.inventory_helpers import *
 from routes.inventory_crud import *

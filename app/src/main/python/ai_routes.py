@@ -1,3 +1,4 @@
+from decorators import requiere_login
 """ai_routes.py v2.0 — Rutas API IA Edge FIXED
 Todas las rutas que el frontend espera, correctamente mapeadas.
 """
@@ -7,11 +8,13 @@ ai_bp = Blueprint('ai_edge', __name__, url_prefix='/api/ai')
 # ══════════════════════════════════════════════════════════════
 #  PREDICCIONES — /api/ai/predict/dashboard
 # ══════════════════════════════════════════════════════════════
+@requiere_login
 @ai_bp.route('/predictor', methods=['GET'])
 def predictor():
     """Alias para compatibilidad."""
     return _predict_dashboard()
 
+@requiere_login
 @ai_bp.route('/predict/dashboard', methods=['GET'])
 def predict_dashboard():
     return _predict_dashboard()
@@ -50,11 +53,13 @@ def _predict_dashboard():
 # ══════════════════════════════════════════════════════════════
 #  ANTI-FRAUDE — /api/ai/fraud/dashboard
 # ══════════════════════════════════════════════════════════════
+@requiere_login
 @ai_bp.route('/fraud', methods=['GET'])
 def fraud():
     """Alias para compatibilidad."""
     return _fraud_dashboard()
 
+@requiere_login
 @ai_bp.route('/fraud/dashboard', methods=['GET'])
 def fraud_dashboard():
     return _fraud_dashboard()
@@ -69,6 +74,7 @@ def _fraud_dashboard():
 # ══════════════════════════════════════════════════════════════
 #  ANALYTICS — /api/ai/analytics/*
 # ══════════════════════════════════════════════════════════════
+@requiere_login
 @ai_bp.route('/analytics', methods=['GET'])
 def analytics():
     """Endpoint combinado para compatibilidad."""
@@ -78,6 +84,7 @@ def analytics():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@requiere_login
 @ai_bp.route('/analytics/abc', methods=['GET'])
 def analytics_abc():
     try:
@@ -86,6 +93,7 @@ def analytics_abc():
     except Exception as e:
         return jsonify({"error": str(e), "categories": {"A": {"count": 0, "revenue_pct": 0}, "B": {"count": 0, "revenue_pct": 0}, "C": {"count": 0, "revenue_pct": 0}}, "insight": []}), 500
 
+@requiere_login
 @ai_bp.route('/analytics/cross-selling', methods=['GET'])
 def analytics_cross_selling():
     try:
@@ -94,10 +102,12 @@ def analytics_cross_selling():
     except Exception as e:
         return jsonify({"error": str(e), "recommendations": [], "total_baskets": 0}), 500
 
+@requiere_login
 @ai_bp.route('/analytics/prices', methods=['GET'])
 def analytics_prices():
     return _price_optimization()
 
+@requiere_login
 @ai_bp.route('/prices', methods=['GET'])
 def prices():
     """Alias para compatibilidad."""
@@ -113,6 +123,7 @@ def _price_optimization():
 # ══════════════════════════════════════════════════════════════
 #  KPIs — /api/ai/kpis  y  /api/analytics/kpis
 # ══════════════════════════════════════════════════════════════
+@requiere_login
 @ai_bp.route('/kpis', methods=['GET'])
 def kpis():
     return _kpis_data()
@@ -152,6 +163,7 @@ def _kpis_data():
 
 analytics_bp = Blueprint('analytics', __name__, url_prefix='/api/analytics')
 
+@requiere_login
 @analytics_bp.route('/dashboard', methods=['GET'])
 def general_dashboard():
     """Dashboard general llamado por ia_cargarTodo()."""
@@ -170,6 +182,7 @@ def general_dashboard():
             "timestamp": datetime.now().isoformat()
         }), 500
 
+@requiere_login
 @analytics_bp.route('/kpis', methods=['GET'])
 def general_kpis():
     """KPIs generales llamado por ia_cargarKPIs()."""

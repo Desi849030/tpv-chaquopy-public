@@ -64,6 +64,7 @@ except Exception:
     _mem_module = False
 
 
+@requiere_login
 @assistant_bp.route('/ping')
 def ping():
     try:
@@ -76,6 +77,7 @@ def ping():
 
 
 
+@requiere_login
 @assistant_bp.route("/public-chat", methods=["POST"])
 def public_chat():
     try:
@@ -90,6 +92,7 @@ def public_chat():
     except Exception as e:
         return jsonify({"answer": f"Error: {e}", "suggestions": ["productos"]})
 
+@requiere_login
 @assistant_bp.route('/chat', methods=['POST'])
 def chat():
     if not _ia_module:
@@ -125,6 +128,7 @@ def chat():
         return jsonify({'answer': f'Error: {str(e)[:100]}', 'suggestions': ['ayuda']})
 
 
+@requiere_login
 @assistant_bp.route('/role', methods=['POST'])
 def set_role():
     if not _ia_module:
@@ -133,6 +137,7 @@ def set_role():
     return jsonify(_set_session_role(data.get('session_id', 'default'), data.get('role', 'cliente'), data.get('user_name', '')))
 
 
+@requiere_login
 @assistant_bp.route('/alerts', methods=['GET'])
 def alerts():
     try:
@@ -143,6 +148,7 @@ def alerts():
         return jsonify({'alerts': []})
 
 
+@requiere_login
 @assistant_bp.route('/status')
 def status():
     try:
@@ -161,6 +167,7 @@ def status():
 #  RUTAS DE MEMORIA PERSISTENTE
 # ═══════════════════════════════════════════════════════════
 
+@requiere_login
 @assistant_bp.route('/memory/recall', methods=['POST'])
 def memory_recall():
     if not _mem_module:
@@ -173,6 +180,7 @@ def memory_recall():
     return jsonify({'ok': True, 'memories': results, 'count': len(results)})
 
 
+@requiere_login
 @assistant_bp.route('/memory/search', methods=['POST'])
 def memory_search():
     if not _mem_module:
@@ -187,6 +195,7 @@ def memory_search():
     return jsonify({'ok': True, 'results': results, 'count': len(results)})
 
 
+@requiere_login
 @assistant_bp.route('/memory/save', methods=['POST'])
 def memory_save():
     if not _mem_module:
@@ -204,6 +213,7 @@ def memory_save():
     return jsonify({'ok': ok})
 
 
+@requiere_login
 @assistant_bp.route('/memory/forget', methods=['POST'])
 def memory_forget():
     if not _mem_module:
@@ -214,6 +224,7 @@ def memory_forget():
     return jsonify({'ok': ok})
 
 
+@requiere_login
 @assistant_bp.route('/memory/summary', methods=['GET'])
 def memory_summary():
     if not _mem_module:

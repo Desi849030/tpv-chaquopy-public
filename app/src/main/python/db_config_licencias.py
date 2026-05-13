@@ -2,7 +2,7 @@ from __future__ import annotations
 
 """db_config_licencias.py - Extracted from db_config.py"""
 """db_config.py - Tablas, licencias, estado, sincronizacion (DAO)"""
-import sqlite3, json, os
+import sqlite3, json, os, uuid
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from db_connection import obtener_conexion, agregar_log, DB_FILE
@@ -13,7 +13,7 @@ from db_connection import obtener_conexion
 from db_users import _crear_desarrollador_default
 
 """db_config.py - Tablas, licencias, estado, sincronizacion (DAO)"""
-import sqlite3, json, os
+import sqlite3, json, os, uuid
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from db_connection import obtener_conexion, agregar_log, DB_FILE

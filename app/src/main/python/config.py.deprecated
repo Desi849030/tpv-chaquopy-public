@@ -298,8 +298,8 @@ def main():
         print("\n" + "="*48)
         print("  TPV ULTRA SMART v2.4.0 - Modular")
         print("  Local : http://localhost:5050")
-        for ip in ips: print(f"  WiFi  : http://{ip}:5000")
+        for ip in ips: print(f"  WiFi  : http://{ip}:5050")
         print("="*48 + "\n")
     except Exception: pass
     setup_error_handlers(app)
-    app.run(host="0.0.0.0", port=_TPV_PORT, debug=False, use_reloader=False)
+    app.run(host="0.0.0.0", port=int(os.environ.get("TPV_PORT", 5050)), debug=False, use_reloader=False)

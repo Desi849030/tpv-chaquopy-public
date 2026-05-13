@@ -327,21 +327,6 @@ ALL_TABLES = [
     AUDITORIA,
     DESCUENTOS_CONFIG,
     HISTORIAL_DIARIO,
-    TBL_17,
-    TBL_18,
-    TBL_19,
-    TBL_20,
-    TBL_21,
-    TBL_22,
-    TBL_23,
-    TBL_24,
-    TBL_25,
-    TBL_26,
-    TBL_27,
-    TBL_28,
-    TBL_29,
-    TBL_30,
-    TBL_31,
 ]
 
 def crear_tablas_schema(conn):

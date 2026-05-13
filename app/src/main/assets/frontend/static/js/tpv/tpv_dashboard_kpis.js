@@ -45,7 +45,8 @@ async function dashboard_cargar() {
     // ── Stock crítico ──────────────────────────────────────
     let stockCritico = [];
     try {
-        const r = await fetch('/api/inventario/general',{credentials:'same-origin'});
+        const r = await fetch('/api/inventario/general',{credentials:'same-origin'}).catch(() => null);
+        if (!r || !r.ok) { container.innerHTML = '<div class="text-muted text-center p-3">Sin acceso al inventario</div>'; return; }
         const d = await r.json();
         stockCritico = (d.inventario||[]).filter(p => parseFloat(p.stock_actual||0) <= parseFloat(p.stock_minimo||5));
     } catch(e){}

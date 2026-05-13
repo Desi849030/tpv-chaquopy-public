@@ -14,7 +14,7 @@ from database import (
     _hash_password, verificar_password
 )
 
-tienda_bp = Blueprint('tienda', __name__)
+# tienda_bp = Blueprint('tienda', __name__)  # REMOVIDO: blueprint viene de routes/tienda_bp.py
 from routes.tienda_bp import tienda_bp
 from routes.tienda_helpers import *
 from routes.tienda_clientes import *

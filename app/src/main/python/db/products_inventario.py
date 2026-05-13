@@ -1,5 +1,5 @@
 from __future__ import annotations
-import sqlite3, json, os
+import sqlite3, uuid, json, os
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from db_connection import obtener_conexion, agregar_log, DB_FILE
@@ -17,7 +17,7 @@ def cargar_stock_masivo(admin_id, items):
     try:
         cursor.execute("SELECT rol FROM usuarios WHERE usuario_id=?", (admin_id,))
         u = cursor.fetchone()
-        if not u or u["rol"] not in ("administrador", "desarrollador", "vendedor"):
+        if not u or u["rol"] not in ("administrador", "desarrollador"):
             return {"ok": False, "mensaje": "Sin permisos. Rol: " + str(u["rol"])}
 
         fecha_ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -57,7 +57,7 @@ def registrar_entrada_producto(datos, admin_id):
     try:
         cursor.execute("SELECT rol FROM usuarios WHERE usuario_id = ? AND activo = 1", (admin_id,))
         u = cursor.fetchone()
-        if not u or u["rol"] not in ("administrador", "desarrollador", "vendedor"):
+        if not u or u["rol"] not in ("administrador", "desarrollador"):
             return {"ok": False, "mensaje": "Solo Admin/Dev puede registrar entradas"}
 
         producto_id   = datos.get("producto_id", "")
@@ -124,7 +124,7 @@ def obtener_inventario_general(admin_id):
     try:
         cursor.execute("SELECT rol FROM usuarios WHERE usuario_id = ?", (admin_id,))
         u = cursor.fetchone()
-        if not u or u["rol"] not in ("administrador", "desarrollador", "vendedor"):
+        if not u or u["rol"] not in ("administrador", "desarrollador"):
             return []
         cursor.execute("""
             SELECT ig.producto_id, ig.nombre, ig.stock_actual, ig.stock_minimo,
@@ -173,7 +173,7 @@ def asignar_inventario_diario(vendedor_id, productos, admin_id):
     try:
         cursor.execute("SELECT rol FROM usuarios WHERE usuario_id = ? AND activo = 1", (admin_id,))
         u = cursor.fetchone()
-        if not u or u["rol"] not in ("administrador", "desarrollador", "vendedor"):
+        if not u or u["rol"] not in ("administrador", "desarrollador"):
             return {"ok": False, "mensaje": "Solo Admin/Dev puede asignar inventario"}
 
         fecha_hoy = datetime.now().strftime("%Y-%m-%d")
@@ -285,7 +285,7 @@ def limpiar_inventarios_diarios(admin_id, vendedor_id=None, fecha=None):
     try:
         cursor.execute("SELECT rol FROM usuarios WHERE usuario_id = ? AND activo = 1", (admin_id,))
         u = cursor.fetchone()
-        if not u or u["rol"] not in ("administrador", "desarrollador", "vendedor"):
+        if not u or u["rol"] not in ("administrador", "desarrollador"):
             return {"ok": False, "mensaje": "Solo Admin/Dev puede limpiar inventarios"}
         if vendedor_id and fecha:
             cursor.execute("DELETE FROM inventario_diario WHERE vendedor_id = ? AND fecha = ?", (vendedor_id, fecha))

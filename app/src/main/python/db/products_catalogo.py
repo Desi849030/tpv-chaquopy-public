@@ -37,7 +37,7 @@ def sincronizar_productos_catalogo(productos, admin_id):
     try:
         cursor.execute("SELECT rol FROM usuarios WHERE usuario_id=?", (admin_id,))
         u = cursor.fetchone()
-        if not u or u["rol"] not in ("administrador","desarrollador","vendedor"):
+        if not u or u["rol"] not in ("administrador","desarrollador"):
             return {"ok": False, "mensaje": "Solo Admin/Dev puede sincronizar catálogo"}
         ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         for p in productos:
@@ -98,7 +98,7 @@ def importar_catalogo_a_inventario(admin_id):
     try:
         cursor.execute("SELECT rol FROM usuarios WHERE usuario_id=?",(admin_id,))
         u = cursor.fetchone()
-        if not u or u["rol"] not in ("administrador","desarrollador","vendedor"):
+        if not u or u["rol"] not in ("administrador","desarrollador"):
             return {"ok": False, "mensaje": "Sin permisos. Rol: " + str(u["rol"])}
         cursor.execute("SELECT producto_id,nombre,precio,costo,categoria,unidad_medida FROM productos")
         prods = cursor.fetchall()

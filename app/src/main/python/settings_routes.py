@@ -21,7 +21,7 @@ from biometric_auth import check_biometric_availability, quick_login_setup
 from payment_tokenizer import create_payment_record
 from supabase_rls import get_branch_id, get_rls_headers
 
-settings_bp = Blueprint('settings', __name__)
+# settings_bp = Blueprint('settings', __name__)  # REMOVIDO: blueprint viene de routes/
 from routes.settings_bp import settings_bp
 from routes.settings_helpers import *
 from routes.settings_state import *

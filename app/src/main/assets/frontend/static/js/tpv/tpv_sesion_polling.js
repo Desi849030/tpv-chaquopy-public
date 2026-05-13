@@ -81,7 +81,7 @@ function _iniciarPolling() {
     if (typeof EventSource !== 'undefined') {
         _sseConn = new EventSource('/api/sse');
 
-        _sseConn.onmessage = (e) => {
+        _sseConn.addEventListener('message', function(e) {
             try {
                 const ev = JSON.parse(e.data);
                 if (ev.tipo === 'pedido_nuevo' || ev.tipo === 'pedidos_update') {
@@ -95,7 +95,7 @@ function _iniciarPolling() {
                     window._adminGeneral = null; // invalidar caché
                 }
             } catch(e2) {}
-        };
+        });
 
         _sseConn.onerror = () => {
             // Si SSE falla, fallback a polling cada 15 s

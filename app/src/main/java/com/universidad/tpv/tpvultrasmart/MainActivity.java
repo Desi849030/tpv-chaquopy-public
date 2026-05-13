@@ -169,7 +169,17 @@ public class MainActivity extends FragmentActivity {
                 });
             }
         });
-        webView.setWebViewClient(new WebViewClient());
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                runOnUiThread(() -> {
+                    if (splashScreen != null) {
+                        splashScreen.setAlpha(0f);
+                    }
+                });
+            }
+        });
         webView.clearCache(true); webView.clearHistory();
         setContentView(webView);
         webView.loadUrl("http://127.0.0.1:5050");

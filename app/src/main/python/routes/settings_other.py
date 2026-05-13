@@ -1,5 +1,7 @@
 from routes.settings_bp import settings_bp
 from routes.settings_helpers import *
+from routes.settings_supabase import _sse_clientes, _sse_lock, _sse_broadcast
+
 
 @settings_bp.route("/api/sse")
 @requiere_login

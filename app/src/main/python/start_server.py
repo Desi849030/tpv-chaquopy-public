@@ -89,10 +89,7 @@ try:
     from migrar_tablas_tienda import migrar; migrar()
     _w("[INFO] Migracion OK")
 except Exception as e: _w("[WARN] Migracion: " + str(e))
-try:
-    from inject_rol_fix import injectar_script; injectar_script(flask_app)
-    _w("[INFO] Rol fix OK")
-except Exception as e: _w("[WARN] Rol: " + str(e))
+# inject_rol_fix eliminado - el rol se maneja en el frontend JS
 def _run_flask():
     try:
         _w("[INFO] Flask en 127.0.0.1:5050")
@@ -131,7 +128,10 @@ try:
     _w("[INFO] IA Edge OK")
 except Exception as e: _w("[WARN] IA Edge: " + str(e))
 try:
-    from loyalty_routes import loyalty_bp; flask_app.register_blueprint(loyalty_bp)
+    from loyalty_routes import loyalty_bp
+    _loyalty_already = any('/api/loyalty' in str(r) for r in flask_app.url_map.iter_rules())
+    if not _loyalty_already:
+        flask_app.register_blueprint(loyalty_bp)
     _w("[INFO] Loyalty OK")
 except Exception as e: _w("[WARN] Loyalty: " + str(e))
 try:

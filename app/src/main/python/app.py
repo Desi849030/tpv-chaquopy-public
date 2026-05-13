@@ -298,7 +298,7 @@ def main():
         print("\n" + "="*48)
         print("  TPV ULTRA SMART v2.4.0 - Modular")
         print("  Local : http://localhost:5050")
-        for ip in ips: print(f"  WiFi  : http://{ip}:5000")
+        for ip in ips: print(f"  WiFi  : http://{ip}:5050")
         print("="*48 + "\n")
     except Exception: pass
     setup_error_handlers(app)
@@ -332,22 +332,7 @@ except Exception as e:
 
 
 # ── API: Importación Inteligente de Excel ──
-@requiere_login
-@requiere_rol("administrador", "desarrollador")
-@app.route('/api/reconstruir-desde-productos', methods=['POST'])
-def api_reconstruir_productos():
-    """Recibe lista de productos y sincroniza con BD."""
-    try:
-        from db_products import sincronizar_productos_catalogo
-        data = request.get_json(silent=True) or {}
-        productos = data.get('productos', [])
-        if not productos:
-            return jsonify({'ok': False, 'mensaje': 'No se recibieron productos'})
-        admin_id = data.get('admin_id', 'system')
-        resultado = sincronizar_productos_catalogo(productos, admin_id)
-        return jsonify(resultado)
-    except Exception as e:
-        return jsonify({'ok': False, 'mensaje': str(e)}), 500
+# /api/reconstruir-desde-productos movido a routes/inventory_crud.py
 
 @requiere_login
 @requiere_rol("administrador", "desarrollador")
@@ -362,6 +347,7 @@ def api_importar_catalogo():
         return jsonify({'ok': False, 'mensaje': str(e)}), 500
 
 @app.route('/api/productos', methods=['GET'])
+@requiere_login
 def api_productos():
     """Retorna productos del catalogo."""
     try:
@@ -381,7 +367,3 @@ if __name__ == "__main__":
 
 
 # ── Biometric ──
-@app.route('/api/biometric/check')
-def biometric_check():
-    """Verificar disponibilidad de biometria en el dispositivo."""
-    return jsonify({'ok': True, 'biometric': {'available': True, 'type': 'fingerprint/face'}})

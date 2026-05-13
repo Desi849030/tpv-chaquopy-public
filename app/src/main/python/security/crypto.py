@@ -1,4 +1,4 @@
-import hashlib, time, re, uuid, threading, json, base64
+import os, hashlib, time, re, uuid, threading, json, base64
 from functools import wraps
 from datetime import datetime
 
@@ -39,6 +39,8 @@ def hash_password(password, salt=None):
 
 
 def verify_password(password, stored_hash):
+    if not password or not stored_hash:
+        return False
     if not stored_hash or '$' not in stored_hash:
         return password == stored_hash
     salt, h = stored_hash.split('$', 1)
@@ -83,3 +85,23 @@ def descifrar_valor(cifrado):
     except Exception:
         return None
 
+
+def generate_api_key(length=32):
+    import secrets
+    return secrets.token_hex(length)
+
+def rate_limit_key(client_id, action):
+    return "rl:" + action + ":" + client_id
+
+def get_hmac_key():
+    return os.urandom(24).hex()
+
+def get_jwt_secret():
+    return os.urandom(24).hex()
+
+def get_csrf_token():
+    import secrets
+    return secrets.token_hex(24)
+
+def get_session_salt():
+    return os.urandom(16).hex()

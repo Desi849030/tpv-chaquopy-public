@@ -138,3 +138,19 @@ _RUTAS_AUDIT = [
 ]
 
 
+
+def sanitize_input(val):
+    if val is None:
+        return "None"
+    text = str(val).strip()
+    import re
+    ctrl = chr(0) + "-" + chr(31) + chr(127)
+    text = re.sub("[" + re.escape(ctrl) + "]", "", text)
+    return text
+
+def validate_email(email):
+    import re
+    if not email or not isinstance(email, str):
+        return False
+    pattern = "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+    return bool(re.match(pattern, email))

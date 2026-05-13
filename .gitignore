@@ -14,9 +14,8 @@ env/
 *.db
 *.sqlite
 *.sqlite3
-tpv_datos.db
 
-# APK / Build artifacts
+# APK / Build
 *.apk
 *.aab
 *.keystore
@@ -24,7 +23,6 @@ tpv_datos.db
 Compilation/
 Run/
 Task/
-build/
 
 # IDE
 .idea/
@@ -37,13 +35,13 @@ build/
 .DS_Store
 Thumbs.db
 
-# Env & secrets
+# Env and secrets
 .env
 .env.local
 *.pem
 *.key
 
-# Temp files
+# Temp
 *.patch
 *.bak
 *.log
@@ -54,28 +52,26 @@ apply_*.py
 .gradle/
 local.properties
 *.iml
+gradlew.bat
 
 # Chaquopy cache
 app/src/main/assets/python/
 
-# Runtime secrets (auto-generated)
+# Runtime secrets
 .branch_id
 .tpv_secret_key
 .tpv_hmac_secret
 .tpv_secrets_v2
 .tpv_secret
-.tpv_secret
-.tpv_secret
-
-# Secrets (generated at runtime)
-.tpv_secret
-.tpv_hmac_secret
 .supabase_config.json
 .dev_initialized
 
-# Backup files
+# Backup
 *.bak*
 *.deprecated
 *.backup
 *_v240*
 *_v24*
+
+# pytest
+.pytest_cache/

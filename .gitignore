@@ -66,3 +66,16 @@ app/src/main/assets/python/
 .tpv_secret
 .tpv_secret
 .tpv_secret
+
+# Secrets (generated at runtime)
+.tpv_secret
+.tpv_hmac_secret
+.supabase_config.json
+.dev_initialized
+
+# Backup files
+*.bak*
+*.deprecated
+*.backup
+*_v240*
+*_v24*

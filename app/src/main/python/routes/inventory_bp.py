@@ -14,4 +14,4 @@ from database import (
     limpiar_inventarios_diarios, agregar_log, obtener_conexion
 )
 
-inv_bp = Blueprint('inventory', __name__)
+from routes.inventory_helpers import inv_bp

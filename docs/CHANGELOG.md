@@ -1,5 +1,23 @@
 # Registro de Cambios
 
+
+## v2.4.1 (Mayo 2026)
+
+### Correcciones criticas (batch 1-3)
+- **IA Agent**: Burbuja no aparecia — ia_assistant_ui.js era 1 linea (stub), reemplazado por core + render + network
+- **Blueprint duplicados**: inventory_bp, settings_bp, tienda_bp, loyalty_bp consolidados en helpers como fuente unica
+- **Excel imports**: Route /api/reconstruir-desde-productos funciona via inventory_helpers
+- **MainActivity.java**: splashRoot tipo FrameLayout + import android.view.View
+- **Login APK**: INSERT OR IGNORE + .dev_initialized para usuario desarrollador
+- **SSE polling**: imports _sse_clientes agregados en settings_other.py
+- **schema.py**: 15 queries DML eliminadas de ALL_TABLES
+- **Debug endpoint**: /api/debug/test-login eliminado de auth_routes.py
+- 15 fixes adicionales: _TPV_PORT, import uuid, _dev_only 403, permisos vendedor, SSE addEventListener, .catch() fallback, _admin_invVista restaurada
+
+### Limpieza
+- Archivos eliminados: config.py.deprecated, inject_rol_fix.py, ia_assistant.py, 4x *.bak_v240 (-1358 lineas)
+- .gitignore: secrets runtime, backup files, *_v240*
+- 142/142 tests pytest pasando
 ## v1.0.0 (Mayo 2026)
 
 ### Refactorizacion completa del frontend

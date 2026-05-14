@@ -40,18 +40,6 @@ except Exception as e:  # ia.agent not available
     except Exception as e2:
         _ia_module = False
 
-# Importar requiere_login
-try:
-    from app import requiere_login
-except ImportError:
-    def requiere_login(f):
-        @wraps(f)
-        def decorated(*args, **kwargs):
-            if not session.get('usuario'):
-                return jsonify({'error': 'No autorizado'}), 401
-            return f(*args, **kwargs)
-        return decorated
-
 # Importar memoria persistente
 _mem_module = False
 try:

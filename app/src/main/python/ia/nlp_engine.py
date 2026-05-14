@@ -1,5 +1,6 @@
 """nlp_engine.py - Clasificador de Intenciones (TF-IDF + Softmax)"""
 import math
+import unicodedata
 from collections import defaultdict
 
 class NLPEngine:
@@ -23,8 +24,15 @@ class NLPEngine:
         self.weights = defaultdict(lambda: defaultdict(float))
         self._train()
     
+    @staticmethod
+    def _normalize(text):
+        return "".join(
+            c for c in unicodedata.normalize("NFD", text)
+            if unicodedata.category(c) != "Mn"
+        )
+
     def _tokenize(self, text):
-        text = text.lower().strip()
+        text = self._normalize(text.lower().strip())
         for c in '.,;:!?()[]{}"\'-':
             text = text.replace(c, ' ')
         return [w for w in text.split() if len(w) > 1]

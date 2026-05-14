@@ -35,6 +35,7 @@ class P:
         cls.cache = prods
         cls.ct = time.time()
         cls.cats = sorted(set(p['cat'] for p in prods))
+        c.close()
 
     @classmethod
     def search(cls, query, limit=10):

@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 try:
-    from tool_registry import get_tool, get_tools_by_category as list_tools_by_category, search_tools, get_catalog_stats
+    from tool_registry import get_tool, get_all_tools_by_category as list_tools_by_category, search_tools, get_catalog_stats
 except ImportError:
     get_tool = None
     list_tools_by_category = None
@@ -50,6 +50,7 @@ class ReActEngine:
         self.category_index = {}
         self.state_manager = None
         self.validator = None
+        self._user_session = user_session
         if app is not None:
             try:
                 self.client = app.test_client()
@@ -80,7 +81,7 @@ class ReActEngine:
             for category, tools in catalog.items():
                 self.category_index[category] = []
                 for tool in tools:
-                    name = tool.get("name", "")
+                    name = tool.name
                     if name:
                         self.tool_catalog[name] = tool
                         self.category_index[category].append(name)
@@ -128,7 +129,7 @@ class ReActEngine:
         best = None
         best_score = 0
         for name, tool in self.tool_catalog.items():
-            desc = (tool.get("description", "") + " " + name).lower()
+            desc = (tool.description + " " + name).lower()
             score = sum(1 for kw in keywords if kw in desc)
             if score > best_score:
                 best_score = score
@@ -148,14 +149,14 @@ class ReActEngine:
         if tool is None:
             avail = sorted(self.tool_catalog.keys())
             return {"success": False, "tool": tool_name, "error": "No encontrada. Top: %s" % str(avail[:10])}
-        tool_name = tool.get("name", tool_name)
-        method = tool.get("method", "GET").upper()
-        endpoint = tool.get("endpoint", "")
-        tool_params = tool.get("parameters", {})
+        tool_name = tool.name or tool_name
+        method = tool.method.upper()
+        endpoint = tool.route
+        tool_param_names = {p["name"] for p in (tool.params or []) if isinstance(p, dict)}
         params = params or {}
         filtered = {}
         for key, value in params.items():
-            if key in tool_params or not tool_params:
+            if key in tool_param_names or not tool_param_names:
                 filtered[key] = value
         try:
             if method == "GET":
@@ -181,7 +182,7 @@ class ReActEngine:
         tool = self._find_tool(query)
         if tool is None:
             return {"success": False, "error": "Sin herramienta para: %s" % query, "query": query}
-        return self._call_tool(tool.get("name", ""), params)
+        return self._call_tool(tool.name, params)
 
 
     def execute_plan(self, plan_name=None, steps=None, context=None):
@@ -274,7 +275,7 @@ class ReActEngine:
             for cat in CATEGORY_SUMMARIES:
                 if cat in query.lower():
                     for t in self._find_tools_for_category(cat):
-                        result = self._call_tool(t.get("name", ""), context)
+                        result = self._call_tool(t.name, context)
                         if result.get("success"):
                             result["correction"] = "alt_cat_%s" % cat
                             return result

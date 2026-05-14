@@ -21,6 +21,9 @@ def q(sql, params=(), one=False):
         return cur.fetchone() if one else cur.fetchall()
     except:
         return None
+    finally:
+        try: c.close()
+        except: pass
 
 def fmt_money(v):
     """Format number as currency."""

@@ -58,6 +58,13 @@ def get_tool(name: str) -> Optional[ToolDefinition]:
 def get_tools_by_category(category: str) -> List[ToolDefinition]:
     return [t for t in TOOL_CATALOG.values() if t.category == category]
 
+def get_all_tools_by_category():
+    """Retorna TODAS las herramientas agrupadas por categoria."""
+    result = {}
+    for tool in TOOL_CATALOG.values():
+        result.setdefault(tool.category, []).append(tool)
+    return result
+
 def get_all_tools() -> Dict[str, ToolDefinition]:
     return dict(TOOL_CATALOG)
 

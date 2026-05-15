@@ -92,7 +92,9 @@ _CARPETA = os.environ.get("TPV_FRONTEND_DIR") or _CARPETA_DETECTADA or os.getcwd
 
 # ── Flask App ──
 _TD = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'assets', 'frontend', 'templates')
-if not os.path.isdir(_TD):
+if _CARPETA and os.path.isdir(os.path.join(_CARPETA, 'templates')):
+    _TD = os.path.join(_CARPETA, 'templates')
+elif not os.path.isdir(_TD):
     _TD = 'templates'
 app = Flask(__name__, static_folder=None, template_folder=_TD)
 app.secret_key = _SECRET_KEY

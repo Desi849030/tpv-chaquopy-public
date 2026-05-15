@@ -200,18 +200,17 @@ def asignar_inventario_diario(vendedor_id, productos, admin_id):
             cursor.execute("""
                 INSERT INTO inventario_diario
                     (fecha, vendedor_id, producto_id, nombre, cant_asignada,
-                     precio_venta, precio_costo, unidad_medida)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                     precio_venta, precio_costo)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(fecha, vendedor_id, producto_id) DO UPDATE SET
                     cant_asignada = cant_asignada + excluded.cant_asignada,
                     precio_venta  = excluded.precio_venta,
                     precio_costo  = excluded.precio_costo,
-                    unidad_medida = excluded.unidad_medida,
                     activo = 1
             """, (fecha_hoy, vendedor_id, pid, prod.get("nombre",""), cant_real,
                   float(prod.get("precio_venta", 0)),
-                  float(prod.get("precio_costo", 0)),
-                  prod.get("unidad_medida", "Un")))
+                  float(prod.get("precio_costo", 0))))
+
 
             cursor.execute("""
                 UPDATE inventario_general
@@ -245,7 +244,7 @@ def obtener_inventario_diario(vendedor_id, fecha=None):
                    id.cant_final,
                    id.cant_asignada - id.cant_vendida AS cant_disponible,
                    id.precio_venta, id.precio_costo,
-                   COALESCE(NULLIF(id.unidad_medida,''), ig.unidad_medida, 'Un') AS um
+                   COALESCE(NULLIF(ig.unidad_medida,''), 'Un') AS um
             FROM inventario_diario id
             LEFT JOIN inventario_general ig ON ig.producto_id = id.producto_id
             WHERE id.vendedor_id = ? AND id.fecha = ? AND id.activo = 1

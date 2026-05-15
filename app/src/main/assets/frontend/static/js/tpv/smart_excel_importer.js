@@ -48,6 +48,7 @@
                 if (resultadoEncabezados.confianza > 0.6) {
                     console.log('✅ Encabezados explícitos detectados');
                     return resultadoEncabezados;
+                }
 
                 // Estrategia 1.5: Fuzzy matching (Levenshtein)
                 // Activa cuando los encabezados no son exactos pero son parecidos

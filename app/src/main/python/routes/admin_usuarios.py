@@ -1,4 +1,4 @@
-from routes.admin_helpers import admin_bp, request, jsonify, requiere_login, requiere_rol, crear_usuario, listar_usuarios, desactivar_usuario, resetear_password, sincronizar_usuario_nuevo, _sb
+from routes.admin_helpers import admin_bp, request, jsonify, requiere_login, requiere_rol, usuario_actual, crear_usuario, listar_usuarios, desactivar_usuario, resetear_password, sincronizar_usuario_nuevo, _sb
 
 # ── Usuarios ─────────────────────────────────────────────────
 @admin_bp.route("/api/usuarios/crear", methods=["POST"])

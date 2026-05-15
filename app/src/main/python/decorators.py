@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """decorators.py - TPV Ultra Smart - Decoradores compartidos"""
+import os
 from functools import wraps
 from flask import request, jsonify, session, redirect
 
@@ -14,9 +15,9 @@ def requiere_login(f):
         uid = u.get("usuario_id")
         last_chk = session.get("_active_check_ts", 0)
         import time as _t
-        if uid and _t.time() - last_chk > 300:
+        # Skip DB active check in TESTING mode (users may not exist in DB)
+        if not os.environ.get("TPV_TESTING") and uid and _t.time() - last_chk > 300:
             try:
-                from db.users import login_usuario
                 _conn = None
                 try:
                     from database import obtener_conexion as _oc

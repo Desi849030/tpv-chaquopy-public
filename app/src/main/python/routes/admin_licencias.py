@@ -1,4 +1,4 @@
-from routes.admin_helpers import admin_bp, request, jsonify, requiere_login, requiere_rol, crear_licencia, listar_licencias, verificar_licencia_activa, desactivar_licencia, _sb
+from routes.admin_helpers import admin_bp, request, jsonify, requiere_login, requiere_rol, usuario_actual, crear_licencia, listar_licencias, verificar_licencia_activa, desactivar_licencia, _sb
 # ── Licencias (sistema DB original) ──────────────────────────
 @admin_bp.route("/api/licencias", methods=["GET"])
 @requiere_rol("desarrollador","administrador")

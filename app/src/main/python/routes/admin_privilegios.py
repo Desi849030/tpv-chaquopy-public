@@ -1,4 +1,4 @@
-from routes.admin_helpers import admin_bp, request, jsonify, requiere_login, requiere_rol, agregar_log, _obtener_privilegios_rol, _guardar_privilegios_rol, _MODULOS_DISPONIBLES, _PRIVILEGIOS_DEFAULT
+from routes.admin_helpers import admin_bp, request, jsonify, requiere_login, requiere_rol, usuario_actual, agregar_log, _obtener_privilegios_rol, _guardar_privilegios_rol, _MODULOS_DISPONIBLES, _PRIVILEGIOS_DEFAULT
 @admin_bp.route("/api/privilegios/<rol>", methods=["GET"])
 @requiere_rol("desarrollador","administrador","supervisor")
 def api_get_privilegios(rol):

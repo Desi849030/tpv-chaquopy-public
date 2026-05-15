@@ -222,3 +222,28 @@
 }
 #network-status-dot.online { background: #10b981; box-shadow: 0 0 6px #10b981; }
 #network-status-dot.offline { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
+
+/* v2.5.5: Dark mode overrides for WCAG compliance */
+[data-theme="dark"] .loading-skeleton,
+body.dark-mode .loading-skeleton {
+    background: linear-gradient(90deg, #2a3a4a 25%, #1e2d3d 50%, #2a3a4a 75%) !important;
+    background-size: 200% 100% !important;
+}
+[data-theme="dark"] .form-control-modern,
+body.dark-mode .form-control-modern {
+    background: #334155 !important;
+    color: #e2e8f0 !important;
+    border-color: #475569 !important;
+}
+[data-theme="dark"] .nav-tabs .nav-link.active.rol-vendedor,
+body.dark-mode .nav-tabs .nav-link.active.rol-vendedor {
+    color: #0a2e1a !important;
+}
+[data-theme="dark"] .nav-tabs .nav-link.active.rol-cliente,
+body.dark-mode .nav-tabs .nav-link.active.rol-cliente {
+    color: #2e0a14 !important;
+}
+[data-theme="dark"] .nav-tabs .nav-link.active.rol-supervisor,
+body.dark-mode .nav-tabs .nav-link.active.rol-supervisor {
+    color: #fff !important;
+}

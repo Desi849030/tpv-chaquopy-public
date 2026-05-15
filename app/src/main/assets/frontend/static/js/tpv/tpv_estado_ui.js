@@ -315,6 +315,7 @@
         async function conf_setTheme(theme){
             tpvState.config.theme = theme;
             document.body.classList.toggle("dark-mode", theme === "dark");
+            document.documentElement.setAttribute("data-theme", theme === "dark" ? "dark" : "light");
             await saveState();
             const _qrCont = document.getElementById('cliente-qr-display-container');
             if (_qrCont && _qrCont.children.length > 0) {

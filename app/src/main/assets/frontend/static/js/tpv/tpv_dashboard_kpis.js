@@ -63,29 +63,29 @@ async function dashboard_cargar() {
         <div class="col-6 col-md-3">
             <div class="glass-card text-center py-3">
                 <div style="font-size:2rem">💰</div>
-                <div class="fw-bold fs-4 text-success">$${ingHoy.toFixed(2)}</div>
-                <div class="text-muted small">Ingresos hoy</div>
+                <div class="fw-bold fs-4" style="color:var(--success,#198754)">$${ingHoy.toFixed(2)}</div>
+                <div style="color:var(--text-secondary,#6c757d)" class="small">Ingresos hoy</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
             <div class="glass-card text-center py-3">
                 <div style="font-size:2rem">📈</div>
-                <div class="fw-bold fs-4 text-primary">$${gananHoy.toFixed(2)}</div>
-                <div class="text-muted small">Ganancia hoy</div>
+                <div class="fw-bold fs-4" style="color:var(--primary,#0d6efd)">$${gananHoy.toFixed(2)}</div>
+                <div style="color:var(--text-secondary,#6c757d)" class="small">Ganancia hoy</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
             <div class="glass-card text-center py-3">
                 <div style="font-size:2rem">🛒</div>
                 <div class="fw-bold fs-4">${txHoy}</div>
-                <div class="text-muted small">Transacciones</div>
+                <div style="color:var(--text-secondary,#6c757d)" class="small">Transacciones</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
             <div class="glass-card text-center py-3">
                 <div style="font-size:2rem">⚠️</div>
                 <div class="fw-bold fs-4 text-danger">${stockCritico.length}</div>
-                <div class="text-muted small">Stock crítico</div>
+                <div style="color:var(--text-secondary,#6c757d)" class="small">Stock crítico</div>
             </div>
         </div>`;
 
@@ -133,7 +133,7 @@ async function dashboard_cargar() {
                     <span class="fw-bold text-warning fs-5">#${i+1}</span>
                     <div class="flex-grow-1 overflow-hidden">
                         <div class="fw-semibold text-truncate">${p.nombre}</div>
-                        <div class="text-muted small">${p.cant} uds · $${p.total.toFixed(2)}</div>
+                        <div style="color:var(--text-secondary,#6c757d)" class="small">${p.cant} uds · $${p.total.toFixed(2)}</div>
                     </div>
                 </div>
             </div>`).join('');

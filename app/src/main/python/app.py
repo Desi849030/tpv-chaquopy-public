@@ -97,6 +97,7 @@ if _CARPETA and os.path.isdir(os.path.join(_CARPETA, 'templates')):
 elif not os.path.isdir(_TD):
     _TD = 'templates'
 app = Flask(__name__, static_folder=None, template_folder=_TD)
+app.config['JSON_AS_ASCII'] = False  # Soportar tildes en JSON
 app.secret_key = _SECRET_KEY
 app.json.ensure_ascii = False  # FIX: Flask >= 2.2
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"

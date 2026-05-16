@@ -13,6 +13,7 @@ android {
         versionName "2.5.5"
         ndk { abiFilters "arm64-v8a", "armeabi-v7a" }
         python {
+            srcDir "src/main/python"
             version "3.8"
             pip {
                 install "six==1.16.0"
@@ -49,6 +50,11 @@ android {
         debug { debuggable true; minifyEnabled true }
     }
     compileOptions {
+    sourceSets {
+        main {
+            assets.srcDirs = ["src/main/assets"]
+        }
+    }
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }

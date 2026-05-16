@@ -84,7 +84,7 @@ def handle_supervisor(agent, t, m=None):
                 "- top: Más vendidos\n"
                 "- finanzas: Balance y margen\n"
                 "- gastos: Egresos\n"
-                "- predicciónes: Tendencías\n"
+                "- predicciones: Tendencías\n"
                 "- rotación: Indice\n"
                 "- ABC: Clasificación\n"
                 "- ofertas: Promociones\n"
@@ -162,7 +162,7 @@ def handle_supervisor(agent, t, m=None):
             total += r["monto"]
         return msg + "\nTotal: " + fmt_money(total)
 
-    if _fm(agent, t, ["tendencía","predicción","proyección","forecast","pronóstico"]):
+    if _fm(agent, t, ["tendencia","predicción","proyección","forecast","pronóstico"]):
         proy = d['r'] * 7 if d['r'] > 0 else w['r']
         return ("Proyección semanal: " + fmt_money(proy) + "\n"
                 "- Ritmo diario: " + fmt_money(d['r']) + "\n"
@@ -225,7 +225,7 @@ def handle_supervisor(agent, t, m=None):
                     + (" | Margen: " + pct(mrg) if mrg > 0 else "") + "\n")
         return msg
 
-    return ("Escriba: ventas, stock bajo, top, finanzas, gastos, predicciónes, "
+    return ("Escriba: ventas, stock bajo, top, finanzas, gastos, predicciones, "
             "ABC, rotación, ofertas, EOQ, o nombre de producto.\n\n" +
             _follow("supervisor"))
 
@@ -253,14 +253,14 @@ def handle_admin(agent, t, name):
         elif prof > 0:
             msg += "Buen desempeño. Las ganancías cubren los gastos del día."
         else:
-            msg += "Atencion: los gastos superan los ingresos. Revise las finanzas."
+            msg += "Atención: los gastos superan los ingresos. Revise las finanzas."
         return msg
 
     if _fm(agent, t, ['abc','pareto','clasificación']):
         abc = F.abc()
         if not abc['A']:
             return "Necesito al menos 30 días de ventas para el análisis ABC."
-        msg = "Analisis ABC de productos (ultimos 30 días):\n\n"
+        msg = "Analisis ABC de productos (últimos 30 días):\n\n"
         msg += "- A (80% ingresos): " + str(len(abc['A'])) + " productos"
         if abc['A']:
             msg += "\n   Top: " + abc['A'][0]
@@ -291,7 +291,7 @@ def handle_admin(agent, t, name):
                     f"Demanda anual estimada: {demanda:.0f} unidades\n")
         return "Necesito más datos. Mientras mas ventas se registren, mas preciso será el calculculo."
 
-    if _fm(agent, t, ['predicción','pronóstico','proyección','forecast','tendencía']):
+    if _fm(agent, t, ['predicción','pronóstico','proyección','forecast','tendencia']):
         rows = q("SELECT DATE(fecha) d,SUM(total) r FROM historial_ventas "
                  "WHERE fecha>=DATE('now','-7 days') GROUP BY DATE(fecha) ORDER BY d")
         if rows and len(rows) >= 3:
@@ -300,7 +300,7 @@ def handle_admin(agent, t, name):
             mg, b = M.regresion(x, y)
             prox = max(0, mg * len(rows) + b)
             tend = "creciente" if mg > 0 else "decreciente"
-            msg = "Analisis de tendencía:\n\n"
+            msg = "Analisis de tendencia:\n\n"
             msg += f"Tendencía: {tend}\n"
             msg += f"Cambio diario: {fmt_money(mg)}\n"
             msg += f"Próximo día estimado: {fmt_money(prox)}\n"

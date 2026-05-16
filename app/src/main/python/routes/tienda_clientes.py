@@ -77,7 +77,15 @@ def api_login_cliente():
             conn.execute("UPDATE clientes_tienda SET ultimo_acceso = ? WHERE cliente_id = ?",
                          (datetime.now().strftime('%Y-%m-%d %H:%M:%S'), c['cliente_id']))
             conn.commit()
+            session.permanent = True
+            session['usuario'] = {
+                'usuario_id': c['cliente_id'],
+                'rol': 'cliente',
+                'nombre': c['nombre'],
+                'username': c['email']
+            }
             return jsonify({'ok': True, 'cliente': {
+                'id': c['cliente_id'], 'nombre': c['nombre'],
                 'id': c['cliente_id'], 'nombre': c['nombre'],
                 'email': c['email'], 'telefono': c['telefono'],
                 'imagen': c['imagen']

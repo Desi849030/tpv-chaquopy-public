@@ -1,3 +1,4 @@
+from security.crypto import rate_limit
 """Rutas de autenticación — /api/auth/*"""
 import json
 from datetime import datetime
@@ -11,6 +12,7 @@ import sync.supabase_sync as _sb
 
 auth_bp = Blueprint('auth', __name__)
 
+@rate_limit(max_attempts=5, window=60)
 @auth_bp.route("/api/auth/login", methods=["POST"])
 def api_login():
     datos = request.get_json(force=True, silent=True) or {}
@@ -81,4 +83,3 @@ def api_auto_backup():
         return jsonify({"ok": False, "error": str(e)}), 500
 
 
-# ── DEBUG ENDPOINT (temporal, eliminar tras login) ──

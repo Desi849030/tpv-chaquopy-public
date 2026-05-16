@@ -12,7 +12,7 @@ except Exception:
     _HAS_NORM = False
 
 try:
-    from ia.intent_engine import get_suggestions as _get_suggestions
+    from ia.intent_engine import get_suggestións as _get_suggestións
     _HAS_INTENT = True
 except Exception:
     _HAS_INTENT = False
@@ -150,7 +150,7 @@ def handle_supervisor(agent, t, m=None):
                 "- Ticket: " + fmt_money(d['a']))
 
     if _fm(agent, t, ["gasto","egreso","gastos","costo"]):
-        rows = q("SELECT descripcion,monto,categoria FROM gastos "
+        rows = q("SELECT descripcion,monto,categoría FROM gastos "
                  "WHERE DATE(fecha)=DATE('now','localtime') ORDER BY monto DESC")
         if not rows:
             return "No hay gastos hoy."
@@ -158,7 +158,7 @@ def handle_supervisor(agent, t, m=None):
         total = 0
         for r in rows[:20]:
             msg += ("- " + str(r["descripcion"]) + ": " + fmt_money(r["monto"]) +
-                    " (" + str(r["categoria"]) + ")\n")
+                    " (" + str(r["categoría"]) + ")\n")
             total += r["monto"]
         return msg + "\nTotal: " + fmt_money(total)
 
@@ -348,14 +348,14 @@ def handle_admin(agent, t, name):
         return msg
 
     if _fm(agent, t, ['gasto','egreso','costo fijo']):
-        rows = q("SELECT descripcion,monto,categoria FROM gastos "
+        rows = q("SELECT descripcion,monto,categoría FROM gastos "
                  "WHERE DATE(fecha)=DATE('now','localtime') ORDER BY monto DESC")
         if not rows:
             return "No hay gastos registrados hoy."
         msg = f"Gastos del dia ({len(rows)}):\n\n"
         total = 0
         for r in rows:
-            msg += f"- {r['descripcion']}: {fmt_money(r['monto'])} ({r['categoria']})\n"
+            msg += f"- {r['descripcion']}: {fmt_money(r['monto'])} ({r['categoría']})\n"
             total += r['monto']
         msg += f"\nTotal gastos: {fmt_money(total)}"
         return msg
@@ -407,7 +407,7 @@ def handle_dev(agent, t, name):
         except Exception:
             pass
     if any(w in tl for w in ["licencía","license","activacion"]):
-        base += "\n\nLicencías: Usa /admin/licencías para gestionar."
+        base += "\n\nLicencias: Usa /admin/licencías para gestiónar."
     if any(w in tl for w in ["usuario","users","cuentas"]):
-        base += "\n\nUsuarios: Usa /admin/usuarios para gestionar cuentas del sistema."
+        base += "\n\nUsuarios: Usa /admin/usuarios para gestiónar cuentas del sistema."
     return base

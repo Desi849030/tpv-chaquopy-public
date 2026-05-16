@@ -55,7 +55,7 @@ def handle_cliente(agent, t, m):
 
     if _fm(agent, t, ["mis compras","historial","compre","recibo","factura"]):
         return ("Puedes ver tu historial de compras en la sección de Registros. "
-                "Alli encontraras todos los recibos con fecha, productos, "
+                "Allí encontrarás todos los recibos con fecha, productos, "
                 "cantidades y totales.")
 
     if _fm(agent, t, ["pago","pagar","efectivo","tarjeta","transferencía","metodo"]):

@@ -5,15 +5,52 @@
 // ══════════════════════════════════════════════════════════════
 // Acceso directo a métricas del sistema
 window._DBG_METRICAS = function(){
-    // Cargar métricas en tiempo real sin salir de la app
-    var panel = document.getElementById('dev-metrics-panel');
-    if (panel) {
-        panel.style.display = 'block';
-        if (typeof DM !== 'undefined' && DM.init) DM.init();
-    } else {
-        // Fallback: abrir en ventana nueva
-        window.open('/dev/metricas','_blank');
-    }
+    // Cargar métricas en tiempo real via API
+    fetch('/api/dev/metrics')
+        .then(r => r.json())
+        .then(d => {
+            if (!d.ok) return alert('Error: ' + (d.error || 'desconocido'));
+            
+            var html = '<div style="padding:12px;color:#e0e0e0;background:#0a0e1a;min-height:100vh">';
+            
+            // RAM
+            html += '<div style="background:#1a2332;border-radius:12px;padding:16px;margin-bottom:12px">';
+            html += '<h3 style="color:#00cec9;margin:0 0 8px 0">🧠 RAM</h3>';
+            html += '<div style="display:flex;justify-content:space-between"><span>Proceso:</span><b>' + (d.ram?.proceso_mb||'--') + ' MB</b></div>';
+            html += '<div style="display:flex;justify-content:space-between"><span>Sistema:</span><b>' + (d.ram?.sistema_pct||'--') + '%</b></div>';
+            html += '<div style="height:6px;background:#2a3a4a;border-radius:3px;margin:4px 0"><div style="height:100%;width:' + (d.ram?.sistema_pct||0) + '%;background:#00cec9;border-radius:3px"></div></div>';
+            html += '<div style="display:flex;justify-content:space-between"><span>Total:</span>' + (d.ram?.sistema_total_mb||'--') + ' MB</div>';
+            html += '<div style="display:flex;justify-content:space-between"><span>Libre:</span>' + (d.ram?.sistema_libre_mb||'--') + ' MB</div>';
+            html += '</div>';
+            
+            // Almacenamiento
+            html += '<div style="background:#1a2332;border-radius:12px;padding:16px;margin-bottom:12px">';
+            html += '<h3 style="color:#00cec9;margin:0 0 8px 0">💾 Almacenamiento</h3>';
+            html += '<div style="display:flex;justify-content:space-between"><span>BD:</span><b>' + (d.storage?.db_size_kb||'--') + ' KB</b></div>';
+            html += '<div style="display:flex;justify-content:space-between"><span>Disco:</span><b>' + (d.storage?.disco_pct||'--') + '%</b></div>';
+            html += '</div>';
+            
+            // Inventario
+            html += '<div style="background:#1a2332;border-radius:12px;padding:16px;margin-bottom:12px">';
+            html += '<h3 style="color:#00cec9;margin:0 0 8px 0">📦 Inventario</h3>';
+            html += '<div style="display:flex;justify-content:space-between"><span>Productos:</span><b>' + (d.inventario?.total_productos||'--') + '</b></div>';
+            html += '<div style="display:flex;justify-content:space-between"><span>Valor venta:</span><b>' + (d.inventario?.valor_venta_total||'--') + ' CUP</b></div>';
+            html += '<div style="display:flex;justify-content:space-between"><span>Ganancia:</span><b>' + (d.inventario?.ganancia_potencial||'--') + ' CUP</b></div>';
+            html += '<div style="display:flex;justify-content:space-between"><span>Margen:</span><b>' + (d.inventario?.margen_bruto_pct||'--') + '%</b></div>';
+            html += '</div>';
+            
+            html += '<div style="text-align:center;font-size:10px;color:#5a6a7a;margin-top:12px">' + (d.timestamp||'') + '</div>';
+            html += '</div>';
+            
+            // Mostrar en el panel de catálogo
+            var tabContent = document.querySelector('.tab-content') || document.getElementById('catalog-tab-pane');
+            if (tabContent) {
+                tabContent.innerHTML = html;
+            }
+        })
+        .catch(function(err) {
+            alert('Error al cargar métricas: ' + err.message);
+        });
 };
 
 window._DBG = {

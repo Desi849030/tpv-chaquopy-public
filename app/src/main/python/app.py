@@ -363,7 +363,6 @@ except Exception as e:
 
 
 
-@app.route("/dev/metricas")
 def dev_metricas_page():
     return render_template("dev/dev_panel_metricas.html")
 

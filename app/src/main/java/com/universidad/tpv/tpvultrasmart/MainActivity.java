@@ -47,7 +47,7 @@ public class MainActivity extends FragmentActivity {
         requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
             WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        if (!Python.isStarted()) Python.start(new AndroidPlatform(this));
+        // MOVED TO THREAD: if (!Python.isStarted()) Python.start(new AndroidPlatform(this));
         String filesDir = getFilesDir().getAbsolutePath();
         System.setProperty("TPV_FILES_DIR", filesDir);
         String frontendDir = filesDir + "/frontend";
@@ -79,6 +79,7 @@ public class MainActivity extends FragmentActivity {
         requestCameraPermission();
         Python py = Python.getInstance();
             new Thread(() -> {
+                if (!Python.isStarted()) Python.start(new AndroidPlatform(MainActivity.this));
                 py.getModule("start_server");
             for (int i = 0; i < 40; i++) {
                 try {

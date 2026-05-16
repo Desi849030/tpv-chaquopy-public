@@ -99,7 +99,7 @@ def _run_flask():
         _w("[ERROR] " + traceback.format_exc())
 t=threading.Thread(target=_run_flask,daemon=False); t.start()
 _w("[INFO] Esperando Flask...")
-for i in range(30):
+for i in range(20):
     time.sleep(0.5)
     try:
         import urllib.request

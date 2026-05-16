@@ -271,6 +271,28 @@ polling_files = [
 for pf in polling_files:
     test(f"Archivo polling: {os.path.basename(pf)}", os.path.exists(pf), "No encontrado")
 
+
+# ============================================================
+# 13. AGENTE PROACTIVO
+# ============================================================
+print("\n🧠 13. AGENTE PROACTIVO")
+try:
+    from ia.proactive_agent import get_proactive_agent, ProactiveAgent
+    test("Importar ProactiveAgent", True)
+    agent = get_proactive_agent()
+    alerts = agent.check_all()
+    test("Alertas generadas", len(alerts) >= 0, f"Se encontraron {len(alerts)} alertas")
+    tipos = set(a['tipo'] for a in alerts)
+    test("Tipos de alertas variados", len(tipos) > 0, f"Tipos: {tipos}")
+    briefing = agent.get_briefing('administrador')
+    test("Briefing generado", 'resumen' in briefing)
+    test("Briefing tiene recomendaciones", len(briefing.get('recomendaciones', [])) >= 0)
+    from ia.proactive_agent import start_background_monitor
+    start_background_monitor(interval_seconds=999)
+    test("Monitoreo background", True)
+except Exception as e:
+    test("Agente Proactivo", False, str(e))
+
 # ============================================================
 # 14. ESTADO FINAL
 # ============================================================

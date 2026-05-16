@@ -170,7 +170,7 @@ function updateRoleDisplay(role){
 // ============================================================
 function getImmediateGreeting(role){
     var h = new Date().getHours();
-    var saludo = 'Buenos dias';
+    var saludo = 'Buenos días';
     if(h >= 12 && h < 18) saludo = 'Buenas tardes';
     else if(h >= 18) saludo = 'Buenas noches';
 

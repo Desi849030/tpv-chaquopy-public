@@ -121,6 +121,7 @@ if val_bp: app.register_blueprint(val_bp)
 if ai_bp: app.register_blueprint(ai_bp)
 if analytics_bp: app.register_blueprint(analytics_bp)
 if dev_metrics_bp: app.register_blueprint(dev_metrics_bp)
+if proactive_bp: app.register_blueprint(proactive_bp)
 if diccionario_bp: app.register_blueprint(diccionario_bp)
 
 try:

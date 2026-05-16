@@ -12,8 +12,8 @@ import sync.supabase_sync as _sb
 
 auth_bp = Blueprint('auth', __name__)
 
-@rate_limit(max_attempts=5, window=60)
 @auth_bp.route("/api/auth/login", methods=["POST"])
+@rate_limit(max_attempts=5, window=60)
 def api_login():
     datos = request.get_json(force=True, silent=True) or {}
     username = datos.get("username", "").strip()
@@ -21,11 +21,13 @@ def api_login():
     if not username or not password:
         return jsonify({"error": "Faltan credenciales"}), 400
     resultado = login_usuario(username, password)
-    if resultado:
-        session.permanent = True
-        session["usuario"] = resultado
-        return jsonify({"ok": True, "usuario": resultado})
-    return jsonify({"error": "Credenciales incorrectas"}), 401
+    if resultado is None:
+        return jsonify({"error": "Credenciales incorrectas"}), 401
+    if isinstance(resultado, dict) and "error" in resultado:
+        return jsonify(resultado), 429  # HTTP 429 Too Many Requests
+    session.permanent = True
+    session["usuario"] = resultado
+    return jsonify({"ok": True, "usuario": resultado})
 
 @auth_bp.route("/api/auth/logout", methods=["POST"])
 def api_logout():

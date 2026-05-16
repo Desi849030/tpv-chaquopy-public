@@ -17,7 +17,7 @@ async function _auth_init(intentos = 0) {
     auth_setModo('staff');
     // Auto-fill desarrollador username
     var uf=document.getElementById('login-username');
-    if(uf)
+    if(uf) uf.focus();
 }
 
 // ══════════════════════════════════════════════════════════════

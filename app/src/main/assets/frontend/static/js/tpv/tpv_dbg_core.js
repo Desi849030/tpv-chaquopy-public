@@ -4,7 +4,17 @@
 //  ESTADO INTERNO DEL DEBUGGER
 // ══════════════════════════════════════════════════════════════
 // Acceso directo a métricas del sistema
-window._DBG_METRICAS = function(){ window.open('/dev/metricas','_blank'); };
+window._DBG_METRICAS = function(){
+    // Cargar métricas en tiempo real sin salir de la app
+    var panel = document.getElementById('dev-metrics-panel');
+    if (panel) {
+        panel.style.display = 'block';
+        if (typeof DM !== 'undefined' && DM.init) DM.init();
+    } else {
+        // Fallback: abrir en ventana nueva
+        window.open('/dev/metricas','_blank');
+    }
+};
 
 window._DBG = {
     activo:     false,

@@ -86,21 +86,21 @@ RLS_SQL_POLICIES = """
 -- Ejecutar en Supabase SQL Editor
 
 -- Habilitar RLS en tablas
-ALTER TABLE tpv_ventas ENABLE ROW LEVEL SECURITY;
-ALTER TABLE tpv_inventario ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tpv_ventas_dia ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tpv_stock ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tpv_productos ENABLE ROW LEVEL SECURITY;
 
 -- Política: sucursal solo ve sus datos
 CREATE POLICY "Branch isolation - ventas"
-ON tpv_ventas FOR ALL
+ON tpv_ventas_dia FOR ALL
 USING (branch_id = current_setting('request.headers')::json->>'x-branch-id');
 
 CREATE POLICY "Branch isolation - inventario"
-ON tpv_inventario FOR ALL
+ON tpv_stock FOR ALL
 USING (branch_id = current_setting('request.headers')::json->>'x-branch-id');
 
 CREATE POLICY "Branch isolation - productos"
-ON tpv_productos FOR SELECT
+ON tpv_productos FOR ALL
 USING (branch_id = current_setting('request.headers')::json->>'x-branch-id' OR branch_id IS NULL);
 """
 

@@ -94,6 +94,7 @@ def _sincronizar_tablas_relacionales(cursor, conn, estado):
                 VALUES (?, ?, 0, 5, ?, ?, ?, ?, ?)
                 ON CONFLICT(producto_id) DO UPDATE SET
                     nombre        = excluded.nombre,
+                    stock_actual  = MAX(inventario_general.stock_actual, excluded.stock_actual),
                     precio_venta  = excluded.precio_venta,
                     precio_compra = CASE WHEN excluded.precio_compra > 0
                                     THEN excluded.precio_compra

@@ -289,7 +289,7 @@ async function supabase_syncUsuarios() {
     const el = document.getElementById('sb-sync-status');
     if (el) el.innerHTML = '<div class="spinner-border spinner-border-sm me-1"></div>Sincronizando usuarios...';
     try {
-        const r = await fetch('/api/supabase/sync', { method:'POST', credentials:'same-origin' });
+        const r = await fetch('/api/supabase/sync-all', { method:'POST', credentials:'same-origin' });
         const d = await r.json();
         if (el) el.innerHTML = d.ok ? '✅ Usuarios sincronizados' : '❌ ' + (d.mensaje||'Error');
         showToast(d.ok ? '☁️ Usuarios sync OK' : 'Error sync usuarios', d.ok?'success':'danger');

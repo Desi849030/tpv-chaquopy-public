@@ -154,7 +154,7 @@ def sincronizar_todo() -> dict:
         from database import obtener_conexion
         conn = obtener_conexion()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM ventas ORDER BY fecha DESC LIMIT 100")
+        cursor.execute("SELECT * FROM historial_ventas ORDER BY fecha DESC LIMIT 100")
         ventas = [dict(r) for r in cursor.fetchall()]
         conn.close()
         if ventas:

@@ -5,6 +5,110 @@ Prueba todos los flujos de negocio: auth, ventas, inventario, cierres, gastos, I
 """
 import sys, os, json, time, sqlite3
 sys.path.insert(0, 'app/src/main/python')
+# Inicializar BD si no existe
+import sqlite3
+conn = sqlite3.connect('tpv_datos.db', timeout=10)
+conn.execute("PRAGMA journal_mode=WAL")
+
+# Crear tablas mínimas si no existen
+conn.executescript("""
+    CREATE TABLE IF NOT EXISTS usuarios (
+        usuario_id TEXT PRIMARY KEY,
+        username TEXT UNIQUE,
+        nombre TEXT,
+        rol TEXT,
+        password_hash TEXT,
+        password_salt TEXT,
+        activo INTEGER DEFAULT 1,
+        ultimo_acceso TEXT,
+        creado_por TEXT
+    );
+    CREATE TABLE IF NOT EXISTS inventario_general (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        producto_id TEXT,
+        nombre TEXT,
+        stock_actual REAL DEFAULT 0,
+        stock_minimo REAL DEFAULT 0,
+        precio_compra REAL DEFAULT 0,
+        precio_venta REAL DEFAULT 0,
+        categoria TEXT DEFAULT 'General',
+        unidad_medida TEXT DEFAULT 'C/U',
+        actualizado TEXT
+    );
+    CREATE TABLE IF NOT EXISTS historial_ventas (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        venta_id TEXT UNIQUE,
+        producto_id TEXT,
+        nombre TEXT,
+        cantidad REAL,
+        precio_unit REAL,
+        total REAL,
+        metodo_pago TEXT,
+        fecha TEXT,
+        vendedor_id TEXT
+    );
+    CREATE TABLE IF NOT EXISTS cierres_caja (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        fecha TEXT,
+        total_ventas REAL,
+        total_costos REAL,
+        total_comisiones REAL,
+        ganancia_total REAL,
+        num_transacciones INTEGER,
+        cerrado_por TEXT,
+        creado TEXT
+    );
+    CREATE TABLE IF NOT EXISTS gastos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        gasto_id TEXT UNIQUE,
+        descripcion TEXT,
+        monto REAL,
+        categoria TEXT,
+        fecha TEXT,
+        registrado_por TEXT
+    );
+    CREATE TABLE IF NOT EXISTS clientes_tienda (
+        cliente_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT,
+        email TEXT,
+        password_hash TEXT,
+        password_salt TEXT,
+        telefono TEXT
+    );
+    CREATE TABLE IF NOT EXISTS inventario_diario (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        vendedor_id TEXT,
+        fecha TEXT,
+        producto_id TEXT,
+        nombre TEXT,
+        stock_inicial REAL,
+        entradas REAL,
+        salidas REAL,
+        stock_final REAL
+    );
+""")
+
+# Crear usuario desarrollador si no existe
+from db_connection import _hash_password
+hash_pw, salt = _hash_password('123456')
+conn.execute("SELECT COUNT(*) FROM usuarios WHERE username='desarrollador'")
+if conn.execute("SELECT COUNT(*) FROM usuarios WHERE username='desarrollador'").fetchone()[0] == 0:
+    conn.execute("""
+        INSERT INTO usuarios (usuario_id, username, nombre, rol, password_hash, password_salt)
+        VALUES ('user-dev', 'desarrollador', 'Desarrollador Principal', 'desarrollador', ?, ?)
+    """, (hash_pw, salt))
+    conn.commit()
+
+# Insertar productos de prueba si no existen
+if conn.execute("SELECT COUNT(*) FROM inventario_general").fetchone()[0] == 0:
+    conn.executescript("""
+        INSERT INTO inventario_general (producto_id, nombre, stock_actual, stock_minimo, precio_compra, precio_venta, categoria) VALUES ('T1', 'Test v25', 10, 5, 2.0, 5.0, 'General');
+        INSERT INTO inventario_general (producto_id, nombre, stock_actual, stock_minimo, precio_compra, precio_venta, categoria) VALUES ('T2', 'Test Dos', 20, 5, 3.0, 8.0, 'Bebidas');
+    """)
+    conn.commit()
+
+conn.close()
+
 
 print("=" * 70)
 print("🚀 SIMULACIÓN MAESTRA - TPV UltraSmart v4.0")

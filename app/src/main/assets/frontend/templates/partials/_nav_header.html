@@ -5,13 +5,13 @@
             <div class="d-flex justify-content-between align-items-center flex-wrap">
                 <div class="flex-grow-1 text-center">
                     <h1 class="mb-0">
-                        <i class="bi bi-shop-window me-2"></i>
+                        <i class="bi bi-shop-window me-2" translate="no"></i>
                         <span id="tpv-custom-name">Sistema TPV</span>
                     </h1>
                 </div>
                 <div id="network-status">
                     <span id="status-badge" class="badge bg-success">
-                        <i class="bi bi-wifi"></i> <span id="status-text">Online</span>
+                        <i class="bi bi-wifi"></i> <span id="status-text" translate="no">Online</span>
                     </span>
                 </div>
             </div>
@@ -23,33 +23,33 @@
             <!-- 📦 CATÁLOGO -->
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle active" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
-                    <i class="bi bi-grid-3x3-gap-fill me-1"></i><span data-i18n="menu_catalog">Catálogo</span>
+                    <i class="bi bi-grid-3x3-gap-fill me-1"></i><span data-i18n="menu_catalog" translate="no">Catálogo</span>
                 </a>
                 <ul class="dropdown-menu">
                     <li><a class="dropdown-item active" id="tpv-caja-tab" data-bs-toggle="tab" data-bs-target="#tpv-caja-tab-pane" href="#" role="tab">
-                        <i class="bi bi-grid-3x3-gap-fill me-2 text-primary"></i>Vista de Venta</a></li>
+                        <i class="bi bi-grid-3x3-gap-fill me-2 text-primary" translate="no"></i>Vista de Venta</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><h6 class="dropdown-header text-muted small">GESTIÓN</h6></li>
                     <li><a class="dropdown-item" id="gestion-productos-tab" data-bs-toggle="tab" data-bs-target="#gestion-productos-tab-pane" href="#" role="tab">
-                        <i class="bi bi-journal-album me-2 text-secondary"></i>Productos</a></li>
+                        <i class="bi bi-journal-album me-2 text-secondary" translate="no"></i>Productos</a></li>
                     <li><a class="dropdown-item" id="gestion-categorias-tab" data-bs-toggle="tab" data-bs-target="#gestion-categorias-tab-pane" href="#" role="tab">
-                        <i class="bi bi-tags-fill me-2 text-secondary"></i>Categorías</a></li>
+                        <i class="bi bi-tags-fill me-2 text-secondary" translate="no"></i>Categorías</a></li>
                     <li><a class="dropdown-item" id="cliente-qr-tab" data-bs-toggle="tab" data-bs-target="#cliente-qr-tab-pane" href="#" role="tab">
-                        <i class="bi bi-qr-code me-2 text-info"></i>Etiquetas QR</a></li>
+                        <i class="bi bi-qr-code me-2 text-info" translate="no"></i>Etiquetas QR</a></li>
                 </ul>
             </li>
 
             <!-- 📊 DASHBOARD -->
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard-tab-pane" type="button" role="tab" onclick="dashboard_cargar()">
-                    <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                    <i class="bi bi-speedometer2 me-1" translate="no"></i>Dashboard
                 </button>
             </li>
 
             <!-- 🧾 ORDEN -->
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="orden-actual-tab" data-bs-toggle="tab" data-bs-target="#orden-actual-tab-pane" type="button" role="tab">
-                    <i class="bi bi-receipt me-1"></i>Orden
+                    <i class="bi bi-receipt me-1" translate="no"></i>Orden
                     <span id="order-badge" class="badge rounded-pill bg-danger d-none">0</span>
                 </button>
             </li>
@@ -57,35 +57,35 @@
             <!-- 💰 VENTAS -->
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
-                    <i class="bi bi-currency-dollar me-1"></i>Ventas
+                    <i class="bi bi-currency-dollar me-1" translate="no"></i>Ventas
                 </a>
                 <ul class="dropdown-menu">
                     <li><a class="dropdown-item" id="ventas-hoy-tab" data-bs-toggle="tab" data-bs-target="#ventas-hoy-tab-pane" href="#" role="tab">
-                        <i class="bi bi-calendar-day me-2 text-success"></i>Ventas del Día</a></li>
+                        <i class="bi bi-calendar-day me-2 text-success" translate="no"></i>Ventas del Día</a></li>
                     <li><a class="dropdown-item" id="nom-nomenclador-tab" data-bs-toggle="tab" data-bs-target="#nom-nomenclador-tab-pane" href="#" role="tab">
-                        <i class="bi bi-cash-coin me-2 text-warning"></i>Nomenclador de Caja</a></li>
+                        <i class="bi bi-cash-coin me-2 text-warning" translate="no"></i>Nomenclador de Caja</a></li>
                     <li><a class="dropdown-item" id="exportar-ventas-tab" data-bs-toggle="tab" data-bs-target="#exportar-ventas-tab-pane" href="#" role="tab">
-                        <i class="bi bi-file-earmark-excel me-2 text-success"></i>Exportar a Excel</a></li>
+                        <i class="bi bi-file-earmark-excel me-2 text-success" translate="no"></i>Exportar a Excel</a></li>
                 </ul>
             </li>
 
             <!-- 📋 REGISTROS -->
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
-                    <i class="bi bi-archive-fill me-1"></i>Registros
+                    <i class="bi bi-archive-fill me-1" translate="no"></i>Registros
                 </a>
                 <ul class="dropdown-menu">
                     <li><a class="dropdown-item" id="inv-inventario-tab" data-bs-toggle="tab" data-bs-target="#inv-inventario-tab-pane" href="#" role="tab">
-                        <i class="bi bi-box-seam me-2 text-primary"></i>Inventario / Stock</a></li>
+                        <i class="bi bi-box-seam me-2 text-primary" translate="no"></i>Inventario / Stock</a></li>
                     <li><a class="dropdown-item" id="registros-tab" data-bs-toggle="tab" data-bs-target="#registros-tab-pane" href="#" role="tab">
-                        <i class="bi bi-clock-history me-2 text-secondary"></i>Historial y Cierres</a></li>
+                        <i class="bi bi-clock-history me-2 text-secondary" translate="no"></i>Historial y Cierres</a></li>
                 </ul>
             </li>
 
             <!-- 🏪 TIENDA -->
             <li class="nav-item" role="presentation">
                 <button class="nav-link position-relative" id="tienda-tab" data-bs-toggle="tab" data-bs-target="#tienda-tab-pane" type="button" role="tab" onclick="tienda_init()">
-                    <i class="bi bi-shop me-1"></i>Tienda
+                    <i class="bi bi-shop me-1" translate="no"></i>Tienda
                     <span id="tienda-pedidos-badge" class="badge rounded-pill bg-warning text-dark d-none position-absolute top-0 end-0" style="font-size:0.6rem;">0</span>
                 </button>
             </li>
@@ -93,28 +93,28 @@
             <!-- ⚙️ HERRAMIENTAS -->
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
-                    <i class="bi bi-tools me-1"></i>Herramientas
+                    <i class="bi bi-tools me-1" translate="no"></i>Herramientas
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li><h6 class="dropdown-header text-muted small">DATOS</h6></li>
                     <li><a class="dropdown-item" id="importar-exportar-tab" data-bs-toggle="tab" data-bs-target="#herramientas-tab-pane" href="#" role="tab">
-                        <i class="bi bi-file-earmark-excel me-2 text-success"></i>Importar / Exportar Excel</a></li>
+                        <i class="bi bi-file-earmark-excel me-2 text-success" translate="no"></i>Importar / Exportar Excel</a></li>
                     <li><a class="dropdown-item" id="copias-seguridad-tab" data-bs-toggle="tab" data-bs-target="#herramientas-tab-pane" href="#" role="tab">
-                        <i class="bi bi-cloud-arrow-up me-2 text-info"></i>Copias de Seguridad</a></li>
+                        <i class="bi bi-cloud-arrow-up me-2 text-info" translate="no"></i>Copias de Seguridad</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><h6 class="dropdown-header text-muted small">SISTEMA</h6></li>
                     <li><a class="dropdown-item" id="conf-config-tab" data-bs-toggle="tab" data-bs-target="#conf-config-tab-pane" href="#" role="tab">
-                        <i class="bi bi-palette me-2 text-secondary"></i>Apariencia e Idioma</a></li>
+                        <i class="bi bi-palette me-2 text-secondary" translate="no"></i>Apariencia e Idioma</a></li>
                     <li><a class="dropdown-item" id="herramientas-tab" data-bs-toggle="tab" data-bs-target="#herramientas-tab-pane" href="#" role="tab">
-                        <i class="bi bi-wrench-adjustable me-2 text-warning"></i>Mantenimiento</a></li>
+                        <i class="bi bi-wrench-adjustable me-2 text-warning" translate="no"></i>Mantenimiento</a></li>
                     <li><a class="dropdown-item" id="licencias-tab" data-bs-toggle="tab" data-bs-target="#licencias-tab-pane" href="#" role="tab">
-                        <i class="bi bi-shield-check me-2 text-danger"></i>Licencias</a></li>
+                        <i class="bi bi-shield-check me-2 text-danger" translate="no"></i>Licencias</a></li>
                     <li><a class="dropdown-item" id="privilegios-tab" data-bs-toggle="tab" data-bs-target="#privilegios-tab-pane" href="#" role="tab" style="display:none">
-                        <i class="bi bi-shield-lock-fill me-2 text-primary"></i>Privilegios</a></li>
+                        <i class="bi bi-shield-lock-fill me-2 text-primary" translate="no"></i>Privilegios</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><h6 class="dropdown-header text-muted small">SEGURIDAD</h6></li>
                     <li><a class="dropdown-item" id="seguridad-tab" data-bs-toggle="tab" data-bs-target="#seguridad-tab-pane" href="#" role="tab">
-                        <i class="bi bi-shield-shaded me-2 text-success"></i>Blindajes</a></li>
+                        <i class="bi bi-shield-shaded me-2 text-success" translate="no"></i>Blindajes</a></li>
                 </ul>
             </li>
         </ul>

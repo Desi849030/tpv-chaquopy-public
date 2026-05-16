@@ -1,3 +1,4 @@
+class SmartExcelImporter {
 // smart_excel_importer.js -- Core: clase SmartExcelImporter
 // smart_excel_importer.js — Importación inteligente Excel: análisis automático, auto-categorización, memoria de aprendizaje
             constructor() {

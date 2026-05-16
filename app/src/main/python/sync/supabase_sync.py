@@ -158,7 +158,7 @@ def sincronizar_todo() -> dict:
         ventas = [dict(r) for r in cursor.fetchall()]
         conn.close()
         if ventas:
-            from .supabase_sync import guardar_en_supabase
+            # (llamada directa) 
             resultados["ventas"] = guardar_en_supabase({"ventas": ventas})
             print("  Ventas sincronizadas")
     except Exception as e:
@@ -173,7 +173,7 @@ def sincronizar_todo() -> dict:
         stock = [dict(r) for r in cursor.fetchall()]
         conn.close()
         if stock:
-            from .supabase_sync import guardar_en_supabase
+            # (llamada directa) 
             resultados["inventario"] = guardar_en_supabase({"inventario": stock})
             print("  Inventario sincronizado")
     except Exception as e:

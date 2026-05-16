@@ -103,7 +103,7 @@
             })
             .catch(function(err) {
                 document.getElementById('seguridad-overall').innerHTML =
-                    '<i class="bi bi-exclamation-triangle-fill me-2"></i>Error cargando dashboard: ' + err.message;
+                    '<i class="bi bi-exclamation-triangle-fill me-2" translate="no"></i>Error cargando dashboard: ' + err.message;
                 document.getElementById('seguridad-overall').className = 'alert alert-danger mb-4 text-center';
             });
     }
@@ -117,7 +117,7 @@
             ? 'Todos los blindajes estan activos y operativos'
             : 'Algunos blindajes no estan completamente activos';
         el.className = 'alert mb-4 text-center ' + cls;
-        el.innerHTML = '<i class="bi bi-' + icon + ' me-2"></i><strong>' +
+        el.innerHTML = '<i class="bi bi-' + icon + ' me-2" translate="no"></i><strong>' +
             (isSecure ? 'ESTADO SEGURO' : 'ESTADO PARCIAL') + '</strong> — ' + text +
             '<br><small class="text-muted">Version ' + data.version + ' | ' + data.timestamp + '</small>';
     }
@@ -145,17 +145,17 @@
                 } else if (data.status) {
                     details = ' | ' + data.status;
                 }
-                el.innerHTML = '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>ACTIVO</span><span class="text-muted small ms-2">' + details + '</span>';
+                el.innerHTML = '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>ACTIVO</span><span class="text-muted small ms-2" translate="no">' + details + '</span>';
             } else {
-                el.innerHTML = '<span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>INACTIVO</span>';
+                el.innerHTML = '<span class="badge bg-danger"><i class="bi bi-x-circle me-1" translate="no"></i>INACTIVO</span>';
             }
         });
         var apiEl = document.getElementById('seguridad-api');
         if (apiEl) {
             var hasBlindajes = Object.keys(blindajes).length > 0;
             apiEl.innerHTML = hasBlindajes
-                ? '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>' + Object.keys(blindajes).length + ' endpoints activos</span>'
-                : '<span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>No disponibles</span>';
+                ? '<span class="badge bg-success"><i class="bi bi-check-circle me-1" translate="no"></i>' + Object.keys(blindajes).length + ' endpoints activos</span>'
+                : '<span class="badge bg-danger"><i class="bi bi-x-circle me-1" translate="no"></i>No disponibles</span>';
         }
     }
 
@@ -177,7 +177,7 @@
                         logEl.innerHTML = entries.map(function(e) {
                             var cls = e.success ? 'text-success' : 'text-danger';
                             return '<div class="d-flex justify-content-between border-bottom py-1">' +
-                                '<span class="' + cls + '"><i class="bi bi-' + (e.success ? 'check' : 'x') + '-circle me-1"></i>' + e.action + '</span>' +
+                                '<span class="' + cls + '"><i class="bi bi-' + (e.success ? 'check' : 'x') + '-circle me-1" translate="no"></i>' + e.action + '</span>' +
                                 '<span class="text-muted">' + (e.identifier || '') + '</span></div>';
                         }).join('');
                     }
@@ -194,7 +194,7 @@
                     container.style.display = 'block';
                     var list = alerts.alerts || [];
                     if (list.length === 0) {
-                        listEl.innerHTML = '<span class="text-success"><i class="bi bi-check-circle me-1"></i>Sin alertas. Todo limpio.</span>';
+                        listEl.innerHTML = '<span class="text-success"><i class="bi bi-check-circle me-1" translate="no"></i>Sin alertas. Todo limpio.</span>';
                     } else {
                         listEl.innerHTML = list.map(function(a) {
                             var cls = a.level === 'CRITICAL' ? 'danger' : 'warning';

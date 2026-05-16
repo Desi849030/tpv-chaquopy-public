@@ -9,7 +9,7 @@ ROLE_MISSIONS = {
         "inicio": ["Buenos días. Revise el stock bajo antes de empezar a vender."],
         "operativo": ["Recuerde ofrecer los productos con mayor margen de ganancia."],
         "cierre": ["Turno terminado. Verifique su arqueo de caja."],
-        "critico": ["ATENCION: Hay productos agotados. No los ofrezca al cliente."],
+        "critico": ["ATENCIÓN: Hay productos agotados. No los ofrezca al cliente."],
         "ayuda": ["Puedo ayudarle con: ventas, stock bajo, top productos, precios."]
     },
     "supervisor": {
@@ -36,7 +36,7 @@ ROLE_MISSIONS = {
 SCREEN_GUIDES = {
     "tpv-caja-tab-pane": "Punto de Venta. Escanee productos y procese el pago.",
     "dashboard-tab-pane": "Panel de Control. Vea el estado general del negocio.",
-    "inv-inventario-tab-pane": "Control de Stock. Gestione existencias y reoórdenes.",
+    "inv-inventario-tab-pane": "Control de Stock. Gestione existencias y reórdenes.",
     "gestión-productos-tab-pane": "Catalogo. Cree productos y ajuste precios.",
     "conf-config-tab-pane": "Configuracion. Ajuste parametros del sistema.",
     "privilegios-tab-pane": "Privilegios. Asigne roles y permisos a empleados."

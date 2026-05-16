@@ -14,7 +14,7 @@ Sistema de Punto de Venta Profesional con IA integrada, biometria, roles multini
 - Importacion Excel: Levenshtein fuzzy matching, 4 estrategias, validacion UTF-8
 - Tienda online: Clientes, pedidos, notificaciones, cola offline
 - Offline-first: WiFi local, IndexedDB + SQLite dual
-- Seguridad: Decoradores de rol, PCI-DSS, anti-fraud, scrypt hashing
+- Seguridad (9.5/10): SQLi, XSS, scrypt, JWT, RBAC, Rate Limiting, Headers, Auditoría
 - Licencias: Activacion con dias de prueba
 - Dashboard: KPIs animados, graficos Chart.js
 - Traduccion: Google Translate ES/EN
@@ -22,10 +22,10 @@ Sistema de Punto de Venta Profesional con IA integrada, biometria, roles multini
 
 ## Estadisticas
 
-- 142 tests pytest pasando
-- Backend modular: 10+ packages con facades
+- 142 tests unitarios + 38 simulación maestra + 7 stress test + 47 auditoría = 234 pruebas totales
+- Backend modular: 173 módulos Python, 47,059 líneas totales, 349 archivos + Agente Proactivo con monitoreo background
 - Frontend: 38 modulos JavaScript
-- IA: 150 herramientas en 17 categorias
+- IA Agentiva + Proactiva: 150 herramientas, 17 categorías, alertas automáticas, briefing
 
 ## Jerarquia de Roles
 

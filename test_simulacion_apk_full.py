@@ -123,6 +123,10 @@ def warn(name, condition, msg=""):
     if condition: print(f"  ⚠️ {name}: {msg}")
 
 def get_conn():
+    conn = sqlite3.connect('tpv_datos.db', timeout=30, isolation_level=None)
+    conn.execute('PRAGMA journal_mode=WAL')
+    conn.execute('PRAGMA busy_timeout=10000')
+    return conn
     return sqlite3.connect('tpv_datos.db', timeout=10)
 
 # ============================================================

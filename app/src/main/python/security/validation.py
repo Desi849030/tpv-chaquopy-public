@@ -139,14 +139,42 @@ _RUTAS_AUDIT = [
 
 
 
-def sanitize_input(val):
-    if val is None:
-        return "None"
-    text = str(val).strip()
-    import re
-    ctrl = chr(0) + "-" + chr(31) + chr(127)
-    text = re.sub("[" + re.escape(ctrl) + "]", "", text)
-    return text
+def sanitize_input(value):
+    """Sanitiza entrada de usuario contra SQLi y XSS"""
+    if not value:
+        return ""
+    if isinstance(value, (int, float)):
+        return str(value)
+    
+    value = str(value).strip()
+    
+    # Remove control characters (NULL, etc)
+    value = ''.join(ch for ch in value if ord(ch) >= 32 or ch == '\n' or ch == '\t')
+    
+    # Escape HTML entities
+    value = value.replace("&", "&amp;")
+    value = value.replace("<", "&lt;")
+    value = value.replace(">", "&gt;")
+    value = value.replace('"', "&quot;")
+    value = value.replace("'", "&#x27;")
+    
+    # Remove dangerous SQL patterns
+    dangerous = ["DROP", "UNION", "SELECT", "INSERT", "DELETE", "UPDATE", "--", "/*", "*/", "OR 1=1"]
+    for d in dangerous:
+        if d.lower() in value.lower():
+            value = value.replace(d, "")
+    
+    # Limit length
+    if len(value) > 255:
+        value = value[:255]
+    
+        # Remove event handlers (XSS)
+    event_handlers = ["onerror", "onload", "onclick", "onmouseover", "onfocus", "onblur", "onsubmit"]
+    for handler in event_handlers:
+        if handler.lower() in value.lower():
+            value = value.replace(handler, "")
+    
+    return value
 
 def validate_email(email):
     import re

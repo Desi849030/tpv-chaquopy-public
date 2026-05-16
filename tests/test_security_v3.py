@@ -45,7 +45,7 @@ class TestSecurity:
     def test_sanitize_string(self):
         from security import sanitize_input
         assert sanitize_input("  hola  ") == "hola"
-        assert sanitize_input(None) == "None"
+        assert sanitize_input(None) == ""  # Nuevo: devuelve vacío para None
         assert sanitize_input(42) == "42"
 
     def test_sanitize_control_chars(self):

@@ -36,6 +36,7 @@ BUSINESS_SYNONYMS = {
     'compra': ['compras', 'adquirir', 'proveedor', 'proveedores'],
     'ganancia': ['ganancias', 'beneficio', 'utilidad', 'rentabilidad'],
     'gasto': ['gastos', 'egreso', 'egresos'],
+    'gestión': ['gestiones', 'administración', 'manejo', 'control'],
     'reporte': ['reportes', 'informe', 'informes', 'estadística'],
     'alerta': ['alertas', 'aviso', 'avisos', 'notificación'],
     'descuento': ['descuentos', 'rebaja', 'promoción', 'ofertas'],

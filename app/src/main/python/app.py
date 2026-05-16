@@ -97,6 +97,21 @@ if _CARPETA and os.path.isdir(os.path.join(_CARPETA, 'templates')):
 elif not os.path.isdir(_TD):
     _TD = 'templates'
 app = Flask(__name__, static_folder=None, template_folder=_TD)
+@app.route("/dev/metrics")
+def dev_metrics_panel():
+    from flask import render_template, jsonify
+    from metrics.helpers import _ram_info, _storage_info, _inventario_formulas, _get_db_path
+    import os, time
+    
+    db = _get_db_path()
+    ram = _ram_info()
+    storage = _storage_info(db) if db else {}
+    inventario = _inventario_formulas(db) if db and os.path.exists(db) else {}
+    
+    return render_template("dev/dev_panel_metricas.html",
+        ram=ram, storage=storage, inventario=inventario,
+        timestamp=time.strftime("%Y-%m-%d %H:%M:%S"))
+
 app.config['JSON_AS_ASCII'] = False  # Soportar tildes en JSON
 app.secret_key = _SECRET_KEY
 app.json.ensure_ascii = False  # FIX: Flask >= 2.2

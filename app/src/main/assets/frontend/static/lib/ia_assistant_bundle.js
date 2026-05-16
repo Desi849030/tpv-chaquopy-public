@@ -65,7 +65,8 @@ var ROLE_ICONS = {desarrollador:'D',administrador:'A',supervisor:'S',vendedor:'V
 
 function cleanText(t){
     if(!t) return '';
-    return String(t).replace(/[^\x20-\x7E\n\r\t]/g, '');
+    // Mantener caracteres UTF-8 (tildes, eñes) - solo eliminar caracteres de control peligrosos
+    return String(t).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
 }
 
 function ce(t, a){
@@ -179,11 +180,11 @@ function getImmediateGreeting(role){
     if(role === 'desarrollador'){
         return saludo + nameStr + '! Soy tu asistente IA.\n\nCargando datos del sistema...\n\nMientras tanto puedes escribir lo que necesites.';
     } else if(role === 'administrador'){
-        return saludo + nameStr + '! Soy tu asistente IA.\n\nObteniendo resumen del negocio...\n\nPreguntame lo que necesites.';
+        return saludo + nameStr + '! Soy tu asistente IA.\n\nObteniendo resumen del negocio...\n\nPregúntame lo que necesites.';
     } else if(role === 'supervisor'){
-        return saludo + nameStr + '! Soy tu asistente IA.\n\nCargando metricas de tu equipo...\n\nEscribe en lenguaje natural.';
+        return saludo + nameStr + '! Soy tu asistente IA.\n\nCargando métricas de tu equipo...\n\nEscribe en lenguaje natural.';
     } else if(role === 'vendedor'){
-        return saludo + nameStr + '! Soy tu asistente IA.\n\nCargando ventas del dia...\n\nPreguntame sobre productos, precios o stock.';
+        return saludo + nameStr + '! Soy tu asistente IA.\n\nCargando ventas del día...\n\nPregúntame sobre productos, precios o stock.';
     } else {
         return saludo + nameStr + '! Bienvenido.\n\nBusca productos, consulta precios o pregunta lo que necesites.';
     }

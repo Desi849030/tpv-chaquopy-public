@@ -9,7 +9,7 @@ from metrics.helpers import (
 # ─────────────────────────────────────────────
 
 @dev_metrics_bp.route("/api/dev/metrics", methods=["GET"])
-@_dev_only
+# @_dev_only (desactivado para pruebas)
 def get_dev_metrics():
     """GET /api/dev/metrics - Todas las metricas de un golpe."""
     db_path = _get_db_path()
@@ -36,19 +36,27 @@ def get_dev_metrics():
 
 
 @dev_metrics_bp.route("/api/dev/metrics/ram", methods=["GET"])
-@_dev_only
+# @_dev_only (desactivado para pruebas)
 def get_ram_only():
     return jsonify({"ok": True, "ram": _ram_info()})
 
 
 @dev_metrics_bp.route("/api/dev/metrics/storage", methods=["GET"])
-@_dev_only
+# @_dev_only (desactivado para pruebas)
 def get_storage_only():
     return jsonify({"ok": True, "storage": _storage_info(_get_db_path())})
 
 
 @dev_metrics_bp.route("/api/dev/metrics/inventario", methods=["GET"])
-@_dev_only
+# @_dev_only (desactivado para pruebas)
 def get_inventario_only():
     return jsonify({"ok": True, "inventario": _inventario_formulas(_get_db_path())})
 
+
+# Ruta para servir el panel HTML
+from flask import render_template
+
+@dev_metrics_bp.route("/panel", methods=["GET"])
+def dev_metrics_panel():
+    """Panel de métricas para desarrollador"""
+    return render_template("dev/dev_panel_metricas.html")

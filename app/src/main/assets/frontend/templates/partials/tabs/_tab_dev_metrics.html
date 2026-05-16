@@ -1,0 +1,47 @@
+<div class="tab-pane fade" id="dev-metrics-tab-pane" role="tabpanel">
+    <div id="dev-metrics-panel" style="padding:12px">
+        <div id="dm-status" style="font-size:11px;color:#5a6a7a;text-align:center;margin-bottom:12px">cargando...</div>
+        
+        <div class="dm-card" style="background:#1a2332;border-radius:12px;padding:16px;margin-bottom:12px;border:1px solid rgba(0,206,201,.1)">
+            <h3 style="color:#00cec9;margin:0 0 8px 0;font-size:14px">🧠 RAM</h3>
+            <div class="dm-row" style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span>Proceso:</span> <span id="dm-ram-proceso" style="font-weight:600">--</span></div>
+            <div id="dm-ram-sys-wrap" style="display:none">
+                <div class="dm-row"><span>Sistema:</span> <span id="dm-ram-sys-pct" style="font-weight:600">--</span></div>
+                <div style="height:6px;background:#2a3a4a;border-radius:3px;margin:4px 0"><div id="dm-ram-bar" style="height:100%;border-radius:3px;background:#00cec9;width:0%"></div></div>
+                <div class="dm-row"><span>Total:</span> <span id="dm-ram-total">--</span></div>
+                <div class="dm-row"><span>Usado:</span> <span id="dm-ram-usado">--</span></div>
+                <div class="dm-row"><span>Libre:</span> <span id="dm-ram-libre">--</span></div>
+            </div>
+            <div id="dm-ram-fuente" style="font-size:10px;color:#5a6a7a">--</div>
+        </div>
+        
+        <div class="dm-card" style="background:#1a2332;border-radius:12px;padding:16px;margin-bottom:12px;border:1px solid rgba(0,206,201,.1)">
+            <h3 style="color:#00cec9;margin:0 0 8px 0;font-size:14px">💾 Almacenamiento</h3>
+            <div class="dm-row"><span>BD:</span> <span id="dm-db-size" style="font-weight:600">--</span></div>
+            <div id="dm-db-path" style="font-size:10px;color:#5a6a7a">--</div>
+            <div class="dm-row"><span>Disco:</span> <span id="dm-disco-pct" style="font-weight:600">--</span></div>
+            <div style="height:6px;background:#2a3a4a;border-radius:3px;margin:4px 0"><div id="dm-disco-bar" style="height:100%;border-radius:3px;background:#00cec9;width:0%"></div></div>
+            <div class="dm-row"><span>Total:</span> <span id="dm-disco-total">--</span></div>
+            <div class="dm-row"><span>Usado:</span> <span id="dm-disco-usado">--</span></div>
+            <div class="dm-row"><span>Libre:</span> <span id="dm-disco-libre">--</span></div>
+        </div>
+        
+        <div class="dm-card" style="background:#1a2332;border-radius:12px;padding:16px;margin-bottom:12px;border:1px solid rgba(0,206,201,.1)">
+            <h3 style="color:#00cec9;margin:0 0 8px 0;font-size:14px">📦 Inventario</h3>
+            <div class="dm-row"><span>Productos:</span> <span id="dm-inv-total" style="font-weight:600">--</span></div>
+            <div class="dm-row"><span>Unidades:</span> <span id="dm-inv-unidades" style="font-weight:600">--</span></div>
+            <div class="dm-row"><span>Sin stock:</span> <span id="dm-inv-sin-stock" style="font-weight:600">--</span></div>
+            <div class="dm-row"><span>Sin precio:</span> <span id="dm-inv-sin-precio" style="font-weight:600">--</span></div>
+            <div class="dm-row"><span>Inválidos:</span> <span id="dm-inv-invalidos" style="font-weight:600">--</span></div>
+            <div class="dm-row"><span>Valor venta:</span> <span id="dm-inv-valor-venta" style="font-weight:600">--</span></div>
+            <div class="dm-row"><span>Valor costo:</span> <span id="dm-inv-valor-costo" style="font-weight:600">--</span></div>
+            <div class="dm-row"><span>Ganancia:</span> <span id="dm-inv-ganancia" style="font-weight:600">--</span></div>
+            <div class="dm-row"><span>Margen:</span> <span id="dm-inv-margen-pct" style="font-weight:600">--</span></div>
+        </div>
+        
+        <div style="font-size:10px;color:#5a6a7a;text-align:center">
+            Uptime: <span id="dm-uptime">--</span> | <span id="dm-timestamp">--</span>
+        </div>
+    </div>
+    <script src="/static/js/tpv/tpv_dev_metrics.js"></script>
+</div>

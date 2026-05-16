@@ -8,7 +8,21 @@ function getTodayDateString(){
 async function saveState(){
     try{
         var s={productos:tpvState.productos||[],categorias:tpvState.categorias||[],inventarios:tpvState.inventarios||{}};
-        localStorage.setItem('tpv_state_backup',JSON.stringify(s));
+        
+        // Usar IndexedDB para más espacio (sin límite de 5MB)
+        if (window.indexedDB) {
+            var req = indexedDB.open('TPV_State', 1);
+            req.onupgradeneeded = function(e) {
+                e.target.result.createObjectStore('state', {keyPath: 'id'});
+            };
+            req.onsuccess = function(e) {
+                var db = e.target.result;
+                var tx = db.transaction('state', 'readwrite');
+                tx.objectStore('state').put({id: 'backup', data: s, ts: Date.now()});
+            };
+        }
+        // Fallback a localStorage
+        localStorage.setItem('tpv_state_backup', JSON.stringify(s));
         console.log('[Import] Estado persistido ('+s.productos.length+' productos)');
     }catch(e){console.warn('[saveState]',e)}
 }

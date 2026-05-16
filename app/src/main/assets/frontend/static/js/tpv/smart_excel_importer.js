@@ -1294,3 +1294,7 @@ class SmartExcelImporter {
         
         // ==================== FUNCIÓN DE IMPORTACIÓN MEJORADA ====================
 
+
+// Instanciar el importador global
+const smartExcelImporter = new SmartExcelImporter();
+const excelImportManager = smartExcelImporter;

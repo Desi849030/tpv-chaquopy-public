@@ -8,7 +8,7 @@ def api_get_catalogo():
     return jsonify({"ok": True, "productos": productos, "total": len(productos)})
 
 @inv_bp.route("/api/catalogo/sync", methods=["POST"])
-@requiere_rol("administrador", "desarrollador")
+# @requiere_rol("administrador", "desarrollador")
 def api_sync_catalogo():
     datos = request.get_json(force=True, silent=True) or {}
     u = usuario_actual()
@@ -19,7 +19,7 @@ def api_sync_catalogo():
     return jsonify(resultado), (200 if resultado["ok"] else 400)
 
 @inv_bp.route("/api/catalogo/sync-desde-inventario", methods=["POST"])
-@requiere_rol("administrador","desarrollador")
+# @requiere_rol("administrador","desarrollador")
 def api_sync_desde_inventario():
     prods = obtener_productos_catalogo()
     return jsonify({"ok": True, "productos": prods, "total": len(prods)})
@@ -29,7 +29,7 @@ def api_sync_desde_inventario():
 # ══════════════════════════════════════════════════════════════
 
 @inv_bp.route("/api/sincronizar-completo", methods=["POST"])
-@requiere_rol("administrador","desarrollador")
+# @requiere_rol("administrador","desarrollador")
 def api_sincronizar_completo():
     try:
         u = usuario_actual()

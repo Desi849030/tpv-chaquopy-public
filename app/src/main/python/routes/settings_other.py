@@ -1,3 +1,4 @@
+import queue
 from routes.settings_bp import settings_bp
 from routes.settings_helpers import *
 from routes.settings_supabase import _sse_clientes, _sse_lock, _sse_broadcast
@@ -8,7 +9,7 @@ from routes.settings_supabase import _sse_clientes, _sse_lock, _sse_broadcast
 def api_sse():
     u = usuario_actual()
     uid = u["usuario_id"]
-    q = _queue.Queue(maxsize=50)
+    q = queue.Queue(maxsize=50)
     with _sse_lock:
         _sse_clientes[uid] = q
     def gen():
@@ -18,7 +19,7 @@ def api_sse():
                 try:
                     msg = q.get(timeout=25)
                     yield msg
-                except _queue.Empty:
+                except queue.Empty:
                     yield ": heartbeat\n\n"
         except GeneratorExit:
             with _sse_lock:

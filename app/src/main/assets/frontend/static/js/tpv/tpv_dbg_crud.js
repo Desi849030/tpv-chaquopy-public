@@ -559,11 +559,36 @@ window._DBG_METRICAS = function() {
     cb.style.cssText = 'background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px;';
     cb.onclick = function() { m.remove(); };
     h.appendChild(cb);
+    var refreshBtn = document.createElement('button');
+    refreshBtn.textContent = '🔄 Actualizar';
+    refreshBtn.style.cssText = 'position:absolute;top:10px;right:50px;background:#00cec9;color:#000;border:none;padding:4px 12px;border-radius:6px;cursor:pointer;font-size:12px;z-index:1';
+    
     var fr = document.createElement('div');
     fr.id = 'dbg-metrics-content';
     fr.style.cssText = 'flex:1;border:none;width:100%;border-radius:0 0 12px 12px;padding:20px;color:#e0e0e0;overflow-y:auto;text-align:center';
     fr.innerHTML = '<span style="color:#5a6a7a">Cargando métricas...</span>';
-    p.appendChild(h); p.appendChild(fr); m.appendChild(p);
+    p.appendChild(h); p.appendChild(refreshBtn); p.appendChild(fr); m.appendChild(p);
+    
+    function cargarMetricas() {
+        fr.innerHTML = '<span style="color:#5a6a7a">Cargando...</span>';
+        fetch('/api/dev/metrics', {cache: 'no-store'})
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.ok && d.ram && fr) {
+                    fr.innerHTML = 
+                        '<b>🧠 RAM:</b> ' + d.ram.proceso_mb + ' MB | Sistema: ' + d.ram.sistema_pct + '%<br>' +
+                        '<b>💾 BD:</b> ' + (d.storage?.db_size_kb||'--') + ' KB | Disco: ' + (d.storage?.disco_pct||'--') + '%<br>' +
+                        '<b>📦 Productos:</b> ' + d.inventario.total_productos + ' | ' + d.inventario.total_unidades + ' unidades<br>' +
+                        '<b>💰 Ganancia:</b> ' + (d.inventario.ganancia_potencial||0).toFixed(2) + ' CUP | Margen: ' + d.inventario.margen_bruto_pct + '%';
+                }
+            })
+            .catch(function() {
+                if (fr) fr.innerHTML = '<span style="color:#e74c3c">Error de conexión</span>';
+            });
+    }
+    
+    refreshBtn.onclick = cargarMetricas;
+    cargarMetricas();
     
     // Cargar datos en tiempo real
     var xhr = new XMLHttpRequest();
@@ -614,6 +639,13 @@ window._DBG_METRICAS = function() {
         xhr2.send();
     }, 10000);
     m.addEventListener('click', function(e) { if (e.target === m) m.remove(); });
+    // Limpiar modal al cambiar de pestaña
+    document.querySelectorAll('.nav-link, .tab-pane').forEach(function(el) {
+        el.addEventListener('click', function() { 
+            var modal = document.getElementById('dbg-metricas-modal');
+            if (modal) modal.remove();
+        });
+    });
     document.body.appendChild(m);
 };
 

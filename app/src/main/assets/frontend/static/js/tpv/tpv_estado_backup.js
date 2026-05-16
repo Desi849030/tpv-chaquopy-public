@@ -66,10 +66,10 @@
         async function crear_backup_manual() {
             const success = await crear_backup_automatico('manual');
             if (success) {
-                showToast('Copia de seguridad creada exitosamente', 'success');
+                if(typeof showToast==='function')showToast('Copia de seguridad creada exitosamente', 'success');
                 actualizar_lista_backups();
             } else {
-                showToast('Error al crear la copia de seguridad', 'danger');
+                if(typeof showToast==='function')showToast('Error al crear la copia de seguridad', 'danger');
             }
         }
         
@@ -118,10 +118,10 @@
                     const backupData = JSON.parse(e.target.result);
                     tpvState = backupData.data;
                     await saveState();
-                    showToast('Copia de seguridad restaurada exitosamente', 'success');
+                    if(typeof showToast==='function')showToast('Copia de seguridad restaurada exitosamente', 'success');
                     location.reload();
                 } catch (error) {
-                    showToast('Error al restaurar la copia de seguridad', 'danger');
+                    if(typeof showToast==='function')showToast('Error al restaurar la copia de seguridad', 'danger');
                     console.error(error);
                 }
             };
@@ -137,10 +137,10 @@
                 const backupData = JSON.parse(localStorage.getItem(backupKey));
                 tpvState = backupData.data;
                 await saveState();
-                showToast('Copia de seguridad restaurada exitosamente', 'success');
+                if(typeof showToast==='function')showToast('Copia de seguridad restaurada exitosamente', 'success');
                 location.reload();
             } catch (error) {
-                showToast('Error al restaurar la copia de seguridad', 'danger');
+                if(typeof showToast==='function')showToast('Error al restaurar la copia de seguridad', 'danger');
                 console.error(error);
             }
         }

@@ -174,7 +174,7 @@
         document.addEventListener('DOMContentLoaded', async () => {
             // Solo cargamos el estado en memoria.
             // La UI se inicializa en _auth_mostrarApp() DESPUÉS del login.
-            await loadState();
+            if (typeof loadState === "function") await loadState();
             console.log('✅ TPV state cargado — esperando autenticación');
         });
 
@@ -183,7 +183,7 @@
             if (document.visibilityState === 'visible'
                 && Object.keys(tpvState).length === 0
                 && window.AUTH?.usuario) {
-                await loadState();
+                if (typeof loadState === "function") await loadState();
                 if (typeof initializeUI         === 'function') initializeUI();
                 conf_setLanguage(tpvState?.config?.lang || 'es').catch(function(){});
             }

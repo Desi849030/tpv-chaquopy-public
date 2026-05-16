@@ -22,7 +22,7 @@ async function catalogo_sincronizarAlServidor(){
             headers:{'Content-Type':'application/json'},
             body:JSON.stringify({productos:prods})
         });
-        if(r.ok){var d=await r.json();if(d.ok)showToast('Sincronizados '+(d.sincronizados||0)+' productos','success');}
+        if(r.ok){var d=await r.json();if(d.ok)if(typeof showToast==='function')showToast('Sincronizados '+(d.sincronizados||0)+' productos','success');}
     }catch(e){console.warn('[catalogo_sync]',e.message)}
 }
 

@@ -576,3 +576,10 @@
             startLicenseAutoCheck();
         });
         
+
+// Exportar funciones al scope global para WebView
+window.loadState = loadState;
+window.initializeUI = initializeUI;
+window.refreshAllUI = refreshAllUI;
+window.showToast = showToast;
+window.conf_setLanguage = conf_setLanguage;

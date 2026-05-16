@@ -23,7 +23,7 @@ class P:
         ).fetchall()
         if not rows:
             rows = c.execute(
-                "SELECT nombre, precio as precio, costoUnitario as costo, "
+                "SELECT nombre, precio as precio, precio_compra as costo, "
                 "categoria, stock_actual, unidad_medida as um FROM productos WHERE activo=1"
             ).fetchall()
         for r in rows:

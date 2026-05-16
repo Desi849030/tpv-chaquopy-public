@@ -77,8 +77,8 @@ public class MainActivity extends FragmentActivity {
         executor = ContextCompat.getMainExecutor(this);
         initBiometricPrompt();
         requestCameraPermission();
-        Python py = Python.getInstance();
-            new Thread(() -> {
+        new Thread(() -> {
+                Python py = Python.getInstance();
                 if (!Python.isStarted()) Python.start(new AndroidPlatform(MainActivity.this));
                 py.getModule("start_server");
             for (int i = 0; i < 40; i++) {

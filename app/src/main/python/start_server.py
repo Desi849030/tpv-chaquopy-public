@@ -109,6 +109,12 @@ for i in range(20):
         if i==29: _w("[ERROR] Flask TIMEOUT 15s")
 time.sleep(1)
 _w("[INFO] Cargando IA...")
+try:
+    from tools.i18n_builder import construir_diccionario
+    construir_diccionario()
+    _w("[INFO] Diccionario i18n actualizado")
+except Exception as e:
+    _w("[WARN] i18n builder: " + str(e))
 # IA: learning table via app.py
 # assistant_bp via app.py
 # ai_bp + analytics_bp via app.py

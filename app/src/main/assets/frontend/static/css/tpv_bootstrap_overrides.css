@@ -58,3 +58,37 @@
 .priv-icon.descuentos{background:#fff3e0}.priv-icon.supabase{background:#e8f5e9}
 .priv-icon.seguridad{background:#ffebee}.priv-icon.exportar{background:#e0f2f1}
 .priv-icon.copias{background:#efebe9}
+
+
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    white-space: nowrap;
+    padding-bottom: 2px;
+}
+
+    .ub-btn { padding: 3px 6px !important; font-size: 0.65rem !important; }
+    .ub-btn span { display: inline !important; }
+}
+
+/* === NAV TABS RESPONSIVE MOVIL === */
+.nav-tabs#main-nav-tabs {
+    display:flex; flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden;
+    -webkit-overflow-scrolling:touch; scrollbar-width:none;
+    white-space:nowrap; padding-bottom:2px; justify-content:flex-start !important;
+}
+.nav-tabs#main-nav-tabs::-webkit-scrollbar { display:none; }
+.nav-tabs#main-nav-tabs .nav-item { flex:0 0 auto !important; flex-shrink:0; }
+.nav-tabs#main-nav-tabs .nav-link { font-size:0.78rem; padding:0.4rem 0.6rem; }
+.nav-tabs#main-nav-tabs .dropdown-menu { min-width:200px; }
+.ub-btn { font-size:0.72rem !important; }
+.ub-btn span { font-size:0.68rem !important; }
+@media (max-width:576px) {
+    .ub-actions { gap:3px !important; flex-wrap:wrap; justify-content:center; }
+    .ub-btn { padding:3px 6px !important; font-size:0.65rem !important; }
+    .ub-btn span { display:inline !important; }
+    .nav-tabs#main-nav-tabs .nav-link { font-size:0.72rem; padding:0.35rem 0.5rem; }
+}

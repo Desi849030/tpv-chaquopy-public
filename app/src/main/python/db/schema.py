@@ -1,6 +1,7 @@
+from __future__ import annotations
+from db.indexes import crear_indices
 # -*- coding: utf-8 -*-
 """db/schema.py - Tablas TPV Smart."""
-from __future__ import annotations
 
 APP_STATE = """CREATE TABLE IF NOT EXISTS app_state (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -337,3 +338,5 @@ def crear_tablas_schema(conn):
             cur.execute(sql)
         except Exception:
             pass
+
+    crear_indices(conn)

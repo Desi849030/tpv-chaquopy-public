@@ -18,3 +18,14 @@
         document.addEventListener('DOMContentLoaded', function(){ setTimeout(check, 300); });
     } else { setTimeout(check, 300); }
 })();
+
+// === FIX: Agregar dev tabs a ACCESO_TABS si no existen ===
+(function() {
+    try {
+        if (typeof ACCESO_TABS === 'object' && ACCESO_TABS !== null) {
+            ACCESO_TABS['dev-metrics-tab'] = ['desarrollador','administrador'];
+            ACCESO_TABS['dev-logs-tab'] = ['desarrollador','administrador'];
+            ACCESO_TABS['dev-api-tab'] = ['desarrollador','administrador'];
+        }
+    } catch(e) { console.warn('[FIX] Error agregando dev tabs:', e); }
+})();

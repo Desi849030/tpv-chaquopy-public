@@ -70,6 +70,7 @@ from loyalty_routes import loyalty_bp
 from api_routes import api_bp
 from license_routes import lic_bp
 from dev_metrics import dev_metrics_bp
+from i18n_routes import i18n_bp
 from diccionario_tpv import diccionario_bp
 try:
     from validacion_routes import val_bp
@@ -136,6 +137,10 @@ if assistant_bp: app.register_blueprint(assistant_bp)
 if val_bp: app.register_blueprint(val_bp)
 if ai_bp: app.register_blueprint(ai_bp)
 if analytics_bp: app.register_blueprint(analytics_bp)
+# FIX: Importar rutas del API de métricas antes de registrar blueprint
+try:
+    import metrics  # registra /api/dev/metrics, /api/dev/metrics/ram, etc.
+except ImportError: print("metrics module no disponible")
 if dev_metrics_bp: app.register_blueprint(dev_metrics_bp)
 # Agente proactivo
 try:
@@ -144,7 +149,19 @@ except ImportError:
     proactive_bp = None
 if proactive_bp: app.register_blueprint(proactive_bp)
 if diccionario_bp: app.register_blueprint(diccionario_bp)
+if i18n_bp: app.register_blueprint(i18n_bp)
 
+
+
+@app.after_request
+def force_utf8_charset(response):
+    """Forzar charset UTF-8 en todas las respuestas HTML y JSON"""
+    ct = response.headers.get("Content-Type", "")
+    if "text/html" in ct and "charset" not in ct:
+        response.headers["Content-Type"] = "text/html; charset=utf-8"
+    elif "application/json" in ct and "charset" not in ct:
+        response.headers["Content-Type"] = "application/json; charset=utf-8"
+    return response
 
 @app.after_request
 def add_security_headers(response):
@@ -371,3 +388,20 @@ if __name__ == "__main__":
 
 
 # ── Biometric ──
+@app.route("/api/i18n/<lang>")
+def get_translations(lang):
+    from i18n_dict import t, available_languages
+    if lang not in available_languages():
+        return jsonify({"error": "Idioma no soportado", "available": available_languages()}), 400
+    return jsonify({"lang": lang, "translations": {k: t(k, lang) for k in TRANSLATIONS.get(lang, {})}})
+
+
+@app.route("/api/sync/status")
+def sync_status():
+    from sync.async_sync import get_sync_status
+    return jsonify(get_sync_status())
+
+@app.route("/api/sync/now")
+def sync_now():
+    from sync.async_sync import sync_in_background
+    return jsonify(sync_in_background())

@@ -1,9 +1,9 @@
-// tpv_traduccion_i18n.js — Google Translate bidireccional ES/EN con persistencia
-var TPV_LANG_KEY = 'tpv_idioma_seleccionado'; // 'es' | 'en'
-var _gtListo     = false;
-var _gtPendiente = null; // idioma pendiente de aplicar cuando GT cargue
+// tpv_traduccion_i18n.js - Sistema i18n NATIVO (sin Google Translate)
+// Usa el diccionario TPV_I18N de tpv_i18n_dict.js + endpoint Python /api/i18n/dict
+// v5 - Reemplaza Google Translate completamente
 
-// ── Leer idioma guardado ─────────────────────────────────────
+var TPV_LANG_KEY = 'tpv_idioma_seleccionado';
+
 function _langGuardado() {
     try { return localStorage.getItem(TPV_LANG_KEY) || 'es'; } catch(e) { return 'es'; }
 }
@@ -11,7 +11,6 @@ function _langGuardar(lang) {
     try { localStorage.setItem(TPV_LANG_KEY, lang); } catch(e) {}
 }
 
-// ── Actualizar estilos de botones ────────────────────────────
 function _actualizarBotonesLang(lang) {
     var btnEs = document.getElementById('btn-lang-es');
     var btnEn = document.getElementById('btn-lang-en');
@@ -25,137 +24,61 @@ function _actualizarBotonesLang(lang) {
     }
 }
 
-// ── Aplicar Google Translate a un idioma ────────────────────
-function _aplicarGT(lang) {
-    var gtSelect = document.querySelector('.goog-te-combo');
-    if (gtSelect) {
-        gtSelect.value = lang === 'en' ? 'en' : '';
-        gtSelect.dispatchEvent(new Event('change'));
-        return true;
+function _aplicarIdiomaNativo(lang) {
+    if (typeof tpv_i18n_apply === 'function') {
+        tpv_i18n_apply(lang);
     }
-    return false;
+    _actualizarBotonesLang(lang);
+    _langGuardar(lang);
+    if (window.tpvState && window.tpvState.config) {
+        window.tpvState.config.lang = lang;
+    }
+    if (typeof refreshAllUI === 'function') {
+        setTimeout(function() { refreshAllUI(); }, 100);
+    }
+    console.log('[i18n] Idioma aplicado: ' + lang);
 }
 
-// ── Inicialización de Google Translate ──────────────────────
-function googleTranslateElementInit() {
-    new google.translate.TranslateElement({
-        pageLanguage: 'es',
-        includedLanguages: 'en,es',
-        layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
-        autoDisplay: false
-    }, 'google_translate_element');
-
-    _gtListo = true;
-
-    // Aplicar idioma guardado si es inglés
-    var saved = _langGuardado();
-    if (saved === 'en') {
-        // GT puede tardar un momento en renderizar el selector
-        var intentos = 0;
-        var intervalo = setInterval(function() {
-            intentos++;
-            if (_aplicarGT('en')) {
-                clearInterval(intervalo);
-                _actualizarBotonesLang('en');
+function _cargarDictServidor() {
+    fetch('/api/i18n/dict', { cache: 'no-store' })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data && window.TPV_I18N) {
+            if (data.es && window.TPV_I18N.es) {
+                for (var k in data.es) {
+                    if (!(k in window.TPV_I18N.es)) {
+                        window.TPV_I18N.es[k] = data.es[k];
+                    }
+                }
             }
-            if (intentos > 20) clearInterval(intervalo); // max 4 segundos
-        }, 200);
-    }
-
-    // Observar cambios de idioma desde el widget de GT
-    var _gtObserver = new MutationObserver(function() {
-        var cookie = document.cookie.match(/googtrans=([^;]+)/);
-        if (cookie) {
-            var lang = cookie[1].split('/').pop();
-            _actualizarBotonesLang(lang === 'en' ? 'en' : 'es');
-        }
-    });
-    _gtObserver.observe(document.body, { attributes: true, subtree: false });
-}
-
-// ── Cambiar a ESPAÑOL ────────────────────────────────────────
-function _setLangES() {
-    _langGuardar('es');
-    _actualizarBotonesLang('es');
-
-    // Limpiar cookies de GT
-    document.cookie = 'googtrans=; path=/; expires=' + new Date(0).toUTCString();
-    document.cookie = 'googtrans=; path=/; domain=.' + location.hostname + '; expires=' + new Date(0).toUTCString();
-
-    // Activar i18n interno en español
-    if (typeof conf_setLanguage === 'function') conf_setLanguage('es');
-
-    // Recargar para limpiar GT completamente
-    setTimeout(function() { location.reload(); }, 200);
-}
-
-// ── Cambiar a INGLÉS ─────────────────────────────────────────
-function _setLangEN() {
-    _langGuardar('en');
-    _actualizarBotonesLang('en');
-
-    // Activar i18n interno en inglés
-    if (typeof conf_setLanguage === 'function') conf_setLanguage('en');
-
-    if (navigator.onLine) {
-        // Con internet: usar GT
-        if (_aplicarGT('en')) {
-            // GT ya estaba listo
-        } else {
-            // GT no ha cargado: forzar via cookie y recargar
-            document.cookie = 'googtrans=/es/en; path=/';
-            document.cookie = 'googtrans=/es/en; path=/; domain=.' + location.hostname;
-            setTimeout(function() { location.reload(); }, 200);
-        }
-    } else {
-        // Sin internet: mostrar aviso, guardar preferencia para cuando vuelva
-        if (typeof showToast === 'function') {
-            showToast('⚠️ Sin conexión. La traducción al inglés se aplicará cuando vuelva internet.', 'warning');
-        }
-        // Marcar cookie para que recargue cuando vuelva la conexión
-        document.cookie = 'googtrans=/es/en; path=/';
-        document.cookie = 'googtrans=/es/en; path=/; domain=.' + location.hostname;
-    }
-}
-
-// ── Cuando vuelve internet: aplicar traducción guardada ──────
-window.addEventListener('online', function() {
-    var saved = _langGuardado();
-    if (saved === 'en') {
-        var cookie = document.cookie.match(/googtrans=([^;]+)/);
-        var yaEn   = cookie && cookie[1].includes('/en');
-        if (!yaEn) {
-            document.cookie = 'googtrans=/es/en; path=/';
-            document.cookie = 'googtrans=/es/en; path=/; domain=.' + location.hostname;
-        }
-        if (typeof showToast === 'function') {
-            showToast('🌐 Conexión restaurada — aplicando traducción al inglés...', 'info');
-        }
-        setTimeout(function() {
-            if (!_aplicarGT('en')) {
-                location.reload();
-            } else {
-                _actualizarBotonesLang('en');
+            if (data.en && window.TPV_I18N.en) {
+                for (var k in data.en) {
+                    if (!(k in window.TPV_I18N.en)) {
+                        window.TPV_I18N.en[k] = data.en[k];
+                    }
+                }
             }
-        }, 800);
-    }
-});
+            console.log('[i18n] Diccionario servidor fusionado');
+        }
+    })
+    .catch(function() {});
+}
 
-// ── Al cargar la página: sincronizar botones con estado real──
-document.addEventListener('DOMContentLoaded', function() {
-    var saved  = _langGuardado();
-    var cookie = document.cookie.match(/googtrans=([^;]+)/);
-    var gtEn   = cookie && cookie[1].includes('/en');
+function _initI18n() {
+    var lang = _langGuardado();
+    _cargarDictServidor();
+    setTimeout(function() { _aplicarIdiomaNativo(lang); }, 500);
+}
 
-    // Reconciliar: si hay cookie EN pero guardado ES (o viceversa)
-    if (saved === 'en' && !gtEn && navigator.onLine) {
-        document.cookie = 'googtrans=/es/en; path=/';
-        document.cookie = 'googtrans=/es/en; path=/; domain=.' + location.hostname;
-    }
+function _setLangES() { _aplicarIdiomaNativo('es'); }
+function _setLangEN() { _aplicarIdiomaNativo('en'); }
 
-    _actualizarBotonesLang(saved);
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _initI18n);
+} else {
+    _initI18n();
+}
 
-    // Sincronizar selector interno conf-language-selector
-    var sel = document.getElementById('conf-language-selector');
-    if (sel) sel.value = saved === 'en' ? 'en' : 'es';
-});
+window._setLangES = _setLangES;
+window._setLangEN = _setLangEN;
+window._aplicarIdiomaNativo = _aplicarIdiomaNativo;

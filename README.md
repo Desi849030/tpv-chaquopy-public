@@ -8,7 +8,7 @@ Sistema de Punto de Venta Profesional con IA integrada, biometria, roles multini
 - Punto de venta: Catalogo, carrito, escaner QR, pagos, descuentos, tickets
 - Inventario: Stock diario, alertas bajo stock, cierres de caja, comisiones
 - Gestion de productos: CRUD completo, categorias, import/export Excel inteligente
-- IA Asistente: Motor NLP con 150 herramientas, intents, guardrails, memoria contextual
+- IA Asistente: Motor NLP con 13 herramientas + 5 skills + 150 endpoints, intents, guardrails, memoria contextual
 - Diccionario comercial: Sinonimos, definiciones, correccion ortografica offline
 - Panel dev metrics: RAM, disco, formulas inventario, KPIs en tiempo real
 - Importacion Excel: Levenshtein fuzzy matching, 4 estrategias, validacion UTF-8
@@ -22,10 +22,10 @@ Sistema de Punto de Venta Profesional con IA integrada, biometria, roles multini
 
 ## Estadisticas
 
-- 142 tests unitarios + 38 simulación maestra + 7 stress test + 47 auditoría = 234 pruebas totales
-- Backend modular: 173 módulos Python, 47,059 líneas totales, 349 archivos + Agente Proactivo con monitoreo background
-- Frontend: 38 modulos JavaScript
-- IA Agentiva + Proactiva: 150 herramientas, 17 categorías, alertas automáticas, briefing
+- 142 tests unitarios + 38 simulación maestra + 7 stress test + 47 auditoría = 679+ pruebas totales
+- Backend modular: 195 archivos Python, 33,718 líneas totales, 347 archivos + Agente Proactivo con monitoreo background
+- Frontend: 62 modulos JavaScript
+- IA Agentiva + Proactiva: 13 herramientas, 5 skills, 17 categorías, alertas automáticas, briefing
 
 ## Jerarquia de Roles
 
@@ -77,7 +77,7 @@ Push a main dispara build automatico en GitHub Actions (tests + APK).
 - IA: NLP engine, intents, fuzzy matching, 150 tools
 - Cache: IndexedDB + SQLite dual sync
 - Cloud: Supabase (opcional)
-- Testing: pytest (142 tests)
+- Testing: pytest (679+ pruebas)
 
 ## Documentacion
 

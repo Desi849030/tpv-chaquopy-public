@@ -315,19 +315,19 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="ub-actions">
             <button id="btn-licencias" class="ub-btn d-none" onclick="lic_abrir()"
                     style="background:rgba(124,58,237,.25);border-color:rgba(124,58,237,.5)">
-                <i class="bi bi-key-fill me-1"></i><span class="d-none d-sm-inline">Licencias</span>
+                <i class="bi bi-key-fill me-1"></i><span>Licencias</span>
             </button>
             <button id="btn-usuarios" class="ub-btn d-none" onclick="auth_abrirUsuarios()">
-                <i class="bi bi-people-fill me-1"></i><span class="d-none d-sm-inline">Usuarios</span>
+                <i class="bi bi-people-fill me-1"></i><span>Usuarios</span>
             </button>
             <button id="btn-debug-toggle" class="ub-btn d-none"
                     onclick="if(window.tpvDebugger)tpvDebugger.activar();else window._dbg_mostrar()"
                     style="background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.4)"
                     title="Mostrar/Ocultar panel de debug">
-                <i class="bi bi-bug-fill me-1"></i><span class="d-none d-sm-inline" id="btn-debug-label">Debug</span>
+                <i class="bi bi-bug-fill me-1"></i><span id="btn-debug-label">Debug</span>
             </button>
             <button class="ub-btn out" onclick="auth_logout()">
-                <i class="bi bi-box-arrow-right me-1"></i><span class="d-none d-sm-inline">Salir</span>
+                <i class="bi bi-box-arrow-right me-1"></i><span>Salir</span>
             </button>
         </div>
     </div>`;

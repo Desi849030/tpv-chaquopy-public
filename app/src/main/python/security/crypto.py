@@ -60,10 +60,21 @@ _SQLI_PATTERNS = ["';", "--", "/*", "*/", "xp_", "UNION ", "SELECT ", "INSERT ",
 def _get_key():
     global _OBFUSC_KEY
     if _OBFUSC_KEY is None:
-        try:
+        _key_file = os.path.join(os.environ.get("TPV_FILES_DIR", os.getcwd()), ".tpv_crypto_key")
+        if os.path.exists(_key_file):
+            try:
+                with open(_key_file, "r") as _kf:
+                    _OBFUSC_KEY = _kf.read().strip()
+            except Exception:
+                pass
+        if not _OBFUSC_KEY:
             _OBFUSC_KEY = uuid.uuid4().hex[:32]
-        except Exception:
-            _OBFUSC_KEY = "tpv_ultra_smart_default_key_32"
+            try:
+                with open(_key_file, "w") as _kf:
+                    _kf.write(_OBFUSC_KEY)
+                os.chmod(_key_file, 0o600)
+            except Exception:
+                pass
     return _OBFUSC_KEY
 
 

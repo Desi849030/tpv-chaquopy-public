@@ -9,6 +9,7 @@ from db_connection import obtener_conexion, agregar_log, DB_FILE
 from db_users import _crear_desarrollador_default
 
 from db.schema import crear_tablas_schema
+from db.indexes import crear_indices
 from db_connection import obtener_conexion
 from db_users import _crear_desarrollador_default
 
@@ -20,6 +21,7 @@ from db_connection import obtener_conexion, agregar_log, DB_FILE
 from db_users import _crear_desarrollador_default
 
 from db.schema import crear_tablas_schema
+from db.indexes import crear_indices
 from db_connection import obtener_conexion
 from db_users import _crear_desarrollador_default
 
@@ -28,6 +30,8 @@ __all__ = ['crear_tablas', 'crear_licencia', 'listar_licencias', 'verificar_lice
 def crear_tablas():
     conn = obtener_conexion()
     crear_tablas_schema(conn)
+    try: crear_indices(conn)
+    except Exception: pass
     try: _crear_desarrollador_default(conn)
     except Exception: pass
     conn.close()

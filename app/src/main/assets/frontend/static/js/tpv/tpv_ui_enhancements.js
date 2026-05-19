@@ -20,7 +20,7 @@ function initDarkMode(){
     var isDark = document.body.classList.contains('dark-mode');
     localStorage.setItem('tpv_darkmode', isDark);
     btn.innerHTML = isDark ? '&#9790;' : '&#9728;';
-  btn.style.cssText = 'position:fixed!important;top:auto!important;bottom:80px!important;right:16px;z-index:1040!important;width:40px;height:40px;border-radius:50%;border:none;background:var(--bs-secondary,#6c757d);color:#fff;font-size:18px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);';
+  // duplicate removed
   btn.style.cssText = 'position:fixed;bottom:80px;right:16px;z-index:9990;width:40px;height:40px;border-radius:50%;border:none;background:var(--bs-secondary,#6c757d);color:#fff;font-size:18px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);';
   document.body.appendChild(btn);
 }
@@ -135,31 +135,13 @@ function checkStockNotifications(){
 
 /* ── ORGANIZE SUBMENUS ── */
 function organizeSubmenus(){
-  // Agregar iconos a los dropdowns
-  var iconMap = {
-    'tpv-caja-tab': '&#128230; Catálogo POS',
-    'gestion-productos-tab': '&#128221; Gestionar Productos',
-    'gestion-categorias-tab': '&#128193; Categorías',
-    'cliente-qr-tab': '&#128243; QR Cliente',
-    'dashboard-tab': '&#128200; Dashboard',
-    'orden-actual-tab': '&#128230; Orden Actual',
-    'ventas-hoy-tab': '&#128176; Ventas Hoy',
-    'nom-nomenclador-tab': '&#128196; Nomenclador',
-    'exportar-ventas-tab': '&#128229; Exportar',
-    'inv-inventario-tab': '&#128218; Inventario',
-    'registros-tab': '&#128203; Registros',
-    'tienda-tab': '&#127978; Tienda',
-    'importar-exportar-tab': '&#128228; Importar/Exportar',
-    'copias-seguridad-tab': '&#128190; Backups'
-  };
+  // NO reemplazar innerHTML — los items ya tienen iconos y texto correctos.
+  // Solo agregar translate="no" si falta, para evitar que GT se coma el texto.
   document.querySelectorAll('.dropdown-item[id$="-tab"]').forEach(function(item){
-    var id = item.id;
-    if(iconMap[id] && !item.querySelector('.bi')){
-      // Preservar active class
-      var wasActive = item.classList.contains('active');
-      item.innerHTML = iconMap[id];
-      if(wasActive) item.classList.add('active');
-    }
+    if (!item.hasAttribute('translate')) item.setAttribute('translate', 'no');
+  });
+  document.querySelectorAll('.nav-link[data-bs-toggle="dropdown"]').forEach(function(item){
+    if (!item.hasAttribute('translate')) item.setAttribute('translate', 'no');
   });
 }
 

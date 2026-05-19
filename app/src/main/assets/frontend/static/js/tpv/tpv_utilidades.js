@@ -1,3 +1,8 @@
+// === DEBOUNCE ===
+function debounce(fn,ms){var t;return function(){var ctx=this,a=arguments;clearTimeout(t);t=setTimeout(function(){fn.apply(ctx,a)},ms);};}
+// === SKELETON ===
+function showSkeleton(el,n){if(!el)return;var h="";for(var i=0;i<(n||3);i++)h+='<div class="sk-text w'+[80,60,100,40][i%4]+' skeleton"></div>';el.innerHTML=h;}
+function hideSkeleton(el,html){if(el)el.innerHTML=html||"";}
 // tpv_utilidades.js — Helpers: logs, copiar texto, eliminaciones
         function agregar_log(mensaje, tipo = 'info') {
             const timestamp = new Date().toISOString();

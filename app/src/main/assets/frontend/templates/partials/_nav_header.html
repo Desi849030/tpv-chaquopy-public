@@ -1,3 +1,21 @@
+<!-- FIX: Protección contra Google Translate en navegación -->
+<style id="FIX_GT_NAV_PROTECTION">
+#main-nav-tabs,
+#main-nav-tabs * {
+    font-family: inherit !important;
+}
+#main-nav-tabs .nav-link,
+#main-nav-tabs .dropdown-item,
+#main-nav-tabs .dropdown-header,
+#main-nav-tabs .dropdown-toggle {
+    display: inline-flex !important;
+    align-items: center !important;
+}
+#main-nav-tabs font {
+    display: contents !important;
+    font: inherit !important;
+}
+</style>
     <!-- Contenedor Principal de la App -->
     <div class="container py-3" id="tpv-app" style="display:none">
         <!-- HEADER -->
@@ -18,18 +36,18 @@
         </header>
         
         <!-- Pestañas de Navegación -->
-        <ul class="nav nav-tabs nav-fill mb-3" id="main-nav-tabs" role="tablist">
+        <ul class="nav nav-tabs mb-3" id="main-nav-tabs" role="tablist">
 
             <!-- 📦 CATÁLOGO -->
             <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle active" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
-                    <i class="bi bi-grid-3x3-gap-fill me-1"></i><span data-i18n="menu_catalog" translate="no">Catálogo</span>
+                <a class="nav-link dropdown-toggle active" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false" translate="no">
+                    <i class="bi bi-grid-3x3-gap-fill me-1"></i><span>Catálogo</span>
                 </a>
                 <ul class="dropdown-menu">
                     <li><a class="dropdown-item active" id="tpv-caja-tab" data-bs-toggle="tab" data-bs-target="#tpv-caja-tab-pane" href="#" role="tab">
                         <i class="bi bi-grid-3x3-gap-fill me-2 text-primary" translate="no"></i>Vista de Venta</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><h6 class="dropdown-header text-muted small">GESTIÓN</h6></li>
+                    <li><h6 class="dropdown-header text-muted small" translate="no">GESTIÓN</h6></li>
                     <li><a class="dropdown-item" id="gestion-productos-tab" data-bs-toggle="tab" data-bs-target="#gestion-productos-tab-pane" href="#" role="tab">
                         <i class="bi bi-journal-album me-2 text-secondary" translate="no"></i>Productos</a></li>
                     <li><a class="dropdown-item" id="gestion-categorias-tab" data-bs-toggle="tab" data-bs-target="#gestion-categorias-tab-pane" href="#" role="tab">
@@ -56,7 +74,7 @@
 
             <!-- 💰 VENTAS -->
             <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
+                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false" translate="no">
                     <i class="bi bi-currency-dollar me-1" translate="no"></i>Ventas
                 </a>
                 <ul class="dropdown-menu">
@@ -71,7 +89,7 @@
 
             <!-- 📋 REGISTROS -->
             <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
+                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false" translate="no">
                     <i class="bi bi-archive-fill me-1" translate="no"></i>Registros
                 </a>
                 <ul class="dropdown-menu">
@@ -92,17 +110,17 @@
 
             <!-- ⚙️ HERRAMIENTAS -->
             <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
+                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false" translate="no">
                     <i class="bi bi-tools me-1" translate="no"></i>Herramientas
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    <li><h6 class="dropdown-header text-muted small">DATOS</h6></li>
+                    <li><h6 class="dropdown-header text-muted small" translate="no">DATOS</h6></li>
                     <li><a class="dropdown-item" id="importar-exportar-tab" data-bs-toggle="tab" data-bs-target="#herramientas-tab-pane" href="#" role="tab">
                         <i class="bi bi-file-earmark-excel me-2 text-success" translate="no"></i>Importar / Exportar Excel</a></li>
                     <li><a class="dropdown-item" id="copias-seguridad-tab" data-bs-toggle="tab" data-bs-target="#herramientas-tab-pane" href="#" role="tab">
                         <i class="bi bi-cloud-arrow-up me-2 text-info" translate="no"></i>Copias de Seguridad</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><h6 class="dropdown-header text-muted small">SISTEMA</h6></li>
+                    <li><h6 class="dropdown-header text-muted small" translate="no">SISTEMA</h6></li>
                     <li><a class="dropdown-item" id="conf-config-tab" data-bs-toggle="tab" data-bs-target="#conf-config-tab-pane" href="#" role="tab">
                         <i class="bi bi-palette me-2 text-secondary" translate="no"></i>Apariencia e Idioma</a></li>
                     <li><a class="dropdown-item" id="herramientas-tab" data-bs-toggle="tab" data-bs-target="#herramientas-tab-pane" href="#" role="tab">
@@ -112,9 +130,17 @@
                     <li><a class="dropdown-item" id="privilegios-tab" data-bs-toggle="tab" data-bs-target="#privilegios-tab-pane" href="#" role="tab" style="display:none">
                         <i class="bi bi-shield-lock-fill me-2 text-primary" translate="no"></i>Privilegios</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><h6 class="dropdown-header text-muted small">SEGURIDAD</h6></li>
+                    <li><h6 class="dropdown-header text-muted small" translate="no">SEGURIDAD</h6></li>
                     <li><a class="dropdown-item" id="seguridad-tab" data-bs-toggle="tab" data-bs-target="#seguridad-tab-pane" href="#" role="tab">
                         <i class="bi bi-shield-shaded me-2 text-success" translate="no"></i>Blindajes</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><h6 class="dropdown-header text-muted small" translate="no">DESARROLLADOR</h6></li>
+                    <li><a class="dropdown-item" id="dev-metrics-tab" data-bs-toggle="tab" data-bs-target="#dev-metrics-tab-pane" href="#" role="tab">
+                        <i class="bi bi-activity me-2" style="color:#00cec9" translate="no"></i>Metricas del Sistema</a></li>
+                    <li><a class="dropdown-item" id="dev-logs-tab" data-bs-toggle="tab" data-bs-target="#dev-logs-tab-pane" href="#" role="tab">
+                        <i class="bi bi-terminal me-2 text-warning" translate="no"></i>Logs del Sistema</a></li>
+                    <li><a class="dropdown-item" id="dev-api-tab" data-bs-toggle="tab" data-bs-target="#dev-api-tab-pane" href="#" role="tab">
+                        <i class="bi bi-braces me-2 text-info" translate="no"></i>API Endpoints</a></li>
                 </ul>
             </li>
         </ul>

@@ -203,7 +203,7 @@
         // --- LÓGICA DE INVENTARIO ---
         function eliminar_backup_individual(backupKey) {
             if (confirm('¿Está seguro de eliminar esta copia de seguridad?')) {
-                localStorage.removeItem(backupKey);
+                tpvStorage.removeItem(backupKey);
                 showToast('Copia eliminada', 'info');
                 actualizar_lista_backups();
             }
@@ -211,8 +211,8 @@
         
         function eliminar_backups() {
             if (confirm('¿Está seguro de eliminar TODAS las copias de seguridad?')) {
-                const allBackups = Object.keys(localStorage).filter(key => key.startsWith('tpv_backup_'));
-                allBackups.forEach(key => localStorage.removeItem(key));
+                const allBackups = tpvStorage.keys().filter(key => key.startsWith('tpv_backup_'));
+                allBackups.forEach(key => tpvStorage.removeItem(key));
                 showToast('Todas las copias han sido eliminadas', 'warning');
                 actualizar_lista_backups();
             }

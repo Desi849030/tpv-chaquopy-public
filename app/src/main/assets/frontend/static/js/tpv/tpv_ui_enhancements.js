@@ -5,7 +5,7 @@ try{
 
 /* ── DARK MODE ── */
 function initDarkMode(){
-  var saved = localStorage.getItem('tpv_darkmode');
+  var saved = tpvStorage.getItem('tpv_darkmode');
   if(saved === 'true' || (!saved && window.matchMedia('(prefers-color-scheme:dark)').matches)){
     document.body.classList.add('dark-mode');
   }
@@ -18,7 +18,7 @@ function initDarkMode(){
   btn.onclick = function(){
     document.body.classList.toggle('dark-mode');
     var isDark = document.body.classList.contains('dark-mode');
-    localStorage.setItem('tpv_darkmode', isDark);
+    tpvStorage.setItem('tpv_darkmode', isDark);
     btn.innerHTML = isDark ? '&#9790;' : '&#9728;';
   // duplicate removed
   btn.style.cssText = 'position:fixed;bottom:80px;right:16px;z-index:9990;width:40px;height:40px;border-radius:50%;border:none;background:var(--bs-secondary,#6c757d);color:#fff;font-size:18px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);';

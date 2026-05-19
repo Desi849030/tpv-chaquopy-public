@@ -480,9 +480,9 @@
         function limpiar_memoria_aprendizaje() {
             if (confirm('⚠️ ¿Estás seguro de limpiar la memoria del sistema?\n\nEsto eliminará:\n• Configuraciones de importación aprendidas\n• Preferencias de exportación\n• Historial de estructuras\n\nEl sistema volverá a aprender desde cero.')) {
                 try {
-                    localStorage.removeItem('tpv_ultima_estructura');
-                    localStorage.removeItem('tpv_preferencias_exportacion');
-                    localStorage.removeItem('tpv_historial_estructuras');
+                    tpvStorage.removeItem('tpv_ultima_estructura');
+                    tpvStorage.removeItem('tpv_preferencias_exportacion');
+                    tpvStorage.removeItem('tpv_historial_estructuras');
                     
                     showToast('✅ Memoria del sistema limpiada correctamente', 'success');
                     console.log('🧹 Memoria de aprendizaje limpiada');

@@ -1,4 +1,42 @@
+#!/usr/bin/env python3
 """
+PATCH COMPLETO TPV UltraSmart v2.5.5
+=====================================
+Aplica TODOS los cambios pendientes:
+  1. metrics/helpers.py completo
+  2. metrics/__init__.py (con fallback)
+  3. tpv_storage.js (NUEVO - wrapper IndexedDB que reemplaza localStorage)
+  4. Reemplaza localStorage por tpvStorage en 17 archivos JS + 1 HTML
+
+Ejecutar en la raiz del repo:  python3 patch_completo.py
+"""
+import os, re, sys
+
+BASE = os.path.dirname(os.path.abspath(__file__))
+PY = os.path.join(BASE, 'app', 'src', 'main', 'python')
+JS = os.path.join(BASE, 'app', 'src', 'main', 'assets', 'frontend', 'static', 'js', 'tpv')
+TPL = os.path.join(BASE, 'app', 'src', 'main', 'assets', 'frontend', 'templates', 'partials')
+METRICS = os.path.join(PY, 'metrics')
+
+changed = 0
+skipped = 0
+
+def write_file(path, content):
+    global changed
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(content)
+    changed += 1
+    print("  [CREADO] " + os.path.relpath(path, BASE))
+
+print("=" * 60)
+print("PATCH COMPLETO TPV UltraSmart v2.5.5")
+print("=" * 60)
+
+# === 1. metrics/helpers.py ===
+print("\n[1/5] metrics/helpers.py")
+os.makedirs(METRICS, exist_ok=True)
+HELPERS = '''"""
 dev_metrics.py - Blueprint Flask para el panel de desarrollador
 Metricas en tiempo real: RAM, almacenamiento, formulas de inventario
 v2 corregido: usa inventario_general (schema real del TPV)
@@ -214,3 +252,165 @@ def _dev_only(func):
 def get_system_metrics():
     db_path = _get_db_path()
     return {"ram":_ram_info(),"storage":_storage_info(db_path),"inventario":_inventario_formulas(db_path),"db_path":db_path}
+'''
+write_file(os.path.join(METRICS, 'helpers.py'), HELPERS)
+
+# === 2. metrics/__init__.py ===
+print("\n[2/5] metrics/__init__.py")
+write_file(os.path.join(METRICS, '__init__.py'),
+    "try:\n    from .helpers import dev_metrics_bp\nexcept ImportError:\n    dev_metrics_bp = None\n\n"
+    "try:\n    from .routes import *\nexcept ImportError:\n    pass\n")
+
+# === 3. tpv_storage.js (NUEVO) ===
+print("\n[3/5] tpv_storage.js (NUEVO)")
+TPV_STORAGE = '''/**
+ * tpv_storage.js - IndexedDB wrapper que reemplaza localStorage
+ * Sin limite de 5MB, persistencia permanente, 100% offline.
+ */
+(function() {
+    'use strict';
+    var DB_NAME = 'tpv_keyvalue_store', DB_VERSION = 1, STORE_NAME = 'kv';
+    var _db = null, _dbPromise = null, _cache = {};
+
+    function _openDB() {
+        if (_db) return Promise.resolve(_db);
+        if (_dbPromise) return _dbPromise;
+        _dbPromise = new Promise(function(resolve, reject) {
+            var req = indexedDB.open(DB_NAME, DB_VERSION);
+            req.onupgradeneeded = function(e) {
+                var db = e.target.result;
+                if (!db.objectStoreNames.contains(STORE_NAME))
+                    db.createObjectStore(STORE_NAME, { keyPath: 'key' });
+            };
+            req.onsuccess = function(e) { _db = e.target.result; resolve(_db); };
+            req.onerror = function(e) { _dbPromise = null; reject(e.target.error); };
+        });
+        return _dbPromise;
+    }
+
+    function _loadAll() {
+        return _openDB().then(function(db) {
+            return new Promise(function(resolve) {
+                var tx = db.transaction(STORE_NAME, 'readonly');
+                var req = tx.objectStore(STORE_NAME).openCursor();
+                req.onsuccess = function(e) {
+                    var c = e.target.result;
+                    if (c) { _cache[c.value.key] = c.value.value; c.continue(); }
+                    else resolve();
+                };
+                req.onerror = function() { resolve(); };
+            });
+        }).catch(function() {});
+    }
+
+    function _put(key, val) {
+        _openDB().then(function(db) {
+            db.transaction(STORE_NAME, 'readwrite').objectStore(STORE_NAME).put({key:key, value:val});
+        });
+    }
+    function _del(key) {
+        _openDB().then(function(db) {
+            db.transaction(STORE_NAME, 'readwrite').objectStore(STORE_NAME).delete(key);
+        });
+    }
+
+    window.tpvStorage = {
+        init: function() { return _loadAll(); },
+        ready: false,
+        getItem: function(k) { return (k in _cache) ? _cache[k] : null; },
+        setItem: function(k, v) { _cache[k] = v; _put(k, v); },
+        removeItem: function(k) { delete _cache[k]; _del(k); },
+        getJSON: function(k) { var r = _cache[k]; if(r==null) return null; try{return JSON.parse(r);}catch(e){return null;} },
+        setJSON: function(k, o) { var s = JSON.stringify(o); _cache[k] = s; _put(k, s); },
+        keys: function(p) { var a = Object.keys(_cache); if(!p) return a; return a.filter(function(k){return k.indexOf(p)===0;}); },
+        removeByPrefix: function(p) { this.keys(p).forEach(function(k){delete _cache[k];_del(k);}); },
+        clear: function() { _cache = {}; _openDB().then(function(db){db.transaction(STORE_NAME,'readwrite').objectStore(STORE_NAME).clear();}); },
+        migrateFromLocalStorage: function() {
+            try { if(!window.localStorage) return; var m=0;
+                for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&!(k in _cache)){_cache[k]=localStorage.getItem(k);_put(k,_cache[k]);m++;}}
+                if(m>0) console.log('[tpvStorage] Migrados '+m+' keys desde localStorage');
+            } catch(e){}
+        }
+    };
+
+    tpvStorage.init().then(function() {
+        tpvStorage.migrateFromLocalStorage();
+        tpvStorage.ready = true;
+        console.log('[tpvStorage] IndexedDB lista - ' + Object.keys(_cache).length + ' claves');
+    });
+})();
+'''
+write_file(os.path.join(JS, 'tpv_storage.js'), TPV_STORAGE)
+
+# === 4. Reemplazar localStorage por tpvStorage ===
+print("\n[4/5] Reemplazar localStorage -> tpvStorage en JS")
+
+js_files = [
+    'tpv_estado_ui.js', 'tpv_estado_backup.js', 'tpv_licencias_activacion.js',
+    'tpv_boot_loader.js', 'tpv_config_central.js', 'tpv_traduccion_i18n.js',
+    'catalog_cache.js', 'tpv_ui_enhancements.js',
+    'tpv_auth_cliente.js', 'tpv_auth_main.js', 'tpv_sesion_polling.js',
+    'tpv_gestion_importer_ia.js', 'tpv_gestion_exports2.js',
+    'smart_excel_compat.js', 'smart_excel_importer.js',
+    'tpv_tienda_init.js', 'tpv_ventas_registros.js',
+]
+
+for fname in js_files:
+    fpath = os.path.join(JS, fname)
+    if not os.path.exists(fpath):
+        print("  [SKIP]   " + fname + " (no encontrado)"); continue
+    with open(fpath, 'r', encoding='utf-8') as f:
+        content = f.read()
+    if 'localStorage.' not in content:
+        print("  [OK]     " + fname + " (sin localStorage)"); continue
+    original = content
+    content = re.sub(r'JSON\.parse\(localStorage\.getItem\(([^)]+)\)\)', r'tpvStorage.getJSON(\1)', content)
+    content = re.sub(r'localStorage\.setItem\(([^,]+),\s*JSON\.stringify\(([^)]+)\)\)', r'tpvStorage.setJSON(\1, \2)', content)
+    content = re.sub(r"Object\.keys\(localStorage\)\.filter\(function\(k\)\s*\{\s*return k\.indexOf\(([^)]+)\)\s*===\s*0;\s*\}\)", r'tpvStorage.keys(\1)', content)
+    content = re.sub(r"Object\.keys\(localStorage\)\.filter\(function\(k\)\s*\{\s*return k\.startsWith\(([^)]+)\);\s*\}\)", r'tpvStorage.keys(\1)', content)
+    content = re.sub(r"Object\.keys\(localStorage\)\.filter\(k\s*=>\s*k\.startsWith\(([^)]+)\)\)", r'tpvStorage.keys(\1)', content)
+    content = re.sub(r"Object\.keys\(localStorage\)\.filter\(k\s*=>\s*k\.indexOf\(([^)]+)\)\s*===\s*0\)", r'tpvStorage.keys(\1)', content)
+    content = content.replace('localStorage.setItem(', 'tpvStorage.setItem(')
+    content = content.replace('localStorage.getItem(', 'tpvStorage.getItem(')
+    content = content.replace('localStorage.removeItem(', 'tpvStorage.removeItem(')
+    content = content.replace('Object.keys(localStorage)', 'tpvStorage.keys()')
+    if content != original:
+        with open(fpath, 'w', encoding='utf-8') as f:
+            f.write(content)
+        count = original.count('localStorage.') - content.count('localStorage.')
+        changed += 1
+        print("  [PATCH]  " + fname + " (" + str(count) + " reemplazos)")
+    else:
+        print("  [OK]     " + fname + " (sin cambios)")
+
+# === 5. _scripts.html ===
+print("\n[5/5] _scripts.html")
+scripts_path = os.path.join(TPL, '_scripts.html')
+if os.path.exists(scripts_path):
+    with open(scripts_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    original = content
+    if 'tpv_storage.js' not in content:
+        content = content.replace(
+            '<script src="/static/js/tpv/tpv_estado_shim.js"></script>',
+            '<script src="/static/js/tpv/tpv_estado_shim.js"></script>\n    <script src="/static/js/tpv/tpv_storage.js"></script>'
+        )
+    content = content.replace('localStorage.getItem(', 'tpvStorage.getItem(')
+    if content != original:
+        with open(scripts_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+        changed += 1
+        print("  [PATCH]  _scripts.html")
+    else:
+        print("  [OK]     _scripts.html (sin cambios)")
+else:
+    print("  [SKIP]   _scripts.html (no encontrado)")
+
+print("\n" + "=" * 60)
+print("RESUMEN: " + str(changed) + " archivos modificados/creados")
+print("\nSiguiente paso:")
+print("  cd ~/tpv-chaquopy")
+print("  python3 patch_completo.py")
+print("  rm -f tpv_datos.db")
+print("  python3 test_simulacion_apk_full.py")
+print("=" * 60)

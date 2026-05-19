@@ -9,7 +9,7 @@ async function _auth_init(intentos = 0) {
         const res  = await fetch('/api/auth/me', { signal: ctrl.signal, credentials: 'same-origin' });
         const data = await res.json();
         if (res.ok && data.autenticado && data.usuario) {
-            AUTH.usuario = data.usuario; localStorage.setItem("tpv_rol", data.usuario.rol || "vendedor"); localStorage.setItem("tpv_user", JSON.stringify(data.usuario));
+            AUTH.usuario = data.usuario; tpvStorage.setItem("tpv_rol", data.usuario.rol || "vendedor"); tpvStorage.setJSON("tpv_user", data.usuario);
             _auth_mostrarApp();
             return;
         }

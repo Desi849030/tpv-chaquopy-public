@@ -12,7 +12,7 @@
         var bootOk=false;
         var startTime=Date.now();
 
-        try{var sn=localStorage.getItem('tpv_custom_name');if(sn&&nameEl)nameEl.textContent=sn;}catch(e){}
+        try{var sn=tpvStorage.getItem('tpv_custom_name');if(sn&&nameEl)nameEl.textContent=sn;}catch(e){}
         function setS(t){if(status)status.textContent=t;}
         function setB(p){if(bar)bar.style.width=Math.min(p,100)+'%';}
         function hide(){
@@ -20,7 +20,7 @@
             if(!screen)return;
             screen.classList.add('fade-out');
             setTimeout(function(){screen.style.display='none';},400);
-            try{var sn=localStorage.getItem('tpv_custom_name');if(sn){var h=document.getElementById('tpv-custom-name');if(h)h.textContent=sn;}}catch(e){}
+            try{var sn=tpvStorage.getItem('tpv_custom_name');if(sn){var h=document.getElementById('tpv-custom-name');if(h)h.textContent=sn;}}catch(e){}
         }
         function scheduleHide(){
             var elapsed=Date.now()-startTime;
@@ -44,7 +44,7 @@
                             .then(function(rc){return rc.json();})
                             .then(function(d){var n=d&&(d.nombre_tienda||d.nombre);
                                 if(n){if(nameEl)nameEl.textContent=n;
-                                try{localStorage.setItem('tpv_custom_name',n);}catch(e){}}})
+                                try{tpvStorage.setItem('tpv_custom_name',n);}catch(e){}}})
                             .catch(function(){});
                         // v6.10.3 FIX: NO llamar scheduleHide() aqui.
                         // Solo tpv_auth.js debe esconder el splash cuando el login este listo.

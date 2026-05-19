@@ -745,13 +745,13 @@
                     };
                     
                     // Guardar en localStorage
-                    localStorage.setItem('tpv_ultima_estructura', JSON.stringify(config));
+                    tpvStorage.setJSON('tpv_ultima_estructura', config);
                     
                     // Guardar historial (últimas 10 configuraciones)
-                    let historial = JSON.parse(localStorage.getItem('tpv_historial_estructuras') || '[]');
+                    let historial = JSON.parse(tpvStorage.getItem('tpv_historial_estructuras') || '[]');
                     historial.unshift(config);
                     historial = historial.slice(0, 10); // Mantener solo últimas 10
-                    localStorage.setItem('tpv_historial_estructuras', JSON.stringify(historial));
+                    tpvStorage.setJSON('tpv_historial_estructuras', historial);
                     
                     if (this.DEBUG) {
                         console.log('💾 Configuración guardada en memoria:', config);
@@ -766,7 +766,7 @@
              */
             recuperarConfiguracionAprendida() {
                 try {
-                    const configStr = localStorage.getItem('tpv_ultima_estructura');
+                    const configStr = tpvStorage.getItem('tpv_ultima_estructura');
                     if (configStr) {
                         const config = JSON.parse(configStr);
                         if (this.DEBUG) {
@@ -1014,7 +1014,7 @@
              */
             guardarPreferenciasExportacion(preferencias) {
                 try {
-                    localStorage.setItem('tpv_preferencias_exportacion', JSON.stringify(preferencias));
+                    tpvStorage.setJSON('tpv_preferencias_exportacion', preferencias);
                     if (this.DEBUG) {
                         console.log('💾 Preferencias de exportación guardadas:', preferencias);
                     }
@@ -1028,7 +1028,7 @@
              */
             recuperarPreferenciasExportacion() {
                 try {
-                    const prefStr = localStorage.getItem('tpv_preferencias_exportacion');
+                    const prefStr = tpvStorage.getItem('tpv_preferencias_exportacion');
                     if (prefStr) {
                         return JSON.parse(prefStr);
                     }

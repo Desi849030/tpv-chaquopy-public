@@ -33,7 +33,7 @@
                 } catch(e) {}
                 // Fallback: usar clave derivada del clientId
                 if (!this._deviceKey) {
-                    const cid = (localStorage.getItem('tpv_client_id') || 'tpv-default-cid');
+                    const cid = (tpvStorage.getItem('tpv_client_id') || 'tpv-default-cid');
                     const encoder = new TextEncoder();
                     const data = encoder.encode('TPV-' + cid + '-v69');
                     const hashBuf = await crypto.subtle.digest('SHA-256', data);
@@ -55,7 +55,7 @@
             setEnvironment: function(env) {
                 if (env === 'development' || env === 'production') {
                     this.ENVIRONMENT = env;
-                    localStorage.setItem('tpv_environment', env);
+                    tpvStorage.setItem('tpv_environment', env);
                     if (this.CONFIG[env].debugMode) {
                         console.log(`🔧 Entorno cambiado a: ${env}`);
                     }
@@ -67,7 +67,7 @@
                 return this.ENVIRONMENT;
             },
             init: function() {
-                const savedEnv = localStorage.getItem('tpv_environment');
+                const savedEnv = tpvStorage.getItem('tpv_environment');
                 if (savedEnv && (savedEnv === 'development' || savedEnv === 'production')) {
                     this.ENVIRONMENT = savedEnv;
                 } else {

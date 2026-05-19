@@ -33,10 +33,10 @@ async function auth_logout() {
     // Limpiar panel debug al cerrar sesión
     if (typeof window._dbg_limpiar === 'function') window._dbg_limpiar();
     AUTH.usuario = null;
-    localStorage.removeItem("tpv_rol");
-    localStorage.removeItem("tpv_user");
-    localStorage.removeItem("tpv_rol");
-    localStorage.removeItem("tpv_user");
+    tpvStorage.removeItem("tpv_rol");
+    tpvStorage.removeItem("tpv_user");
+    tpvStorage.removeItem("tpv_rol");
+    tpvStorage.removeItem("tpv_user");
     // Resetear chat IA a Usuario
     if (typeof updateRoleDisplay === "function") updateRoleDisplay("cliente");
     _prevN = -1;

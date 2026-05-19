@@ -39,7 +39,7 @@
       var tx    = db.transaction(STORE_NAME, 'readwrite');
       var store = tx.objectStore(STORE_NAME);
       store.put({ key: CACHE_KEY, data: data, timestamp: Date.now() });
-      try{ localStorage.setItem(SYNC_KEY, new Date().toLocaleTimeString()); }catch(e){}
+      try{ tpvStorage.setItem(SYNC_KEY, new Date().toLocaleTimeString()); }catch(e){}
       console.log('[v25] IndexedDB: catálogo guardado (' + data.length + ' productos)');
     }).catch(function(e){
       console.warn('[v25] IndexedDB save falló:', e);
@@ -119,14 +119,14 @@
     if(existing) return;
     var bar = document.getElementById('user-bar');
     if(!bar) return;
-    var last = localStorage.getItem(SYNC_KEY) || 'Nunca';
+    var last = tpvStorage.getItem(SYNC_KEY) || 'Nunca';
     var span = document.createElement('span');
     span.id = 'sync-status';
     span.style.cssText = 'font-size:10px;color:#94a3b8;margin-left:6px;';
     span.textContent = '\uD83D\uDD04 ' + last;
     bar.appendChild(span);
     setInterval(function(){
-      var l = localStorage.getItem(SYNC_KEY);
+      var l = tpvStorage.getItem(SYNC_KEY);
       if(l) span.textContent = '\uD83D\uDD04 ' + l;
     }, 60000);
   }

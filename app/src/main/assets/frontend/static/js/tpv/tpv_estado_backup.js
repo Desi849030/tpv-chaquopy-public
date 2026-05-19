@@ -14,19 +14,19 @@
             if (unidad === 'segundos') {
                 // Actualizar cada segundo
                 licenseCheckInterval = setInterval(() => {
-        localStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
+        tpvStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
                     lic_checkLicense();
                 }, 1000);
             } else if (unidad === 'minutos') {
                 // Actualizar cada 10 segundos
                 licenseCheckInterval = setInterval(() => {
-        localStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
+        tpvStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
                     lic_checkLicense();
                 }, 10000);
             } else {
                 // Para días, actualizar cada 5 minutos
                 licenseCheckInterval = setInterval(() => {
-        localStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
+        tpvStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
                     lic_checkLicense();
                 }, 300000);
             }
@@ -45,13 +45,13 @@
                 
                 // Guardar en localStorage
                 const backupKey = `tpv_backup_${timestamp}`;
-                localStorage.setItem(backupKey, JSON.stringify(backupData));
+                tpvStorage.setJSON(backupKey, backupData);
                 
                 // Mantener solo las últimas 10 copias
-                const allBackups = Object.keys(localStorage).filter(key => key.startsWith('tpv_backup_'));
+                const allBackups = tpvStorage.keys().filter(key => key.startsWith('tpv_backup_'));
                 if (allBackups.length > 10) {
                     allBackups.sort().slice(0, allBackups.length - 10).forEach(key => {
-                        localStorage.removeItem(key);
+                        tpvStorage.removeItem(key);
                     });
                 }
                 
@@ -74,10 +74,10 @@
         }
         
         function actualizar_lista_backups() {
-            const allBackups = Object.keys(localStorage)
+            const allBackups = tpvStorage.keys()
                 .filter(key => key.startsWith('tpv_backup_'))
                 .map(key => {
-                    const data = JSON.parse(localStorage.getItem(key));
+                    const data = tpvStorage.getJSON(key);
                     return {
                         key: key,
                         timestamp: data.timestamp,
@@ -134,7 +134,7 @@
             }
             
             try {
-                const backupData = JSON.parse(localStorage.getItem(backupKey));
+                const backupData = tpvStorage.getJSON(backupKey);
                 tpvState = backupData.data;
                 await saveState();
                 if(typeof showToast==='function')showToast('Copia de seguridad restaurada exitosamente', 'success');

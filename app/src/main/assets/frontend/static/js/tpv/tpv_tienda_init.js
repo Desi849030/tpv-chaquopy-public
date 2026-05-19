@@ -423,11 +423,11 @@ async function tienda_registrarCliente() {
 }
 
 function tienda_guardarClienteLocal(cliente) {
-    try { localStorage.setItem('tienda_cliente_actual', JSON.stringify(cliente)); } catch(e) {}
+    try { tpvStorage.setJSON('tienda_cliente_actual', cliente); } catch(e) {}
 }
 function tienda_cargarClienteLocal() {
     try {
-        const c = localStorage.getItem('tienda_cliente_actual');
+        const c = tpvStorage.getItem('tienda_cliente_actual');
         return c ? JSON.parse(c) : null;
     } catch(e) { return null; }
 }
@@ -435,7 +435,7 @@ function tienda_logoutCliente() {
     TPV_TIENDA.clienteActual = null;
     TPV_TIENDA.carrito = [];
     TPV_TIENDA.tiendaSeleccionada = null;
-    try { localStorage.removeItem('tienda_cliente_actual'); } catch(e) {}
+    try { tpvStorage.removeItem('tienda_cliente_actual'); } catch(e) {}
     tienda_renderBienvenida();
     showToast('Sesión cerrada', 'info');
 }

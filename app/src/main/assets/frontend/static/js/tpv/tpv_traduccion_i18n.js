@@ -5,10 +5,10 @@
 var TPV_LANG_KEY = 'tpv_idioma_seleccionado';
 
 function _langGuardado() {
-    try { return localStorage.getItem(TPV_LANG_KEY) || 'es'; } catch(e) { return 'es'; }
+    try { return tpvStorage.getItem(TPV_LANG_KEY) || 'es'; } catch(e) { return 'es'; }
 }
 function _langGuardar(lang) {
-    try { localStorage.setItem(TPV_LANG_KEY, lang); } catch(e) {}
+    try { tpvStorage.setItem(TPV_LANG_KEY, lang); } catch(e) {}
 }
 
 function _actualizarBotonesLang(lang) {

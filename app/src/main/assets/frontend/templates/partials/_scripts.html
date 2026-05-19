@@ -1,5 +1,6 @@
     <!-- Dependencias de Scripts Externas con manejo de errores offline -->
     <script src="/static/js/tpv/tpv_estado_shim.js"></script>
+    <script src="/static/js/tpv/tpv_storage.js"></script>
     <!-- Modulos recuperados: catálogo, cache, importer inteligente -->
     <script src="/static/js/tpv/catalog_cache.js"></script>
     <script src="/static/js/tpv/catalog_and_order.js"></script>
@@ -247,7 +248,7 @@
 
 <script>
 // Control de visibilidad por rol - v1.0
-var _rol = localStorage.getItem("tpv_rol") || sessionStorage.getItem("tpv_rol") || "cliente";
+var _rol = tpvStorage.getItem("tpv_rol") || sessionStorage.getItem("tpv_rol") || "cliente";
 
 // Solo desarrollador ve Supabase y Descuentos
 if(_rol !== "desarrollador"){

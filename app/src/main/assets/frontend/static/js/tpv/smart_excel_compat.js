@@ -22,7 +22,7 @@ async function saveState(){
             };
         }
         // Fallback a localStorage
-        localStorage.setItem('tpv_state_backup', JSON.stringify(s));
+        tpvStorage.setJSON('tpv_state_backup', s);
         console.log('[Import] Estado persistido ('+s.productos.length+' productos)');
     }catch(e){console.warn('[saveState]',e)}
 }

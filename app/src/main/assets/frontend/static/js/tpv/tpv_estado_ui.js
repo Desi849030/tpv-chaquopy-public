@@ -168,7 +168,7 @@
             ventas_renderizarTablaHoy();
             registros_renderizar();
             document.getElementById('nom-selectPais') && nom_cargarDenominaciones(document.getElementById('nom-selectPais').value);
-        localStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
+        tpvStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
             lic_checkLicense();
             cliente_renderizarDropdownCategoriasQR(); 
             
@@ -345,7 +345,7 @@
                 tpvState.licencia.fechaActivacion = new Date().toISOString();
                 tpvState.licencia.unidadTiempo = 'dias';
                 await saveState();
-        localStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
+        tpvStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
                 lic_checkLicense();
                 showToast("Licencia de administrador activada", "success");
                 document.getElementById("overlay-license-key").value = "";
@@ -393,7 +393,7 @@
                 tpvState.licencia.unidadTiempo = unidadTiempo;
                 tpvState.licencia.fechaActivacion = new Date().toISOString();
                 await saveState();
-        localStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
+        tpvStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
                 lic_checkLicense();
                 startLicenseAutoCheck(); // Reiniciar el auto-check con la nueva unidad
                 const unidadTexto = unidadTiempo === 'dias' ? 'días' : unidadTiempo === 'minutos' ? 'minutos' : 'segundos';
@@ -413,7 +413,7 @@
                 tpvState.licencia.key = "";
                 tpvState.licencia.fechaActivacion = null;
                 await saveState();
-        localStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
+        tpvStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
                 lic_checkLicense();
                 showToast("Licencia desactivada. Ahora puede probar otras claves.", "info");
                 // Limpiar el campo de entrada
@@ -432,7 +432,7 @@
             }
             
             // Guardar en localStorage
-            localStorage.setItem('tpv_custom_name', customName);
+            tpvStorage.setItem('tpv_custom_name', customName);
             
             // Actualizar el título en el header
             conf_updateTPVName();
@@ -442,7 +442,7 @@
 
         // --- FUNCIÓN PARA ACTUALIZAR EL NOMBRE DEL TPV EN EL HEADER ---
         function conf_updateTPVName() {
-            const customName = localStorage.getItem('tpv_custom_name');
+            const customName = tpvStorage.getItem('tpv_custom_name');
             const nameElement = document.getElementById('tpv-custom-name');
             const lang = getLang();
             
@@ -458,7 +458,7 @@
 
         // --- FUNCIÓN PARA CARGAR EL NOMBRE GUARDADO AL INICIAR ---
         function conf_loadTPVName() {
-            const customName = localStorage.getItem('tpv_custom_name');
+            const customName = tpvStorage.getItem('tpv_custom_name');
             const nameInput = document.getElementById("tpv-name-input");
             
             if (customName) {

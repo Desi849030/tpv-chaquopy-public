@@ -55,7 +55,7 @@
                 tpvState.licencia.fechaActivacion = new Date().toISOString();
                 tpvState.licencia.unidadTiempo = 'dias';
                 await saveState();
-        localStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
+        tpvStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
                 lic_checkLicense();
                 showToast(lang.toast_admin_license_activated, "info");
                 return;
@@ -105,7 +105,7 @@
                 tpvState.licencia.unidadTiempo = unidadTiempo;
                 tpvState.licencia.fechaActivacion = new Date().toISOString();
                 await saveState();
-        localStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
+        tpvStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
                 lic_checkLicense();
                 startLicenseAutoCheck(); // Reiniciar el auto-check con la nueva unidad
                 const unidadTexto = unidadTiempo === 'dias' ? 'días' : unidadTiempo === 'minutos' ? 'minutos' : 'segundos';
@@ -138,7 +138,7 @@
             }
             
             // ⚡ MODO DE PRUEBA RÁPIDA: Permite usar sin licencia presionando Ctrl+Shift+T
-            const modoTestRapido = localStorage.getItem('tpv_test_rapido') === 'true';
+            const modoTestRapido = tpvStorage.getItem('tpv_test_rapido') === 'true';
             
             if(modoTestRapido) {
                 estado.innerText = "🔧 MODO PRUEBA RÁPIDA ACTIVADO";
@@ -205,15 +205,15 @@
         // ⚡ Función para activar/desactivar modo de prueba rápida (Ctrl+Shift+T)
         document.addEventListener('keydown', function(e) {
             if (e.ctrlKey && e.shiftKey && e.key === 'T') {
-                const modoActual = localStorage.getItem('tpv_test_rapido') === 'true';
-                localStorage.setItem('tpv_test_rapido', !modoActual);
+                const modoActual = tpvStorage.getItem('tpv_test_rapido') === 'true';
+                tpvStorage.setItem('tpv_test_rapido', !modoActual);
                 showToast(
                     !modoActual ? 
                     '🔧 MODO PRUEBA RÁPIDA ACTIVADO - Sin restricciones de licencia' : 
                     '🔒 MODO PRUEBA RÁPIDA DESACTIVADO - Licencia requerida',
                     !modoActual ? 'success' : 'warning'
                 );
-        localStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
+        tpvStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
                 lic_checkLicense();
             }
         });
@@ -237,14 +237,14 @@
                 tpvState.licencia.key = null;
                 saveState();
                 showToast('Licencia eliminada', 'warning');
-        localStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
+        tpvStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
                 lic_checkLicense();
             }
         }
         
         function mostrar_info_licencia() {
             // Delegamos al sistema principal de licencias
-        localStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
+        tpvStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
             lic_checkLicense();
         }
         

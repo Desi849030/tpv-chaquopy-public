@@ -61,7 +61,7 @@ async function auth_login() {
         });
         const data = await res.json();
         if (res.ok && data.ok) {
-            AUTH.usuario = data.usuario; localStorage.setItem("tpv_rol", data.usuario.rol || "vendedor"); localStorage.setItem("tpv_user", JSON.stringify(data.usuario));
+            AUTH.usuario = data.usuario; tpvStorage.setItem("tpv_rol", data.usuario.rol || "vendedor"); tpvStorage.setJSON("tpv_user", data.usuario);
             _auth_mostrarApp();
         } else {
             _loginErr(data.error || 'Usuario o contraseña incorrectos.');
@@ -245,7 +245,7 @@ function _auth_aplicarTabs() {
 // ══════════════════════════════════════════════════════════════
 function auth_biometric_check() {
     try {
-        var saved = JSON.parse(localStorage.getItem("tpv_user") || "{}");
+        var saved = JSON.parse(tpvStorage.getItem("tpv_user") || "{}");
         var hasCreds = saved && saved.username && saved.rol;
         if (typeof TPVNative !== "undefined" && TPVNative.isAvailable && TPVNative.isAvailable() && hasCreds) {
             var btn = document.getElementById("bio-btn");
@@ -265,7 +265,7 @@ function auth_biometric() {
     window.onBiometricCallback = function(result) {
         btn.disabled = false;
         if (result && result.success) {
-            var user = JSON.parse(localStorage.getItem("tpv_user") || "{}");
+            var user = JSON.parse(tpvStorage.getItem("tpv_user") || "{}");
             if (user.rol && user.username) {
                 AUTH.usuario = user;
                 _auth_mostrarApp();

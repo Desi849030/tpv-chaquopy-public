@@ -42,12 +42,6 @@ android {
             v1SigningEnabled true
             v2SigningEnabled true
         }
-        debug {
-            storeFile file('tpv-ultrasmart.keystore')
-            storePassword System.getenv("KEYSTORE_PASSWORD") ?: ""
-            keyAlias System.getenv('KEY_ALIAS') ?: "tpvultrasmart"
-            keyPassword System.getenv("KEY_PASSWORD") ?: ""
-        }
     }
     buildTypes {
         release {
@@ -61,7 +55,6 @@ android {
             debuggable true
             minifyEnabled false
             shrinkResources false
-            signingConfig signingConfigs.debug
         }
     }
     compileOptions {

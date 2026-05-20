@@ -1,3 +1,30 @@
+<script>
+// === CRASH DEBUG v1 ===
+window.onerror=function(m,u,l,c,e){
+    var d=document.createElement('div');
+    d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:999999;background:#b71c1c;color:#fff;padding:15px;font-family:monospace;font-size:13px;white-space:pre-wrap;max-height:80vh;overflow:auto;';
+    d.innerHTML='<b>JS ERROR:</b> '+m+'\n<b>Archivo:</b> '+u+':'+l+(e&&e.stack?'\n\n<b>Stack:</b>\n'+e.stack:'');
+    document.body.appendChild(d);
+    try{tpvStorage.setItem('_last_js_error',m+'|'+u+':'+l);}catch(x){}
+    return false;
+};
+window.addEventListener('unhandledrejection',function(e){
+    var d=document.createElement('div');
+    d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:999999;background:#e65100;color:#fff;padding:15px;font-family:monospace;font-size:13px;white-space:pre-wrap;';
+    var msg=e.reason?(e.reason.message||e.reason.stack||String(e.reason)):String(e);
+    d.innerHTML='<b>PROMISE ERROR:</b> '+msg;
+    document.body.appendChild(d);
+    return false;
+});
+document.addEventListener('DOMContentLoaded',function(){
+    if(!window.tpvStorage||!window.tpvStorage.ready){
+        var d=document.createElement('div');
+        d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:999998;background:#ff6f00;color:#fff;padding:10px;font-family:monospace;font-size:13px;';
+        d.innerHTML='<b>WARN:</b> tpvStorage no esta listo. ready='+((window.tpvStorage&&window.tpvStorage.ready)||false);
+        document.body.appendChild(d);
+    }
+});
+</script>
     <!-- Dependencias de Scripts Externas con manejo de errores offline -->
     <script src="/static/js/tpv/tpv_estado_shim.js"></script>
     <script src="/static/js/tpv/tpv_storage.js"></script>

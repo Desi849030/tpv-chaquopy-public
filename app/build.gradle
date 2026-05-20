@@ -25,6 +25,11 @@ android {
             }
         }
     }
+    sourceSets {
+        main {
+            assets.srcDirs = ["src/main/assets"]
+        }
+    }
     androidResources {
         ignoreAssetsPattern "!.svn:!.git:!.hg:!CVS:!icon_1024.png:!thumbs.db"
     }
@@ -37,6 +42,12 @@ android {
             v1SigningEnabled true
             v2SigningEnabled true
         }
+        debug {
+            storeFile file('tpv-ultrasmart.keystore')
+            storePassword System.getenv("KEYSTORE_PASSWORD") ?: ""
+            keyAlias System.getenv('KEY_ALIAS') ?: "tpvultrasmart"
+            keyPassword System.getenv("KEY_PASSWORD") ?: ""
+        }
     }
     buildTypes {
         release {
@@ -46,14 +57,14 @@ android {
             signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
-        debug { debuggable true; minifyEnabled true }
-    }
-    compileOptions {
-    sourceSets {
-        main {
-            assets.srcDirs = ["src/main/assets"]
+        debug {
+            debuggable true
+            minifyEnabled false
+            shrinkResources false
+            signingConfig signingConfigs.debug
         }
     }
+    compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
@@ -66,4 +77,3 @@ dependencies {
     implementation 'androidx.biometric:biometric:1.1.0'
     implementation 'androidx.core:core:1.9.0'
 }
- 

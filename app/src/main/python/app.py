@@ -405,17 +405,3 @@ def sync_status():
 def sync_now():
     from sync.async_sync import sync_in_background
     return jsonify(sync_in_background())
-
-
-# === CRASH DEBUG v1 ===
-@app.route('/_debug_info')
-def debug_info():
-    import sys, os, traceback
-    info = {
-        'python_version': sys.version,
-        'working_dir': os.getcwd(),
-        'tpvStorage_ready': 'tpv_storage.js (verificar en WebView)',
-        'sys_path': sys.path[:5],
-        'modules_loaded': [m for m in sorted(sys.modules.keys()) if not m.startswith('_')][:20]
-    }
-    return '<pre>' + '\n'.join(str(k)+': '+str(v) for k,v in info.items()) + '</pre>'

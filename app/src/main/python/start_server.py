@@ -1,7 +1,3 @@
-# === CRASH DEBUG v1 ===
-import traceback, os as _crash_os
-_crash_log = _crash_os.path.join(_crash_os.path.dirname(_crash_os.path.abspath(__file__)), '..', '..', 'crash_log.txt')
-
 import sys, os, threading, traceback, time
 _log_file = None
 def _w(msg):
@@ -97,8 +93,7 @@ except Exception as e: _w("[WARN] Migracion: " + str(e))
 def _run_flask():
     try:
         _w("[INFO] Flask en 127.0.0.1:5050")
-        flask_try:
-        app.run(host="127.0.0.1",port=5050,debug=False,use_reloader=False,threaded=True)
+        flask_app.run(host="127.0.0.1",port=5050,debug=False,use_reloader=False,threaded=True)
     except Exception as e:
         _w("[ERROR] Flask crash: " + str(e))
         _w("[ERROR] " + traceback.format_exc())

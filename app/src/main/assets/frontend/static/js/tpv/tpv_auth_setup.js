@@ -67,6 +67,7 @@ const ACCESO_TABS = {
     'herramientas-tab':       ['desarrollador','administrador'],
     'licencias-tab':          ['desarrollador'],
     'seguridad-tab':          ['desarrollador'],
+    'privilegios-tab':        ['desarrollador','administrador'],
 };
 
 // ══════════════════════════════════════════════════════════════

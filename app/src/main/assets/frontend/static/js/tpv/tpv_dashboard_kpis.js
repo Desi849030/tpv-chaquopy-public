@@ -8,54 +8,6 @@ async function dashboard_cargar() {
     const ventas = tpvState.ventasDiarias[hoy] || [];
     const hist   = tpvState.historialVentas   || [];
 
-    // ── KPIs del día ──────────────────────────────────────
-    const ingHoy  = ventas.reduce((s,v) => s + (v.total||0), 0);
-    const costoHoy= ventas.reduce((s,v) => {
-        const p = tpvState.productos.find(p=>p.id===v.productoId);
-        return s + ((p?.costoUnitario||0)*(v.cantidad||1));
-    }, 0);
-    const gananHoy = ingHoy - costoHoy;
-    const txHoy    = ventas.length;
-
-    // Ventas últimos 7 días
-    const dias7 = [], lbl7 = [];
-    for (let i=6; i>=0; i--) {
-        const d = new Date(); d.setDate(d.getDate()-i);
-        const k = d.toISOString().split('T')[0];
-        const sv = (tpvState.ventasDiarias[k]||[]).reduce((s,v)=>s+(v.total||0),0);
-        dias7.push(parseFloat(sv.toFixed(2)));
-        lbl7.push(d.toLocaleDateString('es',{weekday:'short'}));
-    }
-
-    // Ventas por categoría hoy
-    const catMap = {};
-    ventas.forEach(v => {
-        const p = tpvState.productos.find(p=>p.id===v.productoId);
-        const cat = p?.categoria || 'General';
-        catMap[cat] = (catMap[cat]||0) + (v.total||0);
-    });
-
-    // Top 5 hoy
-    const prodMap = {};
-    ventas.forEach(v => {
-        prodMap[v.productoId] = { nombre: v.nombre, cant: (prodMap[v.productoId]?.cant||0)+(v.cantidad||1), total:(prodMap[v.productoId]?.total||0)+(v.total||0) };
-    });
-    const top5 = Object.values(prodMap).sort((a,b)=>b.cant-a.cant).slice(0,5);
-
-    // ── Stock crítico ──────────────────────────────────────
-    let stockCritico = [];
-    try {
-        const r = await fetch('/api/inventario/general',{credentials:'same-origin'}).catch(() => null);
-        if (!r || !r.ok) { container.innerHTML = '<div class="text-muted text-center p-3">Sin acceso al inventario</div>'; return; }
-        const d = await r.json();
-        stockCritico = (d.inventario||[]).filter(p => parseFloat(p.stock_actual||0) <= parseFloat(p.stock_minimo||5));
-    } catch(e){}
-
-    // ── Vendedores hoy ─────────────────────────────────────
-    let vendsHoy = [];
-    try {
-        const r = await fetch('/api/pedidos?estado=pendiente',{credentials:'same-origin'}).catch(()=>null);
-    } catch(e){}
 
     // ── Render KPIs ────────────────────────────────────────
     const kpiDiv = document.getElementById('dash-kpis');

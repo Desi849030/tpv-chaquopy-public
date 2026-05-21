@@ -12,7 +12,7 @@
         // Función helper para obtener la clave secreta del entorno actual
         function getSecretKey() {
             // v6.9 PARCHE_6: sin clave hardcodeada
-            return TPV_CONFIG ? TPV_CONFIG.getCurrentKey() : "(clave pendiente)";
+            var key = TPV_CONFIG ? TPV_CONFIG.getCurrentKey() : "(clave pendiente)"; return (typeof key === 'string') ? key : "(clave pendiente)";
         }
         const DB_NAME = 'tpvDataProfessionalDB';
         const DB_VERSION = 1;
@@ -53,13 +53,6 @@
                     return msg;
                 },
                 toast_license_key_missing: "Por favor, ingrese una clave de licencia.", toast_license_activated: "¡Licencia activada con éxito!", toast_admin_license_activated: "¡Licencia de Administrador activada!", toast_license_incorrect: "La clave de licencia es incorrecta.",
-                maintenance_title: "Mantenimiento de Datos",
-                maintenance_warning: "⚠️ Estas acciones son IRREVERSIBLES. No se puede deshacer.",
-                maintenance_clear_today_sales: "Limpiar Ventas de Hoy",
-                maintenance_clear_closures: "Limpiar Cierres de Caja",
-                maintenance_clear_sales_history: "Limpiar Historial de Ventas",
-                maintenance_clear_inventories: "Limpiar Inventarios",
-                maintenance_clear_everything: "⚠ BORRAR TODO (Restablecimiento de fábrica)",
                 form_label_cost: "Costo Unitario",
                 form_label_commission: "% Comisión",
                 import_xlsx_error_format: "El archivo XLSX no tiene el formato esperado (debe incluir columnas 'Nombre' y 'Precio').", category_updated_success: "Categoría actualizada con éxito.", category_name_exists: "Ya existe una categoría con ese nombre.", import_success: (count) => `${count} productos importados/actualizados.`, import_error: "Error al procesar el archivo.", import_full_success: "Datos importados con éxito. La aplicación se recargará.", invalid_backup_file: "Archivo de backup inválido.",
@@ -102,13 +95,6 @@
                     return msg;
                 },
                 toast_license_key_missing: "Please enter a license key.", toast_license_activated: "License activated successfully!", toast_admin_license_activated: "Administrator License activated!", toast_license_incorrect: "The license key is incorrect.",
-                maintenance_title: "Data Maintenance",
-                maintenance_warning: "⚠️ These actions are IRREVERSIBLE and cannot be undone.",
-                maintenance_clear_today_sales: "Clear Today's Sales",
-                maintenance_clear_closures: "Clear Cash Closings",
-                maintenance_clear_sales_history: "Clear Sales History",
-                maintenance_clear_inventories: "Clear Inventories",
-                maintenance_clear_everything: "⚠ DELETE EVERYTHING (Factory Reset)",
                 form_label_cost: "Unit Cost",
                 form_label_commission: "% Commission",
                 import_xlsx_error_format: "XLSX file is not in the expected format (must include 'Name' and 'Price' columns).", category_updated_success: "Category updated successfully.", category_name_exists: "A category with that name already exists.", import_success: (count) => `${count} products imported/updated.`, import_error: "Error processing the file.", import_full_success: "Data imported successfully. The application will reload.", invalid_backup_file: "Invalid backup file.",

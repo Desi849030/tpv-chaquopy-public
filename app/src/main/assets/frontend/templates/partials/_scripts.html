@@ -106,9 +106,6 @@ document.addEventListener('DOMContentLoaded',function(){
 <script src="/static/js/tpv/tpv_traduccion_i18n.js"></script>
 
 <script type="text/javascript"
-<!-- Google Translate removed -->
-    onerror="(function(){ console.warn('Google Translate no disponible (sin conexión)'); var s=_langGuardado(); _actualizarBotonesLang(s); })()">
-</script>
 
     <!-- TPV Debugger v6.1 — CRUD completo + mejoras -->
     <script src="/static/js/tpv/tpv_dbg_core.js"></script>
@@ -274,8 +271,9 @@ document.addEventListener('DOMContentLoaded',function(){
 <script src="/static/lib/ia_assistant_bundle.js"></script>
 
 <script>
-// Control de visibilidad por rol - v1.0
-var _rol = tpvStorage.getItem("tpv_rol") || sessionStorage.getItem("tpv_rol") || "cliente";
+// Control de visibilidad por rol - v2.0
+document.addEventListener('DOMContentLoaded', function() {
+    var _rol = tpvStorage.getItem("tpv_rol") || sessionStorage.getItem("tpv_rol") || "cliente";
 
 // Solo desarrollador ve Supabase y Descuentos
 if(_rol !== "desarrollador"){
@@ -283,16 +281,17 @@ if(_rol !== "desarrollador"){
   el = document.getElementById("cfg-descuentos-wrap"); if(el) el.style.display = "none";
   el = document.getElementById("cfg-supabase-config-wrap"); if(el) el.style.display = "none";
   el = document.getElementById("cfg-supabase-sync-wrap"); if(el) el.style.display = "none";
-  el = document.getElementById("cfg-licencias-tab"); if(el) el.style.display = "none";
+  el = document.getElementById("licencias-tab"); if(el) el.style.display = "none";
 }
 
 // Admin no ve debug ni privilegios
 if(_rol === "administrador"){
   el = document.getElementById("dbg-v2"); if(el) el.style.display = "none";
 }
+});
 </script>
     <script src="/static/js/tpv/tpv_ui_enhancements.js"></script>
-</body>
+
 
     <!-- Lazy Loader -->
     <script src="/static/js/tpv/tpv_lazy_loader.js"></script>

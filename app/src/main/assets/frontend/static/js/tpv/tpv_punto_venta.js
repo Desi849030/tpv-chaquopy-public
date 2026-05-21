@@ -255,59 +255,6 @@
                 });
             }
         }
-
-        async function tpv_procesarPago(metodo){
-            if(tpvState.ordenActual.length === 0) return;
-            
-            const hoy = getTodayDateString();
-            const fechaInventario = (document.getElementById("inv-fechaActual")?.value ?? getTodayDateString());
-            tpvState.ventasDiarias[hoy] = tpvState.ventasDiarias[hoy] ?? [];
-            
-            const ventas = tpvState.ordenActual.map(item => ({
-                id: `sale-${Date.now()}-${Math.random()}`,
-                productoId: item.id,
-                nombre: item.nombre,
-                cantidad: item.cantidad,
-                precioUnitario: item.precio,
-                total: item.precio * item.cantidad,
-                fecha: new Date().toISOString(),
-                metodoPago: metodo
-            }));
-            
-            tpvState.ventasDiarias[hoy].push(...ventas);
-            tpvState.historialVentas.push(...ventas);
-            
-            ventas.forEach(v => inv_actualizarStockPorVenta(fechaInventario, v.productoId, v.cantidad));
-            
-            tpvState.ordenActual = [];
-            processPaymentModal.hide();
-            tpv_renderizarPedido();
-            ventas_renderizarTablaHoy();
-            registros_renderizar();
-            inv_aplicarGananciaGlobal(fechaInventario);
-            await saveState();
-            showToast(getLang().toast_sale_processed, "success");
-
-            // Actualizar cant_vendida en inventario_diario del servidor (para la tabla admin)
-            const vendedorId = window.AUTH?.usuario?.usuario_id;
-            if (vendedorId) {
-                ventas.forEach(v => {
-                    fetch('/api/inventario/diario/conteo', {
-                        method: 'POST', credentials: 'same-origin',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            vendedor_id:  vendedorId,
-                            producto_id:  v.productoId,
-                            cant_final:   (() => {
-                                const inv = tpvState.inventarios[hoy] || [];
-                                const it  = inv.find(i => i.id === v.productoId);
-                                return it ? Math.max(0, (it.cantInicial||0) - (it.vendido||0)) : 0;
-                            })()
-                        })
-                    }).catch(() => {});
-                });
-            }
-        }
         
         function tpv_startScanner(){
             document.getElementById("qr-scanner-container").classList.remove("d-none");

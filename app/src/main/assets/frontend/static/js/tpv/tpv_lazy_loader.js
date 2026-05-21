@@ -7,9 +7,7 @@
             "/static/js/tpv/tpv_tienda_init.js",
             "/static/js/tpv/tpv_tienda_carrito.js",
             "/static/js/tpv/tpv_tienda_pedidos.js",
-            "/static/js/tpv/tpv_tienda_cliente.js",
-            "/static/js/tpv/tpv_auth_cliente.js",
-            "/static/js/tpv/tpv_auth_main.js"
+            "/static/js/tpv/tpv_tienda_cliente.js"
         ],
         "dev-metrics-tab-pane": [
             "/static/js/tpv/tpv_dev_metrics.js"

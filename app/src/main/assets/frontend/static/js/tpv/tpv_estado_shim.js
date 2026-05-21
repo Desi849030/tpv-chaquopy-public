@@ -46,7 +46,7 @@
 function conf_setLanguage(lang) {
     try {
         if (typeof localStorage !== 'undefined') {
-            localStorage.setItem('tpv_lang', lang);
+            tpvStorage.setItem('tpv_lang', lang);
         }
         if (typeof tpv_i18n_apply === 'function') {
             tpv_i18n_apply(lang);
@@ -66,7 +66,7 @@ function loadState() {
     try {
         var saved = null;
         if (typeof localStorage !== 'undefined') {
-            saved = localStorage.getItem('tpv_state');
+            saved = tpvStorage.getItem('tpv_state');
         }
         if (saved) {
             try {

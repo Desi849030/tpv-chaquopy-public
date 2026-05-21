@@ -235,7 +235,7 @@
             if (confirm('¿Está seguro de eliminar la licencia actual?')) {
                 tpvState.licencia.activada = false;
                 tpvState.licencia.key = null;
-                saveState();
+                (async function() { await saveState(); lic_checkLicense(); })();
                 showToast('Licencia eliminada', 'warning');
         tpvStorage.setItem("tpv_test_rapido","true"); // Fix: activar modo prueba
                 lic_checkLicense();

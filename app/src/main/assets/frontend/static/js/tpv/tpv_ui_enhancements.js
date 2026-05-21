@@ -20,7 +20,7 @@ function initDarkMode(){
     var isDark = document.body.classList.contains('dark-mode');
     tpvStorage.setItem('tpv_darkmode', isDark);
     btn.innerHTML = isDark ? '&#9790;' : '&#9728;';
-  // duplicate removed
+  };
   btn.style.cssText = 'position:fixed;bottom:80px;right:16px;z-index:9990;width:40px;height:40px;border-radius:50%;border:none;background:var(--bs-secondary,#6c757d);color:#fff;font-size:18px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);';
   document.body.appendChild(btn);
 }

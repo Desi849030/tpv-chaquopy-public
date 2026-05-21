@@ -124,3 +124,43 @@
 
     <!-- Contenedor de Notificaciones (Toasts) -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+
+<!-- Modal Gestion Usuarios -->
+<div class="modal fade" id="modal-usuarios" tabindex="-1">
+  <div class="modal-dialog modal-lg"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title"><i class="bi bi-people me-2"></i>Gestionar Usuarios</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <ul class="nav nav-tabs mb-3">
+        <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#ut-lista">Lista</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#up-crear">Crear</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#pw-act">Cambiar Clave</a></li>
+      </ul>
+      <div class="tab-content">
+        <div class="tab-pane fade show active" id="ut-lista"><div id="u-lista-body"></div></div>
+        <div class="tab-pane fade" id="up-crear">
+          <div class="mb-2"><label>Nombre</label><input id="nu-nombre" class="form-control"></div>
+          <div class="mb-2"><label>Usuario</label><input id="nu-user" class="form-control"></div>
+          <div class="mb-2"><label>Clave</label><input id="nu-pw" type="password" class="form-control"></div>
+          <div class="mb-2"><label>Rol</label><select id="nu-rol" class="form-control"><option value="vendedor">Vendedor</option><option value="administrador">Administrador</option><option value="desarrollador">Desarrollador</option></select></div>
+          <button class="btn btn-primary" onclick="crear_usuario()">Crear</button>
+        </div>
+        <div class="tab-pane fade" id="pw-act">
+          <div class="mb-2"><label>Usuario</label><input id="pw-act-user" class="form-control"></div>
+          <div class="mb-2"><label>Nueva Clave</label><input id="pw-new" type="password" class="form-control"></div>
+          <div class="mb-2"><label>Confirmar</label><input id="pw-con" type="password" class="form-control"></div>
+          <button class="btn btn-primary" onclick="cambiar_clave_admin()">Cambiar</button>
+        </div>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- Modal Notificaciones -->
+<div class="modal fade" id="modal-notif" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title"><i class="bi bi-bell me-2"></i>Notificaciones</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body"><div id="notif-body"><p class="text-muted">Sin notificaciones.</p></div></div>
+  </div></div>
+</div>

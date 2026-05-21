@@ -260,6 +260,7 @@
 
         function showToast(message, type = 'info') { 
             const container = document.querySelector(".toast-container");
+            if (!container) return;
             const toastId = `toast-${Date.now()}`;
             const toastHTML = `<div id="${toastId}" class="toast align-items-center text-bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
                 <div class="d-flex"><div class="toast-body">${message}</div>

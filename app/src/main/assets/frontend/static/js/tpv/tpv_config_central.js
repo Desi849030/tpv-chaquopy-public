@@ -47,7 +47,11 @@
             ENVIRONMENT: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'development' : 'production',
             getCurrentKey: function() {
                 // v6.9: usar clave del dispositivo (sin hardcode)
-                return this._deviceKey || this._fetchDeviceKey();
+                if (this._deviceKey) return this._deviceKey;
+                var cid = (tpvStorage && tpvStorage.getItem ? tpvStorage.getItem('tpv_client_id') : null) || 'tpv-default-cid';
+                var h = 0;
+                for (var i = 0; i < cid.length; i++) { h = ((h << 5) - h) + cid.charCodeAt(i); h |= 0; }
+                return 'tpv-' + Math.abs(h).toString(16).padStart(8, '0');
             },
             getCurrentConfig: function() {
                 return this.CONFIG[this.ENVIRONMENT];
@@ -67,6 +71,7 @@
                 return this.ENVIRONMENT;
             },
             init: function() {
+                if (this._fetchDeviceKey) this._fetchDeviceKey();
                 const savedEnv = tpvStorage.getItem('tpv_environment');
                 if (savedEnv && (savedEnv === 'development' || savedEnv === 'production')) {
                     this.ENVIRONMENT = savedEnv;
@@ -77,6 +82,8 @@
                         this.ENVIRONMENT = 'production';
                     }
                 }
+            }
+                this._fetchDeviceKey();
             }
         };
         

@@ -88,6 +88,4 @@
         };
         
         // Auto-inicializar
-        
-        // Auto-inicializar
         TPV_CONFIG.init();

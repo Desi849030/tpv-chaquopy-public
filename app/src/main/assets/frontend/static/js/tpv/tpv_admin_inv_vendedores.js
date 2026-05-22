@@ -1,3 +1,5 @@
+// tpv_admin_inv_vendedores.js
+function _admin_invVista(v) {
     const btnMap = {
         almacen:    { id:'inv-btn-almacen',    on:'btn btn-primary btn-sm',  off:'btn btn-outline-primary btn-sm' },
         vendedores: { id:'inv-btn-vendedores', on:'btn btn-success btn-sm',  off:'btn btn-outline-success btn-sm' },

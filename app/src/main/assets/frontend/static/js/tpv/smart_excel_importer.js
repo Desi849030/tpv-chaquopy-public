@@ -58,8 +58,7 @@ class SmartExcelImporter {
                     if (this.DEBUG) console.log('[Import] Estrategia 1.5 (fuzzy) seleccionada');
                     return resultadoFuzzy;
                 }
-                }
-        
+
                 // Estrategia 2: Análisis por contenido (cuando no hay encabezados claros)
                 const resultadoContenido = this.analizarPorContenido(rawData);
                 if (resultadoContenido.confianza > 0.5) {
@@ -148,7 +147,7 @@ class SmartExcelImporter {
                         dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1]
                             : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
                 return dp[m][n];
-            },
+            }
 
             /**
              * Normaliza texto: quita tildes y no-alfanumericos para comparacion
@@ -158,7 +157,7 @@ class SmartExcelImporter {
                 return String(txt).toLowerCase().trim()
                     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
                     .replace(/[^a-z0-9]/g, '');
-            },
+            }
 
             /**
              * Matching fuzzy de encabezado contra lista de sinonimos
@@ -184,10 +183,10 @@ class SmartExcelImporter {
                     if (score > mejorScore) mejorScore = score;
                 }
                 return mejorScore > 0.6 ? mejorScore * 0.8 : 0;
-            },
+            }
 
             // Sinonimos expandidos por campo (normalizacion fuzzy)
-            SINONIMOS: {
+            SINONIMOS = {
                 nombre:    ['nombre','producto','descripcion','articulo','item','mercancia',
                             'detalle','concepto','bien','referencia','prod','art','desc',
                             'denominacion','denominacion del producto','nombre del articulo'],
@@ -207,7 +206,7 @@ class SmartExcelImporter {
                             'presentacion','presentación','empaque','envase','unit'],
                 codigo:    ['codigo','código','referencia','ref','sku','id','cod',
                             'clave','barcode','code','num','numero']
-            },
+            }
 
             /**
              * Buscar encabezados con fuzzy matching (Levenshtein)
@@ -258,7 +257,7 @@ class SmartExcelImporter {
                     }
                 }
                 return resultado;
-            },
+            }
 
             /**
              * Valida y limpia una fila antes de insertar
@@ -293,7 +292,7 @@ class SmartExcelImporter {
                     costo: costo,
                     valida: true
                 };
-            },
+            }
 
             analizarPorContenido(rawData) {
                 const resultado = {
@@ -1293,8 +1292,3 @@ class SmartExcelImporter {
         const excelImportManager = smartExcelImporter;
         
         // ==================== FUNCIÓN DE IMPORTACIÓN MEJORADA ====================
-
-
-// Instanciar el importador global
-const smartExcelImporter = new SmartExcelImporter();
-const excelImportManager = smartExcelImporter;

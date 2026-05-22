@@ -1,1 +1,1 @@
-html,body{margin:0;padding:0;background:#0d1b2a;}
+html,body{margin:0;padding:0;background:var(--t-bg, #f0f2f5);}

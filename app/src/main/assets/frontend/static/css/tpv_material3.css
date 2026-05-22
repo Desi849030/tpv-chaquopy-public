@@ -132,7 +132,7 @@ body, .md-body {
     border: 1px solid var(--md-outline-variant);
 }
 .md-card-header { padding: 16px 16px 0; }
-.md-card-content { padding: 16px; }
+.md-card-content { padding: 10px 14px; }
 .md-card-actions { padding: 8px 16px 16px; display: flex; gap: 8px; }
 
 /* === Buttons === */
@@ -221,7 +221,7 @@ body, .md-body {
     border-radius: var(--md-radius-xs);
     border: 1px solid var(--md-outline);
     border-bottom-width: 2px;
-    padding: 16px;
+    padding: 10px 14px;
     font-size: 16px;
     transition: var(--md-transition);
     background: transparent;

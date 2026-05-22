@@ -116,7 +116,7 @@
                 </div>`).join("");
             
             const total = tpvState.ordenActual.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
-            totalElement.innerText = formatCurrency(total);
+            if (totalElement) totalElement.innerText = formatCurrency(total);
             badge.innerText = tpvState.ordenActual.length;
             badge.classList.remove("d-none");
         }

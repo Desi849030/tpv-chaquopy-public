@@ -417,7 +417,7 @@
             }
         }
     
-        .offline-indicator { display: none !important; /* oculto */
+        .offline-indicator { display: none;
             position: fixed;
             bottom: 60px;
             left: 50%;
@@ -427,15 +427,12 @@
             padding: 6px 14px;
             border-radius: 20px;
             font-size: 0.85rem;
-            display: none;
             z-index: 2000;
             font-weight: 500;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
-        .offline-indicator { display: none !important; /* oculto */ display: none !important; }
-
         .offline-indicator.show {
-            display: block;
+            display: block !important;
         }
 
 

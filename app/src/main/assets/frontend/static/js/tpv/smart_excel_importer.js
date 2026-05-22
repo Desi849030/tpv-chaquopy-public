@@ -2,7 +2,7 @@ class SmartExcelImporter {
 // smart_excel_importer.js -- Core: clase SmartExcelImporter
 // smart_excel_importer.js — Importación inteligente Excel: análisis automático, auto-categorización, memoria de aprendizaje
             constructor() {
-                this.DEBUG = true;
+                this.DEBUG = false;
                 this.MAX_FILE_SIZE = 10 * 1024 * 1024;
         
                 // Patrones de aprendizaje
@@ -781,7 +781,7 @@ class SmartExcelImporter {
                             const categoria = this.categorizarProducto(nombre);
                     
                             // Crear ID único
-                            const id = `prod-${Date.now()}-${i}-${Math.random().toString(36).substr(2, 9)}`;
+                            const id = `prod-${Date.now()}-${i}-${Math.random().toString(36).substring(2, 9)}`;
                     
                             // Crear producto
                             const producto = {

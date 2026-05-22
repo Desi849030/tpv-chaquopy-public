@@ -122,3 +122,6 @@
   transform: scale(0.95);
   box-shadow: 0 2px 8px rgba(99,102,241,0.4);
 }
+
+body.dark-mode #catalog-search{background:#1e293b!important;color:#e2e8f0!important;border-color:#334155!important}
+body.dark-mode #catalog-search::placeholder{color:#64748b!important}

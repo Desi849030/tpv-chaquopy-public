@@ -1,6 +1,6 @@
 // Diccionario i18n offline - Auto-generado por i18n_builder.py
 // 114 términos ES/EN
-// Actualizado: 2026-05-20 16:38
+// Actualizado: 2026-05-22 13:28
 var TPV_I18N = {
   es: {
     "btn_accept": "Accept",

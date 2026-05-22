@@ -59,21 +59,6 @@
 .priv-icon.seguridad{background:#ffebee}.priv-icon.exportar{background:#e0f2f1}
 .priv-icon.copias{background:#efebe9}
 
-
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    white-space: nowrap;
-    padding-bottom: 2px;
-}
-
-    .ub-btn { padding: 3px 6px !important; font-size: 0.65rem !important; }
-    .ub-btn span { display: inline !important; }
-}
-
 /* === NAV TABS RESPONSIVE MOVIL === */
 .nav-tabs#main-nav-tabs {
     display:flex; flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden;

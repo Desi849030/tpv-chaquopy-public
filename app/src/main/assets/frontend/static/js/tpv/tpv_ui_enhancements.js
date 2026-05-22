@@ -3,13 +3,12 @@
 "use strict";
 try{
 
-/* ── DARK MODE ── */
+/* DARK MODE */
 function initDarkMode(){
   var saved = tpvStorage.getItem('tpv_darkmode');
   if(saved === 'true' || (!saved && window.matchMedia('(prefers-color-scheme:dark)').matches)){
     document.body.classList.add('dark-mode');
   }
-  // Crear toggle
   var btn = document.createElement('button');
   btn.className = 'dark-mode-toggle';
   btn.id = 'dark-mode-toggle';
@@ -24,9 +23,8 @@ function initDarkMode(){
   btn.style.cssText = 'position:fixed;bottom:80px;right:16px;z-index:9990;width:40px;height:40px;border-radius:50%;border:none;background:var(--bs-secondary,#6c757d);color:#fff;font-size:18px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);';
   document.body.appendChild(btn);
 }
-}
 
-/* ── ANIMATED COUNTERS ── */
+/* ANIMATED COUNTERS */
 function animateCounters(){
   var nums = document.querySelectorAll('.kpi-number[data-count]');
   nums.forEach(function(el){
@@ -62,7 +60,7 @@ function animateCounters(){
   });
 }
 
-/* ── ENHANCE KPIs ── */
+/* ENHANCE KPIs */
 function enhanceKPIs(){
   var kpiContainer = document.getElementById('dash-kpis');
   if(!kpiContainer) return;
@@ -70,14 +68,12 @@ function enhanceKPIs(){
     animateCounters();
   });
   observer.observe(kpiContainer, {childList: true, subtree: true});
-  // Ejecutar una vez
   setTimeout(animateCounters, 500);
 }
 
-/* ── CHART TOOLTIPS ── */
+/* CHART TOOLTIPS */
 function enhanceCharts(){
   if(typeof Chart === 'undefined') return;
-  // Config global de tooltips
   Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(0,0,0,.8)';
   Chart.defaults.plugins.tooltip.titleFont = {size: 13, weight: 'bold'};
   Chart.defaults.plugins.tooltip.bodyFont = {size: 12};
@@ -85,8 +81,6 @@ function enhanceCharts(){
   Chart.defaults.plugins.tooltip.padding = 12;
   Chart.defaults.plugins.tooltip.displayColors = true;
   Chart.defaults.plugins.tooltip.boxPadding = 4;
-
-  // Envolver charts en wrappers
   document.querySelectorAll('canvas[id^="dash-chart"]').forEach(function(canvas){
     if(canvas.parentElement.classList.contains('chart-wrapper')) return;
     var wrapper = document.createElement('div');
@@ -96,7 +90,7 @@ function enhanceCharts(){
   });
 }
 
-/* ── STOCK LOW NOTIFICATIONS ── */
+/* STOCK LOW NOTIFICATIONS */
 var stockNotifs = [];
 function checkStockNotifications(){
   try {
@@ -105,7 +99,6 @@ function checkStockNotifications(){
     var items = stockEl.querySelectorAll('tr, .list-group-item, [class*="stock"]');
     var lowCount = items.length;
     if(lowCount === 0 || stockNotifs.length >= 3) return;
-    // Crear notificacion
     var container = document.getElementById('stock-notifications');
     if(!container){
       container = document.createElement('div');
@@ -128,15 +121,12 @@ function checkStockNotifications(){
       '<div class="notif-msg">' + products.length + ' producto(s) con stock bajo</div>';
     container.appendChild(notif);
     stockNotifs.push(notif);
-    // Auto-remover despues de 10s
     setTimeout(function(){ if(notif.parentNode){ notif.remove(); stockNotifs.shift(); }}, 10000);
   } catch(e){}
 }
 
-/* ── ORGANIZE SUBMENUS ── */
+/* ORGANIZE SUBMENUS */
 function organizeSubmenus(){
-  // NO reemplazar innerHTML — los items ya tienen iconos y texto correctos.
-  // Solo agregar translate="no" si falta, para evitar que GT se coma el texto.
   document.querySelectorAll('.dropdown-item[id$="-tab"]').forEach(function(item){
     if (!item.hasAttribute('translate')) item.setAttribute('translate', 'no');
   });
@@ -145,13 +135,12 @@ function organizeSubmenus(){
   });
 }
 
-/* ── INIT ── */
+/* INIT */
 function init_v23(){
   initDarkMode();
   enhanceKPIs();
   enhanceCharts();
   organizeSubmenus();
-  // Monitorear stock cada 30s
   setInterval(checkStockNotifications, 30000);
   setTimeout(checkStockNotifications, 3000);
 }

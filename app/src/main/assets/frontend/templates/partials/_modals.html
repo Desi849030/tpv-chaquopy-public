@@ -143,13 +143,13 @@
           <div class="mb-2"><label>Usuario</label><input id="nu-user" class="form-control"></div>
           <div class="mb-2"><label>Clave</label><input id="nu-pw" type="password" class="form-control"></div>
           <div class="mb-2"><label>Rol</label><select id="nu-rol" class="form-control"><option value="vendedor">Vendedor</option><option value="administrador">Administrador</option><option value="desarrollador">Desarrollador</option></select></div>
-          <button class="btn btn-primary" onclick="crear_usuario()">Crear</button>
+          <button class="btn btn-primary" onclick="auth_crearUsuario()">Crear</button>
         </div>
         <div class="tab-pane fade" id="pw-act">
           <div class="mb-2"><label>Usuario</label><input id="pw-act-user" class="form-control"></div>
           <div class="mb-2"><label>Nueva Clave</label><input id="pw-new" type="password" class="form-control"></div>
           <div class="mb-2"><label>Confirmar</label><input id="pw-con" type="password" class="form-control"></div>
-          <button class="btn btn-primary" onclick="cambiar_clave_admin()">Cambiar</button>
+          <button class="btn btn-primary" onclick="auth_cambiarPw()">Cambiar</button>
         </div>
       </div>
     </div>

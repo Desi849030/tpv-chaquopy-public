@@ -1,407 +1,119 @@
-"""TPV ULTRA SMART v2.5.5 — Arquitectura modular"""
+"""
+╔══════════════════════════════════════════════════════════════╗
+║   app.py  —  TPV ULTRA SMART  v6.0 (MODULAR)               ║
+║   Punto de entrada para Blueprints                         ║
+╚══════════════════════════════════════════════════════════════╝
+"""
 import sys, os
-from error_handlers import setup_error_handlers, api_response
-
-# ── FIX PATH PYDROID3 / ANDROID ──
 try:
     from tpv_rutas import fix_path, CARPETA as _CARPETA_DETECTADA
     fix_path()
 except ImportError:
     def _fix_path_fallback():
-        candidatas = ['/storage/emulated/0/TPV_APK','/storage/emulated/0/TPV',
-                      '/sdcard/TPV_APK','/sdcard/TPV']
-        try: d = os.path.dirname(os.path.abspath(__file__))
+        candidatas = ['/storage/emulated/0/TPV_APK', '/storage/emulated/0/TPV', '/sdcard/TPV_APK', '/sdcard/TPV']
+        try: candidatas.insert(0, os.path.dirname(os.path.abspath(__file__)))
         except NameError: pass
-        else: candidatas.insert(0, d)
         candidatas.insert(0, os.getcwd())
         for r in candidatas:
             if os.path.exists(os.path.join(r, 'database.py')):
                 if r not in sys.path: sys.path.insert(0, r)
-                os.chdir(r)
-                print(f"Proyecto: {r}")
-                return r
-        print("No se encontro database.py")
-        return os.getcwd()
+                os.chdir(r); print(f"✅ Proyecto: {r}"); return r
+        print("❌ No se encontró database.py"); return os.getcwd()
     _CARPETA_DETECTADA = _fix_path_fallback()
 
-from decorators import requiere_login, requiere_rol
 import json, threading, webbrowser, time, pathlib, secrets as _secrets
-_TPV_PORT = int(os.environ.get("TPV_PORT", 5050))
-_TPV_HOST = os.environ.get("TPV_HOST", "127.0.0.1")
-
 from datetime import datetime
+from functools import wraps
+from flask import Flask, request, jsonify, session
 
-# ── Clave secreta ──
-import pathlib as _pathlib
-_KEY_FILE = _pathlib.Path(os.environ.get("TPV_FILES_DIR", os.getcwd())) / ".tpv_secret"
-if not _KEY_FILE.exists():
-    try:
-        _KEY_FILE.write_text(_secrets.token_hex(32))
-        try: _KEY_FILE.chmod(0o600)
-        except Exception: pass
-    except Exception:
-        pass
-try:
-    _SECRET_KEY = _KEY_FILE.read_text().strip()
-except Exception:
-    _SECRET_KEY = _secrets.token_hex(32)
-# ── Flask ──
-try:
-    from flask import Flask, request, jsonify, session, Response, render_template
-except ImportError:
-    print("Instala Flask: pip install flask"); exit(1)
-
-# ── Database ──
-from database import (
-    crear_tablas, cargar_estado, guardar_estado,
-    agregar_log, obtener_info_db, DB_FILE,
-)
-from sync.supabase_sync import sincronizar_subida
-import sync.supabase_sync as _sb
-
-# ── Blueprint modules ──
-from auth_routes import auth_bp
-from admin_routes import admin_bp, _MODULOS_DISPONIBLES, _PRIVILEGIOS_DEFAULT
-from inventory_routes import inv_bp
-from ventas_routes import ventas_bp
-from settings_routes import settings_bp
+# Importar componentes
+from database import crear_tablas, cargar_estado, guardar_estado, obtener_info_db, DB_FILE
 from tienda_routes import tienda_bp, crear_tablas_tienda
-from loyalty_routes import loyalty_bp
-from api_routes import api_bp
-from license_routes import lic_bp
-from dev_metrics import dev_metrics_bp
-from i18n_routes import i18n_bp
-from diccionario_tpv import diccionario_bp
-try:
-    from validacion_routes import val_bp
-except ImportError:
-    val_bp = None
+import supabase_sync as _sb
 
-try:
-    from ia_assistant_routes import assistant_bp
-except ImportError:
-    assistant_bp = None
+# Importar Blueprints Modulares
+from routes.auth import auth_bp
+from routes.inventory import inv_bp
+from routes.products import prod_bp
+from routes.sales import sales_bp
+from routes.system import sys_bp
 
-try:
-    from ai_routes import ai_bp, analytics_bp
-except ImportError:
-    ai_bp = None
-    analytics_bp = None
+# Setup Flask
+ap = os.environ.get("ANDROID_PRIVATE", "")
+_KEY_FILE = pathlib.Path(ap) / ".tpv_secret_key" if ap and os.path.isdir(ap) else pathlib.Path(os.getcwd()) / ".tpv_secret_key"
+if not _KEY_FILE.exists(): _KEY_FILE.write_text(_secrets.token_hex(32))
+try: _KEY_FILE.chmod(0o600)
+except Exception: pass
 
-# ── Carpeta del proyecto ──
-_CARPETA = os.environ.get("TPV_FRONTEND_DIR") or _CARPETA_DETECTADA or os.getcwd()
-
-# ── Flask App ──
-_TD = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'assets', 'frontend', 'templates')
-if _CARPETA and os.path.isdir(os.path.join(_CARPETA, 'templates')):
-    _TD = os.path.join(_CARPETA, 'templates')
-elif not os.path.isdir(_TD):
-    _TD = 'templates'
-app = Flask(__name__, static_folder=None, template_folder=_TD)
-@app.route("/dev/metrics")
-def dev_metrics_panel():
-    from flask import render_template, jsonify
-    from metrics.helpers import _ram_info, _storage_info, _inventario_formulas, _get_db_path
-    import os, time
-    
-    db = _get_db_path()
-    ram = _ram_info()
-    storage = _storage_info(db) if db else {}
-    inventario = _inventario_formulas(db) if db and os.path.exists(db) else {}
-    
-    return render_template("dev/dev_panel_metricas.html",
-        ram=ram, storage=storage, inventario=inventario,
-        timestamp=time.strftime("%Y-%m-%d %H:%M:%S"))
-
-app.config['JSON_AS_ASCII'] = False  # Soportar tildes en JSON
-app.secret_key = _SECRET_KEY
-app.json.ensure_ascii = False  # FIX: Flask >= 2.2
+app = Flask(__name__, static_folder=None)
+app.config["JSON_ENSURE_ASCII"] = False
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = False
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_DOMAIN"] = None
 app.config["PERMANENT_SESSION_LIFETIME"] = 86400 * 7
-app.config["SERVER_START_TIME"] = time.time()
+app.secret_key = _KEY_FILE.read_text().strip()
 
-# ══════════════════════════════════════════════════════════════
-#  REGISTRAR BLUEPRINTS
-# ══════════════════════════════════════════════════════════════
-_blueprints = [
-    auth_bp, admin_bp, inv_bp, ventas_bp, settings_bp,
-    tienda_bp, loyalty_bp, api_bp, lic_bp
-]
-for bp in _blueprints:
-    app.register_blueprint(bp)
+# Registrar Blueprints
+app.register_blueprint(tienda_bp)
+app.register_blueprint(auth_bp)
+app.register_blueprint(inv_bp)
+app.register_blueprint(prod_bp)
+app.register_blueprint(sales_bp)
+app.register_blueprint(sys_bp)
 
-if assistant_bp: app.register_blueprint(assistant_bp)
-if val_bp: app.register_blueprint(val_bp)
-if ai_bp: app.register_blueprint(ai_bp)
-if analytics_bp: app.register_blueprint(analytics_bp)
-# FIX: Importar rutas del API de métricas antes de registrar blueprint
-try:
-    import metrics  # registra /api/dev/metrics, /api/dev/metrics/ram, etc.
-except ImportError: print("metrics module no disponible")
-if dev_metrics_bp: app.register_blueprint(dev_metrics_bp)
-# Agente proactivo
-try:
-    from ia.proactive_routes import proactive_bp
-except ImportError:
-    proactive_bp = None
-if proactive_bp: app.register_blueprint(proactive_bp)
-if diccionario_bp: app.register_blueprint(diccionario_bp)
-if i18n_bp: app.register_blueprint(i18n_bp)
-
-
-
-@app.after_request
-def force_utf8_charset(response):
-    """Forzar charset UTF-8 en todas las respuestas HTML y JSON"""
-    ct = response.headers.get("Content-Type", "")
-    if "text/html" in ct and "charset" not in ct:
-        response.headers["Content-Type"] = "text/html; charset=utf-8"
-    elif "application/json" in ct and "charset" not in ct:
-        response.headers["Content-Type"] = "application/json; charset=utf-8"
-    return response
-
-@app.after_request
-def add_security_headers(response):
-    """Agrega headers de seguridad a todas las respuestas"""
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['X-Frame-Options'] = 'DENY'
-    response.headers['X-XSS-Protection'] = '1; mode=block'
-    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-    response.headers['X-Permitted-Cross-Domain-Policies'] = 'none'
-    return response
-
-try:
-    from tpv_security import registrar_auditoria
-    registrar_auditoria(app)
-    print("Auditoria de seguridad activa")
-except ImportError:
-    print("tpv_security no disponible (modulo opcional)")
-print("Blueprints registrados: auth + admin + inventory + ventas + settings + tienda + loyalty + api + license + assistant + ai")
-
-# ══════════════════════════════════════════════════════════════
-#  SERVIR ARCHIVOS ESTÁTICOS E INDEX
-# ══════════════════════════════════════════════════════════════
-
-def _find_template(name):
-    """Buscar archivo de plantilla en multiples rutas (igual que serve_static)."""
-    _assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'assets', 'frontend')
-    candidates = [
-        os.path.join(_CARPETA, 'frontend', 'templates', name),
-        os.path.join(_assets_dir, 'templates', name),
-        os.path.join(os.getcwd(), 'frontend', 'templates', name),
-        os.path.join(_CARPETA, name),
-        os.path.join(_assets_dir, name),
-        os.path.join(os.getcwd(), name),
-    ]
-    for ruta in candidates:
-        if os.path.exists(ruta):
-            return ruta
-    return None
-
-def _render_html(base_name):
-    """Cargar HTML y procesar {% include %} manualmente."""
-    def load(name):
-        path = _find_template(name)
-        if not path:
-            return f"<!-- TEMPLATE NOT FOUND: {name} -->"
-        with open(path, 'r', encoding='utf-8') as f:
-            content = f.read()
-        import re
-        content = re.sub(
-            r'\{%\s*include\s+"([^"]+)"\s*%\}',
-            lambda m: load(m.group(1)), content
-        )
-        return content
-    return load(base_name)
-
+# Ruta index.html - buscar en assets/frontend/templates/
 @app.route("/")
 def index():
-    try:
-        return render_template('index.html')
-    except Exception:
-        return _render_html('index.html')
-
-@app.route("/<path:filename>")
-def serve_static(filename):
-    allowed = {'.js','.css','.ico','.png','.svg','.woff','.woff2','.json','.ttf','.eot'}
-    ext = os.path.splitext(filename)[1].lower()
-    if ext not in allowed: return '', 404
-    mime_map = {
-        '.js':'application/javascript','.css':'text/css','.ico':'image/x-icon',
-        '.png':'image/png','.svg':'image/svg+xml','.json':'application/json',
-        '.woff':'font/woff','.woff2':'font/woff2','.ttf':'font/ttf',
-        '.eot':'application/vnd.ms-fontobject',
-    }
-    nombre_base = os.path.basename(filename)
-    _assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'assets', 'frontend')
     candidatos = [
-        os.path.join(_CARPETA, filename),
-        os.path.join(_assets_dir, filename),
-        os.path.join(os.getcwd(), filename),
-        os.path.join(_CARPETA, 'frontend', 'static', 'lib', nombre_base),
-        os.path.join(_CARPETA, 'frontend', 'static', 'lib', 'fonts', nombre_base),
-        os.path.join(_assets_dir, 'static', 'lib', nombre_base),
-        os.path.join(_assets_dir, 'static', 'js', nombre_base),
-        os.path.join(_assets_dir, 'static', 'css', nombre_base),
-        os.path.join(_assets_dir, 'static', 'icons', nombre_base),
-        os.path.join(_assets_dir, 'static', 'lib', 'fonts', nombre_base),
-        os.path.join(os.getcwd(), 'frontend', 'static', 'lib', nombre_base),
-        os.path.join(os.getcwd(), 'frontend', 'static', 'lib', 'fonts', nombre_base),
-        os.path.join(_CARPETA, 'frontend', 'static', 'js', nombre_base),
-        os.path.join(_CARPETA, 'frontend', 'static', 'css', nombre_base),
-        os.path.join(_CARPETA, 'frontend', 'static', 'icons', nombre_base),
-        os.path.join(_CARPETA, 'static', 'js', nombre_base),
-        os.path.join(_CARPETA, 'static', nombre_base),
-        os.path.join(_CARPETA, 'static', 'lib', nombre_base),
-        os.path.join(_CARPETA, 'static', 'lib', 'fonts', nombre_base),
+        os.path.join(_CARPETA_DETECTADA, 'assets', 'frontend', 'templates', 'index.html'),
+        os.path.join(os.getcwd(), 'assets', 'frontend', 'templates', 'index.html'),
+        os.path.join(os.getcwd(), 'index.html'),
     ]
     for ruta in candidatos:
         if os.path.exists(ruta):
-            with open(ruta, 'rb') as f:
-                return f.read(), 200, {
-                    'Content-Type': mime_map.get(ext, 'application/octet-stream'),
-                    'Cache-Control': 'public, max-age=3600'
-                }
+            with open(ruta, 'r', encoding='utf-8') as f: return f.read(), 200, {'Content-Type': 'text/html; charset=utf-8'}
+    return '<h3>No se encontro index.html</h3>', 500
+
+# Servir estaticos desde assets/frontend/static/
+@app.route("/<path:filename>")
+def serve_static(filename):
+    allowed = {'.js', '.css', '.ico', '.png', '.svg', '.woff', '.woff2', '.json'}
+    ext = os.path.splitext(filename)[1].lower()
+    if ext not in allowed: return '', 404
+    mime_map = {'.js': 'application/javascript', '.css': 'text/css', '.ico': 'image/x-icon', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json'}
+    nombre_base = os.path.basename(filename)
+    candidatos = [
+        os.path.join(_CARPETA_DETECTADA, 'assets', 'frontend', 'static', 'js', 'tpv', nombre_base),
+        os.path.join(_CARPETA_DETECTADA, 'assets', 'frontend', 'static', nombre_base),
+        os.path.join(os.getcwd(), 'assets', 'frontend', 'static', 'js', 'tpv', nombre_base),
+        os.path.join(os.getcwd(), 'assets', 'frontend', 'static', nombre_base),
+        os.path.join(os.getcwd(), nombre_base),
+    ]
+    for ruta in candidatos:
+        if os.path.exists(ruta):
+            with open(ruta, 'rb') as f: return f.read(), 200, {'Content-Type': mime_map.get(ext, 'application/octet-stream')}
     return '', 404
 
-
-
-#  ERROR HANDLERS
-# ══════════════════════════════════════════════════════════════
-
+# Errores
 @app.errorhandler(404)
-def error_404(e):
-    return jsonify({"error": "Ruta no encontrada", "code": 404}), 404
-
+def error_404(e): return jsonify({"error": "Ruta no encontrada", "code": 404}), 404
 @app.errorhandler(500)
-def error_500(e):
-    import traceback, os
-    tb = traceback.format_exc()
-    print("=" * 60)
-    print("ERROR 500 - TRACEBACK:")
-    print(tb)
-    print("=" * 60)
-    if os.environ.get("FLASK_DEBUG", "false").lower() == "true":
-        return (
-            "<h1>Error 500 (DEBUG)</h1>"
-            "<p>Traceback:</p>"
-            f"<pre style='background:#1e1e1e;color:#d4d4d4;padding:16px;overflow:auto;font-size:12px;white-space:pre-wrap'>{tb}</pre>"
-        ), 500
-    return {"error": "Error interno del servidor", "status": 500}, 500
-
-@app.errorhandler(Exception)
-def handle_exception(e):
-    import traceback, os
-    tb = traceback.format_exc()
-    print("=" * 60)
-    print("EXCEPTION - TRACEBACK:")
-    print(tb)
-    print("=" * 60)
-    if os.environ.get("FLASK_DEBUG", "false").lower() == "true":
-        return (
-            "<h1>Error (DEBUG)</h1>"
-            "<p>Excepcion:</p>"
-            f"<pre style='background:#1e1e1e;color:#d4d4d4;padding:16px;overflow:auto;font-size:12px;white-space:pre-wrap'>{tb}</pre>"
-        ), 500
-    return {"error": "Error interno del servidor", "status": 500}, 500
-
-# ══════════════════════════════════════════════════════════════
-#  ARRANQUE
-# ══════════════════════════════════════════════════════════════
-
-def abrir_navegador():
-    time.sleep(1.5)
-    try: webbrowser.open("http://localhost:5050")
-    except Exception: pass
+def error_500(e): return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 def main():
-    print("\n" + "="*58)
-    print("   TPV ULTRA SMART v2.5.5 — MODULAR")
-    print("="*58)
+    print("\n" + "="*58 + "\n   TPV ULTRA SMART v6.0 (MODULAR)\n" + "="*58)
     crear_tablas()
     crear_tablas_tienda()
     estado = cargar_estado()
-    if estado:
-        print(f" {len(estado.get('productos',[]))} productos | {len(estado.get('historialVentas',[]))} ventas")
-    print(f" Supabase: {'Activo' if _sb.SUPABASE_OK else 'Solo local'}")
-    print(" Servidor: http://localhost:5050")
-    # FIX: no imprimir password en consola
-    threading.Thread(target=abrir_navegador, daemon=True).start()
+    if estado: print(f" {len(estado.get('productos',[]))} productos | {len(estado.get('historialVentas',[]))} ventas ")
+    print(f" Supabase: {'✅ Activo' if _sb.SUPABASE_OK else '⚠️  Solo local'} ")
+    print(" Servidor: http://localhost:5000 ")
+    print(" Login:    desarrollador / dev2024\n ")
+    
     import logging
     logging.getLogger('werkzeug').setLevel(logging.ERROR)
-    try:
-        import socket
-        ips = list(set([
-            i[4][0] for i in socket.getaddrinfo(socket.gethostname(), None)
-            if i[4][0].startswith(('192.168.','10.','172.')) and ':' not in i[4][0]
-        ]))
-        print("\n" + "="*48)
-        print("  TPV ULTRA SMART v2.5.5 - Modular")
-        print("  Local : http://localhost:5050")
-        for ip in ips: print(f"  WiFi  : http://{ip}:5050")
-        print("="*48 + "\n")
-    except Exception: pass
-    setup_error_handlers(app)
-    app.run(host=_TPV_HOST, port=_TPV_PORT, debug=False, use_reloader=False)
+    app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)
 
-
-# ========== v24: Validación BD al inicio ==========
-def tpv_validate_db():
-    """Verificar que la BD existe y tiene datos al arrancar."""
-    import sqlite3, os
-    from database import DB_FILE
-    if not os.path.exists(DB_FILE):
-        print("[v24] ADVERTENCIA: BD no encontrada en", DB_FILE)
-        return False
-    try:
-        conn = sqlite3.connect(DB_FILE)
-        cur = conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM productos")
-        count = cur.fetchone()[0]
-        conn.close()
-        print(f"[v24] BD OK: {count} productos encontrados")
-        return count > 0
-    except Exception as e:
-        print(f"[v24] ERROR BD: {e}")
-        return False
-
-try:
-    tpv_validate_db()
-except Exception as e:
-    print(f'[v24] Validacion BD omitida: {e}')
-
-
-# ── API: Importación Inteligente de Excel ──
-# /api/reconstruir-desde-productos movido a routes/inventory_crud.py
-
-
-
-
-def dev_metricas_page():
-    return render_template("dev/dev_panel_metricas.html")
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
-
-
-# ── Biometric ──
-@app.route("/api/i18n/<lang>")
-def get_translations(lang):
-    from i18n_dict import t, available_languages
-    if lang not in available_languages():
-        return jsonify({"error": "Idioma no soportado", "available": available_languages()}), 400
-    return jsonify({"lang": lang, "translations": {k: t(k, lang) for k in TRANSLATIONS.get(lang, {})}})
-
-
-@app.route("/api/sync/status")
-def sync_status():
-    from sync.async_sync import get_sync_status
-    return jsonify(get_sync_status())
-
-@app.route("/api/sync/now")
-def sync_now():
-    from sync.async_sync import sync_in_background
-    return jsonify(sync_in_background())

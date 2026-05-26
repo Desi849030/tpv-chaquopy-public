@@ -3,568 +3,289 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0d6efd">
 <title>TPV Ultra Smart</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Bootstrap CDN para icons (opcional, fallback a emojis si no carga) -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
 <style>
-body{font-family:system-ui,-apple-system,sans-serif;background:linear-gradient(135deg,#0d1b2a 0%,#1a3a5c 55%,#0d6efd 100%);min-height:100vh;color:white}
-.login-card{background:rgba(255,255,255,0.95);border-radius:1.5rem;padding:2rem;max-width:400px;width:95%;margin:2rem auto;color:#1e293b}
-.btn-primary{background:#0d6efd;border:none}
-.app-screen{display:none;padding:1rem}
-.nav-tabs{display:flex;gap:0.5rem;overflow-x:auto;padding-bottom:0.5rem}
-.nav-tab{padding:0.5rem 1rem;background:rgba(255,255,255,0.1);border-radius:0.5rem;color:white;white-space:nowrap;border:none}
-.nav-tab.active{background:#0d6efd}
-.tab-content{background:rgba(255,255,255,0.9);border-radius:0.5rem;padding:1rem;color:#1e293b;min-height:200px;margin-top:1rem}
-.product-card{background:white;border-radius:0.75rem;padding:0.75rem;margin-bottom:0.5rem;display:flex;justify-content:space-between;align-items:center}
-.stock-badge{font-size:0.7rem;padding:2px 6px;border-radius:4px}
-.stock-verde{background:#22c55e;color:white}.stock-amarillo{background:#eab308;color:black}.stock-rojo{background:#ef4444;color:white}
-.qr-card{background:white;border-radius:0.75rem;padding:1rem;text-align:center;margin-bottom:0.5rem}
-.ai-agent{position:fixed;bottom:20px;right:20px;width:60px;height:60px;background:linear-gradient(135deg,#7c3aed,#5b21b6);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:1.5rem;cursor:pointer;box-shadow:0 4px 20px rgba(124,58,237,0.4);z-index:9999}
-.ai-panel{position:fixed;bottom:90px;right:20px;width:320px;max-height:400px;background:white;border-radius:1rem;padding:1rem;color:#1e293b;box-shadow:0 4px 20px rgba(0,0,0,0.2);display:none;z-index:9998}
-.ai-messages{height:250px;overflow-y:auto;margin-bottom:0.5rem;border-bottom:1px solid #e2e8f0;padding-bottom:0.5rem}
-.ai-input{display:flex;gap:0.5rem}
-.ai-input input{flex:1;padding:0.5rem;border:1px solid #e2e8f0;border-radius:0.5rem}
-.ai-input button{padding:0.5rem 1rem;background:#0d6efd;color:white;border:none;border-radius:0.5rem;cursor:pointer}
-.submenu{display:none;position:absolute;background:white;color:#1e293b;border-radius:0.5rem;padding:0.5rem;min-width:180px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:1000}
-.submenu.show{display:block}
-.submenu a{display:block;padding:0.4rem 0.8rem;color:#1e293b;text-decoration:none;border-radius:0.25rem}
-.submenu a:hover{background:#f1f5f9}
-.dropdown{position:relative}
-.dropdown-toggle::after{content:"▼";font-size:0.6rem;margin-left:0.3rem}
+:root{--p:#0d6efd;--pd:#0a58ca;--s:#198754;--w:#ffc107;--d:#dc3545;--dk:#1e293b;--lt:#f8fafc;--sh:0 8px 30px rgba(0,0,0,0.12);--r:1rem;--tr:all 0.3s cubic-bezier(0.4,0,0.2,1)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 40%,#3b82f6 100%);min-height:100vh;color:var(--dk);line-height:1.6}
+/* Splash */
+#splash{position:fixed;inset:0;background:linear-gradient(135deg,#0f172a,#1e3a5f,#3b82f6);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;transition:opacity 0.6s ease}
+#splash.hidden{opacity:0;pointer-events:none}
+.splash-logo{width:110px;height:110px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pd));display:flex;align-items:center;justify-content:center;font-size:2.8rem;color:white;margin-bottom:1.3rem;box-shadow:0 14px 45px rgba(13,110,253,0.5);animation:pulse 2.5s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.splash-title{font-size:1.9rem;font-weight:800;color:white;margin-bottom:0.4rem;text-shadow:0 3px 14px rgba(0,0,0,0.3)}
+.splash-sub{color:rgba(255,255,255,0.92);font-size:1.05rem}
+/* Login */
+#login{display:none;align-items:center;justify-content:center;min-height:100vh;padding:1.5rem}
+.login-card{background:white;border-radius:var(--r);padding:2.4rem;max-width:440px;width:100%;box-shadow:var(--sh);animation:slideIn 0.5s ease;position:relative;overflow:hidden}
+.login-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--p),var(--pd))}
+@keyframes slideIn{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+.login-header{text-align:center;margin-bottom:1.9rem}
+.login-logo{width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pd));color:white;display:flex;align-items:center;justify-content:center;font-size:1.9rem;margin:0 auto 0.9rem;box-shadow:0 7px 22px rgba(13,110,253,0.35)}
+.login-title{font-size:1.55rem;font-weight:800;color:var(--dk);margin:0 0 0.25rem}
+.login-sub{color:#64748b;font-size:0.94rem}
+.login-tabs{display:flex;background:var(--lt);border-radius:0.78rem;padding:4px;margin:1.4rem 0;position:relative}
+.login-tab{flex:1;padding:0.63rem 0.88rem;border:none;border-radius:0.68rem;font-weight:600;font-size:0.91rem;cursor:pointer;transition:var(--tr);background:transparent;color:#64748b;position:relative;z-index:1}
+.login-tab.active{background:white;color:var(--p);box-shadow:0 2.5px 9px rgba(0,0,0,0.09)}
+.login-tab::before{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(135deg,var(--p),var(--pd));opacity:0;transition:var(--tr);z-index:-1}
+.login-tab.active::before{opacity:0.07}
+.field{margin-bottom:1.25rem;position:relative}
+.field label{display:block;font-weight:600;color:var(--dk);margin-bottom:0.43rem;font-size:0.91rem}
+.field input{width:100%;padding:0.83rem 3.1rem 0.83rem 1.08rem;border-radius:0.83rem;border:2px solid #e2e8f0;font-size:1rem;outline:none;transition:var(--tr);background:white}
+.field input:focus{border-color:var(--p);box-shadow:0 0 0 4px rgba(13,110,253,0.11)}
+/* TOGGLE PASSWORD - PERFECTAMENTE CENTRADO (40x40px) */
+.pw-toggle{position:absolute;right:1.08rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;font-size:1.23rem;line-height:1;transition:var(--tr);z-index:2;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%}
+.pw-toggle:hover{color:var(--p);background:rgba(13,110,253,0.07)}
+.pw-toggle.active{color:var(--p)}
+.btn{width:100%;padding:0.93rem;border:none;border-radius:0.83rem;background:linear-gradient(135deg,var(--p),var(--pd));color:white;font-size:1.04rem;font-weight:700;cursor:pointer;transition:var(--tr);box-shadow:0 5.5px 19px rgba(13,110,253,0.34);display:flex;align-items:center;justify-content:center;gap:0.48rem;position:relative;overflow:hidden}
+.btn::before{content:'';position:absolute;top:50%;left:50%;width:0;height:0;border-radius:50%;background:rgba(255,255,255,0.29);transform:translate(-50%,-50%);transition:width 0.58s,height 0.58s}
+.btn:active::before{width:290px;height:290px}
+.btn:hover:not(:disabled){transform:translateY(-1.9px);box-shadow:0 9px 28px rgba(13,110,253,0.44)}
+.btn:disabled{opacity:0.64;cursor:not-allowed;transform:none}
+.btn-s{background:linear-gradient(135deg,var(--s),#146c43);box-shadow:0 5.5px 19px rgba(25,135,84,0.34)}
+.btn-s:hover:not(:disabled){box-shadow:0 9px 28px rgba(25,135,84,0.44)}
+.error{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:0.83rem;padding:0.83rem 1.08rem;margin-bottom:1.08rem;font-size:0.91rem;display:none;align-items:center;gap:0.48rem;animation:shake 0.39s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}24%{transform:translateX(-4.8px)}72%{transform:translateX(4.8px)}}
+.error i{flex-shrink:0;margin-top:1.8px}
+.login-footer{text-align:center;color:#94a3b8;font-size:0.87rem;margin-top:1.55rem;padding-top:1.18rem;border-top:1px solid #e2e8f0}
+/* App */
+#app{display:none;padding:0.95rem}
+.nav{background:linear-gradient(90deg,var(--p),var(--pd));backdrop-filter:blur(11px);box-shadow:0 3.8px 28px rgba(0,0,0,0.14);padding:0.68rem 1.18rem;border-radius:0 0 var(--r) var(--r);margin-bottom:0.78rem;position:sticky;top:0;z-index:102}
+.nav-brand{font-weight:800;font-size:1.23rem;color:white!important;display:flex;align-items:center;gap:0.58rem}
+.nav-brand i{font-size:1.48rem}
+.user-bar{display:flex;align-items:center;gap:0.83rem;color:white;font-size:0.89rem}
+.user-avatar{width:41px;height:41px;border-radius:50%;background:rgba(255,255,255,0.19);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.08rem;box-shadow:0 2.8px 9px rgba(0,0,0,0.14)}
+.role{padding:0.29rem 0.73rem;border-radius:999px;font-size:0.71rem;font-weight:700;text-transform:uppercase;letter-spacing:0.029em;background:rgba(255,255,255,0.17);border:1px solid rgba(255,255,255,0.29);box-shadow:0 1.9px 7px rgba(0,0,0,0.09)}
+/* Tabs con Submenus - FIX CRÍTICO */
+.tabs{display:flex;gap:0.29rem;overflow-x:auto;padding:0.44rem 0;scrollbar-width:none;margin:0 -0.95rem;padding:0.44rem 0.95rem}
+.tabs::-webkit-scrollbar{display:none}
+.tab-item{position:relative}
+.tab{padding:0.59rem 1.13rem;border-radius:0.83rem;color:rgba(255,255,255,0.94);font-weight:600;font-size:0.91rem;white-space:nowrap;transition:var(--tr);border:none;background:transparent;cursor:pointer;display:flex;align-items:center;gap:0.39rem}
+.tab i{font-size:1.04rem}
+.tab:hover,.tab.active{background:rgba(255,255,255,0.17);color:white;transform:translateY(-1.9px)}
+.tab.drop::after{content:"▼";font-size:0.59rem;margin-left:0.24rem;vertical-align:middle;opacity:0.84;transition:var(--tr)}
+.tab-item:hover .tab.drop::after{transform:rotate(180deg)}
+/* SUBMENÚS - SIEMPRE VISIBLES AL HOVER (FIX CRÍTICO) */
+.submenu{position:absolute;top:100%;left:0;min-width:235px;background:white;border-radius:0.98rem;box-shadow:0 11px 38px rgba(0,0,0,0.19);padding:0.68rem;z-index:103;display:none;animation:slideD 0.29s cubic-bezier(0.4,0,0.2,1);border:1px solid rgba(0,0,0,0.058);margin-top:0.39rem}
+@keyframes slideD{from{opacity:0;transform:translateY(-11px) scale(0.968)}to{opacity:1;transform:translateY(0) scale(1)}}
+.tab-item:hover .submenu,.submenu.show{display:block !important}
+.submenu a{display:flex;align-items:center;gap:0.63rem;padding:0.63rem 0.93rem;color:#334155;text-decoration:none;border-radius:0.68rem;font-size:0.89rem;font-weight:500;transition:var(--tr);position:relative;overflow:hidden}
+.submenu a::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2.9px;background:linear-gradient(135deg,var(--p),var(--pd));transform:scaleY(0);transition:transform 0.19s}
+.submenu a i{width:1.38rem;text-align:center;color:#94a3b8;font-size:1.04rem;transition:var(--tr)}
+.submenu a:hover{background:var(--lt);color:var(--p);padding-left:1.08rem}
+.submenu a:hover::before{transform:scaleY(1)}
+.submenu a:hover i{color:var(--p);transform:translateX(2.9px)}
+/* Cards */
+.card{background:white;border-radius:var(--r);box-shadow:var(--sh);margin-bottom:1.28rem;overflow:hidden;transition:var(--tr)}
+.card:hover{box-shadow:0 11px 38px rgba(0,0,0,0.17);transform:translateY(-2.9px)}
+.card-h{background:linear-gradient(90deg,var(--lt),#f1f5f9);padding:1.13rem 1.38rem;font-weight:700;color:var(--dk);border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:0.63rem;font-size:1.07rem}
+.card-h i{font-size:1.28rem;color:var(--p)}
+.card-b{padding:1.38rem}
+/* Productos */
+.prod{background:white;border-radius:0.98rem;padding:0.93rem;margin-bottom:0.63rem;display:flex;justify-content:space-between;align-items:center;cursor:pointer;border:2px solid transparent;transition:var(--tr);position:relative;overflow:hidden}
+.prod::before{content:'';position:absolute;top:0;left:0;right:0;height:2.9px;background:linear-gradient(90deg,var(--p),var(--pd));opacity:0;transition:var(--tr)}
+.prod:hover{transform:translateY(-3.8px);box-shadow:0 11px 33px rgba(0,0,0,0.14);border-color:var(--p)}
+.prod:hover::before{opacity:1}
+.prod:active{transform:translateY(-1.9px)}
+.p-img{width:56px;height:56px;border-radius:0.88rem;background:linear-gradient(135deg,#f1f5f9,#e2e8f0);display:flex;align-items:center;justify-content:center;font-size:1.58rem;margin-right:0.93rem;flex-shrink:0;color:var(--p);box-shadow:0 2.9px 9px rgba(0,0,0,0.07)}
+.p-info{flex:1;min-width:0}
+.p-n{font-weight:700;color:var(--dk);margin-bottom:0.14rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:0.97rem}
+.p-c{font-size:0.81rem;color:#64748b;margin-bottom:0.29rem}
+.p-pr{font-weight:800;color:#16a34a;font-size:1.14rem}
+.st{font-size:0.71rem;padding:0.24rem 0.58rem;border-radius:999px;font-weight:700;text-transform:uppercase;letter-spacing:0.019em;box-shadow:0 1.9px 5px rgba(0,0,0,0.09)}
+.st-ok{background:#22c55e;color:white}.st-low{background:#eab308;color:var(--dk)}.st-out{background:#ef4444;color:white}
+/* Orden */
+.oi{display:flex;justify-content:space-between;align-items:center;padding:0.54rem 0;border-bottom:1px solid #f1f5f9}
+.oi:last-child{border-bottom:none}
+/* Utils */
+.d-n{display:none!important}.tc{text-align:center}.tm{color:#64748b}.ts{color:#16a34a}.td{color:#dc2626}.fb{font-weight:700}.fs{font-weight:600}
+.r-xl{border-radius:var(--r)!important}.sh-p{box-shadow:var(--sh)!important}.tr{transition:var(--tr)!important}
+/* Responsive */
+@media(max-width:767px){.nav-brand{font-size:1.14rem}.tab{padding:0.54rem 0.98rem;font-size:0.87rem}.submenu{min-width:215px;left:auto;right:0}.prod{padding:0.79rem}.p-img{width:49px;height:49px;font-size:1.34rem}.login-card{padding:1.95rem 1.58rem}.splash-logo{width:98px;height:98px;font-size:2.58rem}.splash-title{font-size:1.68rem}}
+/* Dark */
+@media(prefers-color-scheme:dark){body{background:#0f172a}.card,.login-card{background:#1e293b;color:#f1f5f9}.card-h{background:linear-gradient(90deg,#334155,#475569);color:white}.field input{background:#334155;border-color:#475569;color:white}.submenu{background:#1e293b;border-color:#334155}.submenu a{color:#f1f5f9}.submenu a:hover{background:#334155}}
 </style>
 </head>
 <body>
+
+<!-- SPLASH -->
+<div id="splash"><div class="splash-logo">🏪</div><h1 class="splash-title">TPV Ultra Smart</h1><p class="splash-sub">Sistema Punto de Venta Profesional</p></div>
+
 <!-- LOGIN -->
-<div id="login-screen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem">
-  <div class="login-card text-center">
-    <h3 style="margin-bottom:1rem">🏪 TPV Ultra Smart</h3>
-    <p style="margin-bottom:1.5rem;color:#64748b">Sistema Punto de Venta Profesional</p>
-    <input type="text" id="username" class="form-control" placeholder="Usuario (desarrollador)" style="margin-bottom:0.75rem">
-    <input type="password" id="password" class="form-control" placeholder="Contraseña (dev2024)" style="margin-bottom:1rem">
-    <button class="btn btn-primary" style="width:100%" onclick="login()">Entrar</button>
-    <p id="msg" style="margin-top:1rem;color:#dc2626;font-size:0.875rem"></p>
+<div id="login"><div class="login-card">
+  <div class="login-header"><div class="login-logo">🔐</div><h2 class="login-title">Acceso al Sistema</h2><p class="login-sub">Ingresa con tus credenciales</p></div>
+  <div id="err" class="error"><i>⚠️</i><span id="errmsg"></span></div>
+  <div class="login-tabs"><button class="login-tab active" onclick="setMode('staff')">👤 Personal</button><button class="login-tab" onclick="setMode('client')">🛍️ Cliente</button></div>
+  <div id="panel-staff">
+    <div class="field"><label>👤 Usuario</label><input id="u" type="text" placeholder="ej: desarrollador" autocomplete="username"></div>
+    <div class="field"><label>🔐 Contraseña</label><input id="p" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"><button class="pw-toggle" onclick="togglePw('p')" title="Mostrar/Ocultar">👁️</button></div>
+    <button class="btn" onclick="doLogin()"><span id="lbtn-txt">🚪 Entrar</span><span id="lbtn-spin" style="display:none">⏳ Verificando...</span></button>
+    <div class="login-footer">🔒 Acceso restringido al personal autorizado</div>
   </div>
-</div>
+  <div id="panel-client" class="d-n">
+    <p class="login-sub" style="margin-bottom:1.28rem;text-align:left">Inicia sesión en tu cuenta</p>
+    <div class="field"><label>📧 Email</label><input id="ce" type="email" placeholder="tu@email.com" autocomplete="email"></div>
+    <div class="field"><label>🔐 Contraseña</label><input id="cp" type="password" placeholder="••••••••"><button class="pw-toggle" onclick="togglePw('cp')">👁️</button></div>
+    <button class="btn btn-s" onclick="doClientLogin()">🛍️ Entrar a la tienda</button>
+    <div class="login-footer" style="margin-top:0.98rem">¿Sin cuenta? <a href="#" style="color:var(--p);font-weight:600" onclick="alert('Registro disponible en versión completa');return false">Regístrate gratis</a></div>
+  </div>
+</div></div>
 
-<!-- APP PRINCIPAL -->
-<div id="app-screen" class="app-screen">
-  <!-- Barra superior -->
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;padding:0.5rem;background:rgba(255,255,255,0.1);border-radius:0.5rem">
-    <h5 style="margin:0">👋 <span id="user-name"></span></h5>
-    <button class="btn" style="background:rgba(255,255,255,0.2);color:white;border-radius:0.5rem" onclick="logout()">Salir</button>
+<!-- APP -->
+<div id="app">
+  <!-- Navbar -->
+  <nav class="nav"><div style="display:flex;justify-content:space-between;align-items:center">
+    <span class="nav-brand">🏪 <span id="tpv-n">TPV Ultra Smart</span></span>
+    <div class="user-bar"><div class="user-avatar" id="ua">👤</div><div><div class="fb" id="un">—</div><span class="role" id="ur">—</span></div><button style="background:none;border:none;color:white;font-size:1.08rem;cursor:pointer" onclick="doLogout()" title="Cerrar sesión">⏻</button></div>
+  </div></nav>
+  
+  <!-- Tabs con Submenus - FIX: hover siempre muestra submenu -->
+  <div class="tabs">
+    <div class="tab-item"><button class="tab active" onclick="swTab('cat')"><i>📦</i> Catálogo</button></div>
+    <div class="tab-item">
+      <button class="tab drop" onclick="toggleSub('gestion')"><i>⚙️</i> Gestión</button>
+      <div class="submenu" id="sm-gestion">
+        <a href="#" onclick="showSec('productos');return false"><i>📦</i> Productos</a>
+        <a href="#" onclick="showSec('categorias');return false"><i>🏷️</i> Categorías</a>
+        <a href="#" onclick="showSec('qr');return false"><i>🔲</i> Etiquetas QR</a>
+        <a href="#" onclick="showSec('importar');return false"><i>📥</i> Importar/Exportar</a>
+      </div>
+    </div>
+    <div class="tab-item"><button class="tab" onclick="swTab('ord')"><i>🛒</i> Orden</button></div>
+    <div class="tab-item">
+      <button class="tab drop" onclick="toggleSub('ventas')"><i>💰</i> Ventas</button>
+      <div class="submenu" id="sm-ventas">
+        <a href="#" onclick="showSec('ventas-hoy');return false"><i>📊</i> Ventas Hoy</a>
+        <a href="#" onclick="showSec('nomenclador');return false"><i>🧮</i> Nomenclador</a>
+        <a href="#" onclick="showSec('exportar');return false"><i>📤</i> Exportar Excel</a>
+      </div>
+    </div>
+    <div class="tab-item">
+      <button class="tab drop" onclick="toggleSub('inventario')"><i>📋</i> Inventario</button>
+      <div class="submenu" id="sm-inventario">
+        <a href="#" onclick="showSec('mi-inventario');return false"><i>📦</i> Mi Inventario</a>
+        <a href="#" onclick="showSec('vendedores');return false"><i>👥</i> Vendedores</a>
+        <a href="#" onclick="showSec('cierres');return false"><i>🔒</i> Cierres</a>
+      </div>
+    </div>
+    <div class="tab-item"><button class="tab" onclick="swTab('registros')"><i>📋</i> Registros</button></div>
+    <div class="tab-item"><button class="tab" onclick="swTab('tienda')"><i>🏪</i> Tienda</button></div>
+    <div class="tab-item">
+      <button class="tab drop" onclick="toggleSub('config')"><i>⚙️</i> Sistema</button>
+      <div class="submenu" id="sm-config">
+        <a href="#" onclick="showSec('ajustes');return false"><i>🎨</i> Apariencia</a>
+        <a href="#" onclick="showSec('mantenimiento');return false"><i>🔧</i> Mantenimiento</a>
+        <a href="#" onclick="showSec('licencias');return false"><i>🔑</i> Licencias</a>
+      </div>
+    </div>
   </div>
   
-  <!-- Navegación con submenús -->
-  <div class="nav-tabs">
-    <button class="nav-tab active" onclick="switchTab('catalogo')">📦 Catálogo</button>
-    
-    <div class="dropdown">
-      <button class="nav-tab dropdown-toggle" onclick="toggleSubmenu('gestion')">⚙️ Gestión</button>
-      <div id="submenu-gestion" class="submenu">
-        <a href="#" onclick="showSection('productos')">Productos</a>
-        <a href="#" onclick="showSection('categorias')">Categorías</a>
-        <a href="#" onclick="showSection('qr')">🔲 Generar QR</a>
-        <a href="#" onclick="showSection('importar')">📥 Importar Excel</a>
+  <!-- Contenido: Catálogo -->
+  <div id="tab-cat">
+    <div class="card"><div class="card-h"><i>📦</i> Catálogo de Productos</div><div class="card-b">
+      <div style="display:flex;gap:0.49rem;margin-bottom:0.88rem">
+        <input type="text" id="search" placeholder="🔍 Buscar..." style="flex:1;padding:0.64rem 0.88rem;border-radius:0.69rem;border:2px solid #e2e8f0;font-size:0.94rem;outline:none" oninput="filtProd()">
+        <select id="cat-f" style="padding:0.64rem 0.88rem;border-radius:0.69rem;border:2px solid #e2e8f0;font-size:0.94rem;outline:none;background:white" onchange="filtProd()"><option value="">Todas</option></select>
       </div>
-    </div>
-    
-    <button class="nav-tab" onclick="switchTab('orden')">🛒 Orden</button>
-    
-    <div class="dropdown">
-      <button class="nav-tab dropdown-toggle" onclick="toggleSubmenu('ventas')">💰 Ventas</button>
-      <div id="submenu-ventas" class="submenu">
-        <a href="#" onclick="showSection('ventas-hoy')">Ventas Hoy</a>
-        <a href="#" onclick="showSection('nomenclador')">🪙 Nomenclador</a>
-        <a href="#" onclick="showSection('exportar')">📤 Exportar</a>
-      </div>
-    </div>
-    
-    <div class="dropdown">
-      <button class="nav-tab dropdown-toggle" onclick="toggleSubmenu('inventario')">📊 Inventario</button>
-      <div id="submenu-inventario" class="submenu">
-        <a href="#" onclick="showSection('stock')">Stock General</a>
-        <a href="#" onclick="showSection('vendedores')">Vendedores</a>
-        <a href="#" onclick="showSection('cierres')">Cierres</a>
-      </div>
-    </div>
-    
-    <button class="nav-tab" onclick="switchTab('tienda')">🏪 Tienda</button>
-    
-    <div class="dropdown">
-      <button class="nav-tab dropdown-toggle" onclick="toggleSubmenu('config')">⚙️ Sistema</button>
-      <div id="submenu-config" class="submenu">
-        <a href="#" onclick="showSection('ajustes')">Ajustes</a>
-        <a href="#" onclick="showSection('backup')">💾 Backup</a>
-        <a href="#" onclick="showSection('licencia')">🔑 Licencia</a>
-        <a href="#" onclick="showSection('mantenimiento')">🔧 Mantenimiento</a>
-      </div>
-    </div>
+      <div id="plist"></div>
+    </div></div>
   </div>
   
-  <!-- Contenido de pestañas -->
-  <div class="tab-content">
-    <!-- Catálogo con tarjetas -->
-    <div id="tab-catalogo">
-      <input type="text" id="buscador" class="form-control" placeholder="Buscar producto..." oninput="filtrarProductos()" style="margin-bottom:0.5rem">
-      <select id="filtro-categoria" class="form-select" onchange="filtrarProductos()" style="margin-bottom:1rem">
-        <option value="">Todas las categorías</option>
-      </select>
-      <div id="productos-lista"></div>
-    </div>
-    
-    <!-- Gestión de Productos -->
-    <div id="section-productos" class="tab-content" style="display:none">
-      <div style="display:flex;justify-content:space-between;margin-bottom:1rem">
-        <h6>📦 Gestión de Productos</h6>
-        <button class="btn btn-sm btn-primary" onclick="abrirModalProducto()">+ Nuevo</button>
+  <!-- Contenido: Orden -->
+  <div id="tab-ord" class="d-n">
+    <div class="card"><div class="card-h"><i>🛒</i> Orden Actual</div><div class="card-b">
+      <div id="olist" style="min-height:118px;display:flex;align-items:center;justify-content:center;color:#64748b">Añade productos del catálogo</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:0.98rem 0;padding:0.79rem 0;border-top:2px solid #e2e8f0;border-bottom:2px solid #e2e8f0"><span style="font-size:1.09rem;font-weight:700">Total:</span><span id="ot" style="font-size:1.39rem;font-weight:800;color:var(--s)">$0.00</span></div>
+      <button class="btn btn-s" onclick="pay()">💰 Procesar Pago</button>
+      <button class="btn" style="background:#64748b;margin-top:0.49rem;box-shadow:none" onclick="clearOrd()">🗑️ Cancelar</button>
+    </div></div>
+  </div>
+  
+  <!-- Contenido: Ajustes -->
+  <div id="sec-ajustes" class="d-n">
+    <div class="card"><div class="card-h"><i>⚙️</i> Ajustes del Sistema</div><div class="card-b">
+      <div style="display:grid;gap:0.98rem">
+        <div><label style="display:block;font-weight:600;margin-bottom:0.39rem">🌐 Idioma</label><select id="lang" style="width:100%;padding:0.69rem;border-radius:0.69rem;border:2px solid #e2e8f0;font-size:0.99rem" onchange="setLang(this.value)"><option value="es">Español</option><option value="en">English</option></select></div>
+        <div><label style="display:block;font-weight:600;margin-bottom:0.39rem">🎨 Tema</label><div style="display:flex;align-items:center;gap:0.49rem"><input type="checkbox" id="dark" onchange="setTheme(this.checked)" style="width:1.19rem;height:1.19rem"><label for="dark" style="font-weight:500">Modo Oscuro</label></div></div>
+        <div><label style="display:block;font-weight:600;margin-bottom:0.39rem">🏷️ Nombre del TPV</label><div style="display:flex;gap:0.39rem"><input type="text" id="tpv-i" placeholder="Mi TPV" style="flex:1;padding:0.69rem;border-radius:0.69rem;border:2px solid #e2e8f0"><button class="btn" style="width:auto;padding:0.69rem 1.09rem" onclick="saveTPVN()">Guardar</button></div></div>
       </div>
-      <div id="tabla-productos"></div>
-    </div>
-    
-    <!-- Generar QR -->
-    <div id="section-qr" class="tab-content" style="display:none">
-      <h6>🔲 Generar Códigos QR</h6>
-      <p class="text-muted small">Selecciona productos para generar etiquetas QR</p>
-      <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap">
-        <select id="qr-categoria" class="form-select form-select-sm" style="max-width:150px" onchange="cargarProductosQR()">
-          <option value="">Todas</option>
-        </select>
-        <button class="btn btn-sm btn-success" onclick="generarQRSeleccionados()">🔲 Generar QR</button>
-        <button class="btn btn-sm btn-outline-secondary" onclick="limpiarQR()">🗑️ Limpiar</button>
-      </div>
-      <div id="qr-productos-lista" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0.5rem"></div>
-      <div id="qr-resultados" style="margin-top:1rem"></div>
-    </div>
-    
-    <!-- Orden Actual -->
-    <div id="tab-orden" class="tab-content" style="display:none">
-      <div id="orden-items" style="margin-bottom:1rem"></div>
-      <div style="display:flex;justify-content:space-between;font-weight:bold;margin-bottom:0.5rem">
-        <span>Total:</span><span id="orden-total">$0.00</span>
-      </div>
-      <button class="btn btn-success" style="width:100%" onclick="procesarPago()">💰 Procesar Pago</button>
-    </div>
-    
-    <!-- Ventas Hoy -->
-    <div id="section-ventas-hoy" class="tab-content" style="display:none">
-      <h6>💰 Ventas de Hoy</h6>
-      <div id="ventas-lista"></div>
-    </div>
-    
-    <!-- Tienda -->
-    <div id="tab-tienda" class="tab-content" style="display:none">
-      <h6>🏪 Mi Tienda en Línea</h6>
-      <p class="text-muted small">Comparte este enlace con tus clientes</p>
-      <div style="background:#f1f5f9;padding:0.75rem;border-radius:0.5rem;margin-bottom:1rem">
-        <code id="tienda-url" style="word-break:break-all">http://localhost:5000/tienda</code>
-        <button class="btn btn-sm btn-outline-primary ms-2" onclick="copiarURL()">📋 Copiar</button>
-      </div>
-      <div id="tienda-pedidos"></div>
-    </div>
-    
-    <!-- Ajustes -->
-    <div id="section-ajustes" class="tab-content" style="display:none">
-      <h6>⚙️ Ajustes del Sistema</h6>
-      <div style="display:flex;flex-direction:column;gap:0.75rem">
-        <label>Idioma: <select id="ajuste-idioma" class="form-select form-select-sm" onchange="cambiarIdioma(this.value)"><option value="es">Español</option><option value="en">English</option></select></label>
-        <label><input type="checkbox" id="ajuste-tema" onchange="cambiarTema(this.checked)"> Tema Oscuro</label>
-        <label>Nombre del TPV: <input type="text" id="ajuste-nombre" class="form-control form-control-sm" placeholder="Mi TPV" onchange="guardarAjustes()"></label>
-      </div>
-    </div>
-    
-    <!-- Backup -->
-    <div id="section-backup" class="tab-content" style="display:none">
-      <h6>💾 Copias de Seguridad</h6>
-      <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap">
-        <button class="btn btn-sm btn-success" onclick="exportarBackup()">📤 Exportar JSON</button>
-        <button class="btn btn-sm btn-primary" onclick="document.getElementById('import-backup').click()">📥 Importar JSON</button>
-        <input type="file" id="import-backup" style="display:none" accept=".json" onchange="importarBackup(this)">
-      </div>
-      <div id="backup-lista"></div>
-    </div>
-    
-    <!-- Licencia -->
-    <div id="section-licencia" class="tab-content" style="display:none">
-      <h6>🔑 Estado de Licencia</h6>
-      <div id="licencia-info" style="background:#f1f5f9;padding:1rem;border-radius:0.5rem;margin-bottom:1rem"></div>
-      <input type="text" id="licencia-key" class="form-control form-control-sm" placeholder="Clave de licencia" style="margin-bottom:0.5rem">
-      <button class="btn btn-sm btn-primary" onclick="activarLicencia()">🔓 Activar</button>
-    </div>
-    
-    <!-- Mantenimiento -->
-    <div id="section-mantenimiento" class="tab-content" style="display:none">
-      <h6>🔧 Mantenimiento de Datos</h6>
-      <p class="text-danger small">⚠️ Estas acciones son irreversibles</p>
-      <div style="display:flex;flex-direction:column;gap:0.5rem">
-        <button class="btn btn-sm btn-outline-warning" onclick="limpiarVentasHoy()">🗑️ Limpiar Ventas Hoy</button>
-        <button class="btn btn-sm btn-outline-warning" onclick="limpiarCierres()">🗑️ Limpiar Cierres</button>
-        <button class="btn btn-sm btn-outline-danger" onclick="limpiarTodo()">⚠️ Reiniciar Todo (excepto productos)</button>
-      </div>
-    </div>
+    </div></div>
   </div>
 </div>
 
-<!-- Agente IA Flotante -->
-<div class="ai-agent" onclick="toggleAIPanel()">🤖</div>
-<div class="ai-panel" id="ai-panel">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
-    <strong>🤖 Asistente IA</strong>
-    <button onclick="toggleAIPanel()" style="background:none;border:none;font-size:1.2rem;cursor:pointer">×</button>
-  </div>
-  <div class="ai-messages" id="ai-messages">
-    <div style="background:#f1f5f9;padding:0.5rem;border-radius:0.5rem;margin-bottom:0.5rem">
-      ¡Hola! Soy tu asistente TPV. ¿En qué puedo ayudarte hoy?<br>
-      <small class="text-muted">Puedo ayudarte con: inventario, ventas, QR, exportar, etc.</small>
-    </div>
-  </div>
-  <div class="ai-input">
-    <input type="text" id="ai-input" placeholder="Escribe tu consulta..." onkeypress="if(event.key==='Enter')enviarIA()">
-    <button onclick="enviarIA()">➤</button>
-  </div>
-</div>
-
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<!-- QR Code library -->
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-
-<!-- LÓGICA COMPLETA EMBEBIDA -->
+<!-- JS INLINE - ASCII ONLY, NO EXTERNAL FILES -->
 <script>
 // Estado global
-let state={productos:[],orden:[],ventas:{},config:{lang:'es',theme:'light',nombre:'TPV Ultra Smart'},licencia:{activa:false}};
-let auth=null;
+let S={p:[],o:[],v:{},c:{lang:'es',theme:'light',nombre:'TPV Ultra Smart'}};let A=null;let R=null;
+
+// Permisos por rol (SEGURIDAD PROFESIONAL)
+const PERM={desarrollador:['all'],administrador:['gestion','ventas','inventario','config'],supervisor:['ventas','inventario','registros'],vendedor:['catalogo','orden','ventas-hoy'],cliente:['catalogo','tienda']};
+
+// Splash timeout garantizado (2.4s máximo)
+setTimeout(function(){var s=document.getElementById('splash');if(s&&!s.classList.contains('hidden')){s.classList.add('hidden');setTimeout(function(){s.style.display='none';var l=document.getElementById('login');if(l)l.style.display='flex'},290)}},2400);
+
+// Utilidades
+function $(id){return document.getElementById(id)}
+function esc(t){var d=document.createElement('div');d.textContent=t;return d.innerHTML}
+function togglePw(id){var i=$(id),b=event.currentTarget;if(!i||!b)return;var m=i.type==='password';i.type=m?'text':'password';b.innerHTML=m?'🙈':'👁️';b.classList.toggle('active',m)}
 
 // Login
-async function login(){
-  const u=document.getElementById('username').value.trim();
-  const p=document.getElementById('password').value;
-  const msg=document.getElementById('msg');
-  if(!u||!p){msg.textContent='Completa usuario y contraseña';return}
-  msg.textContent='Verificando...';
-  try{
-    const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
-    const d=await r.json();
-    if(d.ok){
-      auth=d.usuario;
-      document.getElementById('login-screen').style.display='none';
-      document.getElementById('app-screen').style.display='block';
-      document.getElementById('user-name').textContent=d.usuario.nombre;
-      await cargarProductos();
-      renderizarTodo();
-      iniciarIA();
-    }else msg.textContent=d.error||'Error';
-  }catch(e){msg.textContent='Error de conexión'}
-}
+function setMode(m){document.querySelectorAll('.login-tab').forEach(function(t){t.classList.remove('active')});event.currentTarget.classList.add('active');$('panel-staff').classList.toggle('d-n',m!=='staff');$('panel-client').classList.toggle('d-n',m==='staff');$(m==='staff'?'u':'ce').focus()}
+async function doLogin(){var u=$('u').value.trim(),p=$('p').value,e=$('err'),em=$('errmsg'),btn=event.currentTarget;e.style.display='none';if(!u||!p){em.textContent='Usuario y contraseña requeridos';e.style.display='flex';return}
+btn.disabled=true;$('lbtn-txt').style.display='none';$('lbtn-spin').style.display='';
+try{var r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})}),d=await r.json();
+if(d.ok){A=d.usuario;R=d.usuario.rol;if(!PERM[R]){em.textContent='Rol no autorizado';e.style.display='flex';btn.disabled=false;$('lbtn-txt').style.display='';$('lbtn-spin').style.display='none';return}
+hideSplash();$('login').style.display='none';$('app').style.display='block';$('un').textContent=d.usuario.nombre;$('ur').textContent=d.usuario.rol;$('ua').textContent=d.usuario.nombre.charAt(0).toUpperCase();applyPerms(R);loadProd();rendProd();rendOrd();loadCats();}
+else{em.textContent=d.error||'Credenciales inválidas';e.style.display='flex';$('p').value='';}
+}catch(err){em.textContent='Error de conexión';e.style.display='flex';console.error(err)}
+finally{btn.disabled=false;$('lbtn-txt').style.display='';$('lbtn-spin').style.display='none'}}
+function doClientLogin(){alert('Login de cliente: funcional en versión completa');}
+async function doLogout(){if(confirm('¿Cerrar sesión?')){try{await fetch('/api/auth/logout',{method:'POST'})}catch(e){}A=null;R=null;S.o=[];$('app').style.display='none';$('login').style.display='flex';$('u').value=$('p').value='';}}
 
-async function logout(){
-  try{await fetch('/api/auth/logout',{method:'POST'})}catch(e){}
-  auth=null;state.orden=[];
-  document.getElementById('app-screen').style.display='none';
-  document.getElementById('login-screen').style.display='flex';
-  document.getElementById('username').value='';
-  document.getElementById('password').value='';
-  document.getElementById('msg').textContent='';
-}
+// Splash helper
+function hideSplash(){var s=$('splash');if(s&&!s.classList.contains('hidden')){s.classList.add('hidden');setTimeout(function(){s.style.display='none';if($('login'))$('login').style.display='flex'},290)}}
 
-// Cargar productos desde API
-async function cargarProductos(){
-  try{
-    const r=await fetch('/api/catalogo');
-    if(r.ok){const d=await r.json();if(d.ok)state.productos=d.productos}
-  }catch(e){console.log('Offline')}
-}
+// Seguridad: Aplicar permisos por rol
+function applyPerms(rol){var perms=PERM[rol]||[],isDev=perms.includes('all');document.querySelectorAll('.tab-item').forEach(function(item){var btn=item.querySelector('.tab');if(!btn)return;var t=btn.textContent.toLowerCase(),vis=false;if(isDev)vis=true;else if(t.includes('catálogo')&&perms.includes('catalogo'))vis=true;else if(t.includes('gestión')&&perms.includes('gestion'))vis=true;else if(t.includes('orden')&&perms.includes('orden'))vis=true;else if(t.includes('ventas')&&perms.includes('ventas'))vis=true;else if(t.includes('inventario')&&perms.includes('inventario'))vis=true;else if(t.includes('registros')&&perms.includes('registros'))vis=true;else if(t.includes('tienda')&&perms.includes('tienda'))vis=true;else if(t.includes('sistema')&&perms.includes('config'))vis=true;item.style.display=vis?'':'none'});console.log('✅ Permisos aplicados para rol:',rol,perms)}
 
-// Renderizar catálogo con tarjetas
-function renderizarProductos(){
-  const lista=document.getElementById('productos-lista');
-  const filtro=document.getElementById('buscador')?.value.toLowerCase()||'';
-  const cat=document.getElementById('filtro-categoria')?.value||'';
-  const prods=state.productos.filter(p=>p.nombre.toLowerCase().includes(filtro)&&(!cat||p.categoria===cat));
-  
-  if(!prods.length){lista.innerHTML='<p style="text-align:center;color:#64748b;padding:1rem">Sin productos</p>';return}
-  
-  lista.innerHTML=prods.map(p=>{
-    const stock=p.stock||0;
-    const color=stock>=24?'verde':stock>=15?'amarillo':'rojo';
-    return `<div class="product-card">
-      <div>
-        <strong>${p.nombre}</strong><br>
-        <small style="color:#64748b">${p.categoria||'General'}</small>
-      </div>
-      <div style="text-align:right">
-        <div style="font-weight:bold;color:#16a34a">$${(p.precio||0).toFixed(2)}</div>
-        <span class="stock-badge stock-${color}">${stock} uds</span>
-      </div>
-      <button class="btn btn-primary" style="margin-left:0.5rem;padding:0.25rem 0.75rem" onclick="agregar('${p.id}')">+</button>
-    </div>`;
-  }).join('');
-}
+// Navegación
+function toggleSub(id){document.querySelectorAll('.submenu').forEach(function(sm){if(sm.id!=='sm-'+id)sm.classList.remove('show')});$('sm-'+id).classList.toggle('show')}
+function swTab(t){document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('active')});event.currentTarget.classList.add('active');['cat','ord'].forEach(function(x){if($('tab-'+x))$('tab-'+x).classList.add('d-n')});if($('tab-'+t))$('tab-'+t).classList.remove('d-n');document.querySelectorAll('.submenu').forEach(function(sm){sm.classList.remove('show')})}
+function showSec(sec){document.querySelectorAll('.tab-pane,.card').forEach(function(el){if(el.id&&(el.id.startsWith('tab-')||el.id.startsWith('sec-')))el.classList.add('d-n')});var target=$('sec-'+sec);if(target)target.classList.remove('d-n');document.querySelectorAll('.submenu').forEach(function(sm){sm.classList.remove('show')})}
 
-function filtrarProductos(){renderizarProductos()}
-
-// Agregar a orden
-function agregar(id){
-  const prod=state.productos.find(p=>p.id===id);
-  if(!prod)return;
-  const ex=state.orden.find(i=>i.id===id);
-  if(ex)ex.cant=(ex.cant||1)+1;else state.orden.push({...prod,cant:1});
-  renderizarOrden();
-}
-
-// Renderizar orden
-function renderizarOrden(){
-  const items=document.getElementById('orden-items');
-  const total=document.getElementById('orden-total');
-  if(!state.orden.length){items.innerHTML='<p style="text-align:center;color:#64748b">Orden vacía</p>';total.textContent='$0.00';return}
-  let t=0;
-  items.innerHTML=state.orden.map((it,idx)=>{
-    const sub=(it.precio||0)*(it.cant||1);t+=sub;
-    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid #e2e8f0">
-      <span>${it.nombre} ×${it.cant}</span>
-      <div>
-        <span style="font-weight:bold">$${sub.toFixed(2)}</span>
-        <button class="btn" style="background:#ef4444;color:white;margin-left:0.5rem;padding:0.1rem 0.5rem;border-radius:0.25rem" onclick="quitar(${idx})">×</button>
-      </div>
-    </div>`;
-  }).join('');
-  total.textContent=`$${t.toFixed(2)}`;
-}
-
-function quitar(idx){state.orden.splice(idx,1);renderizarOrden()}
-
-// Procesar pago
-async function procesarPago(){
-  if(!state.orden.length)return alert('Orden vacía');
-  const hoy=new Date().toISOString().split('T')[0];
-  const ventas=state.orden.map(it=>({id:`v-${Date.now()}-${Math.random()}`,productoId:it.id,nombre:it.nombre,cantidad:it.cant,precioUnitario:it.precio,total:(it.precio||0)*(it.cant||1),fecha:new Date().toISOString(),metodoPago:'efectivo'}));
-  state.ventas[hoy]=state.ventas[hoy]||[];
-  state.ventas[hoy].push(...ventas);
-  try{await fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(state)})}catch(e){}
-  state.orden=[];renderizarOrden();renderizarVentas();
-  alert('✅ Venta procesada');
-}
-
-// Renderizar ventas
-function renderizarVentas(){
-  const lista=document.getElementById('ventas-lista');
-  const hoy=new Date().toISOString().split('T')[0];
-  const vs=state.ventas[hoy]||[];
-  if(!vs.length){lista.innerHTML='<p style="text-align:center;color:#64748b">Sin ventas hoy</p>';return}
-  lista.innerHTML=vs.map(v=>`<div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid #e2e8f0"><span>${v.nombre} ×${v.cantidad}</span><span style="font-weight:bold;color:#16a34a">$${(v.total||0).toFixed(2)}</span></div>`).join('');
-}
-
-// Renderizar todo
-function renderizarTodo(){renderizarProductos();renderizarOrden();renderizarVentas();cargarCategorias();}
-
-// Cambiar pestaña
-function switchTab(tab){
-  document.querySelectorAll('.tab-content').forEach(t=>t.style.display='none');
-  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-  event.target.classList.add('active');
-  document.getElementById(tab==='catalogo'?'tab-catalogo':tab==='orden'?'tab-orden':'tab-tienda').style.display='block';
-}
-
-// Submenús
-function toggleSubmenu(id){
-  document.querySelectorAll('.submenu').forEach(s=>{if(s.id!==`submenu-${id}`)s.classList.remove('show')});
-  document.getElementById(`submenu-${id}`).classList.toggle('show');
-}
-
-// Mostrar sección
-function showSection(sec){
-  document.querySelectorAll('.tab-content').forEach(t=>t.style.display='none');
-  document.getElementById(`section-${sec}`).style.display='block';
-  if(sec==='productos')renderizarTablaProductos();
-  if(sec==='qr')cargarProductosQR();
-  if(sec==='ventas-hoy')renderizarVentas();
-  if(sec==='licencia')mostrarLicencia();
-  if(sec==='backup')actualizarBackup();
-}
-
-// Cargar categorías
-function cargarCategorias(){
-  const sel=document.getElementById('filtro-categoria');
-  const cats=[...new Set(state.productos.map(p=>p.categoria))].filter(Boolean).sort();
-  sel.innerHTML='<option value="">Todas las categorías</option>'+cats.map(c=>`<option value="${c}">${c}</option>`).join('');
-}
-
-// Gestión de Productos - Tabla
-function renderizarTablaProductos(){
-  const tabla=document.getElementById('tabla-productos');
-  tabla.innerHTML=state.productos.map(p=>`
-    <div class="product-card">
-      <div><strong>${p.nombre}</strong><br><small>${p.categoria||'General'}</small></div>
-      <div style="text-align:right">
-        <div style="font-weight:bold">$${(p.precio||0).toFixed(2)}</div>
-        <button class="btn btn-sm btn-warning" onclick="editarProducto('${p.id}')">✏️</button>
-        <button class="btn btn-sm btn-danger" onclick="eliminarProducto('${p.id}')">🗑️</button>
-      </div>
-    </div>`).join('')||'<p class="text-muted">Sin productos</p>';
-}
-
-// Modal producto (simplificado)
-function abrirModalProducto(){
-  const nombre=prompt('Nombre del producto:');
-  if(!nombre)return;
-  const precio=parseFloat(prompt('Precio:')||'0');
-  const categoria=prompt('Categoría:','General');
-  state.productos.push({id:`prod-${Date.now()}`,nombre,precio,categoria,stock:0});
-  saveState();renderizarTodo();
-}
-
-function editarProducto(id){
-  const p=state.productos.find(x=>x.id===id);
-  if(!p)return;
-  const nombre=prompt('Nuevo nombre:',p.nombre);
-  if(nombre)p.nombre=nombre;
-  const precio=parseFloat(prompt('Nuevo precio:',p.precio));
-  if(!isNaN(precio))p.precio=precio;
-  saveState();renderizarTodo();
-}
-
-function eliminarProducto(id){
-  if(confirm('¿Eliminar este producto?')){
-    state.productos=state.productos.filter(p=>p.id!==id);
-    saveState();renderizarTodo();
-  }
-}
-
-// QR Generation
-async function cargarProductosQR(){
-  const cat=document.getElementById('qr-categoria')?.value||'';
-  const lista=document.getElementById('qr-productos-lista');
-  const prods=state.productos.filter(p=>!cat||p.categoria===cat);
-  
-  lista.innerHTML=prods.map(p=>`
-    <div class="qr-card" onclick="toggleQRSelect('${p.id}')">
-      <input type="checkbox" id="qr-sel-${p.id}" style="margin-bottom:0.5rem">
-      <div style="font-weight:bold;font-size:0.9rem">${p.nombre}</div>
-      <div style="color:#64748b;font-size:0.8rem">$${(p.precio||0).toFixed(2)}</div>
-    </div>`).join('')||'<p class="text-muted">Sin productos</p>';
-}
-
-function toggleQRSelect(id){
-  const chk=document.getElementById(`qr-sel-${id}`);
-  chk.checked=!chk.checked;
-}
-
-async function generarQRSeleccionados(){
-  const seleccionados=state.productos.filter(p=>document.getElementById(`qr-sel-${p.id}`)?.checked);
-  if(!seleccionados.length)return alert('Selecciona al menos un producto');
-  
-  const resultados=document.getElementById('qr-resultados');
-  resultados.innerHTML='<p class="text-muted">Generando QRs...</p>';
-  
-  for(const p of seleccionados){
-    const url=`http://localhost:5000/tienda/producto/${p.id}`;
-    const div=document.createElement('div');
-    div.className='qr-card';
-    div.innerHTML=`<div style="font-weight:bold;margin-bottom:0.5rem">${p.nombre}</div><div id="qr-${p.id}"></div>`;
-    resultados.appendChild(div);
-    new QRCode(document.getElementById(`qr-${p.id}`),{text:url,width:120,height:120});
-  }
-}
-
-function limpiarQR(){document.getElementById('qr-resultados').innerHTML='';}
-
-// Agente IA
-function toggleAIPanel(){
-  const panel=document.getElementById('ai-panel');
-  panel.style.display=panel.style.display==='block'?'none':'block';
-}
-
-function iniciarIA(){
-  // IA inicializada - lista para responder
-  console.log('🤖 Agente IA activado');
-}
-
-async function enviarIA(){
-  const input=document.getElementById('ai-input');
-  const msg=input.value.trim();
-  if(!msg)return;
-  
-  const messages=document.getElementById('ai-messages');
-  messages.innerHTML+=`<div style="background:#dbeafe;padding:0.5rem;border-radius:0.5rem;margin:0.5rem 0;text-align:right"><strong>Tú:</strong> ${msg}</div>`;
-  input.value='';
-  
-  // Respuesta IA simulada (puedes conectar a API real)
-  const respuestas={
-    'inventario':'📊 Tu inventario tiene '+state.productos.length+' productos. ¿Quieres ver el stock crítico?',
-    'ventas':'💰 Ventas hoy: $'+(state.ventas[new Date().toISOString().split('T')[0]]?.reduce((s,v)=>s+v.total,0)||0).toFixed(2),
-    'qr':'🔲 Para generar QR, ve a Gestión → Generar QR y selecciona productos',
-    'exportar':'📤 Ve a Ventas → Exportar para descargar tus datos en Excel',
-    'backup':'💾 Ve a Sistema → Backup para exportar/importar tu base de datos',
-    'ayuda':'🤖 Puedo ayudarte con: inventario, ventas, QR, exportar, backup. ¿Qué necesitas?'
-  };
-  
-  const clave=Object.keys(respuestas).find(k=>msg.toLowerCase().includes(k))||'ayuda';
-  
-  setTimeout(()=>{
-    messages.innerHTML+=`<div style="background:#f1f5f9;padding:0.5rem;border-radius:0.5rem;margin:0.5rem 0"><strong>IA:</strong> ${respuestas[clave]}</div>`;
-    messages.scrollTop=messages.scrollHeight;
-  },500);
-}
-
-// Backup
-function exportarBackup(){
-  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download='tpv_backup_'+new Date().toISOString().split('T')[0]+'.json';
-  a.click();URL.revokeObjectURL(url);
-}
-
-function importarBackup(input){
-  const file=input.files[0];
-  if(!file)return;
-  const reader=new FileReader();
-  reader.onload=e=>{try{state=JSON.parse(e.target.result);saveState();location.reload();}catch(err){alert('Error al importar')}};
-  reader.readAsText(file);
-}
-
-function actualizarBackup(){
-  const lista=document.getElementById('backup-lista');
-  lista.innerHTML='<p class="text-muted">Usa Exportar/Importar para gestionar backups</p>';
-}
-
-// Licencia
-function mostrarLicencia(){
-  const info=document.getElementById('licencia-info');
-  info.innerHTML=state.licencia.activa?
-    '<span style="color:#16a34a;font-weight:bold">✅ Licencia Activada</span>':
-    '<span style="color:#dc2626">❌ Sin licencia - Modo prueba</span><br><small>Ingresa tu clave para activar</small>';
-}
-
-function activarLicencia(){
-  const key=document.getElementById('licencia-key').value.trim();
-  if(!key)return alert('Ingresa una clave');
-  // Simular activación
-  state.licencia={activa:true,key};
-  saveState();mostrarLicencia();
-  alert('✅ Licencia activada');
-}
+// Productos
+async function loadProd(){try{var r=await fetch('/api/catalogo');if(r.ok){var d=await r.json();if(d.ok&&d.productos)S.p=d.productos}}catch(e){console.log('Offline mode')}}
+function loadCats(){var sel=$('cat-f'),cats=[],seen={};S.p.forEach(function(x){if(x.categoria&&!seen[x.categoria]){cats.push(x.categoria);seen[x.categoria]=true}});cats.sort();sel.innerHTML='<option value="">Todas</option>'+cats.map(function(c){return'<option value="'+c+'">'+c+'</option>'}).join('')}
+function rendProd(){var c=$('plist'),f=$('search')?.value.toLowerCase()||'',cat=$('cat-f')?.value||'',prods=S.p.filter(function(x){return x.nombre.toLowerCase().includes(f)&&(!cat||x.categoria===cat)});
+if(!prods.length){c.innerHTML='<p class="tc tm" style="padding:1.48rem">📦 Sin productos encontrados</p>';return}
+c.innerHTML=prods.map(function(x){var st=x.stock||0,col=st>=24?'ok':st>=15?'low':'out',txt=st===0?'Agotado':st+' uds';
+return'<div class="prod tr" onclick="addToOrd(\''+x.id+'\')"><div class="p-img">📦</div><div class="p-info"><div class="p-n">'+esc(x.nombre)+'</div><div class="p-c">'+(x.categoria||'General')+'</div><div class="p-pr">$'+(x.precio||0).toFixed(2)+'</div></div><span class="st st-'+col+'">'+txt+'</span></div>'}).join('')}
+function filtProd(){rendProd()}
+function addToOrd(id){var p=S.p.find(function(x){return x.id===id});if(!p)return;var ex=S.o.find(function(i){return i.id===id});if(ex)ex.cant=(ex.cant||1)+1;else S.o.push(Object.assign({},p,{cant:1}));rendOrd()}
+function rendOrd(){var i=$('olist'),t=$('ot');if(!S.o.length){i.innerHTML='<p class="tm" style="padding:1.48rem;text-align:center">🛒 Añade productos del catálogo</p>';t.textContent='$0.00';return}
+var tot=0;i.innerHTML=S.o.map(function(x,idx){var sub=(x.precio||0)*(x.cant||1);tot+=sub;return'<div class="oi"><div><span class="fs">'+esc(x.nombre)+'</span><br><small class="tm">$'+(x.precio||0).toFixed(2)+' × '+x.cant+'</small></div><div style="text-align:right"><div class="fb ts">$'+sub.toFixed(2)+'</div><button style="background:#ef4444;color:white;border:none;border-radius:50%;width:25px;height:25px;font-size:0.99rem;cursor:pointer;margin-top:0.29rem" onclick="remOrd('+idx+')">×</button></div></div>'}).join('');t.textContent='$'+tot.toFixed(2)}
+function remOrd(idx){S.o.splice(idx,1);rendOrd()}
+async function pay(){if(!S.o.length)return alert('⚠️ Orden vacía');var hoy=new Date().toISOString().split('T')[0];S.v[hoy]=S.v[hoy]||[];S.v[hoy].push(...S.o.map(function(x){return{id:'v-'+Date.now()+'-'+Math.random().toString(36).substr(2,5),nombre:x.nombre,cant:x.cant,total:(x.precio||0)*x.cant,fecha:new Date().toISOString()}}));
+try{await fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(S)})}catch(e){}
+var total=S.o.reduce(function(s,x){return s+(x.precio||0)*(x.cant||1)},0);S.o=[];rendOrd();alert('✅ Venta de $'+total.toFixed(2)+' procesada')}
+function clearOrd(){if(S.o.length&&confirm('¿Cancelar orden?')){S.o=[];rendOrd()}}
 
 // Ajustes
-function cambiarIdioma(lang){state.config.lang=lang;saveState();}
-function cambiarTema(dark){state.config.theme=dark?'dark':'light';document.body.style.background=dark?'#0f172a':'linear-gradient(135deg,#0d1b2a 0%,#1a3a5c 55%,#0d6efd 100%)';saveState();}
-function guardarAjustes(){state.config.nombre=document.getElementById('ajuste-nombre').value;saveState();}
+function setLang(l){S.c.lang=l;localStorage.setItem('tpv_lang',l)}
+function setTheme(d){S.c.theme=d?'dark':'light';localStorage.setItem('tpv_theme',S.c.theme);document.body.style.background=d?'#0f172a':'linear-gradient(135deg,#0f172a,#1e3a5f,#3b82f6)'}
+function saveTPVN(){var n=$('tpv-i').value.trim();if(n){S.c.nombre=n;$('tpv-n').textContent=n;localStorage.setItem('tpv_custom_name',n);alert('✅ Nombre guardado: '+n)}}
 
-// Mantenimiento
-function limpiarVentasHoy(){if(confirm('¿Limpiar ventas de hoy?')){state.ventas[new Date().toISOString().split('T')[0]]=[];saveState();renderizarVentas();}}
-function limpiarCierres(){if(confirm('¿Limpiar cierres?')){state.cierres=[];saveState();}}
-function limpiarTodo(){if(confirm('⚠️ ¿Reiniciar todo excepto productos?')){const prods=state.productos;state={productos:prods,orden:[],ventas:{},config:state.config,licencia:state.licencia};saveState();location.reload();}}
-
-// Copiar URL
-function copiarURL(){navigator.clipboard.writeText(document.getElementById('tienda-url').textContent);alert('📋 URL copiada')}
-
-// Guardar estado
-async function saveState(){try{await fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(state)})}catch(e){}}
-
-// Inicializar
-document.addEventListener('DOMContentLoaded',async()=>{
-  try{
-    const r=await fetch('/api/auth/me');
-    if(r.ok){const d=await r.json();if(d.autenticado){auth=d.usuario;document.getElementById('login-screen').style.display='none';document.getElementById('app-screen').style.display='block';document.getElementById('user-name').textContent=d.usuario.nombre;await cargarProductos();renderizarTodo();iniciarIA()}}
-  }catch(e){}
+// Init
+document.addEventListener('DOMContentLoaded',async function(){
+// Check session
+try{var r=await fetch('/api/auth/me');if(r.ok){var d=await r.json();if(d.autenticado){A=d.usuario;R=d.usuario.rol;hideSplash();$('login').style.display='none';$('app').style.display='block';$('un').textContent=d.usuario.nombre;$('ur').textContent=d.usuario.rol;$('ua').textContent=d.usuario.nombre.charAt(0).toUpperCase();applyPerms(R);loadProd();rendProd();rendOrd();loadCats();}}}catch(e){}
+// Load config
+var lang=localStorage.getItem('tpv_lang');if(lang){$('lang').value=lang;S.c.lang=lang}
+var theme=localStorage.getItem('tpv_theme');if(theme==='dark'){$('dark').checked=true;setTheme(true)}
+var name=localStorage.getItem('tpv_custom_name');if(name){$('tpv-n').textContent=name;$('tpv-i').value=name}
 });
 </script>
 </body>

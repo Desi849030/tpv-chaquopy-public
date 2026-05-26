@@ -1,180 +1,115 @@
-"""
-╔══════════════════════════════════════════════════════════════╗
-║   app.py  —  TPV ULTRA SMART  v7.0 (MODULAR + SEGURIDAD)   ║
-║   Punto de entrada central para APK y servidor local       ║
-╚══════════════════════════════════════════════════════════════╝
-"""
-import sys, os, pathlib, secrets, json, threading, time, re
+"""TPV Ultra Smart v7.0 - GitHub/APK Ready"""
+import os, sys, pathlib, secrets, logging, time
 from datetime import datetime
 from functools import wraps
-from flask import Flask, request, jsonify, session, render_template_string
+from flask import Flask, request, jsonify, session, send_from_directory
 
-# Fix path
+# Path fix
 try:
-    from tpv_rutas import fix_path, CARPETA as _CARPETA_DETECTADA
+    from tpv_rutas import fix_path, CARPETA as _CD
     fix_path()
-except ImportError:
-    def _fix_path_fallback():
-        candidatas = ['/storage/emulated/0/TPV_APK', '/sdcard/TPV_APK', os.getcwd()]
-        try: candidatas.insert(0, os.path.dirname(os.path.abspath(__file__)))
-        except NameError: pass
-        for r in candidatas:
-            if os.path.exists(os.path.join(r, 'database.py')):
-                if r not in sys.path: sys.path.insert(0, r)
-                os.chdir(r); return r
-        return os.getcwd()
-    _CARPETA_DETECTADA = _fix_path_fallback()
+except:
+    _CD = os.getcwd()
+    for p in ['/storage/emulated/0/TPV_APK', '/sdcard/TPV_APK', os.getcwd()]:
+        if os.path.exists(os.path.join(p, 'database.py')):
+            if p not in sys.path: sys.path.insert(0, p)
+            os.chdir(p); _CD = p; break
 
-# Carpetas
-_CARPETA_MAIN = os.path.dirname(_CARPETA_DETECTADA)
-_TEMPLATE_FOLDER = os.path.join(_CARPETA_MAIN, 'assets', 'frontend', 'templates')
-_STATIC_FOLDER = os.path.join(_CARPETA_MAIN, 'assets', 'frontend', 'static')
+# Paths
+_MAIN = os.path.dirname(_CD)
+_ASSETS = os.path.join(_MAIN, 'assets', 'frontend')
+_TPL = os.path.join(_ASSETS, 'templates')
+_STAT = os.path.join(_ASSETS, 'static')
 
 # Imports
-from database import crear_tablas, cargar_estado, guardar_estado, login_usuario, obtener_info_db, DB_FILE
+from database import crear_tablas, login_usuario, obtener_info_db, DB_FILE
 from tienda_routes import tienda_bp, crear_tablas_tienda
 import supabase_sync as _sb
-from routes.auth import auth_bp
-from routes.inventory import inventory_bp
-from routes.products import products_bp
-from routes.sales import sales_bp
-from routes.system import system_bp
-from routes.agent import agent_bp
-from routes.metrics import metrics_bp
 
-# Setup Flask
-app = Flask(__name__, template_folder=_TEMPLATE_FOLDER, static_folder=_STATIC_FOLDER, static_url_path='/static')
-app.config["JSON_ENSURE_ASCII"] = False
-app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-app.config["SESSION_COOKIE_SECURE"] = False
-app.config["SESSION_COOKIE_HTTPONLY"] = True
-app.config["SESSION_COOKIE_DOMAIN"] = None
-app.config["PERMANENT_SESSION_LIFETIME"] = 86400 * 7
+# Blueprints (conditional)
+bps = []
+for m in ['auth','inventory','products','sales','system','agent','metrics']:
+    try:
+        mod = __import__(f'routes.{m}', fromlist=[''])
+        for n in dir(mod):
+            if n.endswith('_bp'): bps.append(getattr(mod,n)); break
+    except: pass
 
-# Clave secreta
-_KEY_FILE = pathlib.Path(os.environ.get("ANDROID_PRIVATE", os.getcwd())) / ".tpv_secret_key"
-if not _KEY_FILE.exists(): _KEY_FILE.write_text(secrets.token_hex(32))
-app.secret_key = _KEY_FILE.read_text().strip()
+# Flask setup - SIN template_folder para evitar Jinja2
+app = Flask(__name__, static_folder=_STAT, static_url_path='/static')
+app.config.update(JSON_ENSURE_ASCII=False, SESSION_COOKIE_SAMESITE='Lax', 
+                  SESSION_COOKIE_HTTPONLY=True, PERMANENT_SESSION_LIFETIME=86400*7)
+_KEY = pathlib.Path(os.environ.get('ANDROID_PRIVATE',_CD)) / '.tpv_key'
+if not _KEY.exists(): _KEY.write_text(secrets.token_hex(32))
+app.secret_key = _KEY.read_text().strip()
 
-# Registrar blueprints
+# Register
 app.register_blueprint(tienda_bp)
-app.register_blueprint(auth_bp)
-app.register_blueprint(inventory_bp)
-app.register_blueprint(products_bp)
-app.register_blueprint(sales_bp)
-app.register_blueprint(system_bp)
-app.register_blueprint(agent_bp)
-app.register_blueprint(metrics_bp)
+for bp in bps: app.register_blueprint(bp)
 
-# Rate limiting simple
-_login_attempts = {}
-def rate_limit(max_attempts=5, window_seconds=600):
-    def decorator(f):
+# Rate limit
+_att = {}
+def rate_limit(max_att=5, win=600):
+    def dec(f):
         @wraps(f)
-        def wrapper(*args, **kwargs):
-            username = request.get_json(force=True, silent=True or {}).get('username', '').lower()
+        def w(*a,**k):
+            u = request.get_json(force=True,silent=True or {}).get('username','').lower()
             now = time.time()
-            _login_attempts[username] = [t for t in _login_attempts.get(username, []) if now - t < window_seconds]
-            if len(_login_attempts.get(username, [])) >= max_attempts:
-                return jsonify({"error": "Demasiados intentos. Intente más tarde."}), 429
-            _login_attempts.setdefault(username, []).append(now)
-            return f(*args, **kwargs)
-        return wrapper
-    return decorator
+            _att[u] = [t for t in _att.get(u,[]) if now-t < win]
+            if len(_att.get(u,[])) >= max_att: return jsonify({'error':'Too many attempts'}),429
+            _att.setdefault(u,[]).append(now)
+            return f(*a,**k)
+        return w
+    return dec
 
-# ══════════════════════════════════════════════════════════════
-# RUTAS PRINCIPALES
-# ══════════════════════════════════════════════════════════════
-@app.route("/")
+# Routes - SERVIR HTML PLANO (sin Jinja2)
+@app.route('/')
 def index():
+    path = os.path.join(_TPL, 'index.html')
+    if os.path.exists(path):
+        with open(path,'r',encoding='utf-8') as f: 
+            return f.read(),200,{'Content-Type':'text/html; charset=utf-8'}
+    return '<h3>❌ No se encontró index.html</h3>',500
+
+@app.route('/static/<path:f>')
+def static_serve(f): return send_from_directory(_STAT, f)
+
+@app.route('/api/auth/login', methods=['POST'])
+@rate_limit()
+def login():
+    d = request.get_json(force=True,silent=True) or {}
+    u,p = d.get('username','').strip(), d.get('password','')
+    if not u or not p: return jsonify({'error':'Missing credentials'}),400
+    res = login_usuario(u,p)
+    if res: session.permanent=True; session['usuario']=res; return jsonify({'ok':True,'usuario':res})
+    return jsonify({'error':'Invalid credentials'}),401
+
+@app.route('/api/auth/logout', methods=['POST'])
+def logout(): session.pop('usuario',None); return jsonify({'ok':True})
+
+@app.route('/api/auth/me', methods=['GET'])
+def me(): u=session.get('usuario'); return jsonify({'autenticado':bool(u),'usuario':u}) if u else (jsonify({'autenticado':False}),401)
+
+@app.route('/api/status')
+def status():
     try:
-        with open(os.path.join(_TEMPLATE_FOLDER, 'index.html'), 'r', encoding='utf-8') as f:
-            return f.read(), 200, {'Content-Type': 'text/html; charset=utf-8'}
-    except Exception as e:
-        return f'<h3>Error cargando index.html: {e}</h3>', 500
-
-@app.route("/<path:filename>")
-def serve_static(filename):
-    allowed = {'.js', '.css', '.ico', '.png', '.svg', '.woff', '.woff2', '.json'}
-    ext = os.path.splitext(filename)[1].lower()
-    if ext not in allowed: return '', 404
-    mime_map = {'.js': 'application/javascript', '.css': 'text/css', '.ico': 'image/x-icon', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json'}
-    nombre_base = os.path.basename(filename)
-    candidatos = [
-        os.path.join(_STATIC_FOLDER, 'js', 'tpv', nombre_base),
-        os.path.join(_STATIC_FOLDER, nombre_base),
-        os.path.join(_CARPETA_DETECTADA, nombre_base),
-        os.path.join(os.getcwd(), nombre_base),
-    ]
-    for ruta in candidatos:
-        if os.path.exists(ruta):
-            with open(ruta, 'rb') as f:
-                return f.read(), 200, {'Content-Type': mime_map.get(ext, 'application/octet-stream'), 'Cache-Control': 'public, max-age=3600'}
-    return '', 404
-
-# ══════════════════════════════════════════════════════════════
-# AUTH + RATE LIMITING
-# ══════════════════════════════════════════════════════════════
-@app.route("/api/auth/login", methods=["POST"])
-@rate_limit(max_attempts=5, window_seconds=600)
-def api_login():
-    datos = request.get_json(force=True, silent=True) or {}
-    username = datos.get("username", "").strip()
-    password = datos.get("password", "")
-    if not username or not password: return jsonify({"error": "Faltan credenciales"}), 400
-    resultado = login_usuario(username, password)
-    if resultado:
-        session.permanent = True
-        session["usuario"] = resultado
-        return jsonify({"ok": True, "usuario": resultado})
-    return jsonify({"error": "Credenciales incorrectas"}), 401
-
-@app.route("/api/auth/logout", methods=["POST"])
-def api_logout():
-    session.pop("usuario", None)
-    return jsonify({"ok": True})
-
-@app.route("/api/auth/me", methods=["GET"])
-def api_me():
-    u = session.get("usuario")
-    if u: return jsonify({"autenticado": True, "usuario": u})
-    return jsonify({"autenticado": False}), 401
-
-# ══════════════════════════════════════════════════════════════
-# STATUS PÚBLICO
-# ══════════════════════════════════════════════════════════════
-@app.route("/api/status", methods=["GET"])
-def get_status():
-    try:
-        u = session.get("usuario", {})
-        return jsonify({
-            "servidor": "activo",
-            "usuario": u.get("username", "sin sesión"),
-            "rol": u.get("rol", "none"),
-            "sqlite": {"activo": True, "existe": os.path.exists(DB_FILE)},
-            "supabase": {"activo": _sb.SUPABASE_OK},
-            "db_info": obtener_info_db(),
-            "timestamp": datetime.now().isoformat()
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        u = session.get('usuario',{})
+        return jsonify({'servidor':'activo','usuario':u.get('username'),'rol':u.get('rol'),
+                       'sqlite':{'activo':True,'existe':os.path.exists(DB_FILE)},
+                       'supabase':{'activo':_sb.SUPABASE_OK},'db_info':obtener_info_db(),'ts':datetime.now().isoformat()})
+    except Exception as e: return jsonify({'error':str(e)}),500
 
 @app.errorhandler(404)
-def error_404(e): return jsonify({"error": "Ruta no encontrada", "code": 404}), 404
+def e404(e): return jsonify({'error':'Not found','code':404}),404
 @app.errorhandler(500)
-def error_500(e): return jsonify({"error": "Error interno", "detalle": str(e)}), 500
+def e500(e): logging.error(f'500: {e}'); return jsonify({'error':'Internal error','detail':str(e)}),500
 
 def main():
-    print("\n" + "="*58 + "\n   TPV ULTRA SMART v7.0 (MODULAR + IA + MÉTRICAS)\n" + "="*58)
-    crear_tablas()
-    crear_tablas_tienda()
-    print(f" ✅ Base de datos: {DB_FILE}")
-    print(f" ✅ Supabase: {'Activo' if _sb.SUPABASE_OK else 'Solo local'}")
-    print(f" ✅ Login: desarrollador / dev2024")
-    print(f" ✅ URL: http://localhost:5000\n")
-    import logging
-    logging.getLogger('werkzeug').setLevel(logging.ERROR)
-    app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    print(f"\n{'='*50}\n  TPV Ultra Smart v7.0 (GitHub/APK)\n{'='*50}")
+    print(f" 📁 DB: {DB_FILE}\n ✅ Login: desarrollador / dev2024\n ✅ URL: http://localhost:5000\n")
+    crear_tablas(); crear_tablas_tienda()
+    logging.getLogger('werkzeug').setLevel(logging.WARNING)
+    app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False, threaded=True)
 
-if __name__ == '__main__':
-    main()
+if __name__=='__main__': main()

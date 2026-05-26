@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TPV Ultra Smart</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+body{font-family:system-ui,-apple-system,sans-serif;background:linear-gradient(135deg,#0d1b2a 0%,#1a3a5c 55%,#0d6efd 100%);min-height:100vh;color:white}
+.login-card{background:rgba(255,255,255,0.95);border-radius:1.5rem;padding:2rem;max-width:400px;width:95%;margin:2rem auto;color:#1e293b}
+.btn-primary{background:#0d6efd;border:none}
+.app-screen{display:none;padding:1rem}
+.nav-tabs{display:flex;gap:0.5rem;overflow-x:auto;padding-bottom:0.5rem}
+.nav-tab{padding:0.5rem 1rem;background:rgba(255,255,255,0.1);border-radius:0.5rem;color:white;white-space:nowrap;border:none}
+.nav-tab.active{background:#0d6efd}
+.tab-content{background:rgba(255,255,255,0.9);border-radius:0.5rem;padding:1rem;color:#1e293b;min-height:200px;margin-top:1rem}
+.product-card{background:white;border-radius:0.75rem;padding:0.75rem;margin-bottom:0.5rem;display:flex;justify-content:space-between;align-items:center}
+.stock-badge{font-size:0.7rem;padding:2px 6px;border-radius:4px}
+.stock-verde{background:#22c55e;color:white}.stock-amarillo{background:#eab308;color:black}.stock-rojo{background:#ef4444;color:white}
+.qr-card{background:white;border-radius:0.75rem;padding:1rem;text-align:center;margin-bottom:0.5rem}
+.ai-agent{position:fixed;bottom:20px;right:20px;width:60px;height:60px;background:linear-gradient(135deg,#7c3aed,#5b21b6);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:1.5rem;cursor:pointer;box-shadow:0 4px 20px rgba(124,58,237,0.4);z-index:9999}
+.ai-panel{position:fixed;bottom:90px;right:20px;width:320px;max-height:400px;background:white;border-radius:1rem;padding:1rem;color:#1e293b;box-shadow:0 4px 20px rgba(0,0,0,0.2);display:none;z-index:9998}
+.ai-messages{height:250px;overflow-y:auto;margin-bottom:0.5rem;border-bottom:1px solid #e2e8f0;padding-bottom:0.5rem}
+.ai-input{display:flex;gap:0.5rem}
+.ai-input input{flex:1;padding:0.5rem;border:1px solid #e2e8f0;border-radius:0.5rem}
+.ai-input button{padding:0.5rem 1rem;background:#0d6efd;color:white;border:none;border-radius:0.5rem;cursor:pointer}
+.submenu{display:none;position:absolute;background:white;color:#1e293b;border-radius:0.5rem;padding:0.5rem;min-width:180px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:1000}
+.submenu.show{display:block}
+.submenu a{display:block;padding:0.4rem 0.8rem;color:#1e293b;text-decoration:none;border-radius:0.25rem}
+.submenu a:hover{background:#f1f5f9}
+.dropdown{position:relative}
+.dropdown-toggle::after{content:"▼";font-size:0.6rem;margin-left:0.3rem}
+</style>
+</head>
+<body>
+<!-- LOGIN -->
+<div id="login-screen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem">
+  <div class="login-card text-center">
+    <h3 style="margin-bottom:1rem">🏪 TPV Ultra Smart</h3>
+    <p style="margin-bottom:1.5rem;color:#64748b">Sistema Punto de Venta Profesional</p>
+    <input type="text" id="username" class="form-control" placeholder="Usuario (desarrollador)" style="margin-bottom:0.75rem">
+    <input type="password" id="password" class="form-control" placeholder="Contraseña (dev2024)" style="margin-bottom:1rem">
+    <button class="btn btn-primary" style="width:100%" onclick="login()">Entrar</button>
+    <p id="msg" style="margin-top:1rem;color:#dc2626;font-size:0.875rem"></p>
+  </div>
+</div>
+
+<!-- APP PRINCIPAL -->
+<div id="app-screen" class="app-screen">
+  <!-- Barra superior -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;padding:0.5rem;background:rgba(255,255,255,0.1);border-radius:0.5rem">
+    <h5 style="margin:0">👋 <span id="user-name"></span></h5>
+    <button class="btn" style="background:rgba(255,255,255,0.2);color:white;border-radius:0.5rem" onclick="logout()">Salir</button>
+  </div>
+  
+  <!-- Navegación con submenús -->
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('catalogo')">📦 Catálogo</button>
+    
+    <div class="dropdown">
+      <button class="nav-tab dropdown-toggle" onclick="toggleSubmenu('gestion')">⚙️ Gestión</button>
+      <div id="submenu-gestion" class="submenu">
+        <a href="#" onclick="showSection('productos')">Productos</a>
+        <a href="#" onclick="showSection('categorias')">Categorías</a>
+        <a href="#" onclick="showSection('qr')">🔲 Generar QR</a>
+        <a href="#" onclick="showSection('importar')">📥 Importar Excel</a>
+      </div>
+    </div>
+    
+    <button class="nav-tab" onclick="switchTab('orden')">🛒 Orden</button>
+    
+    <div class="dropdown">
+      <button class="nav-tab dropdown-toggle" onclick="toggleSubmenu('ventas')">💰 Ventas</button>
+      <div id="submenu-ventas" class="submenu">
+        <a href="#" onclick="showSection('ventas-hoy')">Ventas Hoy</a>
+        <a href="#" onclick="showSection('nomenclador')">🪙 Nomenclador</a>
+        <a href="#" onclick="showSection('exportar')">📤 Exportar</a>
+      </div>
+    </div>
+    
+    <div class="dropdown">
+      <button class="nav-tab dropdown-toggle" onclick="toggleSubmenu('inventario')">📊 Inventario</button>
+      <div id="submenu-inventario" class="submenu">
+        <a href="#" onclick="showSection('stock')">Stock General</a>
+        <a href="#" onclick="showSection('vendedores')">Vendedores</a>
+        <a href="#" onclick="showSection('cierres')">Cierres</a>
+      </div>
+    </div>
+    
+    <button class="nav-tab" onclick="switchTab('tienda')">🏪 Tienda</button>
+    
+    <div class="dropdown">
+      <button class="nav-tab dropdown-toggle" onclick="toggleSubmenu('config')">⚙️ Sistema</button>
+      <div id="submenu-config" class="submenu">
+        <a href="#" onclick="showSection('ajustes')">Ajustes</a>
+        <a href="#" onclick="showSection('backup')">💾 Backup</a>
+        <a href="#" onclick="showSection('licencia')">🔑 Licencia</a>
+        <a href="#" onclick="showSection('mantenimiento')">🔧 Mantenimiento</a>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Contenido de pestañas -->
+  <div class="tab-content">
+    <!-- Catálogo con tarjetas -->
+    <div id="tab-catalogo">
+      <input type="text" id="buscador" class="form-control" placeholder="Buscar producto..." oninput="filtrarProductos()" style="margin-bottom:0.5rem">
+      <select id="filtro-categoria" class="form-select" onchange="filtrarProductos()" style="margin-bottom:1rem">
+        <option value="">Todas las categorías</option>
+      </select>
+      <div id="productos-lista"></div>
+    </div>
+    
+    <!-- Gestión de Productos -->
+    <div id="section-productos" class="tab-content" style="display:none">
+      <div style="display:flex;justify-content:space-between;margin-bottom:1rem">
+        <h6>📦 Gestión de Productos</h6>
+        <button class="btn btn-sm btn-primary" onclick="abrirModalProducto()">+ Nuevo</button>
+      </div>
+      <div id="tabla-productos"></div>
+    </div>
+    
+    <!-- Generar QR -->
+    <div id="section-qr" class="tab-content" style="display:none">
+      <h6>🔲 Generar Códigos QR</h6>
+      <p class="text-muted small">Selecciona productos para generar etiquetas QR</p>
+      <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap">
+        <select id="qr-categoria" class="form-select form-select-sm" style="max-width:150px" onchange="cargarProductosQR()">
+          <option value="">Todas</option>
+        </select>
+        <button class="btn btn-sm btn-success" onclick="generarQRSeleccionados()">🔲 Generar QR</button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="limpiarQR()">🗑️ Limpiar</button>
+      </div>
+      <div id="qr-productos-lista" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0.5rem"></div>
+      <div id="qr-resultados" style="margin-top:1rem"></div>
+    </div>
+    
+    <!-- Orden Actual -->
+    <div id="tab-orden" class="tab-content" style="display:none">
+      <div id="orden-items" style="margin-bottom:1rem"></div>
+      <div style="display:flex;justify-content:space-between;font-weight:bold;margin-bottom:0.5rem">
+        <span>Total:</span><span id="orden-total">$0.00</span>
+      </div>
+      <button class="btn btn-success" style="width:100%" onclick="procesarPago()">💰 Procesar Pago</button>
+    </div>
+    
+    <!-- Ventas Hoy -->
+    <div id="section-ventas-hoy" class="tab-content" style="display:none">
+      <h6>💰 Ventas de Hoy</h6>
+      <div id="ventas-lista"></div>
+    </div>
+    
+    <!-- Tienda -->
+    <div id="tab-tienda" class="tab-content" style="display:none">
+      <h6>🏪 Mi Tienda en Línea</h6>
+      <p class="text-muted small">Comparte este enlace con tus clientes</p>
+      <div style="background:#f1f5f9;padding:0.75rem;border-radius:0.5rem;margin-bottom:1rem">
+        <code id="tienda-url" style="word-break:break-all">http://localhost:5000/tienda</code>
+        <button class="btn btn-sm btn-outline-primary ms-2" onclick="copiarURL()">📋 Copiar</button>
+      </div>
+      <div id="tienda-pedidos"></div>
+    </div>
+    
+    <!-- Ajustes -->
+    <div id="section-ajustes" class="tab-content" style="display:none">
+      <h6>⚙️ Ajustes del Sistema</h6>
+      <div style="display:flex;flex-direction:column;gap:0.75rem">
+        <label>Idioma: <select id="ajuste-idioma" class="form-select form-select-sm" onchange="cambiarIdioma(this.value)"><option value="es">Español</option><option value="en">English</option></select></label>
+        <label><input type="checkbox" id="ajuste-tema" onchange="cambiarTema(this.checked)"> Tema Oscuro</label>
+        <label>Nombre del TPV: <input type="text" id="ajuste-nombre" class="form-control form-control-sm" placeholder="Mi TPV" onchange="guardarAjustes()"></label>
+      </div>
+    </div>
+    
+    <!-- Backup -->
+    <div id="section-backup" class="tab-content" style="display:none">
+      <h6>💾 Copias de Seguridad</h6>
+      <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap">
+        <button class="btn btn-sm btn-success" onclick="exportarBackup()">📤 Exportar JSON</button>
+        <button class="btn btn-sm btn-primary" onclick="document.getElementById('import-backup').click()">📥 Importar JSON</button>
+        <input type="file" id="import-backup" style="display:none" accept=".json" onchange="importarBackup(this)">
+      </div>
+      <div id="backup-lista"></div>
+    </div>
+    
+    <!-- Licencia -->
+    <div id="section-licencia" class="tab-content" style="display:none">
+      <h6>🔑 Estado de Licencia</h6>
+      <div id="licencia-info" style="background:#f1f5f9;padding:1rem;border-radius:0.5rem;margin-bottom:1rem"></div>
+      <input type="text" id="licencia-key" class="form-control form-control-sm" placeholder="Clave de licencia" style="margin-bottom:0.5rem">
+      <button class="btn btn-sm btn-primary" onclick="activarLicencia()">🔓 Activar</button>
+    </div>
+    
+    <!-- Mantenimiento -->
+    <div id="section-mantenimiento" class="tab-content" style="display:none">
+      <h6>🔧 Mantenimiento de Datos</h6>
+      <p class="text-danger small">⚠️ Estas acciones son irreversibles</p>
+      <div style="display:flex;flex-direction:column;gap:0.5rem">
+        <button class="btn btn-sm btn-outline-warning" onclick="limpiarVentasHoy()">🗑️ Limpiar Ventas Hoy</button>
+        <button class="btn btn-sm btn-outline-warning" onclick="limpiarCierres()">🗑️ Limpiar Cierres</button>
+        <button class="btn btn-sm btn-outline-danger" onclick="limpiarTodo()">⚠️ Reiniciar Todo (excepto productos)</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Agente IA Flotante -->
+<div class="ai-agent" onclick="toggleAIPanel()">🤖</div>
+<div class="ai-panel" id="ai-panel">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+    <strong>🤖 Asistente IA</strong>
+    <button onclick="toggleAIPanel()" style="background:none;border:none;font-size:1.2rem;cursor:pointer">×</button>
+  </div>
+  <div class="ai-messages" id="ai-messages">
+    <div style="background:#f1f5f9;padding:0.5rem;border-radius:0.5rem;margin-bottom:0.5rem">
+      ¡Hola! Soy tu asistente TPV. ¿En qué puedo ayudarte hoy?<br>
+      <small class="text-muted">Puedo ayudarte con: inventario, ventas, QR, exportar, etc.</small>
+    </div>
+  </div>
+  <div class="ai-input">
+    <input type="text" id="ai-input" placeholder="Escribe tu consulta..." onkeypress="if(event.key==='Enter')enviarIA()">
+    <button onclick="enviarIA()">➤</button>
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- QR Code library -->
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+<!-- LÓGICA COMPLETA EMBEBIDA -->
+<script>
+// Estado global
+let state={productos:[],orden:[],ventas:{},config:{lang:'es',theme:'light',nombre:'TPV Ultra Smart'},licencia:{activa:false}};
+let auth=null;
+
+// Login
+async function login(){
+  const u=document.getElementById('username').value.trim();
+  const p=document.getElementById('password').value;
+  const msg=document.getElementById('msg');
+  if(!u||!p){msg.textContent='Completa usuario y contraseña';return}
+  msg.textContent='Verificando...';
+  try{
+    const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+    const d=await r.json();
+    if(d.ok){
+      auth=d.usuario;
+      document.getElementById('login-screen').style.display='none';
+      document.getElementById('app-screen').style.display='block';
+      document.getElementById('user-name').textContent=d.usuario.nombre;
+      await cargarProductos();
+      renderizarTodo();
+      iniciarIA();
+    }else msg.textContent=d.error||'Error';
+  }catch(e){msg.textContent='Error de conexión'}
+}
+
+async function logout(){
+  try{await fetch('/api/auth/logout',{method:'POST'})}catch(e){}
+  auth=null;state.orden=[];
+  document.getElementById('app-screen').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('username').value='';
+  document.getElementById('password').value='';
+  document.getElementById('msg').textContent='';
+}
+
+// Cargar productos desde API
+async function cargarProductos(){
+  try{
+    const r=await fetch('/api/catalogo');
+    if(r.ok){const d=await r.json();if(d.ok)state.productos=d.productos}
+  }catch(e){console.log('Offline')}
+}
+
+// Renderizar catálogo con tarjetas
+function renderizarProductos(){
+  const lista=document.getElementById('productos-lista');
+  const filtro=document.getElementById('buscador')?.value.toLowerCase()||'';
+  const cat=document.getElementById('filtro-categoria')?.value||'';
+  const prods=state.productos.filter(p=>p.nombre.toLowerCase().includes(filtro)&&(!cat||p.categoria===cat));
+  
+  if(!prods.length){lista.innerHTML='<p style="text-align:center;color:#64748b;padding:1rem">Sin productos</p>';return}
+  
+  lista.innerHTML=prods.map(p=>{
+    const stock=p.stock||0;
+    const color=stock>=24?'verde':stock>=15?'amarillo':'rojo';
+    return `<div class="product-card">
+      <div>
+        <strong>${p.nombre}</strong><br>
+        <small style="color:#64748b">${p.categoria||'General'}</small>
+      </div>
+      <div style="text-align:right">
+        <div style="font-weight:bold;color:#16a34a">$${(p.precio||0).toFixed(2)}</div>
+        <span class="stock-badge stock-${color}">${stock} uds</span>
+      </div>
+      <button class="btn btn-primary" style="margin-left:0.5rem;padding:0.25rem 0.75rem" onclick="agregar('${p.id}')">+</button>
+    </div>`;
+  }).join('');
+}
+
+function filtrarProductos(){renderizarProductos()}
+
+// Agregar a orden
+function agregar(id){
+  const prod=state.productos.find(p=>p.id===id);
+  if(!prod)return;
+  const ex=state.orden.find(i=>i.id===id);
+  if(ex)ex.cant=(ex.cant||1)+1;else state.orden.push({...prod,cant:1});
+  renderizarOrden();
+}
+
+// Renderizar orden
+function renderizarOrden(){
+  const items=document.getElementById('orden-items');
+  const total=document.getElementById('orden-total');
+  if(!state.orden.length){items.innerHTML='<p style="text-align:center;color:#64748b">Orden vacía</p>';total.textContent='$0.00';return}
+  let t=0;
+  items.innerHTML=state.orden.map((it,idx)=>{
+    const sub=(it.precio||0)*(it.cant||1);t+=sub;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid #e2e8f0">
+      <span>${it.nombre} ×${it.cant}</span>
+      <div>
+        <span style="font-weight:bold">$${sub.toFixed(2)}</span>
+        <button class="btn" style="background:#ef4444;color:white;margin-left:0.5rem;padding:0.1rem 0.5rem;border-radius:0.25rem" onclick="quitar(${idx})">×</button>
+      </div>
+    </div>`;
+  }).join('');
+  total.textContent=`$${t.toFixed(2)}`;
+}
+
+function quitar(idx){state.orden.splice(idx,1);renderizarOrden()}
+
+// Procesar pago
+async function procesarPago(){
+  if(!state.orden.length)return alert('Orden vacía');
+  const hoy=new Date().toISOString().split('T')[0];
+  const ventas=state.orden.map(it=>({id:`v-${Date.now()}-${Math.random()}`,productoId:it.id,nombre:it.nombre,cantidad:it.cant,precioUnitario:it.precio,total:(it.precio||0)*(it.cant||1),fecha:new Date().toISOString(),metodoPago:'efectivo'}));
+  state.ventas[hoy]=state.ventas[hoy]||[];
+  state.ventas[hoy].push(...ventas);
+  try{await fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(state)})}catch(e){}
+  state.orden=[];renderizarOrden();renderizarVentas();
+  alert('✅ Venta procesada');
+}
+
+// Renderizar ventas
+function renderizarVentas(){
+  const lista=document.getElementById('ventas-lista');
+  const hoy=new Date().toISOString().split('T')[0];
+  const vs=state.ventas[hoy]||[];
+  if(!vs.length){lista.innerHTML='<p style="text-align:center;color:#64748b">Sin ventas hoy</p>';return}
+  lista.innerHTML=vs.map(v=>`<div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid #e2e8f0"><span>${v.nombre} ×${v.cantidad}</span><span style="font-weight:bold;color:#16a34a">$${(v.total||0).toFixed(2)}</span></div>`).join('');
+}
+
+// Renderizar todo
+function renderizarTodo(){renderizarProductos();renderizarOrden();renderizarVentas();cargarCategorias();}
+
+// Cambiar pestaña
+function switchTab(tab){
+  document.querySelectorAll('.tab-content').forEach(t=>t.style.display='none');
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById(tab==='catalogo'?'tab-catalogo':tab==='orden'?'tab-orden':'tab-tienda').style.display='block';
+}
+
+// Submenús
+function toggleSubmenu(id){
+  document.querySelectorAll('.submenu').forEach(s=>{if(s.id!==`submenu-${id}`)s.classList.remove('show')});
+  document.getElementById(`submenu-${id}`).classList.toggle('show');
+}
+
+// Mostrar sección
+function showSection(sec){
+  document.querySelectorAll('.tab-content').forEach(t=>t.style.display='none');
+  document.getElementById(`section-${sec}`).style.display='block';
+  if(sec==='productos')renderizarTablaProductos();
+  if(sec==='qr')cargarProductosQR();
+  if(sec==='ventas-hoy')renderizarVentas();
+  if(sec==='licencia')mostrarLicencia();
+  if(sec==='backup')actualizarBackup();
+}
+
+// Cargar categorías
+function cargarCategorias(){
+  const sel=document.getElementById('filtro-categoria');
+  const cats=[...new Set(state.productos.map(p=>p.categoria))].filter(Boolean).sort();
+  sel.innerHTML='<option value="">Todas las categorías</option>'+cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+}
+
+// Gestión de Productos - Tabla
+function renderizarTablaProductos(){
+  const tabla=document.getElementById('tabla-productos');
+  tabla.innerHTML=state.productos.map(p=>`
+    <div class="product-card">
+      <div><strong>${p.nombre}</strong><br><small>${p.categoria||'General'}</small></div>
+      <div style="text-align:right">
+        <div style="font-weight:bold">$${(p.precio||0).toFixed(2)}</div>
+        <button class="btn btn-sm btn-warning" onclick="editarProducto('${p.id}')">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="eliminarProducto('${p.id}')">🗑️</button>
+      </div>
+    </div>`).join('')||'<p class="text-muted">Sin productos</p>';
+}
+
+// Modal producto (simplificado)
+function abrirModalProducto(){
+  const nombre=prompt('Nombre del producto:');
+  if(!nombre)return;
+  const precio=parseFloat(prompt('Precio:')||'0');
+  const categoria=prompt('Categoría:','General');
+  state.productos.push({id:`prod-${Date.now()}`,nombre,precio,categoria,stock:0});
+  saveState();renderizarTodo();
+}
+
+function editarProducto(id){
+  const p=state.productos.find(x=>x.id===id);
+  if(!p)return;
+  const nombre=prompt('Nuevo nombre:',p.nombre);
+  if(nombre)p.nombre=nombre;
+  const precio=parseFloat(prompt('Nuevo precio:',p.precio));
+  if(!isNaN(precio))p.precio=precio;
+  saveState();renderizarTodo();
+}
+
+function eliminarProducto(id){
+  if(confirm('¿Eliminar este producto?')){
+    state.productos=state.productos.filter(p=>p.id!==id);
+    saveState();renderizarTodo();
+  }
+}
+
+// QR Generation
+async function cargarProductosQR(){
+  const cat=document.getElementById('qr-categoria')?.value||'';
+  const lista=document.getElementById('qr-productos-lista');
+  const prods=state.productos.filter(p=>!cat||p.categoria===cat);
+  
+  lista.innerHTML=prods.map(p=>`
+    <div class="qr-card" onclick="toggleQRSelect('${p.id}')">
+      <input type="checkbox" id="qr-sel-${p.id}" style="margin-bottom:0.5rem">
+      <div style="font-weight:bold;font-size:0.9rem">${p.nombre}</div>
+      <div style="color:#64748b;font-size:0.8rem">$${(p.precio||0).toFixed(2)}</div>
+    </div>`).join('')||'<p class="text-muted">Sin productos</p>';
+}
+
+function toggleQRSelect(id){
+  const chk=document.getElementById(`qr-sel-${id}`);
+  chk.checked=!chk.checked;
+}
+
+async function generarQRSeleccionados(){
+  const seleccionados=state.productos.filter(p=>document.getElementById(`qr-sel-${p.id}`)?.checked);
+  if(!seleccionados.length)return alert('Selecciona al menos un producto');
+  
+  const resultados=document.getElementById('qr-resultados');
+  resultados.innerHTML='<p class="text-muted">Generando QRs...</p>';
+  
+  for(const p of seleccionados){
+    const url=`http://localhost:5000/tienda/producto/${p.id}`;
+    const div=document.createElement('div');
+    div.className='qr-card';
+    div.innerHTML=`<div style="font-weight:bold;margin-bottom:0.5rem">${p.nombre}</div><div id="qr-${p.id}"></div>`;
+    resultados.appendChild(div);
+    new QRCode(document.getElementById(`qr-${p.id}`),{text:url,width:120,height:120});
+  }
+}
+
+function limpiarQR(){document.getElementById('qr-resultados').innerHTML='';}
+
+// Agente IA
+function toggleAIPanel(){
+  const panel=document.getElementById('ai-panel');
+  panel.style.display=panel.style.display==='block'?'none':'block';
+}
+
+function iniciarIA(){
+  // IA inicializada - lista para responder
+  console.log('🤖 Agente IA activado');
+}
+
+async function enviarIA(){
+  const input=document.getElementById('ai-input');
+  const msg=input.value.trim();
+  if(!msg)return;
+  
+  const messages=document.getElementById('ai-messages');
+  messages.innerHTML+=`<div style="background:#dbeafe;padding:0.5rem;border-radius:0.5rem;margin:0.5rem 0;text-align:right"><strong>Tú:</strong> ${msg}</div>`;
+  input.value='';
+  
+  // Respuesta IA simulada (puedes conectar a API real)
+  const respuestas={
+    'inventario':'📊 Tu inventario tiene '+state.productos.length+' productos. ¿Quieres ver el stock crítico?',
+    'ventas':'💰 Ventas hoy: $'+(state.ventas[new Date().toISOString().split('T')[0]]?.reduce((s,v)=>s+v.total,0)||0).toFixed(2),
+    'qr':'🔲 Para generar QR, ve a Gestión → Generar QR y selecciona productos',
+    'exportar':'📤 Ve a Ventas → Exportar para descargar tus datos en Excel',
+    'backup':'💾 Ve a Sistema → Backup para exportar/importar tu base de datos',
+    'ayuda':'🤖 Puedo ayudarte con: inventario, ventas, QR, exportar, backup. ¿Qué necesitas?'
+  };
+  
+  const clave=Object.keys(respuestas).find(k=>msg.toLowerCase().includes(k))||'ayuda';
+  
+  setTimeout(()=>{
+    messages.innerHTML+=`<div style="background:#f1f5f9;padding:0.5rem;border-radius:0.5rem;margin:0.5rem 0"><strong>IA:</strong> ${respuestas[clave]}</div>`;
+    messages.scrollTop=messages.scrollHeight;
+  },500);
+}
+
+// Backup
+function exportarBackup(){
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='tpv_backup_'+new Date().toISOString().split('T')[0]+'.json';
+  a.click();URL.revokeObjectURL(url);
+}
+
+function importarBackup(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{try{state=JSON.parse(e.target.result);saveState();location.reload();}catch(err){alert('Error al importar')}};
+  reader.readAsText(file);
+}
+
+function actualizarBackup(){
+  const lista=document.getElementById('backup-lista');
+  lista.innerHTML='<p class="text-muted">Usa Exportar/Importar para gestionar backups</p>';
+}
+
+// Licencia
+function mostrarLicencia(){
+  const info=document.getElementById('licencia-info');
+  info.innerHTML=state.licencia.activa?
+    '<span style="color:#16a34a;font-weight:bold">✅ Licencia Activada</span>':
+    '<span style="color:#dc2626">❌ Sin licencia - Modo prueba</span><br><small>Ingresa tu clave para activar</small>';
+}
+
+function activarLicencia(){
+  const key=document.getElementById('licencia-key').value.trim();
+  if(!key)return alert('Ingresa una clave');
+  // Simular activación
+  state.licencia={activa:true,key};
+  saveState();mostrarLicencia();
+  alert('✅ Licencia activada');
+}
+
+// Ajustes
+function cambiarIdioma(lang){state.config.lang=lang;saveState();}
+function cambiarTema(dark){state.config.theme=dark?'dark':'light';document.body.style.background=dark?'#0f172a':'linear-gradient(135deg,#0d1b2a 0%,#1a3a5c 55%,#0d6efd 100%)';saveState();}
+function guardarAjustes(){state.config.nombre=document.getElementById('ajuste-nombre').value;saveState();}
+
+// Mantenimiento
+function limpiarVentasHoy(){if(confirm('¿Limpiar ventas de hoy?')){state.ventas[new Date().toISOString().split('T')[0]]=[];saveState();renderizarVentas();}}
+function limpiarCierres(){if(confirm('¿Limpiar cierres?')){state.cierres=[];saveState();}}
+function limpiarTodo(){if(confirm('⚠️ ¿Reiniciar todo excepto productos?')){const prods=state.productos;state={productos:prods,orden:[],ventas:{},config:state.config,licencia:state.licencia};saveState();location.reload();}}
+
+// Copiar URL
+function copiarURL(){navigator.clipboard.writeText(document.getElementById('tienda-url').textContent);alert('📋 URL copiada')}
+
+// Guardar estado
+async function saveState(){try{await fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(state)})}catch(e){}}
+
+// Inicializar
+document.addEventListener('DOMContentLoaded',async()=>{
+  try{
+    const r=await fetch('/api/auth/me');
+    if(r.ok){const d=await r.json();if(d.autenticado){auth=d.usuario;document.getElementById('login-screen').style.display='none';document.getElementById('app-screen').style.display='block';document.getElementById('user-name').textContent=d.usuario.nombre;await cargarProductos();renderizarTodo();iniciarIA()}}
+  }catch(e){}
+});
+</script>
+</body>
+</html>

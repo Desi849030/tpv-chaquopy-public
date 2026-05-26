@@ -2,291 +2,70 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#0d6efd">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TPV Ultra Smart</title>
-<!-- Bootstrap CDN para icons (opcional, fallback a emojis si no carga) -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-<style>
-:root{--p:#0d6efd;--pd:#0a58ca;--s:#198754;--w:#ffc107;--d:#dc3545;--dk:#1e293b;--lt:#f8fafc;--sh:0 8px 30px rgba(0,0,0,0.12);--r:1rem;--tr:all 0.3s cubic-bezier(0.4,0,0.2,1)}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 40%,#3b82f6 100%);min-height:100vh;color:var(--dk);line-height:1.6}
-/* Splash */
-#splash{position:fixed;inset:0;background:linear-gradient(135deg,#0f172a,#1e3a5f,#3b82f6);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;transition:opacity 0.6s ease}
-#splash.hidden{opacity:0;pointer-events:none}
-.splash-logo{width:110px;height:110px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pd));display:flex;align-items:center;justify-content:center;font-size:2.8rem;color:white;margin-bottom:1.3rem;box-shadow:0 14px 45px rgba(13,110,253,0.5);animation:pulse 2.5s infinite}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
-.splash-title{font-size:1.9rem;font-weight:800;color:white;margin-bottom:0.4rem;text-shadow:0 3px 14px rgba(0,0,0,0.3)}
-.splash-sub{color:rgba(255,255,255,0.92);font-size:1.05rem}
-/* Login */
-#login{display:none;align-items:center;justify-content:center;min-height:100vh;padding:1.5rem}
-.login-card{background:white;border-radius:var(--r);padding:2.4rem;max-width:440px;width:100%;box-shadow:var(--sh);animation:slideIn 0.5s ease;position:relative;overflow:hidden}
-.login-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--p),var(--pd))}
-@keyframes slideIn{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
-.login-header{text-align:center;margin-bottom:1.9rem}
-.login-logo{width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--pd));color:white;display:flex;align-items:center;justify-content:center;font-size:1.9rem;margin:0 auto 0.9rem;box-shadow:0 7px 22px rgba(13,110,253,0.35)}
-.login-title{font-size:1.55rem;font-weight:800;color:var(--dk);margin:0 0 0.25rem}
-.login-sub{color:#64748b;font-size:0.94rem}
-.login-tabs{display:flex;background:var(--lt);border-radius:0.78rem;padding:4px;margin:1.4rem 0;position:relative}
-.login-tab{flex:1;padding:0.63rem 0.88rem;border:none;border-radius:0.68rem;font-weight:600;font-size:0.91rem;cursor:pointer;transition:var(--tr);background:transparent;color:#64748b;position:relative;z-index:1}
-.login-tab.active{background:white;color:var(--p);box-shadow:0 2.5px 9px rgba(0,0,0,0.09)}
-.login-tab::before{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(135deg,var(--p),var(--pd));opacity:0;transition:var(--tr);z-index:-1}
-.login-tab.active::before{opacity:0.07}
-.field{margin-bottom:1.25rem;position:relative}
-.field label{display:block;font-weight:600;color:var(--dk);margin-bottom:0.43rem;font-size:0.91rem}
-.field input{width:100%;padding:0.83rem 3.1rem 0.83rem 1.08rem;border-radius:0.83rem;border:2px solid #e2e8f0;font-size:1rem;outline:none;transition:var(--tr);background:white}
-.field input:focus{border-color:var(--p);box-shadow:0 0 0 4px rgba(13,110,253,0.11)}
-/* TOGGLE PASSWORD - PERFECTAMENTE CENTRADO (40x40px) */
-.pw-toggle{position:absolute;right:1.08rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;font-size:1.23rem;line-height:1;transition:var(--tr);z-index:2;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%}
-.pw-toggle:hover{color:var(--p);background:rgba(13,110,253,0.07)}
-.pw-toggle.active{color:var(--p)}
-.btn{width:100%;padding:0.93rem;border:none;border-radius:0.83rem;background:linear-gradient(135deg,var(--p),var(--pd));color:white;font-size:1.04rem;font-weight:700;cursor:pointer;transition:var(--tr);box-shadow:0 5.5px 19px rgba(13,110,253,0.34);display:flex;align-items:center;justify-content:center;gap:0.48rem;position:relative;overflow:hidden}
-.btn::before{content:'';position:absolute;top:50%;left:50%;width:0;height:0;border-radius:50%;background:rgba(255,255,255,0.29);transform:translate(-50%,-50%);transition:width 0.58s,height 0.58s}
-.btn:active::before{width:290px;height:290px}
-.btn:hover:not(:disabled){transform:translateY(-1.9px);box-shadow:0 9px 28px rgba(13,110,253,0.44)}
-.btn:disabled{opacity:0.64;cursor:not-allowed;transform:none}
-.btn-s{background:linear-gradient(135deg,var(--s),#146c43);box-shadow:0 5.5px 19px rgba(25,135,84,0.34)}
-.btn-s:hover:not(:disabled){box-shadow:0 9px 28px rgba(25,135,84,0.44)}
-.error{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:0.83rem;padding:0.83rem 1.08rem;margin-bottom:1.08rem;font-size:0.91rem;display:none;align-items:center;gap:0.48rem;animation:shake 0.39s ease}
-@keyframes shake{0%,100%{transform:translateX(0)}24%{transform:translateX(-4.8px)}72%{transform:translateX(4.8px)}}
-.error i{flex-shrink:0;margin-top:1.8px}
-.login-footer{text-align:center;color:#94a3b8;font-size:0.87rem;margin-top:1.55rem;padding-top:1.18rem;border-top:1px solid #e2e8f0}
-/* App */
-#app{display:none;padding:0.95rem}
-.nav{background:linear-gradient(90deg,var(--p),var(--pd));backdrop-filter:blur(11px);box-shadow:0 3.8px 28px rgba(0,0,0,0.14);padding:0.68rem 1.18rem;border-radius:0 0 var(--r) var(--r);margin-bottom:0.78rem;position:sticky;top:0;z-index:102}
-.nav-brand{font-weight:800;font-size:1.23rem;color:white!important;display:flex;align-items:center;gap:0.58rem}
-.nav-brand i{font-size:1.48rem}
-.user-bar{display:flex;align-items:center;gap:0.83rem;color:white;font-size:0.89rem}
-.user-avatar{width:41px;height:41px;border-radius:50%;background:rgba(255,255,255,0.19);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.08rem;box-shadow:0 2.8px 9px rgba(0,0,0,0.14)}
-.role{padding:0.29rem 0.73rem;border-radius:999px;font-size:0.71rem;font-weight:700;text-transform:uppercase;letter-spacing:0.029em;background:rgba(255,255,255,0.17);border:1px solid rgba(255,255,255,0.29);box-shadow:0 1.9px 7px rgba(0,0,0,0.09)}
-/* Tabs con Submenus - FIX CRÍTICO */
-.tabs{display:flex;gap:0.29rem;overflow-x:auto;padding:0.44rem 0;scrollbar-width:none;margin:0 -0.95rem;padding:0.44rem 0.95rem}
-.tabs::-webkit-scrollbar{display:none}
-.tab-item{position:relative}
-.tab{padding:0.59rem 1.13rem;border-radius:0.83rem;color:rgba(255,255,255,0.94);font-weight:600;font-size:0.91rem;white-space:nowrap;transition:var(--tr);border:none;background:transparent;cursor:pointer;display:flex;align-items:center;gap:0.39rem}
-.tab i{font-size:1.04rem}
-.tab:hover,.tab.active{background:rgba(255,255,255,0.17);color:white;transform:translateY(-1.9px)}
-.tab.drop::after{content:"▼";font-size:0.59rem;margin-left:0.24rem;vertical-align:middle;opacity:0.84;transition:var(--tr)}
-.tab-item:hover .tab.drop::after{transform:rotate(180deg)}
-/* SUBMENÚS - SIEMPRE VISIBLES AL HOVER (FIX CRÍTICO) */
-.submenu{position:absolute;top:100%;left:0;min-width:235px;background:white;border-radius:0.98rem;box-shadow:0 11px 38px rgba(0,0,0,0.19);padding:0.68rem;z-index:103;display:none;animation:slideD 0.29s cubic-bezier(0.4,0,0.2,1);border:1px solid rgba(0,0,0,0.058);margin-top:0.39rem}
-@keyframes slideD{from{opacity:0;transform:translateY(-11px) scale(0.968)}to{opacity:1;transform:translateY(0) scale(1)}}
-.tab-item:hover .submenu,.submenu.show{display:block !important}
-.submenu a{display:flex;align-items:center;gap:0.63rem;padding:0.63rem 0.93rem;color:#334155;text-decoration:none;border-radius:0.68rem;font-size:0.89rem;font-weight:500;transition:var(--tr);position:relative;overflow:hidden}
-.submenu a::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2.9px;background:linear-gradient(135deg,var(--p),var(--pd));transform:scaleY(0);transition:transform 0.19s}
-.submenu a i{width:1.38rem;text-align:center;color:#94a3b8;font-size:1.04rem;transition:var(--tr)}
-.submenu a:hover{background:var(--lt);color:var(--p);padding-left:1.08rem}
-.submenu a:hover::before{transform:scaleY(1)}
-.submenu a:hover i{color:var(--p);transform:translateX(2.9px)}
-/* Cards */
-.card{background:white;border-radius:var(--r);box-shadow:var(--sh);margin-bottom:1.28rem;overflow:hidden;transition:var(--tr)}
-.card:hover{box-shadow:0 11px 38px rgba(0,0,0,0.17);transform:translateY(-2.9px)}
-.card-h{background:linear-gradient(90deg,var(--lt),#f1f5f9);padding:1.13rem 1.38rem;font-weight:700;color:var(--dk);border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:0.63rem;font-size:1.07rem}
-.card-h i{font-size:1.28rem;color:var(--p)}
-.card-b{padding:1.38rem}
-/* Productos */
-.prod{background:white;border-radius:0.98rem;padding:0.93rem;margin-bottom:0.63rem;display:flex;justify-content:space-between;align-items:center;cursor:pointer;border:2px solid transparent;transition:var(--tr);position:relative;overflow:hidden}
-.prod::before{content:'';position:absolute;top:0;left:0;right:0;height:2.9px;background:linear-gradient(90deg,var(--p),var(--pd));opacity:0;transition:var(--tr)}
-.prod:hover{transform:translateY(-3.8px);box-shadow:0 11px 33px rgba(0,0,0,0.14);border-color:var(--p)}
-.prod:hover::before{opacity:1}
-.prod:active{transform:translateY(-1.9px)}
-.p-img{width:56px;height:56px;border-radius:0.88rem;background:linear-gradient(135deg,#f1f5f9,#e2e8f0);display:flex;align-items:center;justify-content:center;font-size:1.58rem;margin-right:0.93rem;flex-shrink:0;color:var(--p);box-shadow:0 2.9px 9px rgba(0,0,0,0.07)}
-.p-info{flex:1;min-width:0}
-.p-n{font-weight:700;color:var(--dk);margin-bottom:0.14rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:0.97rem}
-.p-c{font-size:0.81rem;color:#64748b;margin-bottom:0.29rem}
-.p-pr{font-weight:800;color:#16a34a;font-size:1.14rem}
-.st{font-size:0.71rem;padding:0.24rem 0.58rem;border-radius:999px;font-weight:700;text-transform:uppercase;letter-spacing:0.019em;box-shadow:0 1.9px 5px rgba(0,0,0,0.09)}
-.st-ok{background:#22c55e;color:white}.st-low{background:#eab308;color:var(--dk)}.st-out{background:#ef4444;color:white}
-/* Orden */
-.oi{display:flex;justify-content:space-between;align-items:center;padding:0.54rem 0;border-bottom:1px solid #f1f5f9}
-.oi:last-child{border-bottom:none}
-/* Utils */
-.d-n{display:none!important}.tc{text-align:center}.tm{color:#64748b}.ts{color:#16a34a}.td{color:#dc2626}.fb{font-weight:700}.fs{font-weight:600}
-.r-xl{border-radius:var(--r)!important}.sh-p{box-shadow:var(--sh)!important}.tr{transition:var(--tr)!important}
-/* Responsive */
-@media(max-width:767px){.nav-brand{font-size:1.14rem}.tab{padding:0.54rem 0.98rem;font-size:0.87rem}.submenu{min-width:215px;left:auto;right:0}.prod{padding:0.79rem}.p-img{width:49px;height:49px;font-size:1.34rem}.login-card{padding:1.95rem 1.58rem}.splash-logo{width:98px;height:98px;font-size:2.58rem}.splash-title{font-size:1.68rem}}
-/* Dark */
-@media(prefers-color-scheme:dark){body{background:#0f172a}.card,.login-card{background:#1e293b;color:#f1f5f9}.card-h{background:linear-gradient(90deg,#334155,#475569);color:white}.field input{background:#334155;border-color:#475569;color:white}.submenu{background:#1e293b;border-color:#334155}.submenu a{color:#f1f5f9}.submenu a:hover{background:#334155}}
-</style>
+
+<link rel="stylesheet" href="/static/css/tpv.css">
+<link rel="stylesheet" href="/static/css/tpv_mobile.css">
+<link rel="stylesheet" href="/static/css/tpv_dark.css">
 </head>
+
 <body>
 
 <!-- SPLASH -->
-<div id="splash"><div class="splash-logo">🏪</div><h1 class="splash-title">TPV Ultra Smart</h1><p class="splash-sub">Sistema Punto de Venta Profesional</p></div>
+<div id="splash">
+  <div class="splash-logo">🏪</div>
+  <h1 class="splash-title">TPV Ultra Smart</h1>
+  <p class="splash-sub">Sistema Punto de Venta Profesional</p>
+</div>
 
 <!-- LOGIN -->
-<div id="login"><div class="login-card">
-  <div class="login-header"><div class="login-logo">🔐</div><h2 class="login-title">Acceso al Sistema</h2><p class="login-sub">Ingresa con tus credenciales</p></div>
-  <div id="err" class="error"><i>⚠️</i><span id="errmsg"></span></div>
-  <div class="login-tabs"><button class="login-tab active" onclick="setMode('staff')">👤 Personal</button><button class="login-tab" onclick="setMode('client')">🛍️ Cliente</button></div>
-  <div id="panel-staff">
-    <div class="field"><label>👤 Usuario</label><input id="u" type="text" placeholder="ej: desarrollador" autocomplete="username"></div>
-    <div class="field"><label>🔐 Contraseña</label><input id="p" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"><button class="pw-toggle" onclick="togglePw('p')" title="Mostrar/Ocultar">👁️</button></div>
-    <button class="btn" onclick="doLogin()"><span id="lbtn-txt">🚪 Entrar</span><span id="lbtn-spin" style="display:none">⏳ Verificando...</span></button>
-    <div class="login-footer">🔒 Acceso restringido al personal autorizado</div>
-  </div>
-  <div id="panel-client" class="d-n">
-    <p class="login-sub" style="margin-bottom:1.28rem;text-align:left">Inicia sesión en tu cuenta</p>
-    <div class="field"><label>📧 Email</label><input id="ce" type="email" placeholder="tu@email.com" autocomplete="email"></div>
-    <div class="field"><label>🔐 Contraseña</label><input id="cp" type="password" placeholder="••••••••"><button class="pw-toggle" onclick="togglePw('cp')">👁️</button></div>
-    <button class="btn btn-s" onclick="doClientLogin()">🛍️ Entrar a la tienda</button>
-    <div class="login-footer" style="margin-top:0.98rem">¿Sin cuenta? <a href="#" style="color:var(--p);font-weight:600" onclick="alert('Registro disponible en versión completa');return false">Regístrate gratis</a></div>
-  </div>
-</div></div>
+<div id="login" style="display:none">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="login-logo">🔐</div>
+      <h2 class="login-title">Acceso al Sistema</h2>
+      <p class="login-sub">Ingresa con tus credenciales</p>
+    </div>
 
-<!-- APP -->
-<div id="app">
-  <!-- Navbar -->
-  <nav class="nav"><div style="display:flex;justify-content:space-between;align-items:center">
-    <span class="nav-brand">🏪 <span id="tpv-n">TPV Ultra Smart</span></span>
-    <div class="user-bar"><div class="user-avatar" id="ua">👤</div><div><div class="fb" id="un">—</div><span class="role" id="ur">—</span></div><button style="background:none;border:none;color:white;font-size:1.08rem;cursor:pointer" onclick="doLogout()" title="Cerrar sesión">⏻</button></div>
-  </div></nav>
-  
-  <!-- Tabs con Submenus - FIX: hover siempre muestra submenu -->
-  <div class="tabs">
-    <div class="tab-item"><button class="tab active" onclick="swTab('cat')"><i>📦</i> Catálogo</button></div>
-    <div class="tab-item">
-      <button class="tab drop" onclick="toggleSub('gestion')"><i>⚙️</i> Gestión</button>
-      <div class="submenu" id="sm-gestion">
-        <a href="#" onclick="showSec('productos');return false"><i>📦</i> Productos</a>
-        <a href="#" onclick="showSec('categorias');return false"><i>🏷️</i> Categorías</a>
-        <a href="#" onclick="showSec('qr');return false"><i>🔲</i> Etiquetas QR</a>
-        <a href="#" onclick="showSec('importar');return false"><i>📥</i> Importar/Exportar</a>
-      </div>
+    <div id="err" class="error"><i>⚠️</i><span id="errmsg"></span></div>
+
+    <div class="login-tabs">
+      <button class="login-tab active">Personal</button>
+      <button class="login-tab">Cliente</button>
     </div>
-    <div class="tab-item"><button class="tab" onclick="swTab('ord')"><i>🛒</i> Orden</button></div>
-    <div class="tab-item">
-      <button class="tab drop" onclick="toggleSub('ventas')"><i>💰</i> Ventas</button>
-      <div class="submenu" id="sm-ventas">
-        <a href="#" onclick="showSec('ventas-hoy');return false"><i>📊</i> Ventas Hoy</a>
-        <a href="#" onclick="showSec('nomenclador');return false"><i>🧮</i> Nomenclador</a>
-        <a href="#" onclick="showSec('exportar');return false"><i>📤</i> Exportar Excel</a>
-      </div>
+
+    <div class="field">
+      <label>Usuario</label>
+      <input id="user" type="text" placeholder="Usuario">
     </div>
-    <div class="tab-item">
-      <button class="tab drop" onclick="toggleSub('inventario')"><i>📋</i> Inventario</button>
-      <div class="submenu" id="sm-inventario">
-        <a href="#" onclick="showSec('mi-inventario');return false"><i>📦</i> Mi Inventario</a>
-        <a href="#" onclick="showSec('vendedores');return false"><i>👥</i> Vendedores</a>
-        <a href="#" onclick="showSec('cierres');return false"><i>🔒</i> Cierres</a>
-      </div>
+
+    <div class="field">
+      <label>Contraseña</label>
+      <input id="pass" type="password" placeholder="Contraseña">
+      <button class="pw-toggle" id="pwToggle">👁️</button>
     </div>
-    <div class="tab-item"><button class="tab" onclick="swTab('registros')"><i>📋</i> Registros</button></div>
-    <div class="tab-item"><button class="tab" onclick="swTab('tienda')"><i>🏪</i> Tienda</button></div>
-    <div class="tab-item">
-      <button class="tab drop" onclick="toggleSub('config')"><i>⚙️</i> Sistema</button>
-      <div class="submenu" id="sm-config">
-        <a href="#" onclick="showSec('ajustes');return false"><i>🎨</i> Apariencia</a>
-        <a href="#" onclick="showSec('mantenimiento');return false"><i>🔧</i> Mantenimiento</a>
-        <a href="#" onclick="showSec('licencias');return false"><i>🔑</i> Licencias</a>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Contenido: Catálogo -->
-  <div id="tab-cat">
-    <div class="card"><div class="card-h"><i>📦</i> Catálogo de Productos</div><div class="card-b">
-      <div style="display:flex;gap:0.49rem;margin-bottom:0.88rem">
-        <input type="text" id="search" placeholder="🔍 Buscar..." style="flex:1;padding:0.64rem 0.88rem;border-radius:0.69rem;border:2px solid #e2e8f0;font-size:0.94rem;outline:none" oninput="filtProd()">
-        <select id="cat-f" style="padding:0.64rem 0.88rem;border-radius:0.69rem;border:2px solid #e2e8f0;font-size:0.94rem;outline:none;background:white" onchange="filtProd()"><option value="">Todas</option></select>
-      </div>
-      <div id="plist"></div>
-    </div></div>
-  </div>
-  
-  <!-- Contenido: Orden -->
-  <div id="tab-ord" class="d-n">
-    <div class="card"><div class="card-h"><i>🛒</i> Orden Actual</div><div class="card-b">
-      <div id="olist" style="min-height:118px;display:flex;align-items:center;justify-content:center;color:#64748b">Añade productos del catálogo</div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin:0.98rem 0;padding:0.79rem 0;border-top:2px solid #e2e8f0;border-bottom:2px solid #e2e8f0"><span style="font-size:1.09rem;font-weight:700">Total:</span><span id="ot" style="font-size:1.39rem;font-weight:800;color:var(--s)">$0.00</span></div>
-      <button class="btn btn-s" onclick="pay()">💰 Procesar Pago</button>
-      <button class="btn" style="background:#64748b;margin-top:0.49rem;box-shadow:none" onclick="clearOrd()">🗑️ Cancelar</button>
-    </div></div>
-  </div>
-  
-  <!-- Contenido: Ajustes -->
-  <div id="sec-ajustes" class="d-n">
-    <div class="card"><div class="card-h"><i>⚙️</i> Ajustes del Sistema</div><div class="card-b">
-      <div style="display:grid;gap:0.98rem">
-        <div><label style="display:block;font-weight:600;margin-bottom:0.39rem">🌐 Idioma</label><select id="lang" style="width:100%;padding:0.69rem;border-radius:0.69rem;border:2px solid #e2e8f0;font-size:0.99rem" onchange="setLang(this.value)"><option value="es">Español</option><option value="en">English</option></select></div>
-        <div><label style="display:block;font-weight:600;margin-bottom:0.39rem">🎨 Tema</label><div style="display:flex;align-items:center;gap:0.49rem"><input type="checkbox" id="dark" onchange="setTheme(this.checked)" style="width:1.19rem;height:1.19rem"><label for="dark" style="font-weight:500">Modo Oscuro</label></div></div>
-        <div><label style="display:block;font-weight:600;margin-bottom:0.39rem">🏷️ Nombre del TPV</label><div style="display:flex;gap:0.39rem"><input type="text" id="tpv-i" placeholder="Mi TPV" style="flex:1;padding:0.69rem;border-radius:0.69rem;border:2px solid #e2e8f0"><button class="btn" style="width:auto;padding:0.69rem 1.09rem" onclick="saveTPVN()">Guardar</button></div></div>
-      </div>
-    </div></div>
+
+    <button class="btn" id="btnLogin">Entrar</button>
   </div>
 </div>
 
-<!-- JS INLINE - ASCII ONLY, NO EXTERNAL FILES -->
+<!-- APP -->
+<div id="app" style="display:none"></div>
+
+<!-- Scripts del TPV -->
+<div include-html="/templates/partials/_scripts.html"></div>
+
 <script>
-// Estado global
-let S={p:[],o:[],v:{},c:{lang:'es',theme:'light',nombre:'TPV Ultra Smart'}};let A=null;let R=null;
-
-// Permisos por rol (SEGURIDAD PROFESIONAL)
-const PERM={desarrollador:['all'],administrador:['gestion','ventas','inventario','config'],supervisor:['ventas','inventario','registros'],vendedor:['catalogo','orden','ventas-hoy'],cliente:['catalogo','tienda']};
-
-// Splash timeout garantizado (2.4s máximo)
-setTimeout(function(){var s=document.getElementById('splash');if(s&&!s.classList.contains('hidden')){s.classList.add('hidden');setTimeout(function(){s.style.display='none';var l=document.getElementById('login');if(l)l.style.display='flex'},290)}},2400);
-
-// Utilidades
-function $(id){return document.getElementById(id)}
-function esc(t){var d=document.createElement('div');d.textContent=t;return d.innerHTML}
-function togglePw(id){var i=$(id),b=event.currentTarget;if(!i||!b)return;var m=i.type==='password';i.type=m?'text':'password';b.innerHTML=m?'🙈':'👁️';b.classList.toggle('active',m)}
-
-// Login
-function setMode(m){document.querySelectorAll('.login-tab').forEach(function(t){t.classList.remove('active')});event.currentTarget.classList.add('active');$('panel-staff').classList.toggle('d-n',m!=='staff');$('panel-client').classList.toggle('d-n',m==='staff');$(m==='staff'?'u':'ce').focus()}
-async function doLogin(){var u=$('u').value.trim(),p=$('p').value,e=$('err'),em=$('errmsg'),btn=event.currentTarget;e.style.display='none';if(!u||!p){em.textContent='Usuario y contraseña requeridos';e.style.display='flex';return}
-btn.disabled=true;$('lbtn-txt').style.display='none';$('lbtn-spin').style.display='';
-try{var r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})}),d=await r.json();
-if(d.ok){A=d.usuario;R=d.usuario.rol;if(!PERM[R]){em.textContent='Rol no autorizado';e.style.display='flex';btn.disabled=false;$('lbtn-txt').style.display='';$('lbtn-spin').style.display='none';return}
-hideSplash();$('login').style.display='none';$('app').style.display='block';$('un').textContent=d.usuario.nombre;$('ur').textContent=d.usuario.rol;$('ua').textContent=d.usuario.nombre.charAt(0).toUpperCase();applyPerms(R);loadProd();rendProd();rendOrd();loadCats();}
-else{em.textContent=d.error||'Credenciales inválidas';e.style.display='flex';$('p').value='';}
-}catch(err){em.textContent='Error de conexión';e.style.display='flex';console.error(err)}
-finally{btn.disabled=false;$('lbtn-txt').style.display='';$('lbtn-spin').style.display='none'}}
-function doClientLogin(){alert('Login de cliente: funcional en versión completa');}
-async function doLogout(){if(confirm('¿Cerrar sesión?')){try{await fetch('/api/auth/logout',{method:'POST'})}catch(e){}A=null;R=null;S.o=[];$('app').style.display='none';$('login').style.display='flex';$('u').value=$('p').value='';}}
-
-// Splash helper
-function hideSplash(){var s=$('splash');if(s&&!s.classList.contains('hidden')){s.classList.add('hidden');setTimeout(function(){s.style.display='none';if($('login'))$('login').style.display='flex'},290)}}
-
-// Seguridad: Aplicar permisos por rol
-function applyPerms(rol){var perms=PERM[rol]||[],isDev=perms.includes('all');document.querySelectorAll('.tab-item').forEach(function(item){var btn=item.querySelector('.tab');if(!btn)return;var t=btn.textContent.toLowerCase(),vis=false;if(isDev)vis=true;else if(t.includes('catálogo')&&perms.includes('catalogo'))vis=true;else if(t.includes('gestión')&&perms.includes('gestion'))vis=true;else if(t.includes('orden')&&perms.includes('orden'))vis=true;else if(t.includes('ventas')&&perms.includes('ventas'))vis=true;else if(t.includes('inventario')&&perms.includes('inventario'))vis=true;else if(t.includes('registros')&&perms.includes('registros'))vis=true;else if(t.includes('tienda')&&perms.includes('tienda'))vis=true;else if(t.includes('sistema')&&perms.includes('config'))vis=true;item.style.display=vis?'':'none'});console.log('✅ Permisos aplicados para rol:',rol,perms)}
-
-// Navegación
-function toggleSub(id){document.querySelectorAll('.submenu').forEach(function(sm){if(sm.id!=='sm-'+id)sm.classList.remove('show')});$('sm-'+id).classList.toggle('show')}
-function swTab(t){document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('active')});event.currentTarget.classList.add('active');['cat','ord'].forEach(function(x){if($('tab-'+x))$('tab-'+x).classList.add('d-n')});if($('tab-'+t))$('tab-'+t).classList.remove('d-n');document.querySelectorAll('.submenu').forEach(function(sm){sm.classList.remove('show')})}
-function showSec(sec){document.querySelectorAll('.tab-pane,.card').forEach(function(el){if(el.id&&(el.id.startsWith('tab-')||el.id.startsWith('sec-')))el.classList.add('d-n')});var target=$('sec-'+sec);if(target)target.classList.remove('d-n');document.querySelectorAll('.submenu').forEach(function(sm){sm.classList.remove('show')})}
-
-// Productos
-async function loadProd(){try{var r=await fetch('/api/catalogo');if(r.ok){var d=await r.json();if(d.ok&&d.productos)S.p=d.productos}}catch(e){console.log('Offline mode')}}
-function loadCats(){var sel=$('cat-f'),cats=[],seen={};S.p.forEach(function(x){if(x.categoria&&!seen[x.categoria]){cats.push(x.categoria);seen[x.categoria]=true}});cats.sort();sel.innerHTML='<option value="">Todas</option>'+cats.map(function(c){return'<option value="'+c+'">'+c+'</option>'}).join('')}
-function rendProd(){var c=$('plist'),f=$('search')?.value.toLowerCase()||'',cat=$('cat-f')?.value||'',prods=S.p.filter(function(x){return x.nombre.toLowerCase().includes(f)&&(!cat||x.categoria===cat)});
-if(!prods.length){c.innerHTML='<p class="tc tm" style="padding:1.48rem">📦 Sin productos encontrados</p>';return}
-c.innerHTML=prods.map(function(x){var st=x.stock||0,col=st>=24?'ok':st>=15?'low':'out',txt=st===0?'Agotado':st+' uds';
-return'<div class="prod tr" onclick="addToOrd(\''+x.id+'\')"><div class="p-img">📦</div><div class="p-info"><div class="p-n">'+esc(x.nombre)+'</div><div class="p-c">'+(x.categoria||'General')+'</div><div class="p-pr">$'+(x.precio||0).toFixed(2)+'</div></div><span class="st st-'+col+'">'+txt+'</span></div>'}).join('')}
-function filtProd(){rendProd()}
-function addToOrd(id){var p=S.p.find(function(x){return x.id===id});if(!p)return;var ex=S.o.find(function(i){return i.id===id});if(ex)ex.cant=(ex.cant||1)+1;else S.o.push(Object.assign({},p,{cant:1}));rendOrd()}
-function rendOrd(){var i=$('olist'),t=$('ot');if(!S.o.length){i.innerHTML='<p class="tm" style="padding:1.48rem;text-align:center">🛒 Añade productos del catálogo</p>';t.textContent='$0.00';return}
-var tot=0;i.innerHTML=S.o.map(function(x,idx){var sub=(x.precio||0)*(x.cant||1);tot+=sub;return'<div class="oi"><div><span class="fs">'+esc(x.nombre)+'</span><br><small class="tm">$'+(x.precio||0).toFixed(2)+' × '+x.cant+'</small></div><div style="text-align:right"><div class="fb ts">$'+sub.toFixed(2)+'</div><button style="background:#ef4444;color:white;border:none;border-radius:50%;width:25px;height:25px;font-size:0.99rem;cursor:pointer;margin-top:0.29rem" onclick="remOrd('+idx+')">×</button></div></div>'}).join('');t.textContent='$'+tot.toFixed(2)}
-function remOrd(idx){S.o.splice(idx,1);rendOrd()}
-async function pay(){if(!S.o.length)return alert('⚠️ Orden vacía');var hoy=new Date().toISOString().split('T')[0];S.v[hoy]=S.v[hoy]||[];S.v[hoy].push(...S.o.map(function(x){return{id:'v-'+Date.now()+'-'+Math.random().toString(36).substr(2,5),nombre:x.nombre,cant:x.cant,total:(x.precio||0)*x.cant,fecha:new Date().toISOString()}}));
-try{await fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(S)})}catch(e){}
-var total=S.o.reduce(function(s,x){return s+(x.precio||0)*(x.cant||1)},0);S.o=[];rendOrd();alert('✅ Venta de $'+total.toFixed(2)+' procesada')}
-function clearOrd(){if(S.o.length&&confirm('¿Cancelar orden?')){S.o=[];rendOrd()}}
-
-// Ajustes
-function setLang(l){S.c.lang=l;localStorage.setItem('tpv_lang',l)}
-function setTheme(d){S.c.theme=d?'dark':'light';localStorage.setItem('tpv_theme',S.c.theme);document.body.style.background=d?'#0f172a':'linear-gradient(135deg,#0f172a,#1e3a5f,#3b82f6)'}
-function saveTPVN(){var n=$('tpv-i').value.trim();if(n){S.c.nombre=n;$('tpv-n').textContent=n;localStorage.setItem('tpv_custom_name',n);alert('✅ Nombre guardado: '+n)}}
-
-// Init
-document.addEventListener('DOMContentLoaded',async function(){
-// Check session
-try{var r=await fetch('/api/auth/me');if(r.ok){var d=await r.json();if(d.autenticado){A=d.usuario;R=d.usuario.rol;hideSplash();$('login').style.display='none';$('app').style.display='block';$('un').textContent=d.usuario.nombre;$('ur').textContent=d.usuario.rol;$('ua').textContent=d.usuario.nombre.charAt(0).toUpperCase();applyPerms(R);loadProd();rendProd();rendOrd();loadCats();}}}catch(e){}
-// Load config
-var lang=localStorage.getItem('tpv_lang');if(lang){$('lang').value=lang;S.c.lang=lang}
-var theme=localStorage.getItem('tpv_theme');if(theme==='dark'){$('dark').checked=true;setTheme(true)}
-var name=localStorage.getItem('tpv_custom_name');if(name){$('tpv-n').textContent=name;$('tpv-i').value=name}
+document.addEventListener("DOMContentLoaded", async () => {
+    const includes = document.querySelectorAll("[include-html]");
+    for (const el of includes) {
+        const file = el.getAttribute("include-html");
+        const html = await fetch(file).then(r => r.text());
+        el.innerHTML = html;
+    }
 });
 </script>
+
 </body>
 </html>

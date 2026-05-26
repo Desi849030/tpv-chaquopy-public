@@ -1,0 +1,73 @@
+#!/data/data/com.termux/files/usr/bin/bash
+
+echo "=== Creando carpeta de workflows ==="
+mkdir -p .github/workflows
+
+echo "=== Escribiendo workflow profesional ==="
+
+cat > .github/workflows/android-build.yml << 'EOF'
+name: TPV UltraSmart — Build & Debug
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Instalar JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Instalar NDK (r25c)
+      uses: nttld/setup-ndk@v1
+      with:
+        ndk-version: r25c
+
+    - name: Dar permisos a scripts
+      run: |
+        chmod +x build_patch.sh
+        chmod +x verify_patches.sh
+
+    - name: Aplicar parches
+      run: ./build_patch.sh
+
+    - name: Verificar parches
+      run: ./verify_patches.sh
+
+    - name: Compilar APK Debug
+      run: ./gradlew assembleDebug --stacktrace
+
+    - name: Compilar APK Release
+      run: ./gradlew assembleRelease --stacktrace
+
+    - name: Subir artefactos (Debug + Release)
+      uses: actions/upload-artifact@v4
+      with:
+        name: TPV-UltraSmart-APKs
+        path: |
+          app/build/outputs/apk/debug/app-debug.apk
+          app/build/outputs/apk/release/app-release.apk
+EOF
+
+echo "=== Workflow creado correctamente ==="
+
+echo "=== Añadiendo a Git ==="
+git add .github/workflows/android-build.yml
+
+echo "=== Commit ==="
+git commit -m "Añadido workflow profesional de build Android + Chaquopy"
+
+echo "=== Push al repositorio ==="
+git push
+
+echo "=== TODO LISTO ==="
+echo "Ve a GitHub → Actions → y verás el build ejecutándose."

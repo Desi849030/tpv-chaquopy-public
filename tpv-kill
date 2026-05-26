@@ -1,0 +1,22 @@
+#!/data/data/com.termux/files/usr/bin/bash
+set -e
+
+echo "🔍 Buscando procesos en el puerto 8080..."
+PIDS=$(lsof -t -i:8080 || true)
+
+if [ -n "$PIDS" ]; then
+    echo "⚠️  Matando procesos en 8080: $PIDS"
+    kill -9 $PIDS 2>/dev/null || true
+else
+    echo "✔️  No hay procesos usando el puerto 8080"
+fi
+
+echo "🔍 Matando procesos python3, python3.13, python..."
+killall python3 2>/dev/null || true
+killall python3.13 2>/dev/null || true
+killall python 2>/dev/null || true
+
+echo "🔍 Limpiando sesiones tmux colgadas..."
+tmux kill-server 2>/dev/null || true
+
+echo "✨ Puerto liberado y entorno limpio."

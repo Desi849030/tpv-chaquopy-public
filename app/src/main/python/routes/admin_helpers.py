@@ -39,7 +39,10 @@ def _obtener_privilegios_rol(rol):
     from database import obtener_conexion
     conn = obtener_conexion()
     try:
-        row = conn.execute("SELECT valor FROM app_state WHERE clave=?", (f"privilegios_{rol}",)).fetchone()
+        # Sanitizar rol para evitar inyección en nombre de clave
+    rol_seguro = "".join(c for c in rol if c.isalnum() or c == "_")
+    rol_seguro = "".join(c for c in rol if c.isalnum() or c == "_")
+    row = conn.execute("SELECT valor FROM app_state WHERE clave=?", (f"privilegios_{rol_seguro}",)).fetchone()
         if row:
             import json as _j
             v = row[0]; p = _j.loads(v) if isinstance(v, str) else v

@@ -1,3 +1,5 @@
+from auth_decorator import login_required
+from auth_decorator import login_required
 import unicodedata, re
 
 from .helpers import _levenshtein
@@ -10,6 +12,7 @@ from .helpers import _DEFINICIONES
 from .helpers import *
 
 
+@login_required
 @diccionario_bp.route("/api/diccionario/sinonimos", methods=["GET"])
 def api_sinonimos():
     if not _dev_check():
@@ -21,8 +24,10 @@ def api_sinonimos():
     return jsonify({"palabra": q, "sinonimos": results, "total": len(results)})
 
 
+@login_required
 @diccionario_bp.route("/api/diccionario/definicion")
 
+@login_required
 @diccionario_bp.route("/api/diccionario/definicion", methods=["GET"])
 def api_definicion():
     if not _dev_check():
@@ -42,8 +47,10 @@ def api_definicion():
     return jsonify({"termino": q, "definicion": None, "sugerencias": sugerencias[:5]})
 
 
+@login_required
 @diccionario_bp.route("/api/diccionario/corregir")
 
+@login_required
 @diccionario_bp.route("/api/diccionario/corregir", methods=["GET"])
 def api_corregir():
     if not _dev_check():

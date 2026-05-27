@@ -1,3 +1,4 @@
+from auth_decorator import login_required
 from flask import Blueprint, request, jsonify, session
 from functools import wraps
 from database import obtener_productos_catalogo, sincronizar_productos_catalogo, sincronizar_estado_completo
@@ -26,12 +27,14 @@ def requiere_rol(*roles):
 def usuario_actual():
     return session.get("usuario", {})
 
+@login_required
 @prod_bp.route("/catalogo", methods=["GET"])
 @requiere_login
 def api_get_catalogo():
     productos = obtener_productos_catalogo()
     return jsonify({"ok": True, "productos": productos, "total": len(productos)})
 
+@login_required
 @prod_bp.route("/catalogo/sync", methods=["POST"])
 @requiere_rol("administrador", "desarrollador")
 def api_sync_catalogo():

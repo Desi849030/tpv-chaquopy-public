@@ -1,3 +1,4 @@
+from auth_decorator import login_required, admin_required
 """Rutas de estado, supabase, SSE, debug, biometric, payment, branch, IA"""
 import json, os, time, threading, webbrowser, queue as _queue
 import urllib.request

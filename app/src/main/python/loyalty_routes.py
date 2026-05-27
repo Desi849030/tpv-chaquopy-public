@@ -1,3 +1,4 @@
+from auth_decorator import login_required, admin_required
 """loyalty_routes.py v8.0.0 — Lealtad Omnicanal + Headless Commerce (funcional)"""
 from flask import jsonify, request
 from datetime import datetime

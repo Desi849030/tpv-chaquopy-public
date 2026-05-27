@@ -1,3 +1,4 @@
+from auth_decorator import login_required, admin_required
 """Rutas de inventario y catálogo — /api/inventario/*, /api/catalogo/*, /api/stock/*, /api/sincronizar-*"""
 import json as _json
 from datetime import datetime, timedelta

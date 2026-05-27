@@ -1,5 +1,8 @@
+from auth_decorator import login_required, admin_required
 from routes.admin_helpers import admin_bp, request, jsonify, requiere_login, requiere_rol, usuario_actual, crear_licencia, listar_licencias, verificar_licencia_activa, desactivar_licencia, _sb
 # ── Licencias (sistema DB original) ──────────────────────────
+@login_required
+@admin_required
 @admin_bp.route("/api/licencias", methods=["GET"])
 @requiere_rol("desarrollador","administrador")
 def api_listar_licencias():
@@ -8,6 +11,8 @@ def api_listar_licencias():
     licencias = listar_licencias(u["usuario_id"], admin_filtro)
     return jsonify({"licencias": licencias, "total": len(licencias)})
 
+@login_required
+@admin_required
 @admin_bp.route("/api/licencias/crear", methods=["POST"])
 @requiere_rol("desarrollador")
 def api_crear_licencia():
@@ -24,6 +29,8 @@ def api_crear_licencia():
     )
     return jsonify(resultado), (200 if resultado["ok"] else 400)
 
+@login_required
+@admin_required
 @admin_bp.route("/api/licencias/<licencia_id>", methods=["DELETE"])
 @requiere_rol("desarrollador")
 def api_desactivar_licencia(licencia_id):
@@ -31,6 +38,8 @@ def api_desactivar_licencia(licencia_id):
     resultado = desactivar_licencia(licencia_id, u["usuario_id"])
     return jsonify(resultado), (200 if resultado["ok"] else 400)
 
+@login_required
+@admin_required
 @admin_bp.route("/api/licencias/verificar/<admin_id>", methods=["GET"])
 @requiere_rol("desarrollador","administrador")
 def api_verificar_licencia(admin_id):

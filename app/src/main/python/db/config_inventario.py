@@ -121,7 +121,10 @@ def limpiar_tablas_completo(admin_id):
         ]
         conteos = {}
         for t in tablas:
-            cursor.execute(f"DELETE FROM {t}")
+            TABLAS_PERMITIDAS = {'productos', 'categorias', 'inventario_general', 'clientes_tienda', 'usuarios', 'ventas', 'configuracion', 'app_state', 'inventarios', 'historial_ventas'}
+            if t not in TABLAS_PERMITIDAS:
+                continue
+            cursor.execute(f'DELETE FROM "{t}"')
             conteos[t] = cursor.rowcount
 
         # Borrar el estado JSON guardado

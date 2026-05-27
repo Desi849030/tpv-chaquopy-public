@@ -1,3 +1,5 @@
+from auth_decorator import login_required
+from auth_decorator import login_required
 """i18n_routes.py - API de diccionario i18n con aprendizaje"""
 import json, os
 
@@ -21,11 +23,13 @@ from flask import Blueprint, jsonify, request
 
 i18n_bp = Blueprint("i18n", __name__)
 
+@login_required
 @i18n_bp.route("/api/i18n/dict")
 def get_dict():
     d = _load()
     return jsonify({"es": d.get("es", {}), "en": d.get("en", {})})
 
+@login_required
 @i18n_bp.route("/api/i18n/translate", methods=["POST"])
 def translate():
     data = request.get_json(force=True) or {}
@@ -40,6 +44,7 @@ def translate():
         return jsonify({"translation": found, "learned": False})
     return jsonify({"translation": text, "learned": False})
 
+@login_required
 @i18n_bp.route("/api/i18n/learn", methods=["POST"])
 def learn():
     data = request.get_json(force=True) or {}

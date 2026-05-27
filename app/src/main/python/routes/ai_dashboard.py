@@ -1,6 +1,8 @@
+from auth_decorator import login_required
 from routes.ai_helpers import analytics_bp, requiere_login, jsonify, Blueprint
 
 @requiere_login
+@login_required
 @analytics_bp.route('/dashboard', methods=['GET'])
 def general_dashboard():
     """Dashboard general llamado por ia_cargarTodo()."""
@@ -20,6 +22,7 @@ def general_dashboard():
         }), 500
 
 @requiere_login
+@login_required
 @analytics_bp.route('/kpis', methods=['GET'])
 def general_kpis():
     """KPIs generales llamado por ia_cargarKPIs()."""

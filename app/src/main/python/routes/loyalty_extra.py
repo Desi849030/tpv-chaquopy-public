@@ -1,6 +1,8 @@
+from auth_decorator import login_required
 from routes.loyalty_bp import loyalty_bp
 from routes.loyalty_helpers import *
 
+@login_required
 @loyalty_bp.route('/headless/order', methods=['POST'])
 def headless_order():
     _ensure_loyalty_table()
@@ -48,6 +50,7 @@ def headless_order():
     finally:
         c.close()
 
+@login_required
 @loyalty_bp.route('/leaderboard', methods=['GET'])
 def leaderboard():
     _ensure_loyalty_table()

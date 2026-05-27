@@ -1,3 +1,4 @@
+from auth_decorator import login_required
 from flask import Blueprint, request, jsonify, session
 from functools import wraps
 from datetime import datetime
@@ -14,6 +15,7 @@ def requiere_login(f):
 
 def usuario_actual(): return session.get("usuario", {})
 
+@login_required
 @agent_bp.route('/agent/query', methods=['POST'])
 @requiere_login
 def agent_query():
@@ -31,7 +33,16 @@ def agent_query():
             vid = u['usuario_id'] if rol == 'vendedor' else None
             filtro = "WHERE vendedor_id = ?" if vid else ""
             params = (vid,) if vid else ()
-            cursor = conn.execute(f"SELECT COUNT(*) as num, SUM(total) as total FROM historial_ventas {filtro} AND fecha LIKE ?", params + (f"{hoy}%",))
+                        # === PARCHE SQL INJECTION ===
+            if vid:
+# === REVISAR SQL INJECTION ===
+                cursor = conn.execute("SELECT COUNT(*) as num, SUM(total) as total FROM historial_ventas WHERE vendedor_id = ? AND fecha LIKE ?", (vid, f"{hoy}%"))
+# === FIN REVISIÓN ===
+            else:
+# === REVISAR SQL INJECTION ===
+                cursor = conn.execute("SELECT COUNT(*) as num, SUM(total) as total FROM historial_ventas WHERE fecha LIKE ?", (f"{hoy}%",))
+# === FIN REVISIÓN ===
+            # === FIN PARCHE ===
             res = cursor.fetchone()
             conn.close()
             respuesta = f"📊 Ventas hoy: ${res['total'] or 0:.2f} ({res['num'] or 0} transacciones)"
@@ -55,6 +66,7 @@ def agent_query():
     except Exception as e:
         return jsonify({'ok': False, 'error': str(e)}), 500
 
+@login_required
 @agent_bp.route('/agent/suggestions', methods=['GET'])
 @requiere_login
 def agent_suggestions():

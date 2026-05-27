@@ -1,14 +1,19 @@
+from auth_decorator import login_required
 from routes.ai_helpers import ai_bp, requiere_login, jsonify
 # ══════════════════════════════════════════════════════════════
 #  PREDICCIONES — /api/ai/predict/dashboard
 # ══════════════════════════════════════════════════════════════
 @requiere_login
+@login_required
+@login_required
 @ai_bp.route('/predictor', methods=['GET'])
 def predictor():
     """Alias para compatibilidad."""
     return _predict_dashboard()
 
 @requiere_login
+@login_required
+@login_required
 @ai_bp.route('/predict/dashboard', methods=['GET'])
 def predict_dashboard():
     return _predict_dashboard()

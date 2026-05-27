@@ -1,6 +1,8 @@
+from auth_decorator import login_required
 from routes.settings_bp import settings_bp
 from routes.settings_helpers import *
 
+@login_required
 @settings_bp.route("/api/supabase/config", methods=["GET"])
 @requiere_rol("administrador","desarrollador")
 def get_supabase_config():
@@ -9,6 +11,7 @@ def get_supabase_config():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@login_required
 @settings_bp.route("/api/supabase/config", methods=["POST"])
 @requiere_rol("administrador","desarrollador")
 def save_supabase_config():
@@ -23,16 +26,19 @@ def save_supabase_config():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@login_required
 @settings_bp.route("/api/supabase/sync-all", methods=["POST"])
 @requiere_rol("administrador","desarrollador")
 def sync_all():
     return jsonify(sincronizar_todo())
 
+@login_required
 @settings_bp.route("/api/supabase/test", methods=["POST"])
 @requiere_rol("desarrollador")
 def test_supabase():
     return jsonify(probar_conexion())
 
+@login_required
 @settings_bp.route("/api/supabase/push", methods=["POST"])
 @requiere_rol("administrador","desarrollador")
 def push_supabase():
@@ -43,6 +49,7 @@ def push_supabase():
         return jsonify({"error": "Sin datos locales"}), 400
     return jsonify({"ok": guardar_en_supabase(estado)})
 
+@login_required
 @settings_bp.route("/api/supabase/pull", methods=["POST"])
 @requiere_rol("administrador","desarrollador")
 def pull_supabase():
@@ -53,6 +60,7 @@ def pull_supabase():
         return jsonify({"error": "Sin datos en Supabase"}), 500
     return jsonify({"ok": guardar_estado(estado)})
 
+@login_required
 @settings_bp.route("/api/supabase/sync-full", methods=["POST"])
 @requiere_rol("administrador","desarrollador")
 def api_supabase_sync_full():
@@ -97,6 +105,7 @@ def api_supabase_sync_full():
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
 
+@login_required
 @settings_bp.route("/api/supabase/estado", methods=["GET"])
 @requiere_login
 def api_supabase_estado():
@@ -107,6 +116,7 @@ def api_supabase_estado():
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
 
+@login_required
 @settings_bp.route("/api/supabase/setup", methods=["POST"])
 @requiere_login
 def api_supabase_setup():
@@ -118,6 +128,7 @@ def api_supabase_setup():
     except Exception as e:
         return jsonify({"ok": False, "mensaje": str(e)}), 500
 
+@login_required
 @settings_bp.route("/api/supabase/sql", methods=["GET"])
 @requiere_login
 def api_supabase_sql():

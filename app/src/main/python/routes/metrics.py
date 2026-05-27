@@ -1,3 +1,4 @@
+from auth_decorator import login_required
 from flask import Blueprint, request, jsonify, session
 from functools import wraps
 from datetime import datetime, timedelta
@@ -12,6 +13,7 @@ def requiere_login(f):
     return wrapper
 def usuario_actual(): return session.get("usuario", {})
 
+@login_required
 @metrics_bp.route('/dashboard/kpis', methods=['GET'])
 @requiere_login
 def api_kpis_dashboard():
@@ -23,7 +25,16 @@ def api_kpis_dashboard():
         vid = u['usuario_id'] if rol == 'vendedor' else None
         filtro = "AND vendedor_id = ?" if vid else ""
         params = (vid,) if vid else ()
-        cursor = conn.execute(f"SELECT COUNT(*) as num_ventas, SUM(total) as total_ingresos, SUM(cantidad) as unidades FROM historial_ventas WHERE fecha LIKE ? {filtro}", (f"{hoy}%",) + params)
+                # === PARCHE SQL INJECTION ===
+        if vid:
+# === REVISAR SQL INJECTION ===
+            cursor = conn.execute("SELECT COUNT(*) as num_ventas, SUM(total) as total_ingresos, SUM(cantidad) as unidades FROM historial_ventas WHERE fecha LIKE ? AND vendedor_id = ?", (f"{hoy}%", vid))
+# === FIN REVISIÓN ===
+        else:
+# === REVISAR SQL INJECTION ===
+            cursor = conn.execute("SELECT COUNT(*) as num_ventas, SUM(total) as total_ingresos, SUM(cantidad) as unidades FROM historial_ventas WHERE fecha LIKE ?", (f"{hoy}%",))
+# === FIN REVISIÓN ===
+        # === FIN PARCHE ===
         hoy_stats = dict(cursor.fetchone() or {})
         cursor = conn.execute("SELECT COUNT(*) as stock_bajo FROM inventario_general WHERE stock_actual < 5 AND stock_actual >= 0")
         stock_bajo = cursor.fetchone()['stock_bajo'] or 0

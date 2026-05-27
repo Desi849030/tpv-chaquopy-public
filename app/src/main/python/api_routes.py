@@ -1,3 +1,4 @@
+from auth_decorator import login_required, admin_required
 """
 api_routes.py — Solo las 2 rutas que faltan en app.py (1271 lineas)
 /api/health y /api/config/publica — NO requieren login
@@ -9,6 +10,7 @@ from database import obtener_info_db, obtener_conexion
 
 api_bp = Blueprint('api', __name__)
 
+@login_required
 @api_bp.route("/api/health", methods=["GET"])
 def api_health():
     try:
@@ -26,6 +28,7 @@ def api_health():
     except Exception as e:
         return jsonify({"ok": True, "version": "6.13.1", "error": str(e)})
 
+@login_required
 @api_bp.route("/api/config/publica", methods=["GET"])
 def api_config_publica():
     try:

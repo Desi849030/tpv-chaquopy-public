@@ -1,6 +1,8 @@
+from auth_decorator import login_required
 from routes.settings_bp import settings_bp
 from routes.settings_helpers import *
 
+@login_required
 @settings_bp.route("/api/state", methods=["GET"])
 @requiere_login
 def get_state():
@@ -9,6 +11,7 @@ def get_state():
         return jsonify({"error": "Sin estado local"}), 404
     return jsonify({"ok": True, "estado": estado})
 
+@login_required
 @settings_bp.route("/api/state", methods=["POST"])
 @requiere_login
 def save_state():
@@ -27,6 +30,7 @@ def save_state():
 #  STATUS / PING / HEALTH
 # ══════════════════════════════════════════════════════════════
 
+@login_required
 @settings_bp.route("/api/status", methods=["GET"])
 def get_status():
     try:
@@ -41,7 +45,9 @@ def get_status():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@login_required
 @settings_bp.route("/api/ping", methods=["GET"])
+@login_required
 @settings_bp.route("/api/ping", methods=["GET"])
 def api_ping():
     """Health check usando config dinamica de Supabase."""
@@ -58,6 +64,7 @@ def api_ping():
             return jsonify({"online": resp.status == 200})
     except Exception:
         return jsonify({"online": False})
+@login_required
 @settings_bp.route("/api/health/full", methods=["GET"])
 def api_health_full():
     info = obtener_info_db()
@@ -68,6 +75,7 @@ def api_health_full():
         "modules": 26, "routes": 114, "roles": 5
     })
 
+@login_required
 @settings_bp.route("/api/backup", methods=["GET"])
 @requiere_rol("administrador","desarrollador")
 def export_backup():
@@ -82,6 +90,7 @@ def export_backup():
 #  SUPABASE
 # ══════════════════════════════════════════════════════════════
 
+@login_required
 @settings_bp.route("/api/debug/health", methods=["GET"])
 @requiere_login
 def api_debug_health():

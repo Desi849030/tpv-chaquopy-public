@@ -1,3 +1,4 @@
+from auth_decorator import login_required
 # validacion_routes.py — Endpoints de validacion server-side
 from flask import Blueprint, request, jsonify
 from decorators import requiere_login, usuario_actual
@@ -10,6 +11,7 @@ from tpv_security import (
 val_bp = Blueprint('validacion', __name__)
 
 
+@login_required
 @val_bp.route('/api/ventas/calcular', methods=['POST'])
 @requiere_login
 def api_calcular_venta():
@@ -23,6 +25,7 @@ def api_calcular_venta():
     return jsonify({'ok': True, **resultado})
 
 
+@login_required
 @val_bp.route('/api/ventas/validar-totales', methods=['POST'])
 @requiere_login
 def api_validar_totales():
@@ -33,6 +36,7 @@ def api_validar_totales():
     return jsonify({'ok': True, **resultado})
 
 
+@login_required
 @val_bp.route('/api/ventas/validar-stock', methods=['POST'])
 @requiere_login
 def api_validar_stock():
@@ -48,6 +52,7 @@ def api_validar_stock():
     return jsonify({'ok': True, 'mensaje': 'Stock disponible'})
 
 
+@login_required
 @val_bp.route('/api/ventas/cierre-calcular', methods=['POST'])
 @requiere_login
 def api_cierre_calcular():
@@ -64,6 +69,7 @@ def api_cierre_calcular():
     return jsonify({'ok': True, **resultado})
 
 
+@login_required
 @val_bp.route('/api/ventas/generar-id', methods=['POST'])
 @requiere_login
 def api_generar_id():
@@ -72,6 +78,7 @@ def api_generar_id():
     return jsonify({'ok': True, 'id': generar_id(prefijo)})
 
 
+@login_required
 @val_bp.route('/api/util/sanitize', methods=['POST'])
 def api_sanitize():
     datos = request.get_json(silent=True) or {}
@@ -82,6 +89,7 @@ def api_sanitize():
     return jsonify({'sanitized': resultado, 'original': texto})
 
 
+@login_required
 @val_bp.route('/api/util/sqli-check', methods=['POST'])
 def api_sqli_check():
     datos = request.get_json(silent=True) or {}
@@ -92,6 +100,7 @@ def api_sqli_check():
     return jsonify({'peligroso': resultado, 'texto': texto})
 
 
+@login_required
 @val_bp.route('/api/util/cifrar', methods=['POST'])
 @requiere_login
 def api_cifrar():
@@ -103,6 +112,7 @@ def api_cifrar():
     return jsonify({'ok': True, 'cifrado': resultado})
 
 
+@login_required
 @val_bp.route('/api/util/descifrar', methods=['POST'])
 @requiere_login
 def api_descifrar():

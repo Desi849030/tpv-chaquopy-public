@@ -1,6 +1,8 @@
+from auth_decorator import login_required
 from routes.tienda_bp import tienda_bp
 from routes.tienda_helpers import *
 
+@login_required
 @tienda_bp.route('/api/productos', methods=['GET'])
 def api_listar_productos():
     """
@@ -40,6 +42,7 @@ def api_listar_productos():
         conn.close()
 
 
+@login_required
 @tienda_bp.route('/api/productos/<producto_id>', methods=['GET'])
 def api_producto_detalle(producto_id):
     conn   = obtener_conexion()
@@ -62,6 +65,7 @@ def api_producto_detalle(producto_id):
         conn.close()
 
 
+@login_required
 @tienda_bp.route('/api/productos/<producto_id>/imagen', methods=['POST'])
 @requiere_staff
 def api_subir_imagen_producto(producto_id):
@@ -88,6 +92,7 @@ def api_subir_imagen_producto(producto_id):
 # ══════════════════════════════════════════════════════════════
 #  QR — generación para productos del catálogo (máx 40)
 # ══════════════════════════════════════════════════════════════
+@login_required
 @tienda_bp.route('/api/productos/qr', methods=['POST'])
 @requiere_staff
 def api_generar_qr_productos():

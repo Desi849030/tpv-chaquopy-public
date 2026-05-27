@@ -1,6 +1,8 @@
+from auth_decorator import login_required
 from routes.tienda_bp import tienda_bp
 from routes.tienda_helpers import *
 
+@login_required
 @tienda_bp.route('/api/tiendas', methods=['GET'])
 def api_listar_tiendas():
     conn   = obtener_conexion()
@@ -15,6 +17,7 @@ def api_listar_tiendas():
         conn.close()
 
 
+@login_required
 @tienda_bp.route('/api/tiendas', methods=['POST'])
 @requiere_admin
 def api_crear_tienda():
@@ -38,6 +41,7 @@ def api_crear_tienda():
         conn.close()
 
 
+@login_required
 @tienda_bp.route('/api/tiendas/<tienda_id>', methods=['DELETE'])
 @requiere_admin
 def api_eliminar_tienda(tienda_id):
@@ -50,6 +54,7 @@ def api_eliminar_tienda(tienda_id):
         conn.close()
 
 
+@login_required
 @tienda_bp.route('/api/tiendas/<tienda_id>', methods=['PATCH'])
 @requiere_admin
 def api_actualizar_tienda(tienda_id):

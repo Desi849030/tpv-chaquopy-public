@@ -1,6 +1,8 @@
+from auth_decorator import login_required
 from routes.inventory_bp import inv_bp
 from routes.inventory_helpers import *
 
+@login_required
 @inv_bp.route("/api/inventario/entrada", methods=["POST"])
 @requiere_rol("administrador","desarrollador")
 def api_entrada_producto():
@@ -9,6 +11,7 @@ def api_entrada_producto():
     resultado = registrar_entrada_producto(datos, u["usuario_id"])
     return jsonify(resultado), (200 if resultado["ok"] else 400)
 
+@login_required
 @inv_bp.route("/api/inventario/general", methods=["GET"])
 @requiere_rol("administrador","desarrollador")
 def api_inventario_general():
@@ -18,6 +21,7 @@ def api_inventario_general():
     except Exception as e:
         return jsonify({"error": f"Error inventario general: {str(e)}"}), 500
 
+@login_required
 @inv_bp.route("/api/inventario/general/eliminar", methods=["POST"])
 @requiere_rol("administrador","desarrollador")
 def api_eliminar_inventario_general():
@@ -26,6 +30,7 @@ def api_eliminar_inventario_general():
     r = eliminar_producto_inventario_general(datos.get("producto_id",""), u["usuario_id"])
     return jsonify(r), (200 if r["ok"] else 400)
 
+@login_required
 @inv_bp.route("/api/inventario/entradas", methods=["GET"])
 @requiere_rol("administrador","desarrollador")
 def api_historial_entradas():
@@ -37,6 +42,7 @@ def api_historial_entradas():
 #  CATÁLOGO DE PRODUCTOS
 # ══════════════════════════════════════════════════════════════
 
+@login_required
 @inv_bp.route("/api/stock/masivo", methods=["POST"])
 @requiere_rol("administrador","desarrollador")
 def api_stock_masivo():
@@ -49,6 +55,7 @@ def api_stock_masivo():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@login_required
 @inv_bp.route("/api/limpiar-tablas", methods=["POST"])
 @requiere_rol("administrador","desarrollador")
 def api_limpiar_tablas():
@@ -59,6 +66,7 @@ def api_limpiar_tablas():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@login_required
 @inv_bp.route("/api/reconstruir-desde-productos", methods=["POST"])
 @requiere_rol("administrador","desarrollador","vendedor")
 def api_reconstruir_desde_productos():
@@ -75,6 +83,7 @@ def api_reconstruir_desde_productos():
 #  INVENTARIO DIARIO
 # ══════════════════════════════════════════════════════════════
 
+@login_required
 @inv_bp.route("/api/inventario/diario/limpiar", methods=["POST"])
 @requiere_rol("administrador", "desarrollador")
 def api_limpiar_inventarios():

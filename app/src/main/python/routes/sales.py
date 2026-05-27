@@ -1,3 +1,4 @@
+from auth_decorator import login_required
 from flask import Blueprint, request, jsonify, session
 from functools import wraps
 from database import (consultar_ventas_por_fecha, consultar_resumen_ventas, 
@@ -30,6 +31,7 @@ def requiere_rol(*roles):
 def usuario_actual():
     return session.get("usuario", {})
 
+@login_required
 @sales_bp.route("/gastos", methods=["GET"])
 @requiere_login
 def api_listar_gastos():
@@ -48,6 +50,7 @@ def api_listar_gastos():
     finally:
         conn.close()
 
+@login_required
 @sales_bp.route("/gastos", methods=["POST"])
 @requiere_login
 def api_crear_gasto():
@@ -76,6 +79,7 @@ def api_crear_gasto():
     finally:
         conn.close()
 
+@login_required
 @sales_bp.route("/gastos/<gasto_id>", methods=["DELETE"])
 @requiere_login
 def api_eliminar_gasto(gasto_id):
@@ -92,6 +96,7 @@ def api_eliminar_gasto(gasto_id):
     finally:
         conn.close()
 
+@login_required
 @sales_bp.route("/reportes/ventas", methods=["GET"])
 @requiere_login
 def api_reporte_ventas():
@@ -103,6 +108,7 @@ def api_reporte_ventas():
         vid
     )})
 
+@login_required
 @sales_bp.route("/reportes/resumen", methods=["GET"])
 @requiere_login
 def api_resumen():
@@ -110,11 +116,13 @@ def api_resumen():
     vid = u["usuario_id"] if u.get("rol") == "vendedor" else request.args.get("vendedor_id")
     return jsonify(consultar_resumen_ventas(vid))
 
+@login_required
 @sales_bp.route("/reportes/ganancias", methods=["GET"])
 @requiere_rol("administrador","desarrollador","supervisor")
 def api_ganancias():
     return jsonify({"ganancias": consultar_ganancias_por_dia()})
 
+@login_required
 @sales_bp.route("/descuentos", methods=["GET"])
 @requiere_login
 def api_listar_descuentos():

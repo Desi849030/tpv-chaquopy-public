@@ -1,3 +1,4 @@
+from auth_decorator import login_required
 """
 pwa_routes.py — TPV Ultra Smart (PWA Support)
 Rutas mínimas para manifest.json y service-worker

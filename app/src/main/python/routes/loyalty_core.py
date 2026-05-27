@@ -1,6 +1,8 @@
+from auth_decorator import login_required
 from routes.loyalty_bp import loyalty_bp
 from routes.loyalty_helpers import *
 
+@login_required
 @loyalty_bp.route('/status', methods=['GET'])
 def status():
     _ensure_loyalty_table()
@@ -24,6 +26,7 @@ def status():
     finally:
         c.close()
 
+@login_required
 @loyalty_bp.route('/enroll', methods=['POST'])
 def enroll():
     _ensure_loyalty_table()
@@ -53,6 +56,7 @@ def enroll():
     finally:
         c.close()
 
+@login_required
 @loyalty_bp.route('/points', methods=['GET'])
 def get_points():
     _ensure_loyalty_table()
@@ -84,6 +88,7 @@ def get_points():
     finally:
         c.close()
 
+@login_required
 @loyalty_bp.route('/points/add', methods=['POST'])
 def add_points():
     _ensure_loyalty_table()
@@ -110,6 +115,7 @@ def add_points():
     finally:
         c.close()
 
+@login_required
 @loyalty_bp.route('/points/redeem', methods=['POST'])
 def redeem():
     _ensure_loyalty_table()
@@ -140,6 +146,7 @@ def redeem():
     finally:
         c.close()
 
+@login_required
 @loyalty_bp.route('/history', methods=['GET'])
 def get_history():
     _ensure_loyalty_table()

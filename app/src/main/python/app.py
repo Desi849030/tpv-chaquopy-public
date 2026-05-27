@@ -63,6 +63,7 @@ def rate_limit(max_att=5, win=600):
     return dec
 
 # Routes - SERVIR HTML PLANO (sin Jinja2)
+@login_required
 @app.route('/')
 def index():
     path = os.path.join(_TPL, 'index.html')
@@ -71,9 +72,11 @@ def index():
             return f.read(),200,{'Content-Type':'text/html; charset=utf-8'}
     return '<h3>❌ No se encontró index.html</h3>',500
 
+@login_required
 @app.route('/static/<path:f>')
 def static_serve(f): return send_from_directory(_STAT, f)
 
+@login_required
 @app.route('/api/auth/login', methods=['POST'])
 @rate_limit()
 def login():
@@ -84,12 +87,15 @@ def login():
     if res: session.permanent=True; session['usuario']=res; return jsonify({'ok':True,'usuario':res})
     return jsonify({'error':'Invalid credentials'}),401
 
+@login_required
 @app.route('/api/auth/logout', methods=['POST'])
 def logout(): session.pop('usuario',None); return jsonify({'ok':True})
 
+@login_required
 @app.route('/api/auth/me', methods=['GET'])
 def me(): u=session.get('usuario'); return jsonify({'autenticado':bool(u),'usuario':u}) if u else (jsonify({'autenticado':False}),401)
 
+@login_required
 @app.route('/api/status')
 def status():
     try:
@@ -113,3 +119,47 @@ def main():
     app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False, threaded=True)
 
 if __name__=='__main__': main()
+
+# === PARCHE DE SEGURIDAD ===
+from security_patch import generate_csrf, validate_csrf, rate_limit_global, add_security_headers
+
+@app.after_request
+def after_request(response):
+    return add_security_headers(response)
+
+@login_required
+@app.route('/api/csrf-token')
+def csrf_token():
+    return jsonify({'csrf': generate_cscsrf()})
+
+# === PARCHE DE SEGURIDAD GLOBAL ===
+from auth_decorator import csrf_protected
+
+# Headers de seguridad
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    return response
+
+# Generar CSRF token en login
+@login_required
+@app.route('/api/csrf-token', methods=['GET'])
+def get_csrf():
+    from security import get_csrf_token
+    token = get_csrf_token()
+    session['csrf_token'] = token
+    return jsonify({'csrf_token': token})
+
+# Logout original ahora limpia csrf
+@login_required
+@app.route('/api/auth/logout-v2', methods=['POST'])
+def logout_v2():
+    session.pop('usuario', None)
+    session.pop('csrf_token', None)
+    return jsonify({'ok': True})
+# === FIN PARCHE ===

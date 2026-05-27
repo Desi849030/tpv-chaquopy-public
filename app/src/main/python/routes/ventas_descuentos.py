@@ -1,8 +1,10 @@
+from auth_decorator import login_required
 from routes.ventas_helpers import ventas_bp, request, jsonify, requiere_login, requiere_rol, agregar_log, obtener_conexion
 # ══════════════════════════════════════════════════════════════
 #  DESCUENTOS
 # ══════════════════════════════════════════════════════════════
 
+@login_required
 @ventas_bp.route("/api/descuentos", methods=["GET"])
 @requiere_login
 def api_listar_descuentos():
@@ -16,6 +18,7 @@ def api_listar_descuentos():
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
 
+@login_required
 @ventas_bp.route("/api/descuentos", methods=["POST"])
 @requiere_rol("administrador", "desarrollador")
 def api_crear_descuento():
@@ -36,6 +39,7 @@ def api_crear_descuento():
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
 
+@login_required
 @ventas_bp.route("/api/descuentos/<int:did>", methods=["DELETE"])
 @requiere_rol("administrador", "desarrollador")
 def api_eliminar_descuento(did):

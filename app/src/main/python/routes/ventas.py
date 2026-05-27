@@ -1,3 +1,4 @@
+from auth_decorator import login_required
 """
 ╔══════════════════════════════════════════════════════════════╗
 ║   ventas.py  —  TPV ULTRA SMART  v7.0 (COMPLETO)           ║
@@ -40,6 +41,7 @@ def usuario_actual():
 # ══════════════════════════════════════════════════════════════
 # GASTOS
 # ══════════════════════════════════════════════════════════════
+@login_required
 @ventas_bp.route("/gastos", methods=["GET"])
 @requiere_login
 def api_gastos():
@@ -59,6 +61,7 @@ def api_gastos():
     finally:
         conn.close()
 
+@login_required
 @ventas_bp.route("/gastos", methods=["POST"])
 @requiere_rol("administrador", "desarrollador")
 def api_crear_gasto():
@@ -90,6 +93,7 @@ def api_crear_gasto():
     finally:
         conn.close()
 
+@login_required
 @ventas_bp.route("/gastos/<gasto_id>", methods=["DELETE"])
 @requiere_rol("administrador", "desarrollador")
 def api_eliminar_gasto(gasto_id):
@@ -106,6 +110,7 @@ def api_eliminar_gasto(gasto_id):
 # ══════════════════════════════════════════════════════════════
 # CIERRES DE CAJA
 # ══════════════════════════════════════════════════════════════
+@login_required
 @ventas_bp.route("/cierres", methods=["GET"])
 @requiere_login
 def api_cierres():
@@ -128,6 +133,7 @@ def api_cierres():
     finally:
         conn.close()
 
+@login_required
 @ventas_bp.route("/cierres/cerrar-dia", methods=["POST"])
 @requiere_login
 def api_cerrar_dia():
@@ -163,6 +169,7 @@ def api_cerrar_dia():
 # ══════════════════════════════════════════════════════════════
 # REPORTES
 # ══════════════════════════════════════════════════════════════
+@login_required
 @ventas_bp.route("/reportes/ventas", methods=["GET"])
 @requiere_login
 def api_reporte_ventas():
@@ -174,6 +181,7 @@ def api_reporte_ventas():
     ventas = consultar_ventas_por_fecha(desde, hasta, vendedor_id)
     return jsonify({"ventas": ventas, "total": len(ventas)})
 
+@login_required
 @ventas_bp.route("/reportes/resumen", methods=["GET"])
 @requiere_login
 def api_resumen_ventas():
@@ -182,6 +190,7 @@ def api_resumen_ventas():
     resumen = consultar_resumen_ventas(vendedor_id)
     return jsonify(resumen)
 
+@login_required
 @ventas_bp.route("/reportes/ganancias", methods=["GET"])
 @requiere_rol("administrador", "desarrollador", "supervisor")
 def api_ganancias():

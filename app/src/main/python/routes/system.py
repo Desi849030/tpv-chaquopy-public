@@ -1,3 +1,4 @@
+from auth_decorator import login_required
 """
 ╔══════════════════════════════════════════════════════════════╗
 ║   system.py  —  TPV ULTRA SMART  v7.0 (COMPLETO)           ║
@@ -42,6 +43,7 @@ def usuario_actual():
 # ══════════════════════════════════════════════════════════════
 # STATUS DEL SISTEMA
 # ══════════════════════════════════════════════════════════════
+@login_required
 @system_bp.route("/status", methods=["GET"])
 def api_status():
     """Endpoint público de status del servidor."""
@@ -62,6 +64,7 @@ def api_status():
 # ══════════════════════════════════════════════════════════════
 # BACKUPS
 # ══════════════════════════════════════════════════════════════
+@login_required
 @system_bp.route("/backup/export", methods=["GET"])
 @requiere_rol("administrador", "desarrollador")
 def api_export_backup():
@@ -76,6 +79,7 @@ def api_export_backup():
     resp.headers["Content-Disposition"] = f"attachment; filename=tpv_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     return resp
 
+@login_required
 @system_bp.route("/backup/import", methods=["POST"])
 @requiere_rol("administrador", "desarrollador")
 def api_import_backup():
@@ -93,6 +97,7 @@ def api_import_backup():
 # ══════════════════════════════════════════════════════════════
 # HISTORIAL DIARIO
 # ══════════════════════════════════════════════════════════════
+@login_required
 @system_bp.route("/historial/diario", methods=["GET"])
 @requiere_login
 def api_historial_get():
@@ -104,6 +109,7 @@ def api_historial_get():
     except Exception as e:
         return jsonify({"ok": False, "mensaje": str(e)}), 500
 
+@login_required
 @system_bp.route("/historial/diario", methods=["POST"])
 @requiere_rol("administrador", "desarrollador")
 def api_historial_post():
@@ -121,6 +127,7 @@ def api_historial_post():
 # ══════════════════════════════════════════════════════════════
 # LOGS DEL SISTEMA
 # ══════════════════════════════════════════════════════════════
+@login_required
 @system_bp.route("/logs", methods=["GET"])
 @requiere_rol("desarrollador", "administrador")
 def api_logs():
@@ -142,6 +149,7 @@ def api_logs():
     finally:
         conn.close()
 
+@login_required
 @system_bp.route("/logs/limpiar", methods=["POST"])
 @requiere_rol("desarrollador")
 def api_limpiar_logs():
@@ -160,6 +168,7 @@ def api_limpiar_logs():
 # ══════════════════════════════════════════════════════════════
 # CONFIGURACIÓN
 # ══════════════════════════════════════════════════════════════
+@login_required
 @system_bp.route("/config", methods=["GET"])
 @requiere_login
 def api_get_config():
@@ -168,6 +177,7 @@ def api_get_config():
     config = estado.get("config", {})
     return jsonify({"ok": True, "config": config})
 
+@login_required
 @system_bp.route("/config", methods=["POST"])
 @requiere_rol("administrador", "desarrollador")
 def api_update_config():

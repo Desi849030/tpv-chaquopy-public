@@ -1,14 +1,17 @@
+from auth_decorator import login_required
 from routes.ai_helpers import ai_bp, requiere_login, jsonify
 # ══════════════════════════════════════════════════════════════
 #  ANTI-FRAUDE — /api/ai/fraud/dashboard
 # ══════════════════════════════════════════════════════════════
 @requiere_login
+@login_required
 @ai_bp.route('/fraud', methods=['GET'])
 def fraud():
     """Alias para compatibilidad."""
     return _fraud_dashboard()
 
 @requiere_login
+@login_required
 @ai_bp.route('/fraud/dashboard', methods=['GET'])
 def fraud_dashboard():
     return _fraud_dashboard()

@@ -1,5 +1,7 @@
+from auth_decorator import login_required
 from routes.assistant_helpers import assistant_bp, request, jsonify, requiere_login, _mem_module, mem_save, mem_recall, mem_search, mem_forget, mem_summary
 @requiere_login
+@login_required
 @assistant_bp.route('/memory/recall', methods=['POST'])
 def memory_recall():
     if not _mem_module:
@@ -13,6 +15,7 @@ def memory_recall():
 
 
 @requiere_login
+@login_required
 @assistant_bp.route('/memory/search', methods=['POST'])
 def memory_search():
     if not _mem_module:
@@ -28,6 +31,7 @@ def memory_search():
 
 
 @requiere_login
+@login_required
 @assistant_bp.route('/memory/save', methods=['POST'])
 def memory_save():
     if not _mem_module:
@@ -46,6 +50,7 @@ def memory_save():
 
 
 @requiere_login
+@login_required
 @assistant_bp.route('/memory/forget', methods=['POST'])
 def memory_forget():
     if not _mem_module:
@@ -57,6 +62,7 @@ def memory_forget():
 
 
 @requiere_login
+@login_required
 @assistant_bp.route('/memory/summary', methods=['GET'])
 def memory_summary():
     if not _mem_module:

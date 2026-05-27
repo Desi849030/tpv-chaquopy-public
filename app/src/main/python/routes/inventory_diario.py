@@ -1,7 +1,9 @@
+from auth_decorator import login_required
 import json as _json
 from routes.inventory_bp import inv_bp
 from routes.inventory_helpers import *
 
+@login_required
 @inv_bp.route("/api/inventario/asignar-diario", methods=["POST"])
 @requiere_rol("administrador","desarrollador")
 def api_asignar_inventario():
@@ -12,6 +14,7 @@ def api_asignar_inventario():
     resultado = asignar_inventario_diario(vendedor_id, productos, u["usuario_id"])
     return jsonify(resultado), (200 if resultado["ok"] else 400)
 
+@login_required
 @inv_bp.route("/api/inventario/diario/<vendedor_id>", methods=["GET"])
 @requiere_login
 def api_inventario_diario(vendedor_id):
@@ -21,6 +24,7 @@ def api_inventario_diario(vendedor_id):
     except Exception as e:
         return jsonify({"error": f"Error inventario diario: {str(e)}"}), 500
 
+@login_required
 @inv_bp.route("/api/inventario/diario/conteo", methods=["POST"])
 @requiere_login
 def api_conteo_vendedor():
@@ -46,6 +50,7 @@ def api_conteo_vendedor():
     finally:
         conn.close()
 
+@login_required
 @inv_bp.route("/api/inventario/diario/cierre", methods=["POST"])
 @requiere_login
 def api_cierre_vendedor():
@@ -112,6 +117,7 @@ def api_cierre_vendedor():
     finally:
         conn.close()
 
+@login_required
 @inv_bp.route("/api/inventario/diario/historial/<vendedor_id>", methods=["GET"])
 @requiere_login
 def api_historial_cierres(vendedor_id):

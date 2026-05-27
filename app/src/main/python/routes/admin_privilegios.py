@@ -1,4 +1,7 @@
+from auth_decorator import login_required, admin_required
 from routes.admin_helpers import admin_bp, request, jsonify, requiere_login, requiere_rol, usuario_actual, agregar_log, _obtener_privilegios_rol, _guardar_privilegios_rol, _MODULOS_DISPONIBLES, _PRIVILEGIOS_DEFAULT
+@login_required
+@admin_required
 @admin_bp.route("/api/privilegios/<rol>", methods=["GET"])
 @requiere_rol("desarrollador","administrador","supervisor")
 def api_get_privilegios(rol):
@@ -10,6 +13,8 @@ def api_get_privilegios(rol):
         p = _PRIVILEGIOS_DEFAULT.get(rol, {m: False for m in _MODULOS_DISPONIBLES})
     return jsonify({"ok":True,"rol":rol,"privilegios":p,"modulos":_MODULOS_DISPONIBLES,"default":_PRIVILEGIOS_DEFAULT.get(rol,{})})
 
+@login_required
+@admin_required
 @admin_bp.route("/api/privilegios/<rol>", methods=["PUT"])
 @requiere_rol("desarrollador","administrador","supervisor")
 def api_set_privilegios(rol):
@@ -26,6 +31,8 @@ def api_set_privilegios(rol):
         return jsonify({"ok": True, "mensaje": f"Privilegios de '{rol}' actualizados"})
     return jsonify({"error": "No se pudieron guardar"}), 500
 
+@login_required
+@admin_required
 @admin_bp.route("/api/privilegios/<rol>/restablecer", methods=["POST"])
 @requiere_rol("desarrollador","administrador","supervisor")
 def api_reset_privilegios(rol):

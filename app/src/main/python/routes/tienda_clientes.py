@@ -1,6 +1,8 @@
+from auth_decorator import login_required
 from routes.tienda_bp import tienda_bp
 from routes.tienda_helpers import *
 
+@login_required
 @tienda_bp.route('/api/clientes/registrar', methods=['POST'])
 def api_registrar_cliente():
     """
@@ -53,6 +55,7 @@ def api_registrar_cliente():
         conn.close()
 
 
+@login_required
 @tienda_bp.route('/api/clientes/login', methods=['POST'])
 def api_login_cliente():
     datos    = request.get_json(force=True, silent=True) or {}
@@ -95,6 +98,7 @@ def api_login_cliente():
         conn.close()
 
 
+@login_required
 @tienda_bp.route('/api/clientes/<cliente_id>', methods=['GET'])
 def api_perfil_cliente(cliente_id):
     """Perfil público del cliente (para la tienda)."""
@@ -113,6 +117,7 @@ def api_perfil_cliente(cliente_id):
         conn.close()
 
 
+@login_required
 @tienda_bp.route('/api/clientes/<cliente_id>', methods=['PATCH'])
 def api_actualizar_cliente(cliente_id):
     """El cliente actualiza su perfil (nombre, teléfono, imagen)."""
@@ -136,13 +141,19 @@ def api_actualizar_cliente(cliente_id):
     vals.append(cliente_id)
     conn = obtener_conexion()
     try:
-        conn.execute(f"UPDATE clientes_tienda SET {', '.join(campos)} WHERE cliente_id = ?", vals)
+        # Whitelist de columnas permitidas
+    columnas_permitidas = {'nombre', 'email', 'telefono', 'imagen', 'activo', 'ultimo_acceso', 'username', 'direccion', 'ciudad', 'codigo_postal'}
+    campos_seguros = [c for c in campos if c.split('=')[0].strip() in columnas_permitidas]
+    if not campos_seguros:
+        return jsonify({'error': 'Columnas no válidas'}), 400
+    conn.execute(f"UPDATE clientes_tienda SET {', '.join(campos_seguros)} WHERE cliente_id = ?", vals)
         conn.commit()
         return jsonify({'ok': True, 'mensaje': 'Perfil actualizado'})
     finally:
         conn.close()
 
 
+@login_required
 @tienda_bp.route('/api/clientes', methods=['GET'])
 @requiere_admin
 def api_listar_clientes():

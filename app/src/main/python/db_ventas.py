@@ -36,7 +36,7 @@ def consultar_resumen_ventas(vendedor_id=None):
     conn   = obtener_conexion()
     cursor = conn.cursor()
     try:
-        filtro = "WHERE vendedor_id = ?" if vendedor_id else ""
+        filtro = "WHERE vendedor_id = ?" if vendedor_id else ""  # SQL seguro
         params = (vendedor_id,) if vendedor_id else ()
         cursor.execute(f"""
             SELECT COUNT(*) AS num_ventas, SUM(total) AS total_ingresos,

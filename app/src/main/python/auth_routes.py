@@ -1,3 +1,4 @@
+from auth_decorator import login_required, admin_required
 from security.crypto import rate_limit
 """Rutas de autenticación — /api/auth/*"""
 import json
@@ -12,6 +13,7 @@ import sync.supabase_sync as _sb
 
 auth_bp = Blueprint('auth', __name__)
 
+@login_required
 @auth_bp.route("/api/auth/login", methods=["POST"])
 @rate_limit(max_attempts=5, window=60)
 def api_login():
@@ -29,11 +31,13 @@ def api_login():
     session["usuario"] = resultado
     return jsonify({"ok": True, "usuario": resultado})
 
+@login_required
 @auth_bp.route("/api/auth/logout", methods=["POST"])
 def api_logout():
     session.pop("usuario", None)
     return jsonify({"ok": True})
 
+@login_required
 @auth_bp.route("/api/auth/me", methods=["GET"])
 def api_me():
     u = session.get("usuario")
@@ -41,8 +45,8 @@ def api_me():
         return jsonify({"autenticado": True, "usuario": u})
     return jsonify({"autenticado": False}), 401
 
+@login_required
 @auth_bp.route("/api/auth/cambiar-password", methods=["POST"])
-@requiere_login
 def api_cambiar_password():
     datos = request.get_json(force=True, silent=True) or {}
     u = usuario_actual()
@@ -53,8 +57,8 @@ def api_cambiar_password():
     )
     return jsonify(resultado), (200 if resultado["ok"] else 400)
 
+@login_required
 @auth_bp.route("/api/auth/auto-backup", methods=["POST"])
-@requiere_login
 def api_auto_backup():
     """Guarda backup automático al cerrar sesión + sync Supabase si disponible."""
     try:

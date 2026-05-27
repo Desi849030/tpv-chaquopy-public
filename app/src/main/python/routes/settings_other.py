@@ -1,9 +1,11 @@
+from auth_decorator import login_required
 import queue
 from routes.settings_bp import settings_bp
 from routes.settings_helpers import *
 from routes.settings_supabase import _sse_clientes, _sse_lock, _sse_broadcast
 
 
+@login_required
 @settings_bp.route("/api/sse")
 @requiere_login
 def api_sse():
@@ -31,6 +33,7 @@ def api_sse():
 #  DEBUG
 # ══════════════════════════════════════════════════════════════
 
+@login_required
 @settings_bp.route('/api/biometric/check', methods=['GET'])
 def api_biometric_check():
     try:
@@ -38,6 +41,7 @@ def api_biometric_check():
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
 
+@login_required
 @settings_bp.route('/api/biometric/setup', methods=['POST'])
 @requiere_login
 def api_biometric_setup():
@@ -48,6 +52,7 @@ def api_biometric_setup():
 #  TOKENIZACIÓN PAGO
 # ══════════════════════════════════════════════════════════════
 
+@login_required
 @settings_bp.route('/api/payment/tokenize', methods=['POST'])
 @requiere_login
 def api_payment_tokenize():
@@ -64,6 +69,7 @@ def api_payment_tokenize():
 #  RLS / SUCURSALES
 # ══════════════════════════════════════════════════════════════
 
+@login_required
 @settings_bp.route('/api/branch/info', methods=['GET'])
 @requiere_login
 def api_branch_info():
@@ -71,6 +77,7 @@ def api_branch_info():
     headers = get_rls_headers()
     return jsonify({"ok": True, "branch_id": branch_id, "rls_enabled": True, "headers": headers})
 
+@login_required
 @settings_bp.route('/api/branch/filter', methods=['POST'])
 @requiere_login
 def api_branch_filter():
@@ -84,6 +91,7 @@ def api_branch_filter():
 #  IA CHAT SECURE
 # ══════════════════════════════════════════════════════════════
 
+@login_required
 @settings_bp.route('/api/ia/chat/secure', methods=['POST'])
 @requiere_login
 def ia_chat_secure():

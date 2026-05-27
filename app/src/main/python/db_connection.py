@@ -74,7 +74,10 @@ def obtener_info_db():
         tablas = list(TABLAS_PERMITIDAS)
         for t in tablas:
             try:
-                cursor.execute(f"SELECT COUNT(*) AS total FROM {t}")
+                if t not in TABLAS_PERMITIDAS:
+            info["tablas"][t] = -1
+            continue
+        cursor.execute(f'SELECT COUNT(*) AS total FROM "{t}"')
                 info["tablas"][t] = cursor.fetchone()["total"]
             except Exception:
                 info["tablas"][t] = 0

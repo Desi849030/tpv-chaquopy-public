@@ -91,7 +91,11 @@ def crear_tablas_tienda():
         ('username', "TEXT DEFAULT ''"),
     ]:
         try:
-            cursor.execute(f"ALTER TABLE clientes_tienda ADD COLUMN {col} {definicion}")
+            # Sanitizar nombre de columna
+        col_seguro = "".join(c for c in col if c.isalnum() or c == "_")
+        if col_seguro != col:
+            raise ValueError(f"Nombre de columna no válido: {col}")
+        cursor.execute(f"ALTER TABLE clientes_tienda ADD COLUMN {col_seguro} {definicion}")
             conn.commit()
             print(f"✅ Migración: columna '{col}' añadida a clientes_tienda")
         except Exception:

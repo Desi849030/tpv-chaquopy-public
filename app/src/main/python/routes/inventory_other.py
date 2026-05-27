@@ -1,6 +1,8 @@
+from auth_decorator import login_required
 from routes.inventory_bp import inv_bp
 from routes.inventory_helpers import *
 
+@login_required
 @inv_bp.route("/api/inventario/importar-catalogo", methods=["POST"])
 # @requiere_rol desactivado para pruebas
 def api_importar_catalogo():
@@ -8,6 +10,7 @@ def api_importar_catalogo():
     r = importar_catalogo_a_inventario(u["usuario_id"])
     return jsonify(r), (200 if r["ok"] else 400)
 
+@login_required
 @inv_bp.route("/api/inventario/cierre-admin", methods=["POST"])
 @requiere_rol("administrador", "desarrollador")
 def api_cierre_admin():
@@ -37,6 +40,7 @@ def api_cierre_admin():
     finally:
         conn.close()
 
+@login_required
 @inv_bp.route("/api/importar-validado", methods=["POST"])
 # @requiere_rol desactivado para pruebas
 def api_importar_validado():

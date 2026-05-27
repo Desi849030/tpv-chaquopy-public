@@ -1,6 +1,8 @@
+from auth_decorator import login_required
 from routes.tienda_bp import tienda_bp
 from routes.tienda_helpers import *
 
+@login_required
 @tienda_bp.route('/api/pedidos', methods=['POST'])
 def api_crear_pedido():
     datos          = request.get_json(force=True, silent=True) or {}
@@ -44,6 +46,7 @@ def api_crear_pedido():
         conn.close()
 
 
+@login_required
 @tienda_bp.route('/api/pedidos', methods=['GET'])
 def api_listar_pedidos():
     estado     = request.args.get('estado')
@@ -80,6 +83,7 @@ def api_listar_pedidos():
         conn.close()
 
 
+@login_required
 @tienda_bp.route('/api/pedidos/<pedido_id>', methods=['GET'])
 def api_obtener_pedido(pedido_id):
     conn   = obtener_conexion()
@@ -102,6 +106,7 @@ def api_obtener_pedido(pedido_id):
         conn.close()
 
 
+@login_required
 @tienda_bp.route('/api/pedidos/<pedido_id>/estado', methods=['PATCH'])
 @requiere_staff
 def api_actualizar_estado_pedido(pedido_id):
@@ -126,6 +131,7 @@ def api_actualizar_estado_pedido(pedido_id):
         conn.close()
 
 
+@login_required
 @tienda_bp.route('/api/pedidos/resumen', methods=['GET'])
 @requiere_admin
 def api_resumen_pedidos():

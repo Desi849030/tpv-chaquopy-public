@@ -1,3 +1,4 @@
+from auth_decorator import login_required
 from flask import Flask, jsonify
 
 app = Flask(__name__)

@@ -1,6 +1,9 @@
+from auth_decorator import login_required, admin_required
 from routes.admin_helpers import admin_bp, request, jsonify, requiere_login, requiere_rol, usuario_actual, crear_usuario, listar_usuarios, desactivar_usuario, resetear_password, sincronizar_usuario_nuevo, _sb
 
 # ── Usuarios ─────────────────────────────────────────────────
+@login_required
+@admin_required
 @admin_bp.route("/api/usuarios/crear", methods=["POST"])
 @requiere_rol("desarrollador","administrador")
 def api_crear_usuario():
@@ -11,6 +14,8 @@ def api_crear_usuario():
         threading.Thread(target=sincronizar_usuario_nuevo, args=(resultado["usuario_id"],), daemon=True).start()
     return jsonify(resultado), (200 if resultado["ok"] else 400)
 
+@login_required
+@admin_required
 @admin_bp.route("/api/usuarios", methods=["GET"])
 @requiere_rol("desarrollador","administrador")
 def api_listar_usuarios():
@@ -21,6 +26,8 @@ def api_listar_usuarios():
     except Exception as e:
         return jsonify({"error": f"Error al listar usuarios: {str(e)}"}), 500
 
+@login_required
+@admin_required
 @admin_bp.route("/api/usuarios/<usuario_id>", methods=["DELETE"])
 @requiere_rol("desarrollador","administrador")
 def api_desactivar_usuario(usuario_id):
@@ -28,6 +35,8 @@ def api_desactivar_usuario(usuario_id):
     resultado = desactivar_usuario(usuario_id, u["usuario_id"])
     return jsonify(resultado), (200 if resultado["ok"] else 400)
 
+@login_required
+@admin_required
 @admin_bp.route("/api/usuarios/<usuario_id>/reset-password", methods=["POST"])
 @requiere_rol("desarrollador","administrador")
 def api_reset_password(usuario_id):

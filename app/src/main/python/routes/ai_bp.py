@@ -1,3 +1,4 @@
+from auth_decorator import login_required
 """AI: Blueprint agregador - importa sub-módulos"""
 from routes.ai_helpers import ai_bp, analytics_bp
 import routes.ai_predictor

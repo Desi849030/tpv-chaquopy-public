@@ -1,0 +1,171 @@
+
+/* ═══════════════════════════════════════════════
+   TPV Ultra Smart v20 — UI/UX Profesional por Rol
+   ═══════════════════════════════════════════════ */
+
+/* ── Base & Tipografía ── */
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;background:#f0f2f5}
+.glass-card{background:rgba(255,255,255,.85);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.3);border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.06);transition:transform .2s,box-shadow .2s}
+.glass-card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.1)}
+
+/* ── KPI Cards por Rol ── */
+.kpi-card{border-radius:16px;padding:20px;color:#fff;position:relative;overflow:hidden;transition:all .3s ease}
+.kpi-card::before{content:'';position:absolute;top:-50%;right:-50%;width:100%;height:100%;background:radial-gradient(circle,rgba(255,255,255,.15) 0%,transparent 70%);border-radius:50%}
+.kpi-card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.15)}
+.kpi-card.desarrollador{background:linear-gradient(135deg,#667eea,#764ba2)}
+.kpi-card.administrador{background:linear-gradient(135deg,#f093fb,#f5576c)}
+.kpi-card.supervisor{background:linear-gradient(135deg,#4facfe,#00f2fe)}
+.kpi-card.vendedor{background:linear-gradient(135deg,#43e97b,#38f9d7)}
+.kpi-card.cliente{background:linear-gradient(135deg,#fa709a,#fee140)}
+.kpi-number{font-size:2rem;font-weight:800;line-height:1.1}
+.kpi-label{font-size:.8rem;opacity:.85;margin-top:4px;font-weight:500}
+.kpi-icon{font-size:2.5rem;opacity:.2;position:absolute;top:12px;right:16px}
+
+/* ── Navegación por Tabs ── */
+.nav-tabs{border-bottom:2px solid #e8ecf1;gap:4px}
+.nav-tabs .nav-link{border:none;border-radius:12px 12px 0 0;padding:10px 18px;font-weight:600;font-size:.85rem;color:#6c757d;transition:all .25s ease;background:transparent}
+.nav-tabs .nav-link:hover{color:#495057;background:rgba(0,0,0,.03)}
+.nav-tabs .nav-link.active{color:#fff;background:linear-gradient(135deg,#667eea,#764ba2);border:none;box-shadow:0 4px 12px rgba(102,126,234,.3)}
+.nav-tabs .nav-link.active.rol-admin{background:linear-gradient(135deg,#f093fb,#f5576c);box-shadow:0 4px 12px rgba(245,87,108,.3)}
+.nav-tabs .nav-link.active.rol-vendedor{background:linear-gradient(135deg,#43e97b,#38f9d7);box-shadow:0 4px 12px rgba(67,233,123,.3)}
+.nav-tabs .nav-link.active.rol-supervisor{background:linear-gradient(135deg,#4facfe,#00f2fe);box-shadow:0 4px 12px rgba(79,172,254,.3)}
+.nav-tabs .nav-link.active.rol-cliente{background:linear-gradient(135deg,#fa709a,#fee140);box-shadow:0 4px 12px rgba(250,112,154,.3)}
+
+/* ── Tablas Profesionales ── */
+.table-modern{border-collapse:separate;border-spacing:0;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.04)}
+.table-modern thead th{background:linear-gradient(135deg,#2d3436,#636e72);color:#fff;font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.5px;padding:14px 16px;border:none}
+.table-modern tbody tr{transition:background .15s}
+.table-modern tbody tr:hover{background:rgba(102,126,234,.06)}
+.table-modern tbody td{padding:12px 16px;border-bottom:1px solid #f0f0f0;font-size:.85rem;vertical-align:middle}
+
+/* ── Botones Mejorados ── */
+.btn-tpv{border-radius:12px;font-weight:600;padding:10px 20px;transition:all .25s ease;border:none;box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.btn-tpv:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.btn-tpv:active{transform:translateY(0);box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.btn-tpv-primary{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
+.btn-tpv-success{background:linear-gradient(135deg,#43e97b,#38f9d7);color:#1a1a2e}
+.btn-tpv-danger{background:linear-gradient(135deg,#f093fb,#f5576c);color:#fff}
+.btn-tpv-warning{background:linear-gradient(135deg,#f7971e,#ffd200);color:#1a1a2e}
+
+/* ── Formularios ── */
+.form-control-modern{border-radius:12px;border:2px solid #e8ecf1;padding:12px 16px;font-size:.9rem;transition:all .25s ease;background:#fff}
+.form-control-modern:focus{border-color:#667eea;box-shadow:0 0 0 4px rgba(102,126,234,.12);outline:none}
+
+/* ── Login Screen ── */
+#tpv-login-section{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f1923 0%,#1a2332 50%,#0f1923 100%)}
+.login-card{background:rgba(255,255,255,.05);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:40px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.login-card .form-control{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:12px;padding:14px 18px;font-size:1rem;transition:all .3s}
+.login-card .form-control::placeholder{color:rgba(255,255,255,.4)}
+.login-card .form-control:focus{background:rgba(255,255,255,.12);border-color:#00cec9;box-shadow:0 0 0 4px rgba(0,206,201,.15);color:#fff}
+.login-card .btn-login{background:linear-gradient(135deg,#00b894,#00cec9);border:none;border-radius:12px;padding:14px;font-size:1rem;font-weight:700;color:#fff;transition:all .3s;box-shadow:0 4px 20px rgba(0,184,148,.4)}
+.login-card .btn-login:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,184,148,.5)}
+
+/* ── Header App ── */
+#tpv-header{background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;padding:12px 20px;border-radius:0 0 20px 20px;box-shadow:0 4px 20px rgba(0,0,0,.15)}
+
+/* ── Transiciones de Páginas ── */
+.tab-pane{animation:tabFadeIn .3s ease-out}
+@keyframes tabFadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Stock Critico Badge ── */
+.stock-bajo{background:linear-gradient(135deg,#ff6b6b,#ee5a24);color:#fff;padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:700}
+.stock-ok{background:linear-gradient(135deg,#43e97b,#38f9d7);color:#1a1a2e;padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:700}
+
+/* ── Toast Mejorado ── */
+.toast{border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.12);border:none;backdrop-filter:blur(10px)}
+
+/* ── Scrollbar Global ── */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.25)}
+
+/* ── Responsive ── */
+@media(max-width:768px){.kpi-number{font-size:1.5rem}.kpi-card{padding:14px}.nav-tabs .nav-link{padding:8px 12px;font-size:.78rem}#tpv-chat-panel{width:calc(100vw - 16px)!important;right:8px!important;bottom:80px!important;height:440px!important}}
+
+/* ── Animaciones de Carga ── */
+.loading-skeleton{background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:200% 100%;animation:skeleton-loading 1.5s infinite;border-radius:8px}
+@keyframes skeleton-loading{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ── Modales ── */
+.modal-content{border-radius:20px;border:none;box-shadow:0 20px 60px rgba(0,0,0,.15)}
+.modal-header{border-bottom:1px solid #f0f2f5;border-radius:20px 20px 0 0}
+.modal-footer{border-top:1px solid #f0f2f5;border-radius:0 0 20px 20px}
+
+#tpv-chat-fab{cursor:grab;touch-action:none}
+#tpv-chat-fab:active{cursor:grabbing}
+#offline-indicator{cursor:grab;touch-action:none;z-index:9998!important}
+#ia-bubble-container{cursor:grab;touch-action:none}
+#tpv-chat-panel{touch-action:auto}
+
+
+/* ═══════════════════════════════════════════════
+   v23 — Dark Mode + Contadores + Notificaciones
+   ═══════════════════════════════════════════════ */
+
+/* ── Dark Mode Toggle ── */
+.dark-mode-toggle{position:fixed;top:12px;right:12px;z-index:9999;width:40px;height:40px;border-radius:50%;border:2px solid rgba(255,255,255,.3);background:rgba(0,0,0,.3);color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .3s;backdrop-filter:blur(8px)}
+.dark-mode-toggle:hover{transform:scale(1.1);background:rgba(255,255,255,.2)}
+
+/* ── Dark Mode Variables ── */
+body.dark-mode{--bg:#0f1923;--bg2:#1a2332;--bg3:#243447;--text:#e8ecf1;--text2:#8899aa;--border:rgba(255,255,255,.08);--card:rgba(26,35,50,.9);--glass:rgba(26,35,50,.7);--shadow:rgba(0,0,0,.4);--hover:rgba(102,126,234,.08);--input-bg:rgba(15,25,35,.9);--input-border:rgba(255,255,255,.12);--table-hover:rgba(102,126,234,.06);--table-border:#2a3a4a;--nav-bg:#0d1520;--nav-active:#667eea;background:var(--bg);color:var(--text)}
+body.dark-mode .glass-card{background:var(--card);border-color:var(--border);box-shadow:0 4px 24px var(--shadow)}
+body.dark-mode .form-control,body.dark-mode .form-select{background:var(--input-bg);border-color:var(--input-border);color:var(--text)}
+body.dark-mode .form-control::placeholder{color:var(--text2)}
+body.dark-mode .form-control:focus{border-color:#667eea;box-shadow:0 0 0 4px rgba(102,126,234,.15);color:var(--text)}
+body.dark-mode .table-modern thead th{background:linear-gradient(135deg,#1a2332,#2a3a4a)}
+body.dark-mode .table-modern tbody td{border-color:var(--table-border);color:var(--text)}
+body.dark-mode .table-modern tbody tr:hover{background:var(--table-hover)}
+body.dark-mode .nav-tabs{border-color:var(--border)}
+body.dark-mode .nav-tabs .nav-link{color:var(--text2);background:transparent}
+body.dark-mode .nav-tabs .nav-link:hover{color:var(--text);background:var(--hover)}
+body.dark-mode .nav-tabs .nav-link.active{color:#fff;background:linear-gradient(135deg,#667eea,#764ba2)}
+body.dark-mode .dropdown-menu{background:var(--bg2);border-color:var(--border);box-shadow:0 8px 32px var(--shadow)}
+body.dark-mode .dropdown-item{color:var(--text);transition:background .15s}
+body.dark-mode .dropdown-item:hover{background:var(--hover);color:#fff}
+body.dark-mode .dropdown-header{color:var(--text2)}
+body.dark-mode .dropdown-divider{border-color:var(--border)}
+body.dark-mode .btn-close{filter:invert(1)}
+body.dark-mode .modal-content{background:var(--bg2);border-color:var(--border);color:var(--text)}
+body.dark-mode .modal-header{border-color:var(--border)}
+body.dark-mode .modal-footer{border-color:var(--border)}
+body.dark-mode .card{background:var(--card);border-color:var(--border);color:var(--text)}
+body.dark-mode .card-header{background:var(--bg3);border-color:var(--border);color:var(--text)}
+body.dark-mode .card-body{color:var(--text)}
+body.dark-mode .list-group-item{background:var(--bg2);border-color:var(--border);color:var(--text)}
+body.dark-mode .text-muted{color:var(--text2)!important}
+body.dark-mode .bg-light{background:var(--bg3)!important}
+body.dark-mode .bg-white{background:var(--bg2)!important}
+body.dark-mode::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15)}
+body.dark-mode::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.25)}
+
+/* ── Animated Counters ── */
+.kpi-number{font-variant-numeric:tabular-nums}
+.kpi-counter-animate{animation:counterPulse .6s ease-out}
+@keyframes counterPulse{0%{transform:scale(1)}30%{transform:scale(1.15)}100%{transform:scale(1)}}
+
+/* ── Chart Tooltips ── */
+.chart-wrapper{position:relative;border-radius:12px;padding:16px;background:var(--card,rgba(255,255,255,.85));border:1px solid var(--border,rgba(0,0,0,.05));margin-bottom:16px;transition:all .3s}
+.chart-wrapper:hover{box-shadow:0 8px 32px rgba(0,0,0,.1);transform:translateY(-2px)}
+.chart-wrapper h6{font-weight:700;font-size:.9rem;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+
+/* ── Stock Low Notifications ── */
+.stock-notification{position:fixed;bottom:100px;left:16px;z-index:9998;max-width:320px;animation:notifSlideIn .4s ease-out}
+@keyframes notifSlideIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+.stock-notif-card{background:linear-gradient(135deg,#ff6b6b,#ee5a24);color:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 8px 32px rgba(238,90,36,.3);margin-top:8px;cursor:pointer;transition:transform .2s}
+.stock-notif-card:hover{transform:scale(1.02)}
+.stock-notif-card .notif-title{font-size:.75rem;opacity:.85;text-transform:uppercase;letter-spacing:.5px}
+.stock-notif-card .notif-msg{font-size:.9rem;font-weight:600;margin-top:4px}
+.stock-notif-card .notif-close{position:absolute;top:8px;right:12px;background:rgba(255,255,255,.2);border:none;color:#fff;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center}
+
+/* ── Submenu Organizado ── */
+.dropdown-menu{border-radius:12px;padding:8px;box-shadow:0 8px 32px rgba(0,0,0,.1);border:1px solid rgba(0,0,0,.06);min-width:200px}
+.dropdown-header{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;padding:8px 12px 4px;color:#999}
+.dropdown-item{border-radius:8px;padding:8px 14px;font-size:.85rem;font-weight:500;transition:all .15s;display:flex;align-items:center;gap:8px}
+.dropdown-item:hover{padding-left:18px}
+.dropdown-item.active{background:linear-gradient(135deg,rgba(102,126,234,.1),rgba(118,75,162,.1));color:#667eea;font-weight:600}
+.dropdown-divider{margin:4px 0;border-color:rgba(0,0,0,.06)}
+
+/* ── Smooth Transitions ── */
+.tab-pane{opacity:0;animation:tabFade .3s ease-out forwards}
+@keyframes tabFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}

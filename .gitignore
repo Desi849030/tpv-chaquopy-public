@@ -1,119 +1,12 @@
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-*.egg-info/
-dist/
-build/
-*.egg
-venv/
-.venv/
-env/
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# APK / Build
-*.apk
-*.aab
-*.keystore
-*.jks
-Compilation/
-Run/
-Task/
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Env and secrets
-.env
-.env.local
-*.pem
-*.key
-
-# Temp
-*.patch
-*.bak
-*.log
-*.tmp
-apply_*.py
-
-# Gradle
-.gradle/
-local.properties
-*.iml
-gradlew.bat
-
-# Chaquopy cache
-app/src/main/assets/python/
-
-# Runtime secrets
-.branch_id
-.tpv_secret_key
-.tpv_hmac_secret
-.tpv_secrets_v2
-.tpv_secret
-.supabase_config.json
-.dev_initialized
-
-# Backup
-*.bak*
-*.deprecated
-*.backup
-*_v240*
-*_v24*
-
-# pytest
-.pytest_cache/
-.tpv_secret
-.tpv_secret
-.tpv_secret
-.tpv_hmac_secret
-.tpv_secret
-.tpv_hmac_secret
-
-# Python
 __pycache__/
 *.pyc
 *.pyo
-*.egg-info/
-dist/
-build/
-
-# Android
-*.apk
-*.aab
-*.keystore
-*.jks
-local.properties
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# OS
+*.db
+*.sqlite
+*.log
+.env
 .DS_Store
 Thumbs.db
-
-# Secrets
-.tpv_secret
-.tpv_hmac_secret
-.env
-!.env.example
-
-# Database
-*.db-journal
-*.db-wal
-*.db-shm
+data/tpv.db
+*.bak
+*.swp

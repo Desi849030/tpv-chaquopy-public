@@ -1,0 +1,37 @@
+<!-- Overlay de Licencia -->
+    <div id="license-lock-overlay" class="d-none" style="position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.92);display:none;align-items:center;justify-content:center;">
+        <div class="text-center text-white p-5" style="max-width: 500px;">
+            <div class="card bg-dark border-danger shadow-lg">
+                <div class="card-body p-4">
+                    <i class="bi bi-lock-fill display-1 text-danger" translate="no"></i>
+                    <h2 class="mt-3 text-danger" data-i18n="license_expired_title"></h2>
+                    <p class="lead text-white-50" data-i18n="license_expired_desc"></p>
+                    
+                    <hr class="bg-secondary">
+                    
+                    <div class="text-start mt-4">
+                        <div class="mb-3">
+                            <label class="form-label text-white-50 small">ID del Dispositivo:</label>
+                            <div class="input-group">
+                                <input type="text" id="overlay-client-id" class="form-control bg-dark text-white border-secondary" readonly>
+                                <button class="btn btn-outline-light" onclick="copyOverlayClientId()" title="Copiar ID">
+                                    <i class="bi bi-clipboard" translate="no"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="overlay-license-key" class="form-label text-white-50 small">Ingrese su clave de licencia:</label>
+                            <input type="text" id="overlay-license-key" class="form-control bg-dark text-white border-secondary" placeholder="Pegue aquí su clave...">
+                        </div>
+                        
+                        <button class="btn btn-success w-100" onclick="lic_activateFromOverlay()">
+                            <i class="bi bi-unlock-fill me-2" translate="no"></i>Activar Licencia
+                        </button>
+                        
+                        <div id="overlay-error-message" class="alert alert-danger mt-3 d-none"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>

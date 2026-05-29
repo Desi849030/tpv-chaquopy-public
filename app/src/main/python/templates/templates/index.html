@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TPV Ultra Smart</title>
+
+<link rel="stylesheet" href="/static/css/tpv.css">
+<link rel="stylesheet" href="/static/css/tpv_mobile.css">
+<link rel="stylesheet" href="/static/css/tpv_dark.css">
+</head>
+
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-logo">🏪</div>
+  <h1 class="splash-title">TPV Ultra Smart</h1>
+  <p class="splash-sub">Sistema Punto de Venta Profesional</p>
+</div>
+
+<!-- LOGIN -->
+<div id="login" style="display:none">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="login-logo">🔐</div>
+      <h2 class="login-title">Acceso al Sistema</h2>
+      <p class="login-sub">Ingresa con tus credenciales</p>
+    </div>
+
+    <div id="err" class="error"><i>⚠️</i><span id="errmsg"></span></div>
+
+    <div class="login-tabs">
+      <button class="login-tab active">Personal</button>
+      <button class="login-tab">Cliente</button>
+    </div>
+
+    <div class="field">
+      <label>Usuario</label>
+      <input id="user" type="text" placeholder="Usuario">
+    </div>
+
+    <div class="field">
+      <label>Contraseña</label>
+      <input id="pass" type="password" placeholder="Contraseña">
+      <button class="pw-toggle" id="pwToggle">👁️</button>
+    </div>
+
+    <button class="btn" id="btnLogin">Entrar</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none"></div>
+
+<!-- Scripts del TPV -->
+<div include-html="/templates/partials/_scripts.html"></div>
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+    const includes = document.querySelectorAll("[include-html]");
+    for (const el of includes) {
+        const file = el.getAttribute("include-html");
+        const html = await fetch(file).then(r => r.text());
+        el.innerHTML = html;
+    }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,108 @@
+            <div class="tab-pane fade" id="conf-config-tab-pane" role="tabpanel">
+                <div class="row g-4">
+
+                    <!-- Tarjeta Apariencia (todos los roles) -->
+                    <div class="col-12 col-lg-6">
+                        <div class="glass-card h-100">
+                            <h4 class="mb-4">
+                                <i class="bi bi-paint-bucket me-2 text-primary" translate="no"></i>
+                                <span data-i18n="settings_appearance">Apariencia</span>
+                            </h4>
+                            <!-- Nombre del sistema: solo admin/dev -->
+                            <div class="mb-4" id="cfg-tpv-name-wrap">
+                                <label for="tpv-name-input" class="form-label fw-bold">
+                                    <i class="bi bi-display me-1" translate="no"></i>Nombre del Sistema TPV
+                                </label>
+                                <div class="input-group">
+                                    <input type="text" id="tpv-name-input" class="form-control"
+                                           placeholder="Sistema TPV Profesional" maxlength="50">
+                                    <button class="btn btn-primary" onclick="conf_saveTPVName()">
+                                        <i class="bi bi-floppy-fill" translate="no"></i>
+                                    </button>
+                                </div>
+                                <small class="text-muted">Nombre visible en el encabezado de la app</small>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label fw-bold mb-2">
+                                    <i class="bi bi-translate me-1" translate="no"></i>
+                                    <span data-i18n="settings_language">Idioma</span>
+                                </label>
+                                <!-- Selector interno (ES/EN para i18n propio) — oculto, controlado por botones -->
+                                <select id="conf-language-selector" class="d-none">
+                                    <option value="es">Español</option>
+                                    <option value="en">English</option>
+                                </select>
+                                <!-- Botones visibles vinculados con Google Translate + i18n interno -->
+                                <div class="d-flex gap-2">
+                                    <button id="btn-lang-es"
+                                            onclick="_setLangES()"
+                                            class="btn btn-sm btn-primary fw-bold px-3">
+                                        🇪🇸 Español
+                                    </button>
+                                    <button id="btn-lang-en"
+                                            onclick="_setLangEN()"
+                                            class="btn btn-sm btn-outline-secondary fw-bold px-3">
+                                        🇬🇧 English
+                                    </button>
+                                </div>
+                                <small class="text-muted d-block mt-1">
+                                    <i class="bi bi-globe me-1" translate="no"></i>
+                                    Español usa el sistema interno · English usa Google Translate
+                                </small>
+                                <!-- Widget de GT oculto — necesario para que funcione la traducción -->
+                                <div id="google_translate_element" class="d-none"></div>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <label class="form-label mb-0 fw-bold">
+                                    <i class="bi bi-moon-stars-fill me-1" translate="no"></i>
+                                    <span data-i18n="settings_dark_mode">Tema Oscuro</span>
+                                </label>
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                           id="conf-theme-toggle" style="font-size:1.25em">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tarjeta Mi Tienda (solo administrador/desarrollador — controlado por JS) -->
+                    <div class="col-12 col-lg-6" id="cfg-tienda-wrap">
+                        <div class="glass-card h-100">
+                            <h4 class="mb-4">
+                                <i class="bi bi-shop me-2 text-success" translate="no"></i>Datos de la Tienda
+                            </h4>
+                            <p class="text-muted small mb-3">
+                                Nombre e imagen de la tienda visible para los clientes.
+                            </p>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Nombre de la Tienda</label>
+                                <div class="input-group">
+                                    <input type="text" id="cfg-tienda-nombre" class="form-control"
+                                           placeholder="Ej: Tienda Don Juan" maxlength="60">
+                                    <button class="btn btn-success" onclick="cfg_guardarTienda()">
+                                        <i class="bi bi-floppy-fill me-1" translate="no"></i>Guardar
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="form-label fw-semibold">Logo de la Tienda</label>
+                                <input type="file" id="cfg-tienda-img-file" class="form-control"
+                                       accept="image/*" onchange="cfg_previewTienda(this)">
+                                <div id="cfg-tienda-img-wrap" class="mt-2 d-none text-center">
+                                    <img id="cfg-tienda-img-el" src="" alt="Logo"
+                                         style="max-height:90px;max-width:100%;border-radius:.75rem;border:2px solid #e2e8f0;object-fit:cover">
+                                    <br>
+                                    <button type="button" class="btn btn-sm btn-outline-danger mt-1"
+                                            onclick="cfg_quitarImgTienda()">
+                                        <i class="bi bi-x-circle me-1" translate="no"></i>Quitar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            
+            <!-- Pestaña Importar/Exportar Excel (Catálogo) -->
+            <!-- Pestaña Exportar Ventas a Excel -->

@@ -1,0 +1,7 @@
+{
+  "desarrollador": { "usuario": "dev", "password": "dev123", "nombre": "Desarrollador" },
+  "administradores": [{ "usuario": "admin", "password": "admin123", "nombre": "Administrador" }],
+  "supervisores": [{ "usuario": "supervisor", "password": "supervisor123", "nombre": "Supervisor" }],
+  "empleados": [{ "usuario": "empleado", "password": "empleado123", "nombre": "Empleado" }],
+  "clientes": [{ "usuario": "cliente", "password": "cliente123", "nombre": "Cliente" }]
+}

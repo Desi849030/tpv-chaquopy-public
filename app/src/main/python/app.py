@@ -1,4 +1,5 @@
 """TPV Ultra Smart v7.0 - GitHub/APK Ready"""
+from auth_decorator import login_required
 import os, sys, pathlib, secrets, logging, time
 from datetime import datetime
 from functools import wraps

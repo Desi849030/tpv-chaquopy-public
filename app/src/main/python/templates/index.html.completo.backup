@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>TPV Ultra Smart</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background: linear-gradient(135deg,#0d1b2a 0%,#1a3a5c 55%,#0d6efd 100%); min-height:100vh; color:white; font-family:system-ui,-apple-system,sans-serif; }
+    .login-card { background:rgba(255,255,255,0.95); border-radius:1.5rem; padding:2rem; max-width:400px; width:95%; margin:2rem auto; color:#1e293b; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+    .btn-primary { background:#0d6efd; border:none; }
+    .app-screen { display:none; padding:1rem; }
+    .nav-tabs { background:rgba(255,255,255,0.1); border-radius:0.5rem; padding:0.5rem; margin-bottom:1rem; }
+    .nav-link { color:white; border:none; }
+    .nav-link.active { background:#0d6efd; border-radius:0.5rem; }
+    .tab-content { background:rgba(255,255,255,0.9); border-radius:0.5rem; padding:1rem; color:#1e293b; min-height:300px; }
+    .product-card { background:white; border-radius:0.75rem; padding:0.75rem; margin-bottom:0.5rem; display:flex; justify-content:space-between; align-items:center; }
+    .stock-badge { font-size:0.7rem; padding:2px 6px; border-radius:4px; }
+    .stock-verde { background:#22c55e; color:white; }
+    .stock-amarillo { background:#eab308; color:black; }
+    .stock-rojo { background:#ef4444; color:white; }
+  </style>
+</head>
+<body>
+  <!-- LOGIN -->
+  <div id="login-screen" class="d-flex align-items-center justify-content-center min-vh-100">
+    <div class="login-card text-center">
+      <h3 class="mb-3">🏪 TPV Ultra Smart</h3>
+      <p class="mb-4 text-muted">Sistema Punto de Venta</p>
+      <div id="login-form">
+        <input type="text" id="username" class="form-control mb-2" placeholder="Usuario (desarrollador)">
+        <input type="password" id="password" class="form-control mb-3" placeholder="Contraseña (dev2024)">
+        <button class="btn btn-primary w-100" onclick="login()">Entrar</button>
+        <p id="msg" class="mt-3 text-danger small"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- APP PRINCIPAL -->
+  <div id="app-screen" class="app-screen">
+    <div class="container-fluid">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">👋 Bienvenido, <span id="user-name"></span></h5>
+        <button class="btn btn-sm btn-outline-light" onclick="logout()">Cerrar sesión</button>
+      </div>
+      
+      <!-- Pestañas -->
+      <ul class="nav nav-tabs" id="mainTabs">
+        <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#catalogo">📦 Catálogo</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#orden">🛒 Orden</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#ventas">📊 Ventas</a></li>
+      </ul>
+      
+      <!-- Contenido -->
+      <div class="tab-content">
+        <!-- Catálogo -->
+        <div class="tab-pane fade show active" id="catalogo">
+          <input type="text" id="buscador" class="form-control mb-2" placeholder="Buscar producto..." oninput="filtrarProductos()">
+          <div id="productos-lista"></div>
+        </div>
+        
+        <!-- Orden -->
+        <div class="tab-pane fade" id="orden">
+          <div id="orden-items" class="mb-3"></div>
+          <div class="d-flex justify-content-between fw-bold">
+            <span>Total:</span>
+            <span id="orden-total">$0.00</span>
+          </div>
+          <button class="btn btn-success w-100 mt-2" onclick="procesarPago()">💰 Procesar Pago</button>
+        </div>
+        
+        <!-- Ventas -->
+        <div class="tab-pane fade" id="ventas">
+          <div id="ventas-lista"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <!-- LÓGICA COMPLETA EMBEBIDA -->
+  <script>
+    // Estado global
+    let tpvState = { productos: [], ordenActual: [], ventasDiarias: {} };
+    let AUTH = { usuario: null };
+    
+    // Cargar productos desde API
+    async function cargarProductos() {
+      try {
+        const res = await fetch('/api/catalogo');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.ok) tpvState.productos = data.productos;
+        }
+      } catch(e) { console.log('Offline mode'); }
+      renderizarProductos();
+    }
+    
+    // Renderizar catálogo
+    function renderizarProductos() {
+      const lista = document.getElementById('productos-lista');
+      const filtro = document.getElementById('buscador')?.value.toLowerCase() || '';
+      const productos = tpvState.productos.filter(p => p.nombre.toLowerCase().includes(filtro));
+      
+      if (!productos.length) {
+        lista.innerHTML = '<p class="text-center text-muted py-3">Sin productos</p>';
+        return;
+      }
+      
+      lista.innerHTML = productos.map(p => {
+        const stock = p.stock || 0;
+        const color = stock >= 24 ? 'verde' : stock >= 15 ? 'amarillo' : 'rojo';
+        return `<div class="product-card">
+          <div>
+            <strong>${p.nombre}</strong><br>
+            <small class="text-muted">${p.categoria || 'General'}</small>
+          </div>
+          <div class="text-end">
+            <div class="fw-bold text-success">$${(p.precio||0).toFixed(2)}</div>
+            <span class="stock-badge stock-${color}">${stock} uds</span>
+          </div>
+          <button class="btn btn-sm btn-primary ms-2" onclick="agregarAlPedido('${p.id}')">+</button>
+        </div>`;
+      }).join('');
+    }
+    
+    function filtrarProductos() { renderizarProductos(); }
+    
+    // Agregar a orden
+    function agregarAlPedido(id) {
+      const prod = tpvState.productos.find(p => p.id === id);
+      if (!prod) return;
+      const existe = tpvState.ordenActual.find(i => i.id === id);
+      if (existe) existe.cantidad = (existe.cantidad || 1) + 1;
+      else tpvState.ordenActual.push({ ...prod, cantidad: 1 });
+      renderizarOrden();
+    }
+    
+    // Renderizar orden
+    function renderizarOrden() {
+      const items = document.getElementById('orden-items');
+      const totalEl = document.getElementById('orden-total');
+      if (!tpvState.ordenActual.length) {
+        items.innerHTML = '<p class="text-muted text-center py-3">Orden vacía</p>';
+        totalEl.textContent = '$0.00';
+        return;
+      }
+      let total = 0;
+      items.innerHTML = tpvState.ordenActual.map((item, idx) => {
+        const subtotal = (item.precio || 0) * (item.cantidad || 1);
+        total += subtotal;
+        return `<div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+          <span>${item.nombre} ×${item.cantidad}</span>
+          <div>
+            <span class="fw-bold">$${subtotal.toFixed(2)}</span>
+            <button class="btn btn-sm btn-outline-danger ms-2" onclick="quitarDelPedido(${idx})">×</button>
+          </div>
+        </div>`;
+      }).join('');
+      totalEl.textContent = `$${total.toFixed(2)}`;
+    }
+    
+    function quitarDelPedido(idx) {
+      tpvState.ordenActual.splice(idx, 1);
+      renderizarOrden();
+    }
+    
+    // Procesar pago
+    async function procesarPago() {
+      if (!tpvState.ordenActual.length) return alert('Orden vacía');
+      const hoy = new Date().toISOString().split('T')[0];
+      const ventas = tpvState.ordenActual.map(item => ({
+        id: `v-${Date.now()}-${Math.random()}`,
+        productoId: item.id,
+        nombre: item.nombre,
+        cantidad: item.cantidad,
+        precioUnitario: item.precio,
+        total: item.precio * item.cantidad,
+        fecha: new Date().toISOString(),
+        metodoPago: 'efectivo'
+      }));
+      
+      // Guardar local
+      tpvState.ventasDiarias[hoy] = tpvState.ventasDiarias[hoy] || [];
+      tpvState.ventasDiarias[hoy].push(...ventas);
+      
+      // Enviar al servidor si hay conexión
+      try {
+        await fetch('/api/state', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(tpvState)
+        });
+      } catch(e) { console.log('Guardado local'); }
+      
+      tpvState.ordenActual = [];
+      renderizarOrden();
+      renderizarVentas();
+      alert('✅ Venta procesada');
+    }
+    
+    // Renderizar ventas del día
+    function renderizarVentas() {
+      const lista = document.getElementById('ventas-lista');
+      const hoy = new Date().toISOString().split('T')[0];
+      const ventas = tpvState.ventasDiarias[hoy] || [];
+      
+      if (!ventas.length) {
+        lista.innerHTML = '<p class="text-muted text-center py-3">Sin ventas hoy</p>';
+        return;
+      }
+      
+      lista.innerHTML = ventas.map(v => 
+        `<div class="d-flex justify-content-between py-1 border-bottom">
+          <span>${v.nombre} ×${v.cantidad}</span>
+          <span class="fw-bold text-success">$${(v.total||0).toFixed(2)}</span>
+        </div>`
+      ).join('');
+    }
+    
+    // Login
+    async function login() {
+      const u = document.getElementById('username').value.trim();
+      const p = document.getElementById('password').value;
+      const msg = document.getElementById('msg');
+      
+      if (!u || !p) { msg.textContent = 'Completa usuario y contraseña'; return; }
+      
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ username: u, password: p })
+        });
+        const data = await res.json();
+        
+        if (data.ok) {
+          AUTH.usuario = data.usuario;
+          document.getElementById('login-screen').style.display = 'none';
+          document.getElementById('app-screen').style.display = 'block';
+          document.getElementById('user-name').textContent = data.usuario.nombre;
+          await cargarProductos();
+          renderizarVentas();
+        } else {
+          msg.textContent = data.error || 'Error';
+        }
+      } catch(e) {
+        msg.textContent = 'Error de conexión';
+      }
+    }
+    
+    // Logout
+    async function logout() {
+      try { await fetch('/api/auth/logout', { method: 'POST' }); } catch(e) {}
+      AUTH.usuario = null;
+      document.getElementById('app-screen').style.display = 'none';
+      document.getElementById('login-screen').style.display = 'flex';
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+    }
+    
+    // Inicializar
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Verificar sesión existente
+      try {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.autenticado) {
+            AUTH.usuario = data.usuario;
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-screen').style.display = 'block';
+            document.getElementById('user-name').textContent = data.usuario.nombre;
+            await cargarProductos();
+            renderizarVentas();
+          }
+        }
+      } catch(e) { console.log('Sin sesión previa'); }
+    });
+  </script>
+</body>
+</html>

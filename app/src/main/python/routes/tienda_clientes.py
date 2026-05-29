@@ -1,23 +1,23 @@
+from flask import request, jsonify, session
+from functools import wraps
+from datetime import datetime
+import uuid
+
+from database import obtener_conexion, agregar_log, _hash_password, verificar_password
 from auth_decorator import login_required
 from routes.tienda_bp import tienda_bp
-from routes.tienda_helpers import *
+from routes.tienda_helpers import _guardar_imagen_base64
+
 
 @login_required
 @tienda_bp.route('/api/clientes/registrar', methods=['POST'])
 def api_registrar_cliente():
-    """
-    Registro libre. El cliente proporciona nombre, email, contraseña.
-    Opcionalmente puede subir una foto de perfil (base64).
-    Body JSON:
-        { "nombre":"...", "email":"...", "password":"...",
-          "telefono":"...", "imagen":"data:image/jpeg;base64,..." }
-    """
     datos    = request.get_json(force=True, silent=True) or {}
     nombre   = datos.get('nombre', '').strip()
     email    = datos.get('email', '').strip().lower()
     password = datos.get('password', '')
     telefono = datos.get('telefono', '').strip()
-    imagen   = datos.get('imagen', '') or datos.get('foto', '')  # 'foto' es alias del frontend
+    imagen   = datos.get('imagen', '') or datos.get('foto', '')
 
     if not nombre or not email or not password:
         return jsonify({'error': 'nombre, email y password son obligatorios'}), 400
@@ -27,14 +27,11 @@ def api_registrar_cliente():
         return jsonify({'error': 'Email inválido'}), 400
 
     hash_pw, salt = _hash_password(password)
-    cliente_id    = f'cli-{uuid.uuid4().hex[:8]}'
+    cliente_id = f'cli-{uuid.uuid4().hex[:8]}'
+    username = email
 
-    # Guardar imagen si viene en base64
     if imagen and imagen.startswith('data:'):
         imagen = _guardar_imagen_base64(imagen, cliente_id)
-
-    # username = email (único, sirve como identificador de login)
-    username = email
 
     conn = obtener_conexion()
     try:
@@ -45,8 +42,7 @@ def api_registrar_cliente():
         """, (cliente_id, username, nombre, email, telefono, imagen, hash_pw, salt))
         conn.commit()
         agregar_log(f'Cliente registrado: {email}', 'info')
-        return jsonify({'ok': True, 'cliente_id': cliente_id,
-                        'mensaje': f'Bienvenido/a {nombre}'})
+        return jsonify({'ok': True, 'cliente_id': cliente_id, 'mensaje': f'Bienvenido/a {nombre}'})
     except Exception as e:
         if 'UNIQUE' in str(e):
             return jsonify({'error': 'Ese email ya está registrado'}), 409
@@ -89,7 +85,6 @@ def api_login_cliente():
             }
             return jsonify({'ok': True, 'cliente': {
                 'id': c['cliente_id'], 'nombre': c['nombre'],
-                'id': c['cliente_id'], 'nombre': c['nombre'],
                 'email': c['email'], 'telefono': c['telefono'],
                 'imagen': c['imagen']
             }})
@@ -101,7 +96,6 @@ def api_login_cliente():
 @login_required
 @tienda_bp.route('/api/clientes/<cliente_id>', methods=['GET'])
 def api_perfil_cliente(cliente_id):
-    """Perfil público del cliente (para la tienda)."""
     conn   = obtener_conexion()
     cursor = conn.cursor()
     try:
@@ -115,61 +109,3 @@ def api_perfil_cliente(cliente_id):
         return jsonify({'cliente': dict(c)})
     finally:
         conn.close()
-
-
-@login_required
-@tienda_bp.route('/api/clientes/<cliente_id>', methods=['PATCH'])
-def api_actualizar_cliente(cliente_id):
-    """El cliente actualiza su perfil (nombre, teléfono, imagen)."""
-    datos    = request.get_json(force=True, silent=True) or {}
-    nombre   = datos.get('nombre', '').strip()
-    telefono = datos.get('telefono', '').strip()
-    imagen   = datos.get('imagen', '')
-
-    campos = []
-    vals   = []
-    if nombre:   campos.append('nombre = ?');   vals.append(nombre)
-    if telefono: campos.append('telefono = ?'); vals.append(telefono)
-    if imagen:
-        if imagen.startswith('data:'):
-            imagen = _guardar_imagen_base64(imagen, cliente_id)
-        campos.append('imagen = ?'); vals.append(imagen)
-
-    if not campos:
-        return jsonify({'error': 'Nada que actualizar'}), 400
-
-    vals.append(cliente_id)
-    conn = obtener_conexion()
-    try:
-        # Whitelist de columnas permitidas
-    columnas_permitidas = {'nombre', 'email', 'telefono', 'imagen', 'activo', 'ultimo_acceso', 'username', 'direccion', 'ciudad', 'codigo_postal'}
-    campos_seguros = [c for c in campos if c.split('=')[0].strip() in columnas_permitidas]
-    if not campos_seguros:
-        return jsonify({'error': 'Columnas no válidas'}), 400
-    conn.execute(f"UPDATE clientes_tienda SET {', '.join(campos_seguros)} WHERE cliente_id = ?", vals)
-        conn.commit()
-        return jsonify({'ok': True, 'mensaje': 'Perfil actualizado'})
-    finally:
-        conn.close()
-
-
-@login_required
-@tienda_bp.route('/api/clientes', methods=['GET'])
-@requiere_admin
-def api_listar_clientes():
-    conn   = obtener_conexion()
-    cursor = conn.cursor()
-    try:
-        cursor.execute("""
-            SELECT cliente_id AS id, nombre, email, telefono, imagen,
-                   activo, ultimo_acceso, creado
-            FROM clientes_tienda ORDER BY creado DESC
-        """)
-        clientes = [dict(f) for f in cursor.fetchall()]
-        return jsonify({'clientes': clientes, 'total': len(clientes)})
-    finally:
-        conn.close()
-
-# ══════════════════════════════════════════════════════════════
-#  PRODUCTOS — con stock por colores y QR
-# ══════════════════════════════════════════════════════════════

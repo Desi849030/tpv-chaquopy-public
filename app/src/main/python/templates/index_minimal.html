@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TPV Ultra Smart</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:linear-gradient(135deg,#0f172a,#1e3a5f,#3b82f6);min-height:100vh;color:#1e293b}
+#splash{position:fixed;inset:0;background:linear-gradient(135deg,#0f172a,#1e3a5f,#3b82f6);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .5s}
+#splash.hidden{opacity:0;pointer-events:none}
+.splash-logo{width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,#0d6efd,#0a58ca);display:flex;align-items:center;justify-content:center;font-size:2.5rem;color:white;margin-bottom:1rem;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.splash-title{font-size:1.5rem;font-weight:800;color:white;margin-bottom:.5rem}
+.splash-sub{color:rgba(255,255,255,.9);font-size:.95rem}
+#login{display:none;align-items:center;justify-content:center;min-height:100vh;padding:1.5rem}
+.login-card{background:white;border-radius:1rem;padding:2rem;max-width:400px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.2)}
+.login-title{text-align:center;font-weight:700;font-size:1.3rem;margin-bottom:1.5rem}
+.login-tabs{display:flex;background:#f1f5f9;border-radius:.75rem;padding:4px;margin-bottom:1.2rem}
+.login-tab{flex:1;padding:.5rem;border:none;border-radius:.6rem;font-weight:600;font-size:.9rem;cursor:pointer;background:transparent;color:#64748b;transition:all .2s}
+.login-tab.active{background:white;color:#0d6efd;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.field{margin-bottom:1rem;position:relative}
+.field label{display:block;font-weight:600;color:#1e293b;margin-bottom:.3rem;font-size:.9rem}
+.field input{width:100%;padding:.75rem 2.5rem .75rem 1rem;border-radius:.75rem;border:2px solid #e2e8f0;font-size:1rem;outline:none;transition:border-color .2s}
+.field input:focus{border-color:#0d6efd;box-shadow:0 0 0 3px rgba(13,110,253,.12)}
+.pw-toggle{position:absolute;right:1rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;font-size:1.1rem}
+.pw-toggle:hover{color:#0d6efd}
+.btn{width:100%;padding:.85rem;border:none;border-radius:.75rem;background:linear-gradient(135deg,#0d6efd,#0a58ca);color:white;font-size:1rem;font-weight:700;cursor:pointer;transition:transform .15s;box-shadow:0 4px 14px rgba(13,110,253,.35)}
+.btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 20px rgba(13,110,253,.45)}
+.btn:disabled{opacity:.65;cursor:not-allowed}
+.error{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:.75rem;padding:.6rem 1rem;margin-bottom:1rem;font-size:.9rem;display:none;align-items:center;gap:.4rem}
+#app{display:none;padding:1rem}
+.nav{background:linear-gradient(90deg,#0d6efd,#0a58ca);padding:.6rem 1rem;border-radius:0 0 1rem 1rem;margin-bottom:1rem}
+.nav-brand{font-weight:700;font-size:1.1rem;color:white;display:flex;align-items:center;gap:.4rem}
+.user-bar{display:flex;align-items:center;gap:.6rem;color:white;font-size:.85rem}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem}
+.role{padding:.2rem .5rem;border-radius:999px;font-size:.7rem;font-weight:700;text-transform:uppercase;background:rgba(255,255,255,.15)}
+.tabs{display:flex;gap:.2rem;overflow-x:auto;padding:.4rem 0}
+.tab{padding:.4rem .8rem;border-radius:.6rem;color:rgba(255,255,255,.9);font-weight:600;font-size:.85rem;white-space:nowrap;background:transparent;border:none;cursor:pointer;transition:all .2s}
+.tab:hover,.tab.active{background:rgba(255,255,255,.15);color:white}
+.card{background:white;border-radius:1rem;box-shadow:0 4px 20px rgba(0,0,0,.08);margin-bottom:1rem;overflow:hidden}
+.card-head{background:#f8fafc;padding:1rem 1.2rem;font-weight:700;color:#1e293b;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:.4rem}
+.card-body{padding:1.2rem}
+.product{background:white;border-radius:.75rem;padding:.7rem;margin-bottom:.4rem;display:flex;justify-content:space-between;align-items:center;cursor:pointer;border:2px solid transparent;transition:all .15s}
+.product:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,.1);border-color:#0d6efd}
+.p-img{width:44px;height:44px;border-radius:.6rem;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-right:.6rem;color:#0d6efd}
+.p-info{flex:1;min-width:0}
+.p-name{font-weight:700;color:#1e293b;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-price{font-weight:800;color:#16a34a;font-size:1rem}
+.stock{font-size:.7rem;padding:.15rem .4rem;border-radius:999px;font-weight:700}
+.stock-ok{background:#22c55e;color:white}.stock-low{background:#eab308;color:#1e293b}.stock-out{background:#ef4444;color:white}
+.ai-btn{position:fixed;bottom:1.2rem;right:1.2rem;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:white;display:flex;align-items:center;justify-content:center;font-size:1.4rem;cursor:pointer;box-shadow:0 4px 20px rgba(124,58,237,.4);z-index:999;transition:transform .2s}
+.ai-btn:hover{transform:scale(1.08)}
+.ai-panel{position:fixed;bottom:4.2rem;right:1.2rem;width:280px;max-width:calc(100vw - 2rem);max-height:320px;background:white;border-radius:1rem;box-shadow:0 8px 30px rgba(0,0,0,.15);display:none;flex-direction:column;z-index:998;border:1px solid #e2e8f0}
+.ai-panel.show{display:flex}
+.ai-head{padding:.6rem .9rem;background:linear-gradient(90deg,#7c3aed,#5b21b6);color:white;display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:.95rem;border-radius:1rem 1rem 0 0}
+.ai-head button{background:none;border:none;color:white;font-size:1.1rem;cursor:pointer}
+.ai-msgs{flex:1;overflow-y:auto;padding:.7rem .9rem;display:flex;flex-direction:column;gap:.4rem;background:#f8fafc}
+.ai-msg{padding:.45rem .7rem;border-radius:.7rem;font-size:.85rem;max-width:85%;line-height:1.4}
+.ai-msg.agent{background:white;color:#334155;align-self:flex-start}.ai-msg.user{background:#7c3aed;color:white;align-self:flex-end}
+.ai-input{padding:.6rem .9rem;border-top:1px solid #e2e8f0;display:flex;gap:.4rem}
+.ai-input input{flex:1;padding:.45rem .7rem;border:1px solid #cbd5e1;border-radius:.6rem;font-size:.85rem;outline:none}
+.ai-input input:focus{border-color:#7c3aed}
+.ai-input button{background:#7c3aed;color:white;border:none;border-radius:.6rem;padding:.45rem .7rem;cursor:pointer}
+.d-none{display:none!important}.text-center{text-align:center}.text-muted{color:#64748b}.text-success{color:#16a34a}.fw-bold{font-weight:700}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-logo">🏪</div>
+  <div class="splash-title">TPV Ultra Smart</div>
+  <div class="splash-sub">Sistema Punto de Venta</div>
+</div>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="login-card">
+    <div class="login-title">🔐 Acceso</div>
+    <div class="login-tabs">
+      <button class="login-tab active" onclick="setMode('staff')">Personal</button>
+      <button class="login-tab" onclick="setMode('client')">Cliente</button>
+    </div>
+    <div id="err" class="error">⚠️ <span id="errmsg"></span></div>
+    
+    <div id="panel-staff">
+      <div class="field"><label>Usuario</label><input id="u" type="text" placeholder="desarrollador"></div>
+      <div class="field"><label>Contraseña</label><input id="p" type="password" placeholder="••••••••"><button class="pw-toggle" onclick="togglePw('p')">👁️</button></div>
+      <button class="btn" onclick="doLogin()">Entrar</button>
+    </div>
+    
+    <div id="panel-client" class="d-none">
+      <div class="field"><label>Email</label><input id="ce" type="email" placeholder="tu@email.com"></div>
+      <div class="field"><label>Contraseña</label><input id="cp" type="password" placeholder="••••••••"><button class="pw-toggle" onclick="togglePw('cp')">👁️</button></div>
+      <button class="btn" onclick="doClientLogin()">Entrar</button>
+      <div class="text-center text-muted" style="margin-top:.8rem;font-size:.85rem">¿Sin cuenta? <a href="#" style="color:#0d6efd" onclick="alert('Registro disponible en versión completa');return false">Regístrate</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="nav">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span class="nav-brand">🏪 TPV</span>
+      <div class="user-bar">
+        <div class="user-avatar" id="ua">👤</div>
+        <div><div class="fw-bold" id="un">—</div><span class="role" id="ur">—</span></div>
+        <button style="background:none;border:none;color:white;font-size:1rem" onclick="doLogout()">⏻</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('cat')">📦 Catálogo</button>
+    <button class="tab" onclick="switchTab('ord')">🛒 Orden</button>
+    <button class="tab" onclick="switchTab('cfg')">⚙️ Ajustes</button>
+  </div>
+  
+  <div id="tab-cat">
+    <div class="card">
+      <div class="card-head">📦 Productos</div>
+      <div class="card-body">
+        <input type="text" id="search" placeholder="Buscar..." style="width:100%;padding:.6rem;border-radius:.6rem;border:1px solid #e2e8f0;margin-bottom:.8rem" oninput="filterProducts()">
+        <div id="plist"></div>
+      </div>
+    </div>
+  </div>
+  
+  <div id="tab-ord" class="d-none">
+    <div class="card">
+      <div class="card-head">🛒 Orden</div>
+      <div class="card-body">
+        <div id="olist" class="text-center text-muted" style="padding:1rem">Añade productos del catálogo</div>
+        <div style="display:flex;justify-content:space-between;font-weight:700;font-size:1.1rem;margin:.8rem 0"><span>Total:</span><span id="ototal" class="text-success">$0.00</span></div>
+        <button class="btn" onclick="pay()">💰 Pagar</button>
+      </div>
+    </div>
+  </div>
+  
+  <div id="tab-cfg" class="d-none">
+    <div class="card">
+      <div class="card-head">⚙️ Ajustes</div>
+      <div class="card-body">
+        <label style="display:block;font-weight:600;margin-bottom:.3rem">Idioma</label>
+        <select id="lang" style="width:100%;padding:.6rem;border-radius:.6rem;border:1px solid #e2e8f0;margin-bottom:.8rem" onchange="setLang(this.value)"><option value="es">Español</option><option value="en">English</option></select>
+        <div style="display:flex;align-items:center;gap:.4rem"><input type="checkbox" id="dark" onchange="setTheme(this.checked)"><label for="dark">Modo oscuro</label></div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- AI Agent -->
+  <div class="ai-btn" onclick="toggleAI()">🤖</div>
+  <div class="ai-panel" id="aip">
+    <div class="ai-head"><span>🤖 Asistente</span><button onclick="toggleAI()">×</button></div>
+    <div class="ai-msgs" id="aim"><div class="ai-msg agent">👋 Hola, ¿en qué ayudo?</div></div>
+    <div class="ai-input"><input id="aiq" placeholder="Escribe..." onkeypress="if(event.key==='Enter')sendAI()"><button onclick="sendAI()">➤</button></div>
+  </div>
+</div>
+
+<!-- JS INLINE - NO EXTERNAL FILES -->
+<script>
+// Estado global
+let S={p:[],o:[],v:{},c:{lang:'es',theme:'light'}};let A=null;
+
+// Splash timeout garantizado (2.5s máximo)
+setTimeout(()=>{const s=document.getElementById('splash');if(s&&!s.classList.contains('hidden')){s.classList.add('hidden');setTimeout(()=>{s.style.display='none';document.getElementById('login').style.display='flex'},300)}},2500);
+
+// Utilidades
+function $(id){return document.getElementById(id)}
+function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
+function togglePw(id){const i=$(id),b=event.currentTarget;i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'👁️':'🙈'}
+
+// Login
+function setMode(m){document.querySelectorAll('.login-tab').forEach(t=>t.classList.remove('active'));event.currentTarget.classList.add('active');$('panel-staff').classList.toggle('d-none',m!=='staff');$('panel-client').classList.toggle('d-none',m==='staff');$(m==='staff'?'u':'ce').focus()}
+async function doLogin(){const u=$('u').value.trim(),p=$('p').value,e=$('err'),em=$('errmsg');e.style.display='none';if(!u||!p){em.textContent='Usuario y contraseña requeridos';e.style.display='flex';return}
+const btn=event.currentTarget;btn.disabled=true;btn.textContent='Verificando...';
+try{const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})}),d=await r.json();
+if(d.ok){A=d.usuario;hideSplash();$('login').style.display='none';$('app').style.display='block';$('un').textContent=d.usuario.nombre;$('ur').textContent=d.usuario.rol;$('ua').textContent=d.usuario.nombre[0].toUpperCase();loadProducts();renderProducts();renderOrder();aiMsg(`✅ Bienvenido, ${d.usuario.nombre}!\nRol: ${d.usuario.rol}`);}
+else{em.textContent=d.error||'Credenciales inválidas';e.style.display='flex';$('p').value='';}
+}catch(err){em.textContent='Error de conexión';e.style.display='flex';console.error(err)}
+finally{btn.disabled=false;btn.textContent='Entrar'}}
+async function doClientLogin(){alert('Login de cliente: funcional en versión completa');}
+async function doLogout(){if(confirm('¿Cerrar sesión?')){try{await fetch('/api/auth/logout',{method:'POST'})}catch(e){}A=null;S.o=[];$('app').style.display='none';$('login').style.display='flex';$('u').value=$('p').value='';aiMsg('👋 Sesión cerrada')}}
+
+// Splash helper
+function hideSplash(){const s=$('splash');if(s&&!s.classList.contains('hidden')){s.classList.add('hidden');setTimeout(()=>{s.style.display='none';if($('login'))$('login').style.display='flex'},300)}}
+
+// Productos
+async function loadProducts(){try{const r=await fetch('/api/catalogo');if(r.ok){const d=await r.json();if(d.ok&&d.productos)S.p=d.productos}}catch(e){console.log('Offline mode')}}
+function renderProducts(){const c=$('plist'),f=$('search')?.value.toLowerCase()||'',prods=S.p.filter(x=>x.nombre.toLowerCase().includes(f));
+if(!prods.length){c.innerHTML='<p class="text-center text-muted" style="padding:1rem">Sin productos</p>';return}
+c.innerHTML=prods.map(x=>{const st=x.stock||0,col=st>=24?'ok':st>=15?'low':'out',txt=st===0?'Agotado':st+' uds';
+return`<div class="product" onclick="addToOrder('${x.id}')"><div class="p-img">📦</div><div class="p-info"><div class="p-name">${esc(x.nombre)}</div><div class="p-price">$${(x.precio||0).toFixed(2)}</div></div><span class="stock stock-${col}">${txt}</span></div>`}).join('')}
+function filterProducts(){renderProducts()}
+function addToOrder(id){const p=S.p.find(x=>x.id===id);if(!p)return;const ex=S.o.find(i=>i.id===id);if(ex)ex.cant=(ex.cant||1)+1;else S.o.push({...p,cant:1});renderOrder()}
+function renderOrder(){const i=$('olist'),t=$('ototal');if(!S.o.length){i.innerHTML='<p class="text-muted" style="padding:1rem">Añade productos del catálogo</p>';t.textContent='$0.00';return}
+let tot=0;i.innerHTML=S.o.map((x,idx)=>{const sub=(x.precio||0)*(x.cant||1);tot+=sub;return`<div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid #f1f5f9"><span>${esc(x.nombre)} ×${x.cant}</span><span class="fw-bold text-success">$${sub.toFixed(2)}</span><button style="background:#ef4444;color:white;border:none;border-radius:50%;width:24px;height:24px;font-size:.9rem;cursor:pointer" onclick="remFromOrder(${idx})">×</button></div>`}).join('');t.textContent=`$${tot.toFixed(2)}`}
+function remFromOrder(idx){S.o.splice(idx,1);renderOrder()}
+async function pay(){if(!S.o.length)return alert('Orden vacía');const hoy=new Date().toISOString().split('T')[0];S.v[hoy]=S.v[hoy]||[];S.v[hoy].push(...S.o.map(x=>({id:`v-${Date.now()}`,nombre:x.nombre,cant:x.cant,total:(x.precio||0)*x.cant})));
+try{await fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(S)})}catch(e){}
+S.o=[];renderOrder();alert('✅ Venta procesada')}
+
+// Tabs
+function switchTab(t){document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));event.currentTarget.classList.add('active');['cat','ord','cfg'].forEach(x=>$('tab-'+x).classList.add('d-none'));$('tab-'+(t==='cat'?'cat':t==='ord'?'ord':'cfg')).classList.remove('d-none')}
+
+// Ajustes
+function setLang(l){S.c.lang=l;localStorage.setItem('tpv_lang',l)}
+function setTheme(d){S.c.theme=d? 'dark':'light';localStorage.setItem('tpv_theme',S.c.theme);document.body.style.background=d?'#0f172a':'linear-gradient(135deg,#0f172a,#1e3a5f,#3b82f6)'}
+
+// AI Agent
+function toggleAI(){const p=$('aip');p.classList.toggle('show');if(p.classList.contains('show'))$('aiq').focus()}
+function sendAI(){const q=$('aiq').value.trim();if(!q)return;aiMsg(q,'user');$('aiq').value='';setTimeout(()=>{
+const r={'venta':'💰 Ventas hoy: $0.00 (0 transacciones)','inventario':`📦 Productos: ${S.p.length}`,'qr':'🔲 Ve a Gestión → QR','ayuda':'🤖 Puedo ayudarte con: ventas, inventario, QR, ajustes. ¿Qué necesitas?'};
+let resp=r.ayuda;for(const[k,v]of Object.entries(r))if(q.toLowerCase().includes(k)){resp=v;break}
+aiMsg(resp,'agent')},400)}
+function aiMsg(t,from='agent'){const m=$('aim'),d=document.createElement('div');d.className=`ai-msg ${from}`;d.innerHTML=t.replace(/\n/g,'<br>');m.appendChild(d);m.scrollTop=m.scrollHeight}
+
+// Init
+document.addEventListener('DOMContentLoaded',async()=>{
+// Check session
+try{const r=await fetch('/api/auth/me');if(r.ok){const d=await r.json();if(d.autenticado){A=d.usuario;hideSplash();$('login').style.display='none';$('app').style.display='block';$('un').textContent=d.usuario.nombre;$('ur').textContent=d.usuario.rol;$('ua').textContent=d.usuario.nombre[0].toUpperCase();loadProducts();renderProducts();renderOrder();aiMsg(`✅ Bienvenido, ${d.usuario.nombre}!`);}}}catch(e){}
+// Load config
+const lang=localStorage.getItem('tpv_lang');if(lang){$('lang').value=lang;S.c.lang=lang}
+const theme=localStorage.getItem('tpv_theme');if(theme==='dark'){$('dark').checked=true;setTheme(true)}
+});
+</script>
+</body>
+</html>

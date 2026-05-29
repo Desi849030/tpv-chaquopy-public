@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0d6efd">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>TPV Ultra Smart</title>
+<!-- Bootstrap + Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- CSS Principal -->
+<link href="/static/css/main.css" rel="stylesheet">
+</head>
+<body>
+
+    <!-- ═══════ SPLASH SCREEN PROFESIONAL ═══════ -->
+    <div id="tpv-boot-screen">
+        <div class="boot-logo">
+            <i class="bi bi-shop-window" translate="no"></i>
+            <div class="boot-spinner"></div>
+        </div>
+        <div class="boot-title" id="boot-store-name">Sistema TPV</div>
+        <div class="boot-sub">Sistema de Punto de Venta Profesional</div>
+        <div class="boot-bar-wrap"><div class="boot-bar" id="boot-bar"></div></div>
+        <div class="boot-status" id="boot-status">Inicializando...</div>
+    </div>
+
+    <script src="/static/js/tpv/tpv_boot_loader.js"></script>
+
+    <!-- Puente: espera login-screen del DOM, luego oculta splash -->
+    <script src="/static/js/tpv/tpv_auth.js"></script>
+
+    <!-- TPV Debug — panel nuevo en #dbg-v2, ver tpv_debugger.js al final del body -->
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-logo-sm"><i class="bi bi-shop-window"></i></div>
+        <h2 class="login-title" data-i18n="login.title">TPV Ultra Smart</h2>
+        <p class="login-subtitle" data-i18n="login.subtitle">Accede con tu cuenta</p>
+      </div>
+      <div id="login-error" class="login-error"><i class="bi bi-exclamation-triangle-fill"></i><span id="login-error-msg"></span></div>
+      <div class="login-tabs">
+        <button class="login-tab active" onclick="setLoginMode('staff')" id="tab-staff"><i class="bi bi-person-badge me-1"></i><span data-i18n="login.staff">Personal</span></button>
+        <button class="login-tab" onclick="setLoginMode('cliente')" id="tab-cliente"><i class="bi bi-bag-heart me-1"></i><span data-i18n="login.client">Cliente</span></button>
+      </div>
+      <!-- PANEL STAFF -->
+      <div id="panel-staff" class="login-panel active">
+        <div class="login-field">
+          <label for="login-username"><i class="bi bi-person me-1"></i><span data-i18n="login.username">Usuario</span></label>
+          <input id="login-username" class="login-input" type="text" placeholder="ej: desarrollador" autocomplete="username">
+        </div>
+        <div class="login-field">
+          <label for="login-password"><i class="bi bi-lock me-1"></i><span data-i18n="login.password">Contraseña</span></label>
+          <input id="login-password" class="login-input" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')authLogin()">
+          <button type="button" class="pw-toggle" onclick="togglePassword('login-password', this)" title="Mostrar/Ocultar"><i class="bi bi-eye-slash"></i></button>
+        </div>
+        <button id="login-btn" class="login-btn" onclick="authLogin()">
+          <span id="lbtn-txt"><i class="bi bi-box-arrow-in-right"></i> <span data-i18n="login.enter">Entrar</span></span>
+          <span id="lbtn-spin" style="display:none"><span class="spinner-border spinner-border-sm me-2"></span><span data-i18n="login.verifying">Verificando...</span></span>
+        </button>
+        <div class="login-footer"><i class="bi bi-shield-lock me-1"></i><span data-i18n="login.restricted">Acceso restringido</span></div>
+      </div>
+      <!-- PANEL CLIENTE: Login -->
+      <div id="panel-cliente-login" class="login-panel">
+        <p class="login-subtitle" style="margin-bottom:1.2rem;text-align:left">Inicia sesión</p>
+        <div class="login-field">
+          <label for="cli-email"><i class="bi bi-envelope"></i> Email</label>
+          <input id="cli-email" class="login-input" type="email" placeholder="tu@email.com">
+        </div>
+        <div class="login-field">
+          <label for="cli-pw"><i class="bi bi-lock"></i> Contraseña</label>
+          <input id="cli-pw" class="login-input" type="password" placeholder="••••••••">
+          <button type="button" class="pw-toggle" onclick="togglePassword('cli-pw', this)"><i class="bi bi-eye-slash"></i></button>
+        </div>
+        <button class="login-btn login-btn-success" onclick="clienteLogin()">
+          <span id="cli-lbtn-txt"><i class="bi bi-bag-heart"></i> Entrar</span>
+          <span id="cli-lbtn-spin" style="display:none"><span class="spinner-border spinner-border-sm"></span>Verificando...</span>
+        </button>
+        <div class="login-footer">¿Sin cuenta? <a href="#" class="login-link" onclick="switchClientePanel('registro');return false">Regístrate</a></div>
+      </div>
+      <!-- PANEL CLIENTE: Registro -->
+      <div id="panel-cliente-registro" class="login-panel">
+        <p class="login-subtitle" style="margin-bottom:1.2rem;text-align:left">Crea tu cuenta</p>
+        <div class="login-field"><label>Nombre</label><input id="reg-nombre" class="login-input" type="text"></div>
+        <div class="login-field"><label>Email</label><input id="reg-email" class="login-input" type="email"></div>
+        <div class="login-field"><label>Teléfono <small>(opcional)</small></label><input id="reg-telefono" class="login-input" type="tel"></div>
+        <div class="login-field">
+          <label>Contraseña</label>
+          <input id="reg-pw" class="login-input" type="password" placeholder="Mínimo 4 caracteres">
+          <button type="button" class="pw-toggle" onclick="togglePassword('reg-pw', this)"><i class="bi bi-eye-slash"></i></button>
+        </div>
+        <button class="login-btn login-btn-success" onclick="clienteRegistrar()">
+          <span id="reg-btn-txt">Crear cuenta</span><span id="reg-btn-spin" style="display:none"><span class="spinner-border spinner-border-sm"></span>Creando...</span>
+        </button>
+        <div class="login-footer">¿Ya tienes cuenta? <a href="#" class="login-link" onclick="switchClientePanel('login');return false">Inicia sesión</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ❌ Partial no encontrado: partials/_app.html -->
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- QR Code -->
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<!-- JS Modular del TPV -->
+<script src="/static/js/tpv_i18n.js"></script>
+<script src="/static/js/tpv_core.js"></script>
+<script src="/static/js/tpv_auth.js"></script>
+<script src="/static/js/tpv_ui.js"></script>
+<script src="/static/js/tpv_agent.js"></script>
+
+</body>
+</html>

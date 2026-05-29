@@ -59,31 +59,26 @@ def agregar_log(mensaje, tipo="info", usuario=None):
         conn.close()
 
 
-
 TABLAS_PERMITIDAS = frozenset([
-    "app_state","usuarios","historial_ventas","productos",
-    "inventario_general","inventario_diario","entradas_productos",
-    "cierres_caja","inventarios","logs_sistema","licencias",
+    "app_state", "usuarios", "historial_ventas", "productos",
+    "inventario_general", "inventario_diario", "entradas_productos",
+    "cierres_caja", "inventarios", "logs_sistema", "licencias",
 ])
 
 def obtener_info_db():
-    conn   = obtener_conexion()
+    conn = obtener_conexion()
     cursor = conn.cursor()
     try:
-        info   = {"archivo": DB_FILE, "tablas": {}}
-        tablas = list(TABLAS_PERMITIDAS)
-        for t in tablas:
+        info = {"archivo": DB_FILE, "tablas": {}}
+        for t in TABLAS_PERMITIDAS:
             try:
-                if t not in TABLAS_PERMITIDAS:
-            info["tablas"][t] = -1
-            continue
-        cursor.execute(f'SELECT COUNT(*) AS total FROM "{t}"')
+                cursor.execute(f'SELECT COUNT(*) AS total FROM "{t}"')
                 info["tablas"][t] = cursor.fetchone()["total"]
             except Exception:
                 info["tablas"][t] = 0
         if os.path.exists(DB_FILE):
             info["tamaño_bytes"] = os.path.getsize(DB_FILE)
-            info["tamaño_kb"]    = round(info["tamaño_bytes"] / 1024, 2)
+            info["tamaño_kb"] = round(info["tamaño_bytes"] / 1024, 2)
         return info
     finally:
         conn.close()
@@ -108,7 +103,8 @@ def crear_tabla_audit():
     except Exception as e:
         import sys
         print("[AUDIT ERROR] audit_log: %s" % e, file=sys.stderr)
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def audit_log(usuario, accion, tabla, registro_id="", valor_anterior="", valor_nuevo=""):
@@ -122,5 +118,5 @@ def audit_log(usuario, accion, tabla, registro_id="", valor_anterior="", valor_n
     except Exception as e:
         import sys
         print("[AUDIT ERROR] audit_log: %s" % e, file=sys.stderr)
-    finally: conn.close()
-
+    finally:
+        conn.close()

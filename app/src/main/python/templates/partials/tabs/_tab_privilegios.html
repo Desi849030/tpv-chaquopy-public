@@ -1,0 +1,65 @@
+            <div class="tab-pane fade" id="privilegios-tab-pane" role="tabpanel">
+                <div class="glass-card">
+                    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                        <h4 class="mb-0"><i class="bi bi-shield-lock-fill me-2 text-primary" translate="no"></i>Gestión de Privilegios</h4>
+                        <span class="badge bg-info" id="priv-badge-rol">Admin / Dev</span>
+                    </div>
+                    <p class="text-muted small mb-4">
+                        Asigna permisos a cada rol. El administrador y supervisor no pueden acceder a los módulos desactivados.
+                        Los cambios toman efecto al iniciar sesión de cada usuario.
+                    </p>
+
+                    <!-- Selector de rol -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold"><i class="bi bi-person-badge me-1" translate="no"></i>Seleccionar Rol:</label>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-outline-primary btn-sm" onclick="priv_cargarRol('administrador')" id="priv-btn-administrador">
+                                <i class="bi bi-person-gear me-1" translate="no"></i>Administrador
+                            </button>
+                            <button class="btn btn-outline-warning btn-sm" onclick="priv_cargarRol('supervisor')" id="priv-btn-supervisor">
+                                <i class="bi bi-person-check me-1" translate="no"></i>Supervisor
+                            </button>
+                            <button class="btn btn-outline-success btn-sm" onclick="priv_cargarRol('vendedor')" id="priv-btn-vendedor">
+                                <i class="bi bi-person me-1" translate="no"></i>Vendedor
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="priv_cargarRol('desarrollador')" id="priv-btn-desarrollador">
+                                <i class="bi bi-code-slash me-1" translate="no"></i>Desarrollador
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de privilegios -->
+                    <div id="priv-tabla-wrap" style="display:none">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr class="table-light">
+                                        <th style="width:40%">Módulo</th>
+                                        <th style="width:35%">Descripción</th>
+                                        <th class="text-center" style="width:25%">
+                                            <span id="priv-rol-activo">—</span>
+                                            <i class="bi bi-toggle-on text-success ms-1" translate="no"></i>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="priv-tabla-body">
+                                    <!-- JS renderiza las filas -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Botones de acción -->
+                        <div class="d-flex gap-2 mt-3 flex-wrap">
+                            <button class="btn btn-primary" onclick="priv_guardar()">
+                                <i class="bi bi-floppy-fill me-1" translate="no"></i>Guardar Cambios
+                            </button>
+                            <button class="btn btn-outline-warning" onclick="priv_restablecer()">
+                                <i class="bi bi-arrow-counterclockwise me-1" translate="no"></i>Restablecer a Default
+                            </button>
+                        </div>
+                        <div id="priv-msg" class="mt-3" style="display:none"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════ PESTAÑA SEGURIDAD / BLINDAJES ══════════ -->

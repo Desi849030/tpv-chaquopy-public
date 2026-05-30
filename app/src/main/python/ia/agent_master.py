@@ -31,7 +31,23 @@ class AgentMaster:
         icon = self.role_icons.get(role, '🤖')
         poderes = self.privilegios.get(role, ['catalogo', 'ventas'])
         
-        intent, conf = self.nlp.predict_intent(text) if text else (None, 0)
+        # Detección rápida por palabras clave
+        tl = text.lower() if text else ''
+        intent = None
+        conf = 0
+        if tl:
+            if any(kw in tl for kw in ['recomiendame','recomendar','recomendacion','sugerir','sugerencia','aconsejar']):
+                intent, conf = ('RECOMMEND', 0.9)
+            elif any(kw in tl for kw in ['stock','inventario','critico','agotado','bajo','faltante','reponer']):
+                intent, conf = ('STOCK', 0.9)
+            elif any(kw in tl for kw in ['finanza','balance','ganancia','margen','ingreso','gasto']):
+                intent, conf = ('FINANCE', 0.9)
+            elif any(kw in tl for kw in ['venta','cuanto vendi','recaude','caja','facturacion']):
+                intent, conf = ('SALES', 0.9)
+            elif any(kw in tl for kw in ['hola','buenos dias','saludos','hey','que tal']):
+                intent, conf = ('GREETING', 0.9)
+            else:
+                intent, conf = self.nlp.predict_intent(text) if text else (None, 0)
         intent_str = str(intent) if intent else ''
         
         tools = []
@@ -41,7 +57,12 @@ class AgentMaster:
                 if any(kw in text_low for kw in tinfo.get('keywords', [])):
                     tools.append({'name': tname, 'icon': tinfo.get('icon', '🔧'), 'desc': tinfo.get('desc', '')})
         
+        # Humanizar respuesta
         resp = self._respond(text, intent_str, role, user_name, icon, poderes, tools)
+        try:
+            resp = self.humanizer.enhance(resp, role)
+        except:
+            pass
         
         # Guardar en memoria simple
         self.sessions[session_id] = {"text": text, "role": role, "time": datetime.now().isoformat()}

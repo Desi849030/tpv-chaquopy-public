@@ -22,6 +22,7 @@ class NLPEngine:
         self.vocab = set()
         self.idf = {}
         self.weights = defaultdict(lambda: defaultdict(float))
+        self.intents["RECOMMEND"] = ["recomiendame","recomendar","recomendacion","sugerir","sugerencia","que me recomiendas","aconsejar","aconsejame","propuesta","proponer"]
         self._train()
     
     @staticmethod

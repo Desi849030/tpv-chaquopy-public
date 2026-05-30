@@ -78,8 +78,21 @@ def auth_me():
 # ========== CATÁLOGO ==========
 @app.route('/api/catalogo')
 def catalogo():
+    try:
+        from db_connection import obtener_conexion
+        conn = obtener_conexion()
+        cursor = conn.cursor()
+        cursor.execute("SELECT p.producto_id, p.nombre, COALESCE(p.categoria,'General'), p.precio, COALESCE(p.unidad_medida,'Un'), COALESCE(p.costo,0), CAST(COALESCE(ig.stock_actual, 50) AS INTEGER) FROM productos p LEFT JOIN inventario_general ig ON p.producto_id = ig.producto_id WHERE p.activo=1")
+        prods = []
+        emojis = ["🍚","🫘","🫒","🥤","🧴","🍬","☕","🥛","🥚","🍞","🧼","🪥"]
+        for i, row in enumerate(cursor.fetchall()):
+            prods.append({"id": row[0], "nombre": row[1], "categoria": row[2], "precio": row[3], "um": row[4], "costo": row[5], "stock": row[6], "codigo": row[0][:6], "imagen": emojis[i % len(emojis)]})
+        conn.close()
+        cats = list(set(p["categoria"] for p in prods))
+        return jsonify({"ok": True, "productos": prods, "total": len(prods), "categorias": cats})
+    except Exception as e:
+        print(f"Catálogo error: {e}")
     return jsonify({"ok": True, "productos": [
-        {"id": "p1", "nombre": "Arroz Premium 1kg", "categoria": "Alimentos", "precio": 25.50, "stock": 45, "um": "Kg", "costo": 18.20, "codigo": "AR001", "imagen": "🍚"},
         {"id": "p2", "nombre": "Frijoles Negros 500g", "categoria": "Alimentos", "precio": 18.75, "stock": 32, "um": "Bolsa", "costo": 12.50, "codigo": "FR002", "imagen": "🫘"},
         {"id": "p3", "nombre": "Aceite Vegetal 1L", "categoria": "Alimentos", "precio": 45.00, "stock": 28, "um": "L", "costo": 32.00, "codigo": "AC003", "imagen": "🫒"},
         {"id": "p4", "nombre": "Refresco Cola 2L", "categoria": "Bebidas", "precio": 32.00, "stock": 60, "um": "Botella", "costo": 22.00, "codigo": "RC004", "imagen": "🥤"},
@@ -298,6 +311,294 @@ def tool_abc():
         "B": ["Frijoles Negros", "Leche Entera", "Refresco Cola"],
         "C": ["Pan Integral", "Pasta Dental", "Detergente"]
     }})
+
+
+# ========== REGISTRO DE VENTAS ==========
+@app.route('/api/ventas/registrar', methods=['POST'])
+def registrar_venta():
+    """Registra una venta en la BD"""
+    d = request.get_json(silent=True) or {}
+    items = d.get('items', [])
+    metodo_pago = d.get('metodo_pago', 'efectivo')
+    vendedor = d.get('vendedor', 'desarrollador')
+    
+    if not items:
+        return jsonify({"ok": False, "error": "No hay productos"}), 400
+    
+    try:
+        from db_connection import obtener_conexion
+        import uuid
+        from datetime import datetime
+        
+        conn = obtener_conexion()
+        cursor = conn.cursor()
+        
+        venta_id = f"vta-{uuid.uuid4().hex[:8]}"
+        fecha = datetime.now().isoformat()
+        total = 0
+        
+        for item in items:
+            producto_id = item.get('id', '')
+            nombre = item.get('nombre', '')
+            cantidad = float(item.get('cantidad', 1))
+            precio = float(item.get('precio', 0))
+            subtotal = cantidad * precio
+            total += subtotal
+            
+            cursor.execute("""
+                INSERT INTO historial_ventas (venta_id, producto_id, nombre, cantidad, precio_unit, total, metodo_pago, fecha, vendedor_id, vendedor_nombre)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (venta_id, producto_id, nombre, cantidad, precio, subtotal, metodo_pago, fecha, vendedor, vendedor))
+            
+            # Actualizar stock
+            cursor.execute("""
+                UPDATE inventario_general SET stock_actual = MAX(0, stock_actual - ?), actualizado = ?
+                WHERE producto_id = ?
+            """, (cantidad, fecha, producto_id))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({"ok": True, "venta_id": venta_id, "total": round(total, 2), "items": len(items), "fecha": fecha})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+@app.route('/api/ventas/hoy')
+def ventas_hoy():
+    """Ventas del día actual"""
+    try:
+        from db_connection import obtener_conexion
+        from datetime import date
+        conn = obtener_conexion()
+        cursor = conn.cursor()
+        hoy = date.today().isoformat()
+        cursor.execute("SELECT venta_id, nombre, cantidad, precio_unit, total, metodo_pago, fecha FROM historial_ventas WHERE fecha LIKE ? ORDER BY fecha DESC", (f"{hoy}%",))
+        ventas = []
+        total = 0
+        for row in cursor.fetchall():
+            ventas.append({
+                "venta_id": row[0], "producto": row[1], "cantidad": row[2],
+                "precio_unit": row[3], "total": row[4], "metodo_pago": row[5], "fecha": row[6]
+            })
+            total += row[4] or 0
+        conn.close()
+        return jsonify({"ok": True, "ventas": ventas, "total": round(total, 2), "cantidad": len(ventas)})
+    except Exception as e:
+        return jsonify({"ok": True, "ventas": [], "total": 0})
+
+
+# ========== CIERRE DE CAJA ==========
+@app.route('/api/ventas/cierre', methods=['POST'])
+def cierre_caja():
+    d = request.get_json(silent=True) or {}
+    fecha = d.get('fecha', __import__('datetime').date.today().isoformat())
+    cerrado_por = d.get('cerrado_por', 'desarrollador')
+    try:
+        from db_connection import obtener_conexion
+        conn = obtener_conexion()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COALESCE(SUM(total),0), COUNT(*) FROM historial_ventas WHERE fecha LIKE ?", (f"{fecha}%",))
+        total_ventas, num_ventas = cursor.fetchone()
+        cursor.execute("INSERT INTO cierres_caja (fecha, total_ventas, num_transacciones, cerrado_por) VALUES (?, ?, ?, ?)",
+                      (fecha, total_ventas or 0, num_ventas, cerrado_por))
+        conn.commit()
+        conn.close()
+        return jsonify({"ok": True, "fecha": fecha, "total_ventas": total_ventas or 0, "num_transacciones": num_ventas})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+@app.route('/api/ventas/cierres')
+def listar_cierres():
+    """Lista todos los cierres de caja"""
+    try:
+        from db_connection import obtener_conexion
+        conn = obtener_conexion()
+        cursor = conn.cursor()
+        cursor.execute("SELECT cierre_id, fecha, total_ventas, num_transacciones, efectivo, tarjeta, transferencia, cerrado_por, creado FROM cierres_caja ORDER BY fecha DESC LIMIT 30")
+        cierres = []
+        for row in cursor.fetchall():
+            cierres.append({"id": row[0], "fecha": row[1], "total": row[2], "transacciones": row[3],
+                          "efectivo": row[4], "tarjeta": row[5], "transferencia": row[6], "cerrado_por": row[7]})
+        conn.close()
+        return jsonify({"ok": True, "cierres": cierres})
+    except Exception as e:
+        return jsonify({"ok": True, "cierres": []})
+
+@app.route('/api/ventas/totales')
+def totales_ventas():
+    """Resumen de totales con cálculo automático"""
+    try:
+        from db_connection import obtener_conexion
+        from datetime import date
+        conn = obtener_conexion()
+        cursor = conn.cursor()
+        hoy = date.today().isoformat()
+        
+        # Totales de hoy
+        cursor.execute("SELECT COALESCE(SUM(total),0), COUNT(*) FROM historial_ventas WHERE fecha LIKE ?", (f"{hoy}%",))
+        total_hoy, num_hoy = cursor.fetchone()
+        
+        # Totales del mes
+        mes = hoy[:7]
+        cursor.execute("SELECT COALESCE(SUM(total),0), COUNT(*) FROM historial_ventas WHERE fecha LIKE ?", (f"{mes}%",))
+        total_mes, num_mes = cursor.fetchone()
+        
+        conn.close()
+        return jsonify({"ok": True, "hoy": {"total": total_hoy or 0, "ventas": num_hoy},
+                       "mes": {"total": total_mes or 0, "ventas": num_mes}})
+    except Exception as e:
+        return jsonify({"ok": True, "hoy": {"total": 0, "ventas": 0}, "mes": {"total": 0, "ventas": 0}})
+
+
+# ========== REPORTES Y EXPORTACIÓN ==========
+@app.route('/api/reportes/ventas', methods=['GET'])
+def reporte_ventas():
+    """Reporte de ventas con filtros"""
+    desde = request.args.get('desde', __import__('datetime').date.today().isoformat())
+    hasta = request.args.get('hasta', __import__('datetime').date.today().isoformat())
+    try:
+        from db_connection import obtener_conexion
+        conn = obtener_conexion()
+        cursor = conn.cursor()
+        cursor.execute("SELECT venta_id, nombre, cantidad, precio_unit, total, metodo_pago, fecha FROM historial_ventas WHERE fecha >= ? AND fecha <= ? ORDER BY fecha DESC LIMIT 200", (desde, hasta))
+        ventas = []
+        total = 0
+        for row in cursor.fetchall():
+            ventas.append({"id": row[0], "producto": row[1], "cantidad": row[2], "precio": row[3], "total": row[4], "metodo": row[5], "fecha": row[6]})
+            total += row[4] or 0
+        conn.close()
+        return jsonify({"ok": True, "ventas": ventas, "total": round(total, 2), "cantidad": len(ventas)})
+    except Exception as e:
+        return jsonify({"ok": True, "ventas": [], "total": 0})
+
+@app.route('/api/reportes/exportar', methods=['GET'])
+def exportar_excel():
+    """Exporta ventas a formato JSON (compatible con Excel)"""
+    desde = request.args.get('desde', __import__('datetime').date.today().isoformat())
+    hasta = request.args.get('hasta', __import__('datetime').date.today().isoformat())
+    try:
+        from db_connection import obtener_conexion
+        conn = obtener_conexion()
+        cursor = conn.cursor()
+        cursor.execute("SELECT fecha, venta_id, nombre, cantidad, precio_unit, total, metodo_pago FROM historial_ventas WHERE fecha >= ? AND fecha <= ? ORDER BY fecha DESC", (desde, hasta))
+        datos = []
+        for row in cursor.fetchall():
+            datos.append({"fecha": row[0], "venta_id": row[1], "producto": row[2], "cantidad": row[3], "precio_unit": row[4], "total": row[5], "metodo_pago": row[6]})
+        conn.close()
+        # Formato CSV simple
+        csv = "Fecha,Venta ID,Producto,Cantidad,Precio Unit,Total,Método Pago\n"
+        for d in datos:
+            csv += f"{d['fecha']},{d['venta_id']},{d['producto']},{d['cantidad']},{d['precio_unit']},{d['total']},{d['metodo_pago']}\n"
+        return csv, 200, {'Content-Type': 'text/csv', 'Content-Disposition': f'attachment; filename=ventas_{desde}_{hasta}.csv'}
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+@app.route('/api/reportes/resumen')
+def reporte_resumen():
+    """Resumen general para dashboard"""
+    try:
+        from db_connection import obtener_conexion
+        from datetime import date, timedelta
+        conn = obtener_conexion()
+        cursor = conn.cursor()
+        hoy = date.today()
+        
+        # Hoy
+        cursor.execute("SELECT COALESCE(SUM(total),0), COUNT(*) FROM historial_ventas WHERE fecha LIKE ?", (f"{hoy.isoformat()}%",))
+        ventas_hoy, num_hoy = cursor.fetchone()
+        
+        # Ayer
+        ayer = hoy - timedelta(days=1)
+        cursor.execute("SELECT COALESCE(SUM(total),0) FROM historial_ventas WHERE fecha LIKE ?", (f"{ayer.isoformat()}%",))
+        ventas_ayer = cursor.fetchone()[0] or 0
+        
+        # Este mes
+        mes = hoy.isoformat()[:7]
+        cursor.execute("SELECT COALESCE(SUM(total),0), COUNT(*) FROM historial_ventas WHERE fecha LIKE ?", (f"{mes}%",))
+        ventas_mes, num_mes = cursor.fetchone()
+        
+        # Total productos
+        cursor.execute("SELECT COUNT(*) FROM productos WHERE activo=1")
+        num_prod = cursor.fetchone()[0]
+        
+        # Stock bajo
+        cursor.execute("SELECT COUNT(*) FROM inventario_general WHERE stock_actual <= 5")
+        stock_bajo = cursor.fetchone()[0]
+        
+        conn.close()
+        
+        return jsonify({"ok": True, "resumen": {
+            "ventas_hoy": ventas_hoy or 0, "transacciones_hoy": num_hoy,
+            "ventas_ayer": ventas_ayer or 0, "ventas_mes": ventas_mes or 0,
+            "transacciones_mes": num_mes, "productos": num_prod, "stock_bajo": stock_bajo
+        }})
+    except Exception as e:
+        return jsonify({"ok": True, "resumen": {"ventas_hoy": 0}})
+
+
+# ========== IMPORTACIÓN INTELIGENTE EXCEL ==========
+@app.route('/api/importar/excel', methods=['POST'])
+def importar_excel():
+    """Importa productos desde JSON (simula carga de Excel)"""
+    d = request.get_json(silent=True) or {}
+    productos = d.get('productos', [])
+    if not productos:
+        return jsonify({"ok": False, "error": "No hay productos para importar"}), 400
+    
+    try:
+        from db_connection import obtener_conexion
+        import uuid
+        from datetime import datetime
+        
+        conn = obtener_conexion()
+        cursor = conn.cursor()
+        importados = 0
+        actualizados = 0
+        
+        for p in productos:
+            nombre = p.get('nombre', '').strip()
+            if not nombre:
+                continue
+            precio = float(p.get('precio', 0))
+            categoria = p.get('categoria', 'General')
+            stock = int(p.get('stock', 0))
+            um = p.get('um', 'Un')
+            costo = float(p.get('costo', precio * 0.7))
+            codigo = p.get('codigo', '')
+            
+            # Verificar si existe
+            cursor.execute("SELECT producto_id FROM productos WHERE nombre = ?", (nombre,))
+            existente = cursor.fetchone()
+            
+            if existente:
+                cursor.execute("UPDATE productos SET precio=?, categoria=?, unidad_medida=?, costo=?, activo=1 WHERE producto_id=?",
+                             (precio, categoria, um, costo, existente[0]))
+                # Actualizar stock
+                cursor.execute("UPDATE inventario_general SET stock_actual=?, actualizado=? WHERE producto_id=?",
+                             (stock, datetime.now().isoformat(), existente[0]))
+                actualizados += 1
+            else:
+                pid = f"prod-{uuid.uuid4().hex[:8]}"
+                cursor.execute("INSERT INTO productos (producto_id, nombre, precio, costo, categoria, unidad_medida, activo) VALUES (?,?,?,?,?,?,1)",
+                             (pid, nombre, precio, costo, categoria, um))
+                cursor.execute("INSERT INTO inventario_general (producto_id, nombre, stock_actual, stock_minimo, precio_venta, actualizado) VALUES (?,?,?,5,?,?)",
+                             (pid, nombre, stock, precio, datetime.now().isoformat()))
+                importados += 1
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({"ok": True, "importados": importados, "actualizados": actualizados, 
+                       "total": importados + actualizados})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+@app.route('/api/importar/previsualizar', methods=['POST'])
+def previsualizar_excel():
+    """Previsualiza datos antes de importar"""
+    d = request.get_json(silent=True) or {}
+    productos = d.get('productos', [])
+    return jsonify({"ok": True, "total": len(productos), "muestra": productos[:5]})
 
 # ========== CATCH-ALL ==========
 @app.route('/api/<path:p>')

@@ -3918,6 +3918,10 @@
         }
 
         function lic_checkLicense(){
+        // Desarrollador siempre tiene licencia activa
+        if (typeof currentUser !== 'undefined' && currentUser && currentUser.rol === 'desarrollador') {
+            if (tpvState && tpvState.licencia) { tpvState.licencia.activada = true; tpvState.licencia.tipo = 'dev'; }
+        }
             const { licencia } = tpvState;
             const estado = document.getElementById("lic-status");
             const countdownContainer = document.getElementById("lic-countdown-container");
@@ -3951,7 +3955,6 @@
                 return; // Salir sin bloquear
             }
             
-            licencia.activada = true; licencia.tipo = 'premium';
             if(licencia.activada){
                 estado.innerText = lang.license_activated;
                 estado.className = "text-success fw-bold";

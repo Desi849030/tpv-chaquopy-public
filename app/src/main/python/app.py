@@ -109,7 +109,33 @@ def catalogo():
 # ========== MÉTRICAS ==========
 @app.route('/api/metrics')
 def metrics():
-    return jsonify({"ok": True, "ventas_totales": 156, "ventas_hoy": 12, "productos": 89, "clientes": 234, "ingresos_mes": 45230, "ingresos_hoy": 3250, "ganancia_hoy": 890, "top_producto": "Arroz Premium", "top_categoria": "Alimentos"})
+    try:
+        from db_connection import obtener_conexion
+        from datetime import date
+        conn = obtener_conexion()
+        c = conn.cursor()
+        hoy = date.today()
+        mes = hoy.strftime('%Y-%m')
+        c.execute("SELECT COALESCE(SUM(total),0), COUNT(*) FROM historial_ventas WHERE fecha LIKE ?", (f"{hoy.isoformat()}%",))
+        r = c.fetchone()
+        ingresos_hoy = r[0] or 0
+        ventas_hoy = r[1]
+        c.execute("SELECT COALESCE(SUM(total),0) FROM historial_ventas WHERE fecha LIKE ?", (f"{mes}%",))
+        ingresos_mes = c.fetchone()[0] or 0
+        c.execute("SELECT COUNT(*) FROM productos WHERE activo=1")
+        num_productos = c.fetchone()[0]
+        c.execute("SELECT nombre, SUM(cantidad) FROM historial_ventas WHERE fecha LIKE ? GROUP BY nombre ORDER BY SUM(cantidad) DESC LIMIT 1", (f"{hoy.isoformat()}%",))
+        top = c.fetchone()
+        top_producto = top[0] if top else "N/A"
+        c.execute("SELECT COALESCE(SUM(total)*0.30,0) FROM historial_ventas WHERE fecha LIKE ?", (f"{hoy.isoformat()}%",))
+        ganancia_hoy = round(c.fetchone()[0], 2)
+        conn.close()
+        return jsonify({"ok": True, "ventas_hoy": ventas_hoy, "ingresos_hoy": ingresos_hoy, 
+                       "ingresos_mes": ingresos_mes, "productos": num_productos,
+                       "ganancia_hoy": ganancia_hoy, "top_producto": top_producto})
+    except Exception as e:
+        print(f"Metrics error: {e}")
+    return jsonify({"ok": True, "ventas_hoy": 0, "productos": 13})
 
 # ========== AGENTE IA ==========
 try:

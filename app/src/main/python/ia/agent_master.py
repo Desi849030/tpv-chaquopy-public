@@ -58,7 +58,12 @@ class AgentMaster:
                     tools.append({'name': tname, 'icon': tinfo.get('icon', '🔧'), 'desc': tinfo.get('desc', '')})
         
         # Humanizar respuesta
-        resp = self._respond(text, intent_str, role, user_name, icon, poderes, tools)
+        # Intentar herramienta automática primero
+        auto_resp = self._auto_tool_response(intent, role, icon)
+        if auto_resp:
+            resp = f"{icon} {auto_resp}"
+        else:
+            resp = self._respond(text, intent_str, role, user_name, icon, poderes, tools)
         try:
             resp = self.humanizer.enhance(resp, role)
         except:

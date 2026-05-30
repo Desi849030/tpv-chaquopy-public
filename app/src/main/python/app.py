@@ -425,7 +425,7 @@ def cierre_caja():
         cursor = conn.cursor()
         cursor.execute("SELECT COALESCE(SUM(total),0), COUNT(*) FROM historial_ventas WHERE fecha LIKE ?", (f"{fecha}%",))
         total_ventas, num_ventas = cursor.fetchone()
-        cursor.execute("INSERT INTO cierres_caja (fecha, total_ventas, num_transacciones, cerrado_por) VALUES (?, ?, ?, ?)",
+        cursor.execute("INSERT OR REPLACE INTO cierres_caja (fecha, total_ventas, num_transacciones, cerrado_por) VALUES (?, ?, ?, ?)",
                       (fecha, total_ventas or 0, num_ventas, cerrado_por))
         conn.commit()
         conn.close()
@@ -625,6 +625,24 @@ def previsualizar_excel():
     d = request.get_json(silent=True) or {}
     productos = d.get('productos', [])
     return jsonify({"ok": True, "total": len(productos), "muestra": productos[:5]})
+
+
+@app.route('/api/seguridad/check')
+def seguridad_check():
+    checks = {}
+    try:
+        from security_het import get_threat_summary
+        checks['het'] = get_threat_summary()
+    except: checks['het'] = {'error': 'no disponible'}
+    try:
+        from security_pci import get_audit_log
+        checks['pci'] = {'audit_entries': len(get_audit_log(10))}
+    except: checks['pci'] = {'error': 'no disponible'}
+    try:
+        from security_attestation import get_attestation_status
+        checks['attestation'] = get_attestation_status()
+    except: checks['attestation'] = {'error': 'no disponible'}
+    return jsonify({"ok": True, "seguridad": checks})
 
 # ========== CATCH-ALL ==========
 @app.route('/api/<path:p>')

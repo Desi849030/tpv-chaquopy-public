@@ -1,3 +1,5 @@
+from db_connection import obtener_conexion
+from flask import request
 from auth_decorator import login_required
 from routes.inventory_bp import inv_bp
 from routes.inventory_helpers import *

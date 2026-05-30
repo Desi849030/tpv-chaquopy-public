@@ -1,3 +1,5 @@
+from db_connection import obtener_conexion
+from flask import request
 from auth_decorator import login_required
 from routes.tienda_bp import tienda_bp
 from routes.tienda_helpers import *

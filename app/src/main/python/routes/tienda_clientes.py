@@ -1,3 +1,4 @@
+from db_connection import obtener_conexion
 from flask import request, jsonify, session
 from functools import wraps
 from datetime import datetime

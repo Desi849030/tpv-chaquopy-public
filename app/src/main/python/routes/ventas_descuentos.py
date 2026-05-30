@@ -1,3 +1,5 @@
+from db_connection import obtener_conexion
+from flask import request
 from auth_decorator import login_required
 from routes.ventas_helpers import ventas_bp, request, jsonify, requiere_login, requiere_rol, agregar_log, obtener_conexion
 # ══════════════════════════════════════════════════════════════

@@ -32,7 +32,7 @@ def crear_tablas():
     crear_tablas_schema(conn)
     try: crear_indices(conn)
     except Exception: pass
-    try: _crear_desarrollador_default(conn)
+    try: cursor = conn.cursor(); _crear_desarrollador_default(cursor, conn)
     except Exception: pass
     conn.close()
 

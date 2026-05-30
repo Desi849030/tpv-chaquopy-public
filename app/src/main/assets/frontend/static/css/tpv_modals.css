@@ -1,0 +1,99 @@
+/* Modales TPV Ultra Smart */
+.stock-modal, .modal-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(0,0,0,0.7) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 10000 !important;
+    backdrop-filter: blur(5px) !important;
+}
+.stock-modal-content, .modal-content {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    border-radius: 16px !important;
+    padding: 24px !important;
+    width: 90% !important;
+    max-width: 500px !important;
+    max-height: 85vh !important;
+    overflow-y: auto !important;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
+    color: #f8fafc !important;
+}
+.stock-modal-content h3, .modal-content h3,
+.stock-modal-content h4, .modal-content h4,
+.stock-modal-content h5, .modal-content h5,
+.stock-modal-content h6, .modal-content h6 {
+    color: #f8fafc !important;
+    margin-bottom: 12px !important;
+}
+.stock-modal-content .form-label,
+.modal-content label {
+    color: #94a3b8 !important;
+    font-size: 0.8rem !important;
+    display: block !important;
+    margin-bottom: 4px !important;
+}
+.stock-modal-content .form-control,
+.stock-modal-content input,
+.stock-modal-content select,
+.modal-content .form-control,
+.modal-content input,
+.modal-content select {
+    width: 100% !important;
+    padding: 10px !important;
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+    border-radius: 8px !important;
+    color: #f8fafc !important;
+    font-size: 0.9rem !important;
+}
+.stock-modal-content .btn,
+.modal-content .btn,
+.modal-content button {
+    padding: 10px 20px !important;
+    border: none !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+}
+.stock-modal-content .btn-primary,
+.modal-content .btn-primary {
+    background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
+    color: white !important;
+}
+.stock-modal-content .btn-secondary,
+.modal-content .btn-secondary {
+    background: #334155 !important;
+    color: #f8fafc !important;
+}
+.stock-modal-content .btn-danger,
+.modal-content .btn-danger {
+    background: #ef4444 !important;
+    color: white !important;
+}
+
+/* Asegurar que los modales no bloqueen */
+#modal-crear-usuario, #modal-usuario-priv {
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(0,0,0,0.7) !important;
+    z-index: 10000 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+#modal-crear-usuario > div, #modal-usuario-priv > div {
+    background: #1e293b !important;
+    border: 2px solid #6366f1 !important;
+    border-radius: 16px !important;
+    padding: 24px !important;
+    width: 90% !important;
+    max-width: 400px !important;
+    position: relative !important;
+}

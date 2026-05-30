@@ -1,3 +1,4 @@
+from db_connection import obtener_conexion
 from auth_decorator import login_required
 from routes.ai_helpers import ai_bp, requiere_login, jsonify, request
 # ══════════════════════════════════════════════════════════════

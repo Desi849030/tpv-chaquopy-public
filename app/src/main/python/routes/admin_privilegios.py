@@ -1,3 +1,4 @@
+from flask import request
 from auth_decorator import login_required, admin_required
 from routes.admin_helpers import admin_bp, request, jsonify, requiere_login, requiere_rol, usuario_actual, agregar_log, _obtener_privilegios_rol, _guardar_privilegios_rol, _MODULOS_DISPONIBLES, _PRIVILEGIOS_DEFAULT
 @login_required

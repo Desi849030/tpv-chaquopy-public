@@ -1,3 +1,4 @@
+from flask import request
 from auth_decorator import login_required
 from routes.ventas_helpers import ventas_bp, datetime, request, jsonify, requiere_login, usuario_actual, guardar_historial_diario_local, obtener_historial_diario_local, obtener_historial_detalle_local, guardar_historial_diario, obtener_historial_diario, obtener_historial_detalle, obtener_config_actual, verificar_tablas_supabase, obtener_sql_completo, setup_supabase, _sb
 # ══════════════════════════════════════════════════════════════

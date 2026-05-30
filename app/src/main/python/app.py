@@ -809,4 +809,5 @@ if __name__ == '__main__':
     print(f" ✅ Privilegios + Jerarquía")
     print(f" ✅ URL: http://localhost:5000\n")
     logging.basicConfig(level=logging.WARNING)
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    port = int(os.environ.get('TPV_PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)

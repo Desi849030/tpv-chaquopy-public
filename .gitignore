@@ -10,3 +10,14 @@ Thumbs.db
 data/tpv.db
 *.bak
 *.swp
+__pycache__/
+*.pyc
+*.bak
+*.backup
+*.danado
+app/src/main/python/static/static/
+app/src/main/python/templates/templates/
+app/src/main/python/21:_TPL*/
+tpv_datos.db
+tpv_datos.db-*
+tpv_server.log

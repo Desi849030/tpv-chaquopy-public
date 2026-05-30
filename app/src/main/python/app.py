@@ -722,6 +722,17 @@ def listar_clientes():
         return jsonify({"ok": True, "clientes": clientes})
     except: return jsonify({"ok": True, "clientes": []})
 
+@app.route('/api/db/backup', methods=['POST'])
+def backup_bd():
+    try:
+        import shutil, os
+        from db_connection import DB_FILE
+        backup_path = DB_FILE + '.backup'
+        shutil.copy2(DB_FILE, backup_path)
+        return jsonify({"ok": True, "backup": backup_path, "size": os.path.getsize(backup_path)})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)})
+
 # ========== CATCH-ALL ==========
 @app.route('/api/<path:p>')
 def catch_all(p):

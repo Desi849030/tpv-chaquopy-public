@@ -31,23 +31,21 @@ class AgentMaster:
         icon = self.role_icons.get(role, '🤖')
         poderes = self.privilegios.get(role, ['catalogo', 'ventas'])
         
-        # Detección rápida por palabras clave
-        tl = text.lower() if text else ''
-        intent = None
-        conf = 0
-        if tl:
-            if any(kw in tl for kw in ['recomiendame','recomendar','recomendacion','sugerir','sugerencia','aconsejar']):
-                intent, conf = ('RECOMMEND', 0.9)
-            elif any(kw in tl for kw in ['stock','inventario','critico','agotado','bajo','faltante','reponer']):
-                intent, conf = ('STOCK', 0.9)
-            elif any(kw in tl for kw in ['finanza','balance','ganancia','margen','ingreso','gasto']):
-                intent, conf = ('FINANCE', 0.9)
-            elif any(kw in tl for kw in ['venta','cuanto vendi','recaude','caja','facturacion']):
-                intent, conf = ('SALES', 0.9)
-            elif any(kw in tl for kw in ['hola','buenos dias','saludos','hey','que tal']):
-                intent, conf = ('GREETING', 0.9)
-            else:
-                intent, conf = self.nlp.predict_intent(text) if text else (None, 0)
+        # NLP real + fallback a keywords
+        intent, conf = self.nlp.predict_intent(text) if text else (None, 0)
+        # Fallback: si NLP no detecta, usar keywords
+        if not intent or conf < 0.6:
+            tl = text.lower() if text else ''
+            if any(kw in tl for kw in ['recomiendame','recomendar','sugerir']):
+                intent, conf = ('RECOMMEND', 0.7)
+            elif any(kw in tl for kw in ['stock','inventario','critico','agotado']):
+                intent, conf = ('STOCK', 0.7)
+            elif any(kw in tl for kw in ['finanza','balance','ganancia','margen']):
+                intent, conf = ('FINANCE', 0.7)
+            elif any(kw in tl for kw in ['venta','cuanto vendi','caja']):
+                intent, conf = ('SALES', 0.7)
+            elif any(kw in tl for kw in ['hola','buenos dias','saludos']):
+                intent, conf = ('GREETING', 0.7)
         intent_str = str(intent) if intent else ''
         
         tools = []
@@ -59,11 +57,7 @@ class AgentMaster:
         
         # Humanizar respuesta
         # Intentar herramienta automática primero
-        auto_resp = self._auto_tool_response(intent, role, icon)
-        if auto_resp:
-            resp = f"{icon} {auto_resp}"
-        else:
-            resp = self._respond(text, intent_str, role, user_name, icon, poderes, tools)
+        resp = self._respond(text, intent_str, role, user_name, icon, poderes, tools)
         try:
             resp = self.humanizer.enhance(resp, role)
         except:

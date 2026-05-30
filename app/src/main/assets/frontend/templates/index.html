@@ -52,6 +52,10 @@
       }
     </script>
     <!-- Fin TPV Ultra Smart PWA -->
+
+<link rel="stylesheet" href="/static/lib/bootstrap.min.css">
+<link rel="stylesheet" href="/static/lib/bootstrap-icons.css">
+
 </head>
 <body>
 
@@ -1305,7 +1309,7 @@ window.toggleDark = function() {
 
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<canvas id="ventasChart" style="max-height:200px;margin-top:16px"></canvas>
+
 <script>
 window.dibujarGrafico = async function() {
   var res = await fetch('/api/ventas/hoy');
@@ -1331,6 +1335,15 @@ window.dibujarGrafico = async function() {
 };
 setTimeout(dibujarGrafico, 2000);
 </script>
+
+
+<script src="/static/lib/chart.umd.min.js"></script>
+
+
+<script src="/static/lib/bootstrap.bundle.min.js"></script>
+<script src="/static/lib/xlsx.full.min.js"></script>
+<script src="/static/lib/qrcode.min.js"></script>
+<script src="/static/lib/html5-qrcode.min.js"></script>
 
 </body>
 </html>

@@ -27,6 +27,22 @@ class AgentMaster:
         }
     
     def process(self, text, role='vendedor', user_name=''):
+        # Búsqueda rápida de productos en BD
+        if text and len(text) > 2:
+            try:
+                from db_connection import obtener_conexion
+                conn = obtener_conexion()
+                c = conn.cursor()
+                c.execute("SELECT nombre, precio, unidad_medida, COALESCE((SELECT stock_actual FROM inventario_general WHERE producto_id=p.producto_id), 0) FROM productos p WHERE activo=1 AND nombre LIKE ?", (f"%{text}%",))
+                rows = c.fetchall()
+                conn.close()
+                if rows:
+                    items = [f"{r[0]}: ${r[1]:.2f} ({r[3]} {r[2]})" for r in rows[:5]]
+                    icon = self.role_icons.get(role, '🤖')
+                    return {'response': f"{icon} Productos encontrados:\n" + "\n".join(f"  📦 {item}" for item in items), 'intent': 'PRODUCT_SEARCH', 'confidence': 1.0, 'role': role, 'privilegios': [], 'tools': [], 'session_id': 'search'}
+            except:
+                pass
+        
         session_id = f"sess_{random.randint(100000,999999)}"
         icon = self.role_icons.get(role, '🤖')
         poderes = self.privilegios.get(role, ['catalogo', 'ventas'])

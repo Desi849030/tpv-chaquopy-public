@@ -644,6 +644,84 @@ def seguridad_check():
     except: checks['attestation'] = {'error': 'no disponible'}
     return jsonify({"ok": True, "seguridad": checks})
 
+
+@app.route('/api/notificaciones')
+def notificaciones():
+    notas = []
+    try:
+        from db_connection import obtener_conexion
+        from datetime import date, timedelta
+        conn = obtener_conexion()
+        c = conn.cursor()
+        hoy = date.today()
+        
+        # Stock bajo
+        c.execute("SELECT p.nombre, ig.stock_actual FROM productos p JOIN inventario_general ig ON p.producto_id=ig.producto_id WHERE ig.stock_actual <= 5")
+        for row in c.fetchall():
+            notas.append({"tipo": "stock_bajo", "icono": "⚠️", "mensaje": f"Stock bajo: {row[0]} ({row[1]}u)", "accion": "inventario"})
+        
+        # Cierre pendiente (ayer no cerrado)
+        ayer = (hoy - timedelta(days=1)).isoformat()
+        c.execute("SELECT COUNT(*) FROM cierres_caja WHERE fecha=?", (ayer,))
+        if c.fetchone()[0] == 0:
+            c.execute("SELECT COUNT(*) FROM historial_ventas WHERE fecha LIKE ?", (f"{ayer}%",))
+            if c.fetchone()[0] > 0:
+                notas.append({"tipo": "cierre_pendiente", "icono": "📋", "mensaje": f"Cierre pendiente del día {ayer}", "accion": "cierre"})
+        
+        conn.close()
+    except: pass
+    return jsonify({"ok": True, "notificaciones": notas, "total": len(notas)})
+
+
+@app.route('/api/qr/<producto_id>')
+def generar_qr(producto_id):
+    """Genera datos para código QR de un producto"""
+    try:
+        from db_connection import obtener_conexion
+        conn = obtener_conexion()
+        c = conn.cursor()
+        c.execute("SELECT nombre, precio, categoria FROM productos WHERE producto_id=?", (producto_id,))
+        row = c.fetchone()
+        conn.close()
+        if row:
+            return jsonify({"ok": True, "qr_data": f"PROD:{producto_id}|{row[0]}|${row[1]}|{row[2]}"})
+    except: pass
+    return jsonify({"ok": False, "error": "Producto no encontrado"})
+
+
+@app.route('/api/clientes/registrar', methods=['POST'])
+def registrar_cliente():
+    d = request.get_json(silent=True) or {}
+    nombre = d.get('nombre', '').strip()
+    telefono = d.get('telefono', '')
+    email = d.get('email', '')
+    if not nombre:
+        return jsonify({"ok": False, "error": "Nombre requerido"}), 400
+    try:
+        from db_connection import obtener_conexion
+        import uuid
+        conn = obtener_conexion()
+        c = conn.cursor()
+        cid = f"cli-{uuid.uuid4().hex[:8]}"
+        c.execute("INSERT INTO clientes (cliente_id, nombre, telefono, email) VALUES (?,?,?,?)", (cid, nombre, telefono, email))
+        conn.commit()
+        conn.close()
+        return jsonify({"ok": True, "cliente_id": cid, "nombre": nombre})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+@app.route('/api/clientes')
+def listar_clientes():
+    try:
+        from db_connection import obtener_conexion
+        conn = obtener_conexion()
+        c = conn.cursor()
+        c.execute("SELECT cliente_id, nombre, telefono, email FROM clientes ORDER BY nombre LIMIT 50")
+        clientes = [{"id": r[0], "nombre": r[1], "telefono": r[2], "email": r[3]} for r in c.fetchall()]
+        conn.close()
+        return jsonify({"ok": True, "clientes": clientes})
+    except: return jsonify({"ok": True, "clientes": []})
+
 # ========== CATCH-ALL ==========
 @app.route('/api/<path:p>')
 def catch_all(p):

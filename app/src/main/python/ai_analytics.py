@@ -69,8 +69,6 @@ def price_optimization_suggestions():
     try:
         d = conn2.execute("SELECT p.nombre, ig.stock_actual as stock FROM productos p JOIN inventario_general ig ON p.producto_id=ig.producto_id WHERE ig.stock_actual > 0 ORDER BY ig.stock_actual DESC LIMIT 20").fetchall()
     finally: conn2.close()
-    return {"price_suggestions": suggestions[:5], dead_products[:5], "total_price_opportunities": len(suggestions)}
-
 def cross_selling_analysis():
     conn = _get_db()
     try:

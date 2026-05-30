@@ -436,8 +436,8 @@ except Exception as e:
 
 try:
     from ai_analytics import cross_selling_analysis as AnalyticsEngine
-    from ai_fraud import FraudDetector
-    from ai_predictor import SalesPredictor
+    from ai_fraud import get_fraud_dashboard as FraudDetector
+    from ai_predictor import get_inventory_predictions_summary as SalesPredictor
     print("📊 AI Analytics + Fraude + Predictor cargados")
 except Exception as e:
     print(f"⚠️ AI Analytics: {e}")

@@ -1303,5 +1303,47 @@ window.toggleDark = function() {
 };
 </script>
 
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<canvas id="ventasChart" style="max-height:200px;margin-top:16px;display:none"></canvas>
+<script>
+window.dibujarGrafico = async function() {
+  var res = await fetch('/api/ventas/hoy');
+  var d = await res.json();
+  var ctx = document.getElementById('ventasChart');
+  if (!ctx || !d.ventas) return;
+  var productos = {};
+  d.ventas.forEach(function(v) {
+    productos[v.producto] = (productos[v.producto] || 0) + v.total;
+  });
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: Object.keys(productos).slice(0,5),
+      datasets: [{label: 'Ventas Hoy ($)', data: Object.values(productos).slice(0,5), backgroundColor: '#6366f1', borderRadius: 8}]
+    },
+    options: {
+      responsive: true,
+      plugins: {legend: {labels: {color: '#94a3b8'}}},
+      scales: {x: {ticks: {color: '#94a3b8', maxRotation: 45}}, y: {ticks: {color: '#94a3b8'}}}
+    }
+  });
+};
+setTimeout(dibujarGrafico, 2000);
+</script>
+
+
+<script>
+// Mostrar canvas solo en dashboard
+const observer = new MutationObserver(function() {
+  const dashboard = document.getElementById('dashboard-tab-pane');
+  const canvas = document.getElementById('ventasChart');
+  if (dashboard && canvas) {
+    canvas.style.display = dashboard.classList.contains('active') || dashboard.classList.contains('show') ? 'block' : 'none';
+  }
+});
+observer.observe(document.body, {childList: true, subtree: true});
+</script>
+
 </body>
 </html>

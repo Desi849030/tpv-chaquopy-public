@@ -1,8 +1,0 @@
-        // Buscar supervisor
-        if (data.supervisores) {
-            const sup = data.supervisores.find(s => s.usuario === usuario && s.password === password);
-            if (sup) {
-                this.guardarSesion(usuario, "supervisor", sup.nombre);
-                return { success: true, role: "supervisor", nombre: sup.nombre };
-            }
-        }

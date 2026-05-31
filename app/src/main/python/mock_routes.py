@@ -1,110 +1,7 @@
-"""TPV Ultra Smart v8.0 - Backend Completo con Agente IA, Seguridad, Privilegios"""
-import os, sys, json, logging, uuid
-from datetime import datetime
-from flask import Flask, request, jsonify, send_from_directory
-
-_CD = os.path.dirname(os.path.abspath(__file__))
-_MAIN = os.path.dirname(_CD)
-_ASSETS = os.path.join(_MAIN, 'assets', 'frontend')
-_TPL = os.path.join(_ASSETS, 'templates')
-_STAT = os.path.join(_ASSETS, 'static')
-
-app = Flask(__name__, static_folder=_STAT, static_url_path='/static')
-app.config['PERMANENT_SESSION_LIFETIME'] = 86400 * 365  # 1 año
-app.secret_key = 'tpv-ultra-smart-v8-2026-nueva-sesion'
-
-# ========== FRONTEND ==========
-@app.route('/')
-def index():
-    path = os.path.join(_TPL, 'index.html')
-    if os.path.exists(path):
-        with open(path, 'r', encoding='utf-8') as f:
-            return f.read(), 200, {'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache'}
-    return '<h1>TPV no encontrado</h1>', 404
-
-@app.route('/static/<path:f>')
-def static_serve(f):
-    return send_from_directory(_STAT, f)
-
-# ========== AUTH ==========
-@app.route('/api/health')
-def health():
-    return jsonify({"status": "ok", "version": "8.0", "db": True})
-
-@app.route('/api/auth/login', methods=['POST'])
-def login():
-    from flask import session
-    d = request.get_json(silent=True) or {}
-    u = d.get('username', '').strip()
-    p = d.get('password', '').strip()
-    
-    # Aceptar cualquier contraseña para los usuarios conocidos
-    usuarios = {
-        'desarrollador': {'nombre': 'Desarrollador Principal', 'rol': 'desarrollador', 'id': 'dev-001'},
-        'admin': {'nombre': 'Administrador', 'rol': 'administrador', 'id': 'usr-001'},
-        'supervisor1': {'nombre': 'María Supervisora', 'rol': 'supervisor', 'id': 'usr-002'},
-        'vendedor1': {'nombre': 'Juan Vendedor', 'rol': 'vendedor', 'id': 'usr-003'},
-        'cajero1': {'nombre': 'Ana Cajera', 'rol': 'cajero', 'id': 'usr-004'}
-    }
-    
-    user = usuarios.get(u)
-    if user:
-        user['username'] = u
-        session['usuario'] = user
-        return jsonify({"ok": True, "usuario": user})
-    # Si no existe, crear con rol vendedor
-    session['usuario'] = {'username': u, 'nombre': u, 'rol': 'vendedor', 'id': 'auto-001'}
-    return jsonify({"ok": True, "usuario": session['usuario']})
-
-@app.route('/api/auth/logout', methods=['POST'])
-def logout():
-    from flask import session
-    session.pop('usuario', None)
-    return jsonify({"ok": True})
-
-@app.route('/api/auth/me')
-def auth_me():
-    from flask import session
-    user = session.get('usuario')
-    if user:
-        return jsonify({"autenticado": True, "usuario": user})
-    # Auto-login como desarrollador si no hay sesión
-    default = {"username": "desarrollador", "nombre": "Desarrollador Principal", "rol": "desarrollador", "id": "dev-001"}
-    session['usuario'] = default
-    session.permanent = True
-    return jsonify({"autenticado": True, "usuario": default})
-
-
-# ========== CATÁLOGO ==========
-@app.route('/api/catalogo')
-def catalogo():
-    try:
-        from db_connection import obtener_conexion
-        conn = obtener_conexion()
-        cursor = conn.cursor()
-        cursor.execute("SELECT p.producto_id, p.nombre, COALESCE(p.categoria,'General'), p.precio, COALESCE(p.unidad_medida,'Un'), COALESCE(p.costo,0), CAST(COALESCE(ig.stock_actual, 50) AS INTEGER) FROM productos p LEFT JOIN inventario_general ig ON p.producto_id = ig.producto_id WHERE p.activo=1")
-        prods = []
-        emojis = ["🍚","🫘","🫒","🥤","🧴","🍬","☕","🥛","🥚","🍞","🧼","🪥"]
-        for i, row in enumerate(cursor.fetchall()):
-            prods.append({"id": row[0], "nombre": row[1], "categoria": row[2], "precio": row[3], "um": row[4], "costo": row[5], "stock": row[6], "codigo": row[0][:6], "imagen": emojis[i % len(emojis)]})
-        conn.close()
-        cats = list(set(p["categoria"] for p in prods))
-        return jsonify({"ok": True, "productos": prods, "total": len(prods), "categorias": cats})
-    except Exception as e:
-        print(f"Catálogo error: {e}")
-    return jsonify({"ok": True, "productos": [
-        {"id": "p2", "nombre": "Frijoles Negros 500g", "categoria": "Alimentos", "precio": 18.75, "stock": 32, "um": "Bolsa", "costo": 12.50, "codigo": "FR002", "imagen": "🫘"},
-        {"id": "p3", "nombre": "Aceite Vegetal 1L", "categoria": "Alimentos", "precio": 45.00, "stock": 28, "um": "L", "costo": 32.00, "codigo": "AC003", "imagen": "🫒"},
-        {"id": "p4", "nombre": "Refresco Cola 2L", "categoria": "Bebidas", "precio": 32.00, "stock": 60, "um": "Botella", "costo": 22.00, "codigo": "RC004", "imagen": "🥤"},
-        {"id": "p5", "nombre": "Jabón Líquido Multiusos", "categoria": "Limpieza", "precio": 55.00, "stock": 25, "um": "Botella", "costo": 35.00, "codigo": "JL005", "imagen": "🧴"},
-        {"id": "p6", "nombre": "Azúcar Morena 1kg", "categoria": "Alimentos", "precio": 22.30, "stock": 50, "um": "Kg", "costo": 15.80, "codigo": "AZ006", "imagen": "🍬"},
-        {"id": "p7", "nombre": "Café Molido 250g", "categoria": "Bebidas", "precio": 65.00, "stock": 40, "um": "Paquete", "costo": 45.00, "codigo": "CF007", "imagen": "☕"},
-        {"id": "p8", "nombre": "Leche Entera 1L", "categoria": "Lácteos", "precio": 28.00, "stock": 55, "um": "L", "costo": 20.00, "codigo": "LC008", "imagen": "🥛"},
-        {"id": "p9", "nombre": "Huevos 12un", "categoria": "Lácteos", "precio": 42.00, "stock": 35, "um": "Caja", "costo": 30.00, "codigo": "HV009", "imagen": "🥚"},
-        {"id": "p10", "nombre": "Pan Integral", "categoria": "Panadería", "precio": 35.00, "stock": 20, "um": "Pieza", "costo": 22.00, "codigo": "PN010", "imagen": "🍞"},
-        {"id": "p11", "nombre": "Detergente Líquido 500ml", "categoria": "Limpieza", "precio": 38.00, "stock": 30, "um": "Botella", "costo": 25.00, "codigo": "DT011", "imagen": "🧼"},
-        {"id": "p12", "nombre": "Pasta Dental", "categoria": "Higiene", "precio": 28.00, "stock": 45, "um": "Unidad", "costo": 18.00, "codigo": "PD012", "imagen": "🪥"}
-    ], "categorias": ["Alimentos", "Bebidas", "Limpieza", "Lácteos", "Panadería", "Higiene", "General"]})
+"""APIs Mock - TPV Ultra Smart"""
+from flask import jsonify, request
+from datetime import date, timedelta
+import uuid
 
 # ========== MÉTRICAS ==========
 @app.route('/api/metrics')
@@ -737,6 +634,225 @@ def backup_bd():
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)})
 
+
+# ========== SINCRONIZACIÓN OFFLINE → SUPABASE ==========
+@app.route('/api/sync/upload', methods=['POST'])
+def sync_upload():
+    """Recibe datos offline y los sincroniza con resolución de conflictos"""
+    d = request.get_json(silent=True) or {}
+    ventas = d.get('ventas', [])
+    inventario = d.get('inventario', [])
+    dispositivo = d.get('dispositivo', 'unknown')
+    timestamp = d.get('timestamp', __import__('datetime').datetime.now().isoformat())
+    
+    resultados = {"ventas": 0, "inventario": 0, "conflictos": 0}
+    
+    try:
+        from db_connection import obtener_conexion
+        conn = obtener_conexion()
+        cursor = conn.cursor()
+        
+        # Sincronizar ventas con resolución de conflictos (timestamp más reciente gana)
+        for v in ventas:
+            venta_id = v.get('venta_id', '')
+            ts = v.get('timestamp', timestamp)
+            
+            # Verificar si ya existe
+            cursor.execute("SELECT timestamp_sync FROM historial_ventas WHERE venta_id=?", (venta_id,))
+            existente = cursor.fetchone()
+            
+            if not existente or (existente[0] and ts > existente[0]):
+                # Insertar o actualizar (el más reciente gana)
+                cursor.execute("""
+                    INSERT OR REPLACE INTO historial_ventas 
+                    (venta_id, producto_id, nombre, cantidad, precio_unit, total, metodo_pago, fecha, vendedor_id, vendedor_nombre, timestamp_sync, dispositivo)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (venta_id, v.get('producto_id',''), v.get('nombre',''), v.get('cantidad',1),
+                      v.get('precio_unit',0), v.get('total',0), v.get('metodo_pago','efectivo'),
+                      v.get('fecha', timestamp), v.get('vendedor_id',''), v.get('vendedor_nombre',''),
+                      ts, dispositivo))
+                resultados['ventas'] += 1
+                if existente:
+                    resultados['conflictos'] += 1
+        
+        # Sincronizar inventario
+        for inv in inventario:
+            pid = inv.get('producto_id', '')
+            stock = inv.get('stock_actual', 0)
+            ts = inv.get('timestamp', timestamp)
+            
+            cursor.execute("SELECT timestamp_sync FROM inventario_general WHERE producto_id=?", (pid,))
+            existente = cursor.fetchone()
+            
+            if not existente or (existente[0] and ts > existente[0]):
+                cursor.execute("""
+                    INSERT OR REPLACE INTO inventario_general 
+                    (producto_id, nombre, stock_actual, stock_minimo, precio_venta, actualizado, timestamp_sync, dispositivo)
+                    VALUES (?, ?, ?, 5, ?, ?, ?, ?)
+                """, (pid, inv.get('nombre',''), stock, inv.get('precio_venta',0),
+                      ts, ts, dispositivo))
+                resultados['inventario'] += 1
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({"ok": True, "resultados": resultados, "timestamp": timestamp})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+@app.route('/api/sync/download', methods=['GET'])
+def sync_download():
+    """Descarga datos para sincronizar a dispositivo offline"""
+    desde = request.args.get('desde', '2026-01-01')
+    try:
+        from db_connection import obtener_conexion
+        conn = obtener_conexion()
+        cursor = conn.cursor()
+        
+        # Ventas desde fecha
+        cursor.execute("SELECT * FROM historial_ventas WHERE timestamp_sync >= ? OR fecha >= ? ORDER BY timestamp_sync", (desde, desde))
+        ventas = [dict(row) for row in cursor.fetchall()]
+        
+        # Inventario actual
+        cursor.execute("SELECT * FROM inventario_general")
+        inventario = [dict(row) for row in cursor.fetchall()]
+        
+        conn.close()
+        return jsonify({"ok": True, "ventas": ventas, "inventario": inventario, "timestamp": __import__('datetime').datetime.now().isoformat()})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+@app.route('/api/sync/conflictos', methods=['GET'])
+def sync_conflictos():
+    """Verifica conflictos de sincronización"""
+    try:
+        from db_connection import obtener_conexion
+        conn = obtener_conexion()
+        cursor = conn.cursor()
+        
+        # Ventas con múltiples versiones (conflictos)
+        cursor.execute("""
+            SELECT venta_id, COUNT(*) as versiones, MAX(timestamp_sync) as ultima
+            FROM historial_ventas 
+            WHERE timestamp_sync IS NOT NULL
+            GROUP BY venta_id 
+            HAVING COUNT(*) > 1
+        """)
+        conflictos = [{"venta_id": r[0], "versiones": r[1], "ultima": r[2]} for r in cursor.fetchall()]
+        
+        conn.close()
+        return jsonify({"ok": True, "conflictos": conflictos, "total": len(conflictos)})
+    except Exception as e:
+        return jsonify({"ok": True, "conflictos": [], "total": 0})
+
+
+@app.route('/api/ventas/registrar-seguro', methods=['POST'])
+def registrar_venta_segura():
+    """Registra AMBAS ventas, descuenta stock disponible. Sin stock -> venta en espera"""
+    d = request.get_json(silent=True) or {}
+    items = d.get('items', [])
+    metodo_pago = d.get('metodo_pago', 'efectivo')
+    vendedor = d.get('vendedor', 'anonimo')
+    
+    if not items:
+        return jsonify({"ok": False, "error": "No hay productos"}), 400
+    
+    try:
+        from db_connection import obtener_conexion
+        import uuid
+        from datetime import datetime
+        
+        conn = obtener_conexion()
+        cursor = conn.cursor()
+        fecha = datetime.now().isoformat()
+        resultados = []
+        
+        for item in items:
+            pid = item.get('id', '')
+            nombre = item.get('nombre', 'Producto')
+            cantidad = float(item.get('cantidad', 1))
+            precio = float(item.get('precio', 0))
+            subtotal = cantidad * precio
+            venta_id = f"vta-{uuid.uuid4().hex[:8]}"
+            
+            # Verificar stock disponible
+            cursor.execute("SELECT stock_actual FROM inventario_general WHERE producto_id = ?", (pid,))
+            row = cursor.fetchone()
+            stock = row[0] if row else 0
+            
+            # SIEMPRE registrar la venta
+            cursor.execute("""
+                INSERT INTO historial_ventas (venta_id, producto_id, nombre, cantidad, precio_unit, total, metodo_pago, fecha, vendedor_id, vendedor_nombre)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (venta_id, pid, nombre, cantidad, precio, subtotal, metodo_pago, fecha, vendedor, vendedor))
+            
+            # Descontar stock si hay disponible (lo que se pueda)
+            if stock > 0:
+                descuento = min(stock, cantidad)
+                cursor.execute("""
+                    UPDATE inventario_general 
+                    SET stock_actual = MAX(0, stock_actual - ?), actualizado = ?
+                    WHERE producto_id = ?
+                """, (descuento, fecha, pid))
+                pendiente = cantidad - descuento
+            else:
+                descuento = 0
+                pendiente = cantidad
+            
+            estado = "completa" if pendiente == 0 else "parcial"
+            resultados.append({
+                "venta_id": venta_id,
+                "producto": nombre,
+                "cantidad": cantidad,
+                "descontado": descuento,
+                "pendiente": pendiente,
+                "estado": estado,
+                "total": subtotal
+            })
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            "ok": True, 
+            "ventas": resultados,
+            "total": round(sum(r["total"] for r in resultados), 2),
+            "fecha": fecha
+        })
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+@app.route('/api/ventas/stock-verificar', methods=['POST'])
+def verificar_stock():
+    """Verifica stock disponible antes de vender"""
+    d = request.get_json(silent=True) or {}
+    items = d.get('items', [])
+    
+    try:
+        from db_connection import obtener_conexion
+        conn = obtener_conexion()
+        cursor = conn.cursor()
+        
+        resultado = []
+        for item in items:
+            pid = item.get('id', '')
+            cantidad = float(item.get('cantidad', 1))
+            cursor.execute("SELECT p.nombre, ig.stock_actual FROM productos p LEFT JOIN inventario_general ig ON p.producto_id=ig.producto_id WHERE p.producto_id=?", (pid,))
+            row = cursor.fetchone()
+            stock = row[1] if row and row[1] else 0
+            resultado.append({
+                "producto_id": pid,
+                "nombre": row[0] if row else "Desconocido",
+                "stock_actual": stock,
+                "solicitado": cantidad,
+                "disponible": stock >= cantidad
+            })
+        
+        conn.close()
+        return jsonify({"ok": True, "stock": resultado, "todo_disponible": all(r["disponible"] for r in resultado)})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
 # ========== CATCH-ALL ==========
 @app.route('/api/<path:p>')
 def catch_all(p):
@@ -911,14 +1027,3 @@ try:
 except Exception as e:
     print(f"⚠️ Tools: {e}")
 
-if __name__ == '__main__':
-    print(f"\n{'='*50}\n  TPV Ultra Smart v8.0 - COMPLETO\n{'='*50}")
-    print(f" 📁 Frontend: {_TPL}")
-    print(f" ✅ APIs: 20+ endpoints")
-    print(f" ✅ Login: desarrollador / 123456")
-    print(f" ✅ Agente IA: {'ACTIVO' if _agent_loaded else 'fallback'}")
-    print(f" ✅ Privilegios + Jerarquía")
-    print(f" ✅ URL: http://localhost:5000\n")
-    logging.basicConfig(level=logging.WARNING)
-    port = int(os.environ.get('TPV_PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)

@@ -365,7 +365,8 @@
             } catch(e) { /* offline */ }
         }
 
-        async function initializeUI() {
+        async function _syncStockFromAPI(){try{const r=await fetch("/api/catalogo");const d=await r.json();if(d&&d.productos){d.productos.forEach(ap=>{const p=tpvState.productos.find(p=>p.nombre===ap.nombre);if(p){p.stock=ap.stock||10;p.precio=ap.precio||p.precio;}});}}catch(e){}}
+async function initializeUI() {
             addToCartModal = new bootstrap.Modal('#addToCartModal');
             processPaymentModal = new bootstrap.Modal('#processPaymentModal');
             editSaleModal = new bootstrap.Modal('#editSaleModal');

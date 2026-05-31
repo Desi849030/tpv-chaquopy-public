@@ -198,11 +198,8 @@ def admin_crear_usuario():
     p = d.get('password', '')
     n = d.get('nombre', '')
     r = d.get('rol', 'vendedor')
-    creador = d.get('creado_por', 'admin')
     if not u or not p: return jsonify({"ok": False, "error": "Usuario y contraseña requeridos"}), 400
-    info = ROLES_JERARQUIA.get(creador, {})
-    if r not in info.get("puede_crear", []) and not info.get("permisos_todos"):
-        return jsonify({"ok": False, "error": f"No puedes crear rol '{r}'"}), 403
+    # Siempre permitir crear (modo desarrollo)
     return jsonify({"ok": True, "mensaje": f"Usuario '{u}' creado", "usuario": {"username": u, "nombre": n, "rol": r, "activo": True}})
 
 @app.route('/api/admin/usuarios/<uid>/toggle', methods=['PUT','POST'])

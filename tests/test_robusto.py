@@ -104,7 +104,7 @@ print("\n🔑 PRIVILEGIOS (4 pruebas)")
 check("34. Lista privilegios", (r := api('GET','/api/admin/privilegios')) and 'jerarquia' in r.json())
 check("35. 5 roles", (r := api('GET','/api/admin/privilegios')) and len(r.json().get('jerarquia',{})) >= 5)
 uid = 'test-'+''.join(random.choices(string.ascii_lowercase, k=4))
-check("36. Crear usuario", (r := api('POST','/api/admin/usuarios/crear', json={'username':uid,'password':'123','nombre':'Test','rol':'vendedor'})) and (r.json().get('ok') or r.status_code == 403))
+check("36. Crear usuario", (r := api('POST','/api/admin/usuarios/crear', json={'username':uid,'password':'123','nombre':'Test','rol':'administrador'})) and (r.json().get('ok') or r.status_code == 403))
 check("37. Toggle usuario", (r := api('PUT','/api/admin/usuarios/dev-001/toggle', json={'activo':True})) and r.json().get('ok'))
 
 # ==================== CLIENTES (3) ====================

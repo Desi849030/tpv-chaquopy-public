@@ -737,6 +737,225 @@ def backup_bd():
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)})
 
+
+# ========== SINCRONIZACIÓN OFFLINE → SUPABASE ==========
+@app.route('/api/sync/upload', methods=['POST'])
+def sync_upload():
+    """Recibe datos offline y los sincroniza con resolución de conflictos"""
+    d = request.get_json(silent=True) or {}
+    ventas = d.get('ventas', [])
+    inventario = d.get('inventario', [])
+    dispositivo = d.get('dispositivo', 'unknown')
+    timestamp = d.get('timestamp', __import__('datetime').datetime.now().isoformat())
+    
+    resultados = {"ventas": 0, "inventario": 0, "conflictos": 0}
+    
+    try:
+        from db_connection import obtener_conexion
+        conn = obtener_conexion()
+        cursor = conn.cursor()
+        
+        # Sincronizar ventas con resolución de conflictos (timestamp más reciente gana)
+        for v in ventas:
+            venta_id = v.get('venta_id', '')
+            ts = v.get('timestamp', timestamp)
+            
+            # Verificar si ya existe
+            cursor.execute("SELECT timestamp_sync FROM historial_ventas WHERE venta_id=?", (venta_id,))
+            existente = cursor.fetchone()
+            
+            if not existente or (existente[0] and ts > existente[0]):
+                # Insertar o actualizar (el más reciente gana)
+                cursor.execute("""
+                    INSERT OR REPLACE INTO historial_ventas 
+                    (venta_id, producto_id, nombre, cantidad, precio_unit, total, metodo_pago, fecha, vendedor_id, vendedor_nombre, timestamp_sync, dispositivo)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (venta_id, v.get('producto_id',''), v.get('nombre',''), v.get('cantidad',1),
+                      v.get('precio_unit',0), v.get('total',0), v.get('metodo_pago','efectivo'),
+                      v.get('fecha', timestamp), v.get('vendedor_id',''), v.get('vendedor_nombre',''),
+                      ts, dispositivo))
+                resultados['ventas'] += 1
+                if existente:
+                    resultados['conflictos'] += 1
+        
+        # Sincronizar inventario
+        for inv in inventario:
+            pid = inv.get('producto_id', '')
+            stock = inv.get('stock_actual', 0)
+            ts = inv.get('timestamp', timestamp)
+            
+            cursor.execute("SELECT timestamp_sync FROM inventario_general WHERE producto_id=?", (pid,))
+            existente = cursor.fetchone()
+            
+            if not existente or (existente[0] and ts > existente[0]):
+                cursor.execute("""
+                    INSERT OR REPLACE INTO inventario_general 
+                    (producto_id, nombre, stock_actual, stock_minimo, precio_venta, actualizado, timestamp_sync, dispositivo)
+                    VALUES (?, ?, ?, 5, ?, ?, ?, ?)
+                """, (pid, inv.get('nombre',''), stock, inv.get('precio_venta',0),
+                      ts, ts, dispositivo))
+                resultados['inventario'] += 1
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({"ok": True, "resultados": resultados, "timestamp": timestamp})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+@app.route('/api/sync/download', methods=['GET'])
+def sync_download():
+    """Descarga datos para sincronizar a dispositivo offline"""
+    desde = request.args.get('desde', '2026-01-01')
+    try:
+        from db_connection import obtener_conexion
+        conn = obtener_conexion()
+        cursor = conn.cursor()
+        
+        # Ventas desde fecha
+        cursor.execute("SELECT * FROM historial_ventas WHERE timestamp_sync >= ? OR fecha >= ? ORDER BY timestamp_sync", (desde, desde))
+        ventas = [dict(row) for row in cursor.fetchall()]
+        
+        # Inventario actual
+        cursor.execute("SELECT * FROM inventario_general")
+        inventario = [dict(row) for row in cursor.fetchall()]
+        
+        conn.close()
+        return jsonify({"ok": True, "ventas": ventas, "inventario": inventario, "timestamp": __import__('datetime').datetime.now().isoformat()})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+@app.route('/api/sync/conflictos', methods=['GET'])
+def sync_conflictos():
+    """Verifica conflictos de sincronización"""
+    try:
+        from db_connection import obtener_conexion
+        conn = obtener_conexion()
+        cursor = conn.cursor()
+        
+        # Ventas con múltiples versiones (conflictos)
+        cursor.execute("""
+            SELECT venta_id, COUNT(*) as versiones, MAX(timestamp_sync) as ultima
+            FROM historial_ventas 
+            WHERE timestamp_sync IS NOT NULL
+            GROUP BY venta_id 
+            HAVING COUNT(*) > 1
+        """)
+        conflictos = [{"venta_id": r[0], "versiones": r[1], "ultima": r[2]} for r in cursor.fetchall()]
+        
+        conn.close()
+        return jsonify({"ok": True, "conflictos": conflictos, "total": len(conflictos)})
+    except Exception as e:
+        return jsonify({"ok": True, "conflictos": [], "total": 0})
+
+
+@app.route('/api/ventas/registrar-seguro', methods=['POST'])
+def registrar_venta_segura():
+    """Registra AMBAS ventas, descuenta stock disponible. Sin stock -> venta en espera"""
+    d = request.get_json(silent=True) or {}
+    items = d.get('items', [])
+    metodo_pago = d.get('metodo_pago', 'efectivo')
+    vendedor = d.get('vendedor', 'anonimo')
+    
+    if not items:
+        return jsonify({"ok": False, "error": "No hay productos"}), 400
+    
+    try:
+        from db_connection import obtener_conexion
+        import uuid
+        from datetime import datetime
+        
+        conn = obtener_conexion()
+        cursor = conn.cursor()
+        fecha = datetime.now().isoformat()
+        resultados = []
+        
+        for item in items:
+            pid = item.get('id', '')
+            nombre = item.get('nombre', 'Producto')
+            cantidad = float(item.get('cantidad', 1))
+            precio = float(item.get('precio', 0))
+            subtotal = cantidad * precio
+            venta_id = f"vta-{uuid.uuid4().hex[:8]}"
+            
+            # Verificar stock disponible
+            cursor.execute("SELECT stock_actual FROM inventario_general WHERE producto_id = ?", (pid,))
+            row = cursor.fetchone()
+            stock = row[0] if row else 0
+            
+            # SIEMPRE registrar la venta
+            cursor.execute("""
+                INSERT INTO historial_ventas (venta_id, producto_id, nombre, cantidad, precio_unit, total, metodo_pago, fecha, vendedor_id, vendedor_nombre)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (venta_id, pid, nombre, cantidad, precio, subtotal, metodo_pago, fecha, vendedor, vendedor))
+            
+            # Descontar stock si hay disponible (lo que se pueda)
+            if stock > 0:
+                descuento = min(stock, cantidad)
+                cursor.execute("""
+                    UPDATE inventario_general 
+                    SET stock_actual = MAX(0, stock_actual - ?), actualizado = ?
+                    WHERE producto_id = ?
+                """, (descuento, fecha, pid))
+                pendiente = cantidad - descuento
+            else:
+                descuento = 0
+                pendiente = cantidad
+            
+            estado = "completa" if pendiente == 0 else "parcial"
+            resultados.append({
+                "venta_id": venta_id,
+                "producto": nombre,
+                "cantidad": cantidad,
+                "descontado": descuento,
+                "pendiente": pendiente,
+                "estado": estado,
+                "total": subtotal
+            })
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            "ok": True, 
+            "ventas": resultados,
+            "total": round(sum(r["total"] for r in resultados), 2),
+            "fecha": fecha
+        })
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+@app.route('/api/ventas/stock-verificar', methods=['POST'])
+def verificar_stock():
+    """Verifica stock disponible antes de vender"""
+    d = request.get_json(silent=True) or {}
+    items = d.get('items', [])
+    
+    try:
+        from db_connection import obtener_conexion
+        conn = obtener_conexion()
+        cursor = conn.cursor()
+        
+        resultado = []
+        for item in items:
+            pid = item.get('id', '')
+            cantidad = float(item.get('cantidad', 1))
+            cursor.execute("SELECT p.nombre, ig.stock_actual FROM productos p LEFT JOIN inventario_general ig ON p.producto_id=ig.producto_id WHERE p.producto_id=?", (pid,))
+            row = cursor.fetchone()
+            stock = row[1] if row and row[1] else 0
+            resultado.append({
+                "producto_id": pid,
+                "nombre": row[0] if row else "Desconocido",
+                "stock_actual": stock,
+                "solicitado": cantidad,
+                "disponible": stock >= cantidad
+            })
+        
+        conn.close()
+        return jsonify({"ok": True, "stock": resultado, "todo_disponible": all(r["disponible"] for r in resultado)})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
 # ========== CATCH-ALL ==========
 @app.route('/api/<path:p>')
 def catch_all(p):

@@ -1,6 +1,12 @@
 let _dashChartVentas = null;
 let _dashChartCat    = null;
 
+// Only render charts if the dashboard tab is active
+function isDashboardTabActive() {
+    const tabPane = document.getElementById('dashboard-tab-pane');
+    return tabPane && tabPane.classList.contains('active');
+}
+
 async function dashboard_cargar() {
     const hoy   = new Date().toISOString().split('T')[0];
     const ventas = tpvState.ventasDiarias[hoy] || [];
@@ -87,37 +93,41 @@ async function dashboard_cargar() {
         </div>`;
 
     // ── Gráfico barras ventas 7 días ───────────────────────
-    const ctxV = document.getElementById('dash-chart-ventas');
-    if (ctxV) {
-        if (_dashChartVentas) _dashChartVentas.destroy();
-        _dashChartVentas = new Chart(ctxV, {
-            type: 'bar',
-            data: {
-                labels: lbl7,
-                datasets: [{ label:'Ventas $', data: dias7,
-                    backgroundColor:'rgba(13,110,253,0.7)', borderRadius:6 }]
-            },
-            options: { responsive:true, plugins:{ legend:{ display:false } },
-                scales:{ y:{ beginAtZero:true } } }
-        });
-    }
+    // Destroy existing chart instances to prevent leaks
+    if (window._dashChartVentas) window._dashChartVentas.destroy();
+    if (window._dashChartCat) window._dashChartCat.destroy();
 
-    // ── Gráfico pie categorías ─────────────────────────────
-    const ctxC = document.getElementById('dash-chart-cat');
-    if (ctxC && Object.keys(catMap).length) {
-        if (_dashChartCat) _dashChartCat.destroy();
-        const COLORS = ['#0d6efd','#198754','#ffc107','#dc3545','#6f42c1','#20c997','#fd7e14'];
-        _dashChartCat = new Chart(ctxC, {
-            type: 'doughnut',
-            data: {
-                labels: Object.keys(catMap),
-                datasets: [{ data: Object.values(catMap).map(v=>parseFloat(v.toFixed(2))),
-                    backgroundColor: COLORS }]
-            },
-            options: { responsive:true, plugins:{ legend:{ position:'bottom' } } }
-        });
-    } else if (ctxC) {
-        ctxC.parentElement.innerHTML = '<p class="text-muted text-center py-4">Sin ventas hoy para categorías</p>';
+    if (isDashboardTabActive()) {
+        const ctxV = document.getElementById('dash-chart-ventas');
+        if (ctxV) {
+            _dashChartVentas = new Chart(ctxV, {
+                type: 'bar',
+                data: {
+                    labels: lbl7,
+                    datasets: [{ label:'Ventas $', data: dias7,
+                        backgroundColor:'rgba(13,110,253,0.7)', borderRadius:6 }]
+                },
+                options: { responsive:true, plugins:{ legend:{ display:false } },
+                    scales:{ y:{ beginAtZero:true } } }
+            });
+        }
+
+        // ── Gráfico pie categorías ─────────────────────────────
+        const ctxC = document.getElementById('dash-chart-cat');
+        if (ctxC && Object.keys(catMap).length) {
+            const COLORS = ['#0d6efd','#198754','#ffc107','#dc3545','#6f42c1','#20c997','#fd7e14'];
+            _dashChartCat = new Chart(ctxC, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(catMap),
+                    datasets: [{ data: Object.values(catMap).map(v=>parseFloat(v.toFixed(2))),
+                        backgroundColor: COLORS }]
+                },
+                options: { responsive:true, plugins:{ legend:{ position:'bottom' } } }
+            });
+        } else if (ctxC) {
+            ctxC.parentElement.innerHTML = '<p class="text-muted text-center py-4">Sin ventas hoy para categorías</p>';
+        }
     }
 
     // ── Top 5 productos ────────────────────────────────────

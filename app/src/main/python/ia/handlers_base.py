@@ -1,10 +1,59 @@
 # -*- coding: utf-8 -*-
 """
-Handlers Base del Agente
+Handlers Base del Agente - Funciones compartidas por handlers especializados
 """
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def _fm(agent, text, keywords, threshold=0.6):
+    """Fuzzy match: verifica si el texto contiene alguno de los keywords.
+    Usa coincidencia difusa para mayor tolerancia a errores de escritura."""
+    if not text or not keywords:
+        return False
+    tl = text.lower().strip()
+    # Coincidencia exacta primero (rapido)
+    for kw in keywords:
+        if kw.lower() in tl:
+            return True
+    # Fallback: coincidencia difusa si fuzzy_match esta disponible
+    try:
+        from ia.fuzzy_match import best_match
+        for word in tl.split():
+            if len(word) < 3:
+                continue
+            match, score = best_match(word, [kw.lower() for kw in keywords],
+                                      threshold=threshold * 100)
+            if match:
+                return True
+    except Exception:
+        pass
+    return False
+
+
+def _follow(role='cliente'):
+    """Mensaje de seguimiento contextual segun el rol."""
+    followups = {
+        'cliente': "¿Algo mas en lo que pueda ayudarle?",
+        'vendedor': "¿Necesita algo mas? Ventas, stock, top.",
+        'supervisor': "¿Consulto algo mas? Dashboard, tendencias, inventario.",
+        'administrador': "¿Requiere otro reporte? Finanzas, ABC, EOQ.",
+        'desarrollador': "¿Debug algo mas? Logs, metricas, estado del sistema."
+    }
+    return followups.get(role, followups['cliente'])
+
+
+def _get_sug(role='cliente'):
+    """Sugerencias contextuales segun el rol."""
+    suggestions = {
+        'cliente': ["ofertas", "categorias", "precio de producto"],
+        'vendedor': ["ventas hoy", "stock bajo", "top productos"],
+        'supervisor': ["dashboard", "predicciones", "rotacion"],
+        'administrador': ["finanzas", "ABC", "punto equilibrio"],
+        'desarrollador': ["metricas", "logs", "estado sistema"]
+    }
+    return suggestions.get(role, suggestions['cliente'])
 
 
 def greet(role='cliente', name='amigo'):
@@ -29,6 +78,18 @@ def handle_stock(role='cliente'):
 
 def say_goodbye(name='amigo'):
     return f"¡Hasta luego, {name}! 👋"
+
+
+def help_text(role='cliente'):
+    """Texto de ayuda contextual segun el rol."""
+    helps = {
+        'cliente': "Puedo mostrarle nuestro catalogo, precios y ofertas.",
+        'vendedor': "Puedo informarle sobre ventas, stock y productos mas vendidos.",
+        'supervisor': "Tengo listo el dashboard con KPIs y tendencias.",
+        'administrador': "Puedo generarle reportes financieros, ABC y proyecciones.",
+        'desarrollador': "Acceso total activo. Monitoreo del sistema disponible."
+    }
+    return helps.get(role, helps['cliente'])
 
 
 def handle_unknown(text):

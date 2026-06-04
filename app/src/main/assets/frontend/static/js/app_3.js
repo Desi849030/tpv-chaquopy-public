@@ -199,7 +199,7 @@
             const productosIniciales = [];
             
             // INVENTARIO INICIAL PARA HOY
-            const inventarioHoy = {};
+            const inventarioHoy = [];
             
             return { 
                 licencia: { 
@@ -260,35 +260,87 @@
 
         async function loadState() { 
             try { 
-                const db = await dbHelper.openDb();
-                let savedState = await dbHelper.load(db);
-                db.close();
-
-                // Si IndexedDB está vacío, intentar recuperar del servidor
-                if (!savedState) {
-                    try {
-                        const res = await fetch('/api/state', { credentials: 'same-origin' });
-                        if (res.ok) {
-                            const data = await res.json();
-                            if (data.ok && data.estado) {
-                                savedState = data.estado;
-                                console.log('📦 Estado recuperado del servidor');
-                            }
-                        }
-                    } catch(e) { /* offline, continuar */ }
+                // Inicializar capa API primero
+                if (window.TPV_API) {
+                    try { await TPV_API.init(); } catch(e) { console.warn('⚠️ TPV_API.init() falló:', e.message); }
                 }
 
-                const defaultState = getDefaultState();
-                const parsedState = savedState ?? defaultState;
+                // Intentar cargar desde la API primero (fuente de verdad)
+                let loadedFromAPI = false;
+                if (window.TPV_API && TPV_API._isOnline) {
+                    try {
+                        const catalogData = await TPV_API.catalogo.getAll();
+                        if (catalogData && catalogData.productos && catalogData.productos.length > 0) {
+                            const defaultState = getDefaultState();
+                            // Construir inventario desde productos del API
+                            const invFromAPI = catalogData.productos.map(p => ({
+                                id: p.id, nombre: p.nombre, cantInicial: p.stock || 50,
+                                vendido: 0, cantFinal: p.stock || 50, precioVenta: p.precio,
+                                costoUnitario: p.costo || 0
+                            }));
+                            const todayInv = new Date().toISOString().split('T')[0];
+                            tpvState = {
+                                ...defaultState,
+                                productos: catalogData.productos,
+                                categorias: catalogData.categorias || [...new Set(catalogData.productos.map(p => p.categoria))].sort(),
+                                inventarios: { [todayInv]: invFromAPI },
+                            };
+                            loadedFromAPI = true;
+                            console.log('📦 Estado cargado desde API: ' + catalogData.productos.length + ' productos');
+                        }
+                    } catch(e) {
+                        console.warn('⚠️ API no disponible, usando IndexedDB:', e.message);
+                    }
+                }
 
-                tpvState = {
-                    ...defaultState,
-                    ...parsedState,
-                    licencia: { ...defaultState.licencia, ...(parsedState.licencia ?? {}) },
-                    config: { ...defaultState.config, ...(parsedState.config ?? {}) },
-                    nomencladores: { ...defaultState.nomencladores, ...(parsedState.nomencladores ?? {}) },
-                    nomencladorCantidades: parsedState.nomencladorCantidades ?? defaultState.nomencladorCantidades,
-                };
+                // Fallback a IndexedDB si la API no funcionó
+                if (!loadedFromAPI) {
+                    const db = await dbHelper.openDb();
+                    let savedState = await dbHelper.load(db);
+                    db.close();
+
+                    // Si IndexedDB está vacío, intentar recuperar del servidor
+                    if (!savedState) {
+                        try {
+                            const res = await fetch('/api/state', { credentials: 'same-origin' });
+                            if (res.ok) {
+                                const data = await res.json();
+                                if (data.ok && data.estado) {
+                                    savedState = data.estado;
+                                    console.log('📦 Estado recuperado del servidor');
+                                }
+                            }
+                        } catch(e) { /* offline, continuar */ }
+                    }
+
+                    const defaultState = getDefaultState();
+                    const parsedState = savedState ?? defaultState;
+
+                    tpvState = {
+                        ...defaultState,
+                        ...parsedState,
+                        licencia: { ...defaultState.licencia, ...(parsedState.licencia ?? {}) },
+                        config: { ...defaultState.config, ...(parsedState.config ?? {}) },
+                        nomencladores: { ...defaultState.nomencladores, ...(parsedState.nomencladores ?? {}) },
+                        nomencladorCantidades: parsedState.nomencladorCantidades ?? defaultState.nomencladorCantidades,
+                    };
+                } else {
+                    // Si cargamos desde API, completar campos que no vienen del catálogo
+                    const db = await dbHelper.openDb();
+                    let savedState = await dbHelper.load(db);
+                    db.close();
+                    const defaultState = getDefaultState();
+                    const parsedState = savedState ?? defaultState;
+                    tpvState = {
+                        ...defaultState,
+                        ...parsedState,
+                        ...tpvState,
+                        licencia: { ...defaultState.licencia, ...(parsedState.licencia ?? {}) },
+                        config: { ...defaultState.config, ...(parsedState.config ?? {}) },
+                        nomencladores: { ...defaultState.nomencladores, ...(parsedState.nomencladores ?? {}) },
+                        nomencladorCantidades: parsedState.nomencladorCantidades ?? defaultState.nomencladorCantidades,
+                    };
+                }
 
                 if (!tpvState.licencia.clienteId) {
                     tpvState.licencia.clienteId = `TPV-${Date.now().toString().slice(-6)}`;
@@ -301,7 +353,7 @@
                 await catalogo_cargarDesdeServidor();
 
             } catch(e) { 
-                console.error("Error loading state from IndexedDB, resetting to default.", e); 
+                console.error("Error loading state, resetting to default.", e); 
                 showToast(getLang().toast_error_load, 'danger'); 
                 tpvState = getDefaultState(); 
             } 
@@ -345,6 +397,7 @@
 
         async function saveState() { 
             try { 
+                // Siempre guardar en IndexedDB para soporte offline
                 const db = await dbHelper.openDb();
                 await dbHelper.save(db, tpvState); 
                 db.close();
@@ -732,7 +785,7 @@ async function initializeUI() {
         // Obtiene el stock actual de un producto desde el inventario de hoy
         function tpv_getStock(productoId) {
             const hoy = getTodayDateString();
-            const inv = tpvState.inventarios?.[hoy] || [];
+            const _ir = tpvState.inventarios?.[hoy] || []; const inv = Array.isArray(_ir) ? _ir : Object.values(_ir);
             const item = inv.find(i => i.id === productoId);
             return item ? (item.cantFinal ?? item.cantInicial ?? 0) : null;
         }
@@ -748,7 +801,14 @@ async function initializeUI() {
             return `<div class="stock-badge ${cls}">${label}</div>`;
         }
 
-        function tpv_renderizarProductos() { 
+                // ── Helper para detectar emojis en campo imagen ──
+        function _isEmoji(str) {
+            if (!str || typeof str !== 'string') return false;
+            const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F000}-\u{1FFFF}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/u;
+            return emojiRegex.test(str) || (/^.{1,4}$/.test(str) && /[^\w\s.\/:\-\\]/.test(str));
+        }
+
+function tpv_renderizarProductos() { 
             const container = document.getElementById("tpv-productos-container");
             const categoriaSeleccionada = document.getElementById("tpv-category-filter")?.value || "all";
             const lang = getLang();
@@ -769,8 +829,8 @@ async function initializeUI() {
                 return `
                 <div class="col">
                     <div class="product-card" onclick="tpv_mostrarConfirmacionAgregar('${p.id}')">
-                        <div class="product-img" style="position:relative;${p.imagen ? `background-image: url('${p.imagen}')` : ""}">
-                            ${p.imagen ? "" : '<i class="bi bi-image-alt"></i>'}
+                        <div class="product-img" style="position:relative;">
+                            ${(() => { if(!p.imagen) return '<i class="bi bi-image-alt"></i>'; const e=/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}]/u; if(e.test(p.imagen)) return '<span style="font-size:2.5rem;line-height:1">'+p.imagen+'</span>'; return '<img src="'+p.imagen+'" style="max-width:100%;max-height:100%;object-fit:contain" onerror="this.outerHTML=\'<i class=bi-image-alt></i>\'">'\; })()}
                             ${tpv_stockBadge(stock)}
                         </div>
                         <div class="product-info">
@@ -966,8 +1026,17 @@ async function initializeUI() {
             await saveState();
             showToast(`${getLang().toast_sale_processed} ${descuento > 0 ? '| Descuento: -'+formatCurrency(descuento) : ''}`, "success");
 
-            // Notificar al servidor (inventario diario) y SSE
+            // Sincronizar venta al servidor via TPV_API
             const vendedorId = window.AUTH?.usuario?.usuario_id;
+            const vendedorNombre = window.AUTH?.usuario?.nombre || vendedorId || 'vendedor';
+            if (window.TPV_API) {
+                const items = ventas.map(v => ({ id: v.productoId, nombre: v.nombre, cantidad: v.cantidad, precio: v.precioUnitario }));
+                TPV_API.ventas.registrar(items, metodo, vendedorNombre).then(result => {
+                    if (result && result.ok) console.log('✅ Venta registrada en servidor:', result.venta_id || 'ok');
+                }).catch(e => console.warn('⚠️ Venta no sincronizada:', e.message));
+            }
+
+            // Notificar al servidor (inventario diario) y SSE
             if (vendedorId) {
                 ventas.forEach(v => {
                     fetch('/api/inventario/diario/conteo', {
@@ -977,7 +1046,7 @@ async function initializeUI() {
                             vendedor_id:  vendedorId,
                             producto_id:  v.productoId,
                             cant_final:   (() => {
-                                const inv = tpvState.inventarios[hoy] || [];
+                                const _ir = tpvState.inventarios[hoy] || []; const inv = Array.isArray(_ir) ? _ir : Object.values(_ir);
                                 const it  = inv.find(i => i.id === v.productoId);
                                 return it ? Math.max(0, (it.cantInicial||0) - (it.vendido||0)) : 0;
                             })()
@@ -1019,18 +1088,27 @@ async function initializeUI() {
             await saveState();
             showToast(getLang().toast_sale_processed, "success");
 
+            // Sincronizar venta al servidor via TPV_API
+            const vendedorId2 = window.AUTH?.usuario?.usuario_id;
+            const vendedorNombre2 = window.AUTH?.usuario?.nombre || vendedorId2 || 'vendedor';
+            if (window.TPV_API) {
+                const items = ventas.map(v => ({ id: v.productoId, nombre: v.nombre, cantidad: v.cantidad, precio: v.precioUnitario }));
+                TPV_API.ventas.registrar(items, metodo, vendedorNombre2).then(result => {
+                    if (result && result.ok) console.log('✅ Venta registrada en servidor:', result.venta_id || 'ok');
+                }).catch(e => console.warn('⚠️ Venta no sincronizada:', e.message));
+            }
+
             // Actualizar cant_vendida en inventario_diario del servidor (para la tabla admin)
-            const vendedorId = window.AUTH?.usuario?.usuario_id;
-            if (vendedorId) {
+            if (vendedorId2) {
                 ventas.forEach(v => {
                     fetch('/api/inventario/diario/conteo', {
                         method: 'POST', credentials: 'same-origin',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            vendedor_id:  vendedorId,
+                            vendedor_id:  vendedorId2,
                             producto_id:  v.productoId,
                             cant_final:   (() => {
-                                const inv = tpvState.inventarios[hoy] || [];
+                                const _ir = tpvState.inventarios[hoy] || []; const inv = Array.isArray(_ir) ? _ir : Object.values(_ir);
                                 const it  = inv.find(i => i.id === v.productoId);
                                 return it ? Math.max(0, (it.cantInicial||0) - (it.vendido||0)) : 0;
                             })()
@@ -1246,6 +1324,14 @@ async function initializeUI() {
             // Crear copia de seguridad automática
             await crear_backup_automatico('cierre_dia');
             await saveState();
+
+            // Sincronizar cierre de caja al servidor via TPV_API
+            if (window.TPV_API) {
+                const cerradoPor = window.AUTH?.usuario?.nombre || 'admin';
+                TPV_API.ventas.cerrarCaja(fecha, cerradoPor).then(result => {
+                    if (result && result.ok) console.log('✅ Cierre de caja registrado en servidor:', fecha);
+                }).catch(e => console.warn('⚠️ Cierre de caja no sincronizado:', e.message));
+            }
 
             // Actualizar inventario_general con las cantidades finales del día
             try {
@@ -1498,6 +1584,21 @@ async function initializeUI() {
             }
             invModalStock.hide();
             await inv_aplicarGananciaGlobal(fecha);
+
+            // Sincronizar stock al servidor via TPV_API
+            if (window.TPV_API) {
+                const updates = (tpvState.inventarios[fecha] || []).map(i => ({
+                    producto_id: i.id,
+                    cant_inicial: i.cantInicial,
+                    cant_final: i.cantFinal ?? i.cantInicial,
+                    precio_costo: i.precioCosto
+                }));
+                if (updates.length) {
+                    TPV_API.inventario.actualizarStockMasivo(updates).then(result => {
+                        if (result && result.ok) console.log('✅ Stock sincronizado al servidor');
+                    }).catch(e => console.warn('⚠️ Stock no sincronizado:', e.message));
+                }
+            }
         }
 
         // --- LÓGICA DE GESTIÓN (Productos y Categorías) ---
@@ -1817,6 +1918,30 @@ async function initializeUI() {
             catalogo_sincronizarAlServidor(); // ← todos los roles ven el cambio
             showToast(getLang().toast_product_saved, 'success');
 
+            // Sincronizar producto al servidor via TPV_API
+            if (window.TPV_API) {
+                const esActualizacion = index > -1;
+                const apiProducto = {
+                    id: producto.id,
+                    nombre: producto.nombre,
+                    categoria: producto.categoria,
+                    precio: producto.precio,
+                    costo_unitario: producto.costoUnitario,
+                    um: producto.um,
+                    imagen: producto.imagen,
+                    on_sale: producto.onSale
+                };
+                if (esActualizacion) {
+                    TPV_API.catalogo.importarExcel([apiProducto]).then(result => {
+                        if (result && result.ok) console.log('✅ Producto actualizado via API:', producto.nombre);
+                    }).catch(e => console.warn('⚠️ Producto no sincronizado:', e.message));
+                } else {
+                    TPV_API.catalogo.importarExcel([apiProducto]).then(result => {
+                        if (result && result.ok) console.log('✅ Producto creado via API:', producto.nombre);
+                    }).catch(e => console.warn('⚠️ Producto no sincronizado:', e.message));
+                }
+            }
+
             const currentActiveTabPane = document.querySelector('.tab-pane.fade.show.active');
             if (currentActiveTabPane && currentActiveTabPane.id === 'cliente-qr-tab-pane') {
                 cliente_generarEtiquetas();
@@ -1830,6 +1955,18 @@ async function initializeUI() {
                 tpv_renderizarProductos();
                 await saveState();
                 catalogo_sincronizarAlServidor(); // ← todos los roles ven el cambio
+
+                // Sincronizar eliminación al servidor via TPV_API
+                if (window.TPV_API) {
+                    TPV_API.catalogo.importarExcel(tpvState.productos.map(p => ({
+                        id: p.id, nombre: p.nombre, categoria: p.categoria,
+                        precio: p.precio, costo_unitario: p.costoUnitario,
+                        um: p.um, imagen: p.imagen, on_sale: p.onSale
+                    }))).then(result => {
+                        if (result && result.ok) console.log('✅ Catálogo sincronizado tras eliminación via API');
+                    }).catch(e => console.warn('⚠️ Eliminación no sincronizada:', e.message));
+                }
+
                 if ((document.getElementById('cliente-qr-display-container')?.children.length > 0)) {
                     cliente_generarEtiquetas();
                 }
@@ -5070,3 +5207,89 @@ async function initializeUI() {
                 showToast('✅ Copiado', 'success');
             }
         }
+
+// ═══ HOTFIX v8.0.1 - Refresh en tiempo real ═══
+async function tpv_refreshFromServer() {
+    try {
+        const r = await fetch('/api/catalogo', {credentials:'same-origin'});
+        const d = await r.json();
+        if (d.ok && d.productos && d.productos.length) {
+            const hoy = new Date().toISOString().split('T')[0];
+            tpvState.productos = d.productos;
+            tpvState.categorias = d.categorias || [...new Set(d.productos.map(p=>p.categoria))].sort();
+            tpvState.inventarios[hoy] = d.productos.map(p => ({
+                id: p.id, nombre: p.nombre, cantInicial: p.stock || 50,
+                vendido: 0, cantFinal: p.stock || 50, precioVenta: p.precio,
+                costoUnitario: p.costo || 0
+            }));
+            if (typeof tpv_renderizarProductos === 'function') tpv_renderizarProductos();
+            if (typeof tpv_renderizarFiltroCategorias === 'function') tpv_renderizarFiltroCategorias();
+            if (typeof inv_renderizarTabla === 'function') inv_renderizarTabla(hoy);
+            if (typeof ventas_renderizarTablaHoy === 'function') ventas_renderizarTablaHoy();
+            if (typeof dashboard_cargar === 'function') dashboard_cargar();
+            console.log('TPV refrescado: ' + d.productos.length + ' productos');
+        }
+    } catch(e) { console.warn('Refresh fallo:', e.message); }
+}
+setInterval(() => {
+    if (document.visibilityState === 'visible' && window.AUTH?.usuario) tpv_refreshFromServer();
+}, 30000);
+
+
+// ═══ HOTFIX v8.0.2 — Window exports ═══
+(function(){
+  if(typeof tpv_renderizarProductos==='function' && !window.tpv_renderizarProductos) window.tpv_renderizarProductos=tpv_renderizarProductos;
+  if(typeof conf_setLanguage==='function' && !window.conf_setLanguage) window.conf_setLanguage=conf_setLanguage;
+  if(typeof saveState==='function' && !window.saveState) window.saveState=saveState;
+  if(typeof loadState==='function' && !window.loadState) window.loadState=loadState;
+  if(typeof refreshAllUI==='function' && !window.refreshAllUI) window.refreshAllUI=refreshAllUI;
+  if(typeof inv_renderizarTabla==='function' && !window.inv_renderizarTabla) window.inv_renderizarTabla=inv_renderizarTabla;
+  if(typeof registros_renderizar==='function' && !window.registros_renderizar) window.registros_renderizar=registros_renderizar;
+  if(typeof gestion_guardarProducto==='function' && !window.gestion_guardarProducto) window.gestion_guardarProducto=gestion_guardarProducto;
+  if(typeof ventas_renderizarTablaHoy==='function' && !window.ventas_renderizarTablaHoy) window.ventas_renderizarTablaHoy=ventas_renderizarTablaHoy;
+})();
+
+// ═══ HOTFIX v8.0.2 — Auto-refresh cada 30s ═══
+(function(){
+    if(window._tpvAutoRefresh) return;
+    window._tpvAutoRefresh = true;
+    setInterval(async function(){
+        if(typeof catalogo_cargarDesdeServidor==='function'){
+            try{
+                await catalogo_cargarDesdeServidor();
+                if(typeof tpv_renderizarProductos==='function') tpv_renderizarProductos();
+                if(typeof tpv_renderizarFiltroCategorias==='function') tpv_renderizarFiltroCategorias();
+            }catch(e){}
+        }
+    },30000);
+    console.log('🔄 Auto-refresh instalado (30s)');
+})();
+
+// ═══ HOTFIX v8.0.2 — Rebuild inventario diario desde catalogo ═══
+(function(){
+    if(window._tpvRebuildInv) return;
+    window._tpvRebuildInv = true;
+    var _origCargar = typeof catalogo_cargarDesdeServidor==='function'?catalogo_cargarDesdeServidor:null;
+    if(_origCargar){
+        window.catalogo_cargarDesdeServidor = async function(){
+            await _origCargar();
+            var hoy = typeof getTodayDateString==='function'?getTodayDateString():new Date().toISOString().split('T')[0];
+            if(!tpvState.inventarios) tpvState.inventarios={};
+            if(!tpvState.inventarios[hoy]) tpvState.inventarios[hoy]=[];
+            var invArr = tpvState.inventarios[hoy];
+            var invMap = {};
+            invArr.forEach(function(it){invMap[it.id]=it;});
+            tpvState.productos.forEach(function(p){
+                if(!invMap[p.id]){
+                    var stock = p.stock||0;
+                    invArr.push({
+                        id:p.id, nombre:p.nombre, categoria:p.categoria||'General',
+                        pVenta:p.precio||0, um:p.um||'Un',
+                        cantInicial:stock, cantFinal:stock, vendido:0,
+                        iVenta:0, pCosto:p.costo||0, comision:0, ganancia:0
+                    });
+                }
+            });
+        };
+    }
+})();

@@ -87,3 +87,65 @@ def obtener_sql_completo(): return "-- Offline mode"
 
 # Inicializar al importar
 verificar_supabase()
+
+
+# ═══ HOTFIX v8.0.2: Funciones offline mejoradas ═══
+SUPABASE_CONFIG_COMPLETE = True
+
+def obtener_estado_tablas():
+    """Devuelve estado de todas las tablas (offline-safe)"""
+    try:
+        from db_connection import obtener_conexion
+        conn = obtener_conexion()
+        c = conn.cursor()
+        c.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
+        tablas = [r[0] for r in c.fetchall()]
+        resultado = {}
+        for t in tablas:
+            try:
+                c.execute(f'SELECT COUNT(*) FROM "{t}"')
+                resultado[t] = {"registros": c.fetchone()[0], "existe": True}
+            except:
+                resultado[t] = {"registros": 0, "existe": False}
+        conn.close()
+        return {"ok": True, "tablas": resultado, "supabase_activo": SUPABASE_OK}
+    except Exception as e:
+        return {"ok": False, "error": str(e), "supabase_activo": SUPABASE_OK}
+
+def importar_datos_offline(datos, tabla_destino):
+    """Importa datos a tabla SQLite local (sin Supabase)"""
+    if not datos or not tabla_destino:
+        return {"ok": False, "error": "Datos o tabla vacios"}
+    try:
+        from db_connection import obtener_conexion
+        conn = obtener_conexion()
+        cursor = conn.cursor()
+        insertados = 0
+        for fila in datos:
+            if isinstance(fila, dict):
+                cols = list(fila.keys())
+                vals = list(fila.values())
+                placeholders = ",".join(["?"] * len(cols))
+                col_names = ",".join(cols)
+                try:
+                    cursor.execute(f'INSERT OR REPLACE INTO {tabla_destino} ({col_names}) VALUES ({placeholders})', vals)
+                    insertados += 1
+                except: pass
+        conn.commit(); conn.close()
+        return {"ok": True, "insertados": insertados, "tabla": tabla_destino}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+def exportar_datos_offline(tabla):
+    """Exporta datos de tabla SQLite local"""
+    try:
+        from db_connection import obtener_conexion
+        conn = obtener_conexion()
+        c = conn.cursor()
+        c.execute(f'SELECT * FROM {tabla} LIMIT 1000')
+        cols = [desc[0] for desc in c.description] if c.description else []
+        rows = [dict(zip(cols, row)) for row in c.fetchall()]
+        conn.close()
+        return {"ok": True, "datos": rows, "columnas": cols}
+    except Exception as e:
+        return {"ok": True, "datos": [], "error": str(e)}

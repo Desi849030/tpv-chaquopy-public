@@ -4,30 +4,34 @@ Sistema de Punto de Venta Profesional con IA integrada, biometria, roles multini
 
 ## Caracteristicas Principales
 
-- Autenticacion multinivel: Desarrollador, Administrador, Supervisor, Vendedor + biometria nativa
+- Autenticacion multinivel: Desarrollador, Administrador, Supervisor, Vendedor, Cajero
+- Biometria en el login: huella/rostro (WebAuthn en navegador + puente Android nativo en APK)
+- Bienvenida personalizada por nombre, rol y hora del dia
 - Punto de venta: Catalogo, carrito, escaner QR, pagos, descuentos, tickets
 - Inventario: Stock diario, alertas bajo stock, cierres de caja, comisiones
 - Gestion de productos: CRUD completo, categorias, import/export Excel inteligente
-- IA Asistente: Motor NLP con 13 herramientas + 5 skills + 150 endpoints, intents, guardrails, memoria contextual
-- Diccionario comercial: Sinonimos, definiciones, correccion ortografica offline
-- Panel dev metrics: RAM, disco, formulas inventario, KPIs en tiempo real
-- Importacion Excel: Levenshtein fuzzy matching, 4 estrategias, validacion UTF-8
+- IA Asistente: motor NLP con herramientas y memoria; chat personalizado por rol,
+  boton flotante arrastrable, sugerencias contextuales, 100% offline
+- Privilegios por rol: activar/desactivar modulos por rol (admin/desarrollador)
+- Seguridad y Biometria: panel PCI-DSS, HET (anti-amenazas), WebSocket
+- Panel de Metricas del Sistema: RAM, almacenamiento real y tablas de la BD
+- Importacion Excel: fuzzy matching, validacion UTF-8 (actualiza almacen real)
 - Tienda online: Clientes, pedidos, notificaciones, cola offline
-- Offline-first: WiFi local, IndexedDB + SQLite dual
-- Seguridad (9.5/10): SQLi, XSS, scrypt, JWT, RBAC, Rate Limiting, Headers, Auditoría
-- Licencias: Activacion con dias de prueba
-- Dashboard: KPIs animados, graficos Chart.js
-- Traduccion: Google Translate ES/EN
-- Supabase: Sincronizacion cloud opcional
+- Offline-first: librerias y fuentes locales (sin CDN), IndexedDB + SQLite
+- Seguridad: SQLi reforzado (tautologias/time-based), XSS, RBAC, auditoria
+- Diseño moderno: design system propio, dark mode completo, dialogos con estilo
+- Debug del desarrollador: captura de errores/fetch con tiempos y estadisticas
+- Licencias, Dashboard con graficos, traduccion ES/EN, Supabase opcional
 
 ## Estadisticas (reales)
 
-- Backend: ~172 archivos Python (~19,400 líneas), 187 rutas Flask registradas
-- Frontend: 84 archivos JavaScript + 5 hojas CSS
+- Backend: ~172 archivos Python, 177 rutas Flask registradas
+- Frontend: 86 archivos JavaScript + 6 hojas CSS (incl. design system)
 - Tests: suite estable de 51 pruebas verdes + 5 skip (ver `pytest.ini`)
 - Smoke test: arranque + rutas críticas + agente + SQLi (`scripts/smoke_test.py`)
-- IA Agentiva + Proactiva: herramientas, skills, categorías, alertas, briefing
 - 100% offline: todas las librerías y fuentes servidas localmente (sin CDN)
+
+> Detalle completo de las mejoras recientes en `docs/CHANGELOG_refactor.md`.
 
 ## Jerarquia de Roles
 

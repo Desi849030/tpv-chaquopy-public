@@ -17,13 +17,13 @@ class TestPassword:
 
 class TestSQLi:
     def test_clean(self):
-        from tpv_security import check_sql_injection
+        from security import check_sql_injection
         assert check_sql_injection("texto normal") is False
     def test_union(self):
-        from tpv_security import check_sql_injection
+        from security import check_sql_injection
         assert check_sql_injection("UNION SELECT") is True
     def test_dict(self):
-        from tpv_security import check_sql_injection
+        from security import check_sql_injection
         assert check_sql_injection({"q": "DROP TABLE"}) is True
 
 class TestTokenizer:

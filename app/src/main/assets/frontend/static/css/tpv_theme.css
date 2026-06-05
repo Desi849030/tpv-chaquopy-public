@@ -338,6 +338,95 @@ body.rol-desarrollador #privilegios-tab { display: list-item !important; }
 body.rol-desarrollador #seguridad-tab,
 body.rol-desarrollador #dev-metrics-tab { display: list-item !important; }
 
+/* ---------------------------------------------------------------------------
+   13) NAVEGACIÓN MEJORADA (menús, submenús, dropdowns)
+--------------------------------------------------------------------------- */
+/* Barra de pestañas: scroll horizontal en móvil sin romper el diseño */
+.nav-tabs {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.nav-tabs::-webkit-scrollbar { display: none; }
+.nav-tabs .nav-item { flex-shrink: 0; }
+
+/* Caret visible en dropdowns del nav */
+.nav-tabs .dropdown-toggle::after {
+  vertical-align: middle;
+  margin-left: 0.35rem;
+  transition: transform var(--tpv-dur) var(--tpv-ease);
+}
+.nav-tabs .dropdown-toggle.show::after { transform: rotate(180deg); }
+
+/* Dropdown del menú: animación de entrada y ancho cómodo */
+.dropdown-menu {
+  min-width: 14rem;
+  animation: tpv-menu-in 0.18s var(--tpv-ease) both;
+}
+@keyframes tpv-menu-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Cabeceras de sección dentro del menú: más legibles */
+.dropdown-header {
+  text-transform: uppercase;
+  font-size: 0.68rem !important;
+  letter-spacing: 0.8px;
+  color: var(--tpv-primary) !important;
+  opacity: 0.85;
+  padding-top: 0.5rem;
+}
+.dropdown-divider { border-color: var(--tpv-border); opacity: 0.7; }
+
+/* Ítems del menú: icono alineado y feedback claro */
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.dropdown-item i { width: 1.25rem; text-align: center; }
+.dropdown-item:active { background: var(--tpv-primary); color: #fff; }
+
+/* Badge de notificaciones en pestaña Tienda (campanita de pedidos) */
+.nav-link .badge,
+.nav-link .tienda-notif-dot {
+  font-size: 0.6rem;
+  padding: 0.2em 0.45em;
+}
+
+/* Header: nombre de tienda con mejor tipografía y badge de estado pulido */
+.app-header h1 { font-size: clamp(1.25rem, 4vw, 1.9rem); }
+#status-badge {
+  backdrop-filter: blur(4px);
+  background: rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+#status-badge.bg-danger,
+#status-badge.offline {
+  background: rgba(239, 68, 68, 0.9) !important;
+  border-color: transparent;
+}
+
+/* Tarjetas con borde de color (seguridad, métricas): refinar */
+.card.border-start { border-left-width: 4px !important; }
+
+/* Switches de privilegios: más grandes y táctiles */
+.form-switch .form-check-input {
+  cursor: pointer;
+  height: 1.4em;
+  width: 2.6em;
+}
+.form-switch .form-check-input:checked {
+  background-color: var(--tpv-success);
+  border-color: var(--tpv-success);
+}
+
+/* Tablas dentro de paneles: encabezado fijo al hacer scroll */
+.table-responsive { border-radius: var(--tpv-radius); }
+
 /* Respeto a usuarios con preferencia de menos movimiento */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

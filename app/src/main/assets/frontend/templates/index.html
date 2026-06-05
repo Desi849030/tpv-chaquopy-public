@@ -250,6 +250,14 @@
                         <i class="bi bi-wrench-adjustable me-2 text-warning"></i>Mantenimiento</a></li>
                     <li><a class="dropdown-item" id="licencias-tab" data-bs-toggle="tab" data-bs-target="#licencias-tab-pane" href="#" role="tab">
                         <i class="bi bi-shield-check me-2 text-danger"></i>Licencias</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><h6 class="dropdown-header text-muted small">ADMINISTRACIÓN</h6></li>
+                    <li><a class="dropdown-item" id="privilegios-tab" data-bs-toggle="tab" data-bs-target="#privilegios-tab-pane" href="#" role="tab">
+                        <i class="bi bi-shield-lock-fill me-2 text-primary"></i>Privilegios</a></li>
+                    <li><a class="dropdown-item" id="seguridad-tab" data-bs-toggle="tab" data-bs-target="#seguridad-tab-pane" href="#" role="tab" onclick="if(typeof seguridad_cargarDashboard==='function')seguridad_cargarDashboard()">
+                        <i class="bi bi-shield-shaded me-2 text-success"></i>Seguridad y Biometría</a></li>
+                    <li><a class="dropdown-item" id="dev-metrics-tab" data-bs-toggle="tab" data-bs-target="#dev-metrics-tab-pane" href="#" role="tab" onclick="if(typeof devmetrics_cargar==='function')devmetrics_cargar()">
+                        <i class="bi bi-cpu me-2 text-info"></i>Métricas del Sistema</a></li>
                 </ul>
             </li>
         </ul>
@@ -886,6 +894,115 @@
                 <div id="tienda-root"></div>
             </div>
 
+            <!-- ══════════ PRIVILEGIOS ══════════ -->
+            <div class="tab-pane fade" id="privilegios-tab-pane" role="tabpanel">
+                <div class="glass-card">
+                    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                        <h4 class="mb-0"><i class="bi bi-shield-lock-fill me-2 text-primary" translate="no"></i>Gestión de Privilegios</h4>
+                        <span class="badge bg-info" id="priv-badge-rol">Admin / Dev</span>
+                    </div>
+                    <p class="text-muted small mb-4">
+                        Asigna permisos a cada rol. El administrador y supervisor no pueden acceder a los módulos desactivados.
+                        Los cambios toman efecto al iniciar sesión de cada usuario.
+                    </p>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold"><i class="bi bi-person-badge me-1" translate="no"></i>Seleccionar Rol:</label>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-outline-primary btn-sm" onclick="priv_cargarRol('administrador')" id="priv-btn-administrador"><i class="bi bi-person-gear me-1" translate="no"></i>Administrador</button>
+                            <button class="btn btn-outline-warning btn-sm" onclick="priv_cargarRol('supervisor')" id="priv-btn-supervisor"><i class="bi bi-person-check me-1" translate="no"></i>Supervisor</button>
+                            <button class="btn btn-outline-success btn-sm" onclick="priv_cargarRol('vendedor')" id="priv-btn-vendedor"><i class="bi bi-person me-1" translate="no"></i>Vendedor</button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="priv_cargarRol('desarrollador')" id="priv-btn-desarrollador"><i class="bi bi-code-slash me-1" translate="no"></i>Desarrollador</button>
+                        </div>
+                    </div>
+                    <div id="priv-tabla-wrap" style="display:none">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead><tr><th style="width:40%">Módulo</th><th style="width:35%">Descripción</th><th class="text-center" style="width:25%"><span id="priv-rol-activo">—</span> <i class="bi bi-toggle-on text-success ms-1" translate="no"></i></th></tr></thead>
+                                <tbody id="priv-tabla-body"></tbody>
+                            </table>
+                        </div>
+                        <div class="d-flex gap-2 mt-3 flex-wrap">
+                            <button class="btn btn-primary" onclick="priv_guardar()"><i class="bi bi-floppy-fill me-1" translate="no"></i>Guardar Cambios</button>
+                            <button class="btn btn-outline-warning" onclick="priv_restablecer()"><i class="bi bi-arrow-counterclockwise me-1" translate="no"></i>Restablecer a Default</button>
+                        </div>
+                        <div id="priv-msg" class="mt-3" style="display:none"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════ SEGURIDAD Y BIOMETRÍA ══════════ -->
+            <div class="tab-pane fade" id="seguridad-tab-pane" role="tabpanel">
+                <div class="glass-card">
+                    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                        <h4 class="mb-0"><i class="bi bi-shield-shaded me-2 text-success" translate="no"></i>Seguridad y Biometría</h4>
+                        <button class="btn btn-outline-primary btn-sm" onclick="seguridad_cargarDashboard()"><i class="bi bi-arrow-clockwise me-1" translate="no"></i>Actualizar</button>
+                    </div>
+                    <p class="text-muted small mb-4">Monitor en tiempo real de los blindajes: PCI-DSS, HET, WebSockets, API Routes y autenticación biométrica.</p>
+                    <div id="seguridad-overall" class="alert alert-secondary mb-4 text-center"><span class="spinner-border spinner-border-sm me-2"></span>Cargando estado de seguridad...</div>
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6"><div class="card h-100 border-start border-4 border-primary"><div class="card-body"><h5 class="card-title"><i class="bi bi-credit-card me-2 text-primary" translate="no"></i>PCI-DSS</h5><p class="text-muted small">Tokenización de PAN, enmascaramiento, validación Luhn, auditoría de pagos.</p><div id="seguridad-pci" class="mt-2"><span class="badge bg-secondary">Esperando...</span></div></div></div></div>
+                        <div class="col-12 col-md-6"><div class="card h-100 border-start border-4 border-warning"><div class="card-body"><h5 class="card-title"><i class="bi bi-bug me-2 text-warning" translate="no"></i>HET (Threat Engine)</h5><p class="text-muted small">Detección SQLi, XSS, rate-limiting, protección brute-force, sanitización.</p><div id="seguridad-het" class="mt-2"><span class="badge bg-secondary">Esperando...</span></div></div></div></div>
+                        <div class="col-12 col-md-6"><div class="card h-100 border-start border-4 border-info"><div class="card-body"><h5 class="card-title"><i class="bi bi-broadcast me-2 text-info" translate="no"></i>WebSocket Terminal</h5><p class="text-muted small">Registro de terminales, heartbeat, eventos en tiempo real.</p><div id="seguridad-ws" class="mt-2"><span class="badge bg-secondary">Esperando...</span></div></div></div></div>
+                        <div class="col-12 col-md-6"><div class="card h-100 border-start border-4 border-success"><div class="card-body"><h5 class="card-title"><i class="bi bi-fingerprint me-2 text-success" translate="no"></i>Biometría</h5><p class="text-muted small">Autenticación por huella/rostro nativa de Android (BiometricPrompt). Disponible al ejecutar como APK.</p><div id="seguridad-bio" class="mt-2"><span class="badge bg-secondary">Detectando...</span></div></div></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════ MÉTRICAS DEL SISTEMA (DEV) ══════════ -->
+            <div class="tab-pane fade" id="dev-metrics-tab-pane" role="tabpanel">
+                <div class="glass-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                        <h4 class="mb-0"><i class="bi bi-cpu me-2 text-info" translate="no"></i>Métricas del Sistema</h4>
+                        <button class="btn btn-outline-primary btn-sm" onclick="devmetrics_cargar()"><i class="bi bi-arrow-clockwise me-1" translate="no"></i>Actualizar</button>
+                    </div>
+                    <div id="dm-status" class="text-muted small text-center mb-3">cargando...</div>
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6"><div class="card h-100"><div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-memory me-2 text-info"></i>RAM</h5>
+                            <div class="d-flex justify-content-between"><span class="text-muted">Proceso:</span><span id="dm-ram-proceso" class="fw-bold">--</span></div>
+                            <div id="dm-ram-sys-wrap" style="display:none">
+                                <div class="d-flex justify-content-between"><span class="text-muted">Sistema:</span><span id="dm-ram-sys-pct" class="fw-bold">--</span></div>
+                                <div class="progress my-1" style="height:6px"><div id="dm-ram-bar" class="progress-bar bg-info" style="width:0%"></div></div>
+                                <div class="d-flex justify-content-between"><span class="text-muted">Total:</span><span id="dm-ram-total">--</span></div>
+                                <div class="d-flex justify-content-between"><span class="text-muted">Usado:</span><span id="dm-ram-usado">--</span></div>
+                                <div class="d-flex justify-content-between"><span class="text-muted">Libre:</span><span id="dm-ram-libre">--</span></div>
+                            </div>
+                            <div id="dm-ram-fuente" class="text-muted small mt-1">--</div>
+                        </div></div></div>
+                        <div class="col-12 col-md-6"><div class="card h-100"><div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-hdd me-2 text-info"></i>Almacenamiento</h5>
+                            <div class="d-flex justify-content-between"><span class="text-muted">BD:</span><span id="dm-db-size" class="fw-bold">--</span></div>
+                            <div id="dm-db-path" class="text-muted small">--</div>
+                            <div class="d-flex justify-content-between"><span class="text-muted">Índices:</span><span id="dm-db-indexes" class="fw-bold">--</span></div>
+                            <div class="d-flex justify-content-between"><span class="text-muted">Disco:</span><span id="dm-disco-pct" class="fw-bold">--</span></div>
+                            <div class="progress my-1" style="height:6px"><div id="dm-disco-bar" class="progress-bar bg-info" style="width:0%"></div></div>
+                            <div class="d-flex justify-content-between"><span class="text-muted">Total:</span><span id="dm-disco-total">--</span></div>
+                            <div class="d-flex justify-content-between"><span class="text-muted">Usado:</span><span id="dm-disco-usado">--</span></div>
+                            <div class="d-flex justify-content-between"><span class="text-muted">Libre:</span><span id="dm-disco-libre">--</span></div>
+                        </div></div></div>
+                        <div class="col-12"><div class="card"><div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-box-seam me-2 text-info"></i>Inventario</h5>
+                            <div class="row">
+                                <div class="col-6 col-md-3 d-flex justify-content-between"><span class="text-muted">Productos:</span><span id="dm-inv-total" class="fw-bold">--</span></div>
+                                <div class="col-6 col-md-3 d-flex justify-content-between"><span class="text-muted">Unidades:</span><span id="dm-inv-unidades" class="fw-bold">--</span></div>
+                                <div class="col-6 col-md-3 d-flex justify-content-between"><span class="text-muted">Sin stock:</span><span id="dm-inv-sin-stock" class="fw-bold">--</span></div>
+                                <div class="col-6 col-md-3 d-flex justify-content-between"><span class="text-muted">Sin precio:</span><span id="dm-inv-sin-precio" class="fw-bold">--</span></div>
+                                <div class="col-6 col-md-3 d-flex justify-content-between"><span class="text-muted">Inválidos:</span><span id="dm-inv-invalidos" class="fw-bold">--</span></div>
+                                <div class="col-6 col-md-3 d-flex justify-content-between"><span class="text-muted">Valor venta:</span><span id="dm-inv-valor-venta" class="fw-bold">--</span></div>
+                                <div class="col-6 col-md-3 d-flex justify-content-between"><span class="text-muted">Valor costo:</span><span id="dm-inv-valor-costo" class="fw-bold">--</span></div>
+                                <div class="col-6 col-md-3 d-flex justify-content-between"><span class="text-muted">Ganancia:</span><span id="dm-inv-ganancia" class="fw-bold">--</span></div>
+                                <div class="col-6 col-md-3 d-flex justify-content-between"><span class="text-muted">Margen:</span><span id="dm-inv-margen-pct" class="fw-bold">--</span></div>
+                                <div class="col-6 col-md-3 d-flex justify-content-between"><span class="text-muted">Rentab.:</span><span id="dm-inv-rentabilidad" class="fw-bold text-info">--</span></div>
+                                <div class="col-6 col-md-3 d-flex justify-content-between"><span class="text-muted">Cobertura:</span><span id="dm-inv-cobertura" class="fw-bold text-info">--</span></div>
+                            </div>
+                            <div id="dm-inv-categorias" class="mt-2"></div>
+                            <div id="dm-inv-top5" class="mt-2"></div>
+                        </div></div></div>
+                    </div>
+                    <div class="text-muted small text-center mt-3">Uptime: <span id="dm-uptime">--</span> | <span id="dm-timestamp">--</span></div>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -1291,6 +1408,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script src="/static/js/tpv_licencias.js"></script>
 <script src="/static/js/tpv_ventas.js"></script>
+
+<!-- Módulos de administración: privilegios, métricas de sistema, seguridad/biometría -->
+<script src="/static/js/tpv_privacidad.js"></script>
+<script src="/static/js/tpv_dev_metrics.js"></script>
+<script src="/static/js/tpv_seguridad.js"></script>
+<script>
+  // Alias para los botones "Actualizar" de las pestañas nuevas
+  window.devmetrics_cargar = function () {
+    if (window.DM && typeof window.DM.fetch === 'function') window.DM.fetch();
+  };
+</script>
 
 <script>
 window.toggleDark = function() {

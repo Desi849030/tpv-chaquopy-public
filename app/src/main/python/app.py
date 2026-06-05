@@ -108,6 +108,24 @@ def catalogo():
     ], "categorias": ["Alimentos", "Bebidas", "Limpieza", "Lácteos", "Panadería", "Higiene", "General"]})
 
 # ========== MÉTRICAS ==========
+@app.route('/api/dev/metrics')
+def dev_metrics():
+    """Métricas de sistema (RAM, disco, BD, fórmulas de inventario) para el
+    panel de desarrollador. Usa metrics/helpers.get_system_metrics()."""
+    try:
+        from flask import session
+        usuario = session.get("usuario", {})
+        rol = usuario.get("rol", "") if isinstance(usuario, dict) else ""
+        if rol not in ("desarrollador", "administrador"):
+            return jsonify({"ok": False, "error": "Acceso restringido"}), 403
+        from metrics.helpers import get_system_metrics
+        data = get_system_metrics()
+        data["ok"] = True
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
 @app.route('/api/metrics')
 def metrics():
     try:

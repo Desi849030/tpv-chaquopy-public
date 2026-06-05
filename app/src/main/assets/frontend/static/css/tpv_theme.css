@@ -324,6 +324,20 @@ hr { border-color: var(--tpv-border); opacity: 1; }
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ---------------------------------------------------------------------------
+   12) VISIBILIDAD DE TABS POR ROL (administración)
+   Mismo patrón que #licencias-tab. JS añade body.rol-<rol> al iniciar sesión.
+--------------------------------------------------------------------------- */
+/* Privilegios: administrador y desarrollador */
+#privilegios-tab { display: none; }
+body.rol-administrador #privilegios-tab,
+body.rol-desarrollador #privilegios-tab { display: list-item !important; }
+
+/* Seguridad/Biometría y Métricas: solo desarrollador */
+#seguridad-tab, #dev-metrics-tab { display: none; }
+body.rol-desarrollador #seguridad-tab,
+body.rol-desarrollador #dev-metrics-tab { display: list-item !important; }
+
 /* Respeto a usuarios con preferencia de menos movimiento */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

@@ -83,6 +83,32 @@ def main() -> int:
         print(f"[{FAIL}] login lanzó excepción: {e}")
         fallos.append(f"login: {e}")
 
+    # 5) Agente IA responde (protege contra regresiones del import de ia.agent)
+    try:
+        resp = client.post("/api/agent/chat", json={"mensaje": "hola", "rol": "vendedor"})
+        data = resp.get_json(silent=True) or {}
+        respuesta = data.get("respuesta") or data.get("answer") or data.get("response") or ""
+        if resp.status_code == 200 and respuesta:
+            print(f"[{OK}] POST /api/agent/chat -> respuesta de {len(str(respuesta))} chars")
+        else:
+            print(f"[{FAIL}] POST /api/agent/chat -> {resp.status_code} (respuesta vacía)")
+            fallos.append("agent/chat")
+    except Exception as e:  # noqa: BLE001
+        print(f"[{FAIL}] agent/chat lanzó excepción: {e}")
+        fallos.append(f"agent/chat: {e}")
+
+    # 6) Detección SQLi activa (protege el fix de seguridad)
+    try:
+        from security import check_sql_injection
+        if check_sql_injection("1' OR '1'='1") and not check_sql_injection("Juan Perez"):
+            print(f"[{OK}] check_sql_injection detecta ataques sin falsos positivos")
+        else:
+            print(f"[{FAIL}] check_sql_injection no funciona como se espera")
+            fallos.append("sqli")
+    except Exception as e:  # noqa: BLE001
+        print(f"[{FAIL}] check_sql_injection lanzó excepción: {e}")
+        fallos.append(f"sqli: {e}")
+
     print("-" * 50)
     if fallos:
         print(f"RESULTADO: {len(fallos)} fallo(s)")

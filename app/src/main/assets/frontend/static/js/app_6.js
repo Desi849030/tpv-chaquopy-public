@@ -2334,7 +2334,7 @@ function _iniciarPolling() {
             // Si SSE falla, fallback a polling cada 15 s
             if (_sseConn) { _sseConn.close(); _sseConn = null; }
             if (!AUTH.pollingNotif) {
-                AUTH.pollingNotif = setInterval(_pollPedidos, 15000);
+                AUTH.pollingNotif = setInterval(_pollPedidos, 20000);
                 _pollPedidos();
             }
         };
@@ -2343,7 +2343,7 @@ function _iniciarPolling() {
         _pollPedidos();
     } else {
         // Navegador sin SSE: polling clásico 8 s
-        AUTH.pollingNotif = setInterval(_pollPedidos, 8000);
+        AUTH.pollingNotif = setInterval(_pollPedidos, 20000);
         _pollPedidos();
     }
 }

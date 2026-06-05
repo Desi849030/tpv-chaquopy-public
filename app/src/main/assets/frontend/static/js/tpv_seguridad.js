@@ -58,7 +58,7 @@
 
     detectarBiometria();
 
-    fetch('/api/security/dashboard', { cache: 'no-store' })
+    fetch('/api/security/dashboard', { cache: 'no-store', credentials: 'same-origin' })
       .then(function (r) { return r.json(); })
       .then(function (d) {
         var b = (d && d.blindajes) || {};

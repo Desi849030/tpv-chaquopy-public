@@ -1,5 +1,7 @@
-let _dashChartVentas = null;
-let _dashChartCat    = null;
+// Usar window.* de forma consistente para que el destroy encuentre la
+// instancia previa y no falle Chart.js con "Canvas is already in use".
+window._dashChartVentas = window._dashChartVentas || null;
+window._dashChartCat    = window._dashChartCat    || null;
 
 // Only render charts if the dashboard tab is active
 function isDashboardTabActive() {
@@ -100,7 +102,7 @@ async function dashboard_cargar() {
     if (isDashboardTabActive()) {
         const ctxV = document.getElementById('dash-chart-ventas');
         if (ctxV) {
-            _dashChartVentas = new Chart(ctxV, {
+            window._dashChartVentas = new Chart(ctxV, {
                 type: 'bar',
                 data: {
                     labels: lbl7,
@@ -116,7 +118,7 @@ async function dashboard_cargar() {
         const ctxC = document.getElementById('dash-chart-cat');
         if (ctxC && Object.keys(catMap).length) {
             const COLORS = ['#0d6efd','#198754','#ffc107','#dc3545','#6f42c1','#20c997','#fd7e14'];
-            _dashChartCat = new Chart(ctxC, {
+            window._dashChartCat = new Chart(ctxC, {
                 type: 'doughnut',
                 data: {
                     labels: Object.keys(catMap),

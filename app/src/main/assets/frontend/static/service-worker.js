@@ -5,7 +5,7 @@
    La app corre contra Flask local en la APK, así que esto refuerza
    la carga incluso si el servidor tarda en levantar. */
 
-const CACHE = 'tpv-static-v2';
+const CACHE = 'tpv-static-v3';
 
 // Precache de los recursos críticos de la UI (todos locales).
 const PRECACHE = [
@@ -43,8 +43,10 @@ self.addEventListener('fetch', (e) => {
 
   const url = new URL(req.url);
 
-  // Cache-first para assets estáticos.
-  if (url.pathname.startsWith('/static/')) {
+  // JS/HTML: network-first para no servir código obsoleto desde cache.
+  const esCodigo = url.pathname.endsWith('.js') || url.pathname.endsWith('.html');
+  if (url.pathname.startsWith('/static/') && !esCodigo) {
+    // CSS, fuentes, imágenes, libs: cache-first (rápido y offline).
     e.respondWith(
       caches.match(req).then((cached) => {
         if (cached) return cached;
@@ -56,6 +58,19 @@ self.addEventListener('fetch', (e) => {
           return resp;
         }).catch(() => cached);
       })
+    );
+    return;
+  }
+  if (url.pathname.startsWith('/static/') && esCodigo) {
+    // network-first: intenta red, cae a cache solo si no hay conexión.
+    e.respondWith(
+      fetch(req).then((resp) => {
+        if (resp && resp.status === 200) {
+          const copy = resp.clone();
+          caches.open(CACHE).then((c) => c.put(req, copy));
+        }
+        return resp;
+      }).catch(() => caches.match(req))
     );
     return;
   }

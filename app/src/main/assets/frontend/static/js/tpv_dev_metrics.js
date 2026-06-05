@@ -23,14 +23,14 @@
     init: function() {
       this.fetch();
       var self = this;
-      this.intervalId = setInterval(function() { self.fetch(); }, 10000);
+      this.intervalId = setInterval(function() { self.fetch(); }, 30000);
     },
 
     fetch: function() {
       var self = this;
       var se = this.el("dm-status");
       if (se) se.textContent = "cargando...";
-      fetch(this.endpoint, {cache: "no-store"}).then(function(r) {
+      fetch(this.endpoint, {cache: "no-store", credentials: "same-origin"}).then(function(r) {
         if (!r.ok) throw new Error("HTTP " + r.status);
         return r.json();
       }).then(function(d) {

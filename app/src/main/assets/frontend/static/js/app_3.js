@@ -119,20 +119,28 @@
 
         // --- LÓGICA DE ALMACENAMIENTO INDEXEDDB ---
         const dbHelper = {
+            // Abre la BD garantizando que el store exista. Si la BD está
+            // corrupta/incompleta (creada sin el store por una versión previa
+            // u otro módulo), la elimina y la recrea limpia. Maneja onblocked.
             openDb: () => new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, DB_VERSION);
-                request.onupgradeneeded = e => {
-                    const db = e.target.result;
-                    if (!db.objectStoreNames.contains(STORE_NAME)) {
-                        db.createObjectStore(STORE_NAME);
-                    }
-                };
-                request.onsuccess = e => {
-                    const db = e.target.result;
-                    // Auto-reparación: si la BD existía pero sin el store (creada
-                    // por una versión previa u otro módulo), reabrir con versión
-                    // superior para crearlo y evitar 'object store not found'.
-                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                const abrir = (version) => {
+                    let req;
+                    try {
+                        req = version ? indexedDB.open(DB_NAME, version) : indexedDB.open(DB_NAME);
+                    } catch (err) { return reject(err); }
+                    req.onupgradeneeded = e => {
+                        const db = e.target.result;
+                        if (!db.objectStoreNames.contains(STORE_NAME)) {
+                            db.createObjectStore(STORE_NAME);
+                        }
+                    };
+                    req.onblocked = () => { /* otra pestaña/conexión bloquea; esperar */ };
+                    req.onsuccess = e => {
+                        const db = e.target.result;
+                        if (db.objectStoreNames.contains(STORE_NAME)) {
+                            return resolve(db);
+                        }
+                        // Falta el store: reabrir con versión superior para crearlo.
                         const nextVer = (db.version || 1) + 1;
                         db.close();
                         const up = indexedDB.open(DB_NAME, nextVer);
@@ -142,21 +150,34 @@
                                 db2.createObjectStore(STORE_NAME);
                             }
                         };
-                        up.onsuccess = ev => resolve(ev.target.result);
+                        up.onblocked = () => {};
+                        up.onsuccess = ev => {
+                            const db2 = ev.target.result;
+                            if (db2.objectStoreNames.contains(STORE_NAME)) return resolve(db2);
+                            // Último recurso: borrar y recrear desde cero.
+                            db2.close();
+                            const del = indexedDB.deleteDatabase(DB_NAME);
+                            del.onsuccess = del.onerror = () => abrir(1);
+                        };
                         up.onerror = ev => reject(ev.target.error);
-                        return;
-                    }
-                    resolve(db);
+                    };
+                    req.onerror = e => reject(e.target.error);
                 };
-                request.onerror = e => reject(e.target.error);
+                abrir(DB_VERSION);
             }),
             save: (db, data) => new Promise((resolve, reject) => {
+                if (!db.objectStoreNames.contains(STORE_NAME)) {
+                    return reject(new Error('store ausente'));
+                }
                 const tx = db.transaction(STORE_NAME, 'readwrite');
                 tx.objectStore(STORE_NAME).put(data, 'appState');
                 tx.oncomplete = () => resolve();
                 tx.onerror = e => reject(e.target.error);
             }),
             load: (db) => new Promise((resolve, reject) => {
+                if (!db.objectStoreNames.contains(STORE_NAME)) {
+                    return resolve(undefined); // BD nueva: sin estado previo
+                }
                 const tx = db.transaction(STORE_NAME, 'readonly');
                 const request = tx.objectStore(STORE_NAME).get('appState');
                 request.onsuccess = e => resolve(e.target.result);
@@ -294,9 +315,14 @@
                             const defaultState = getDefaultState();
                             // Construir inventario desde productos del API
                             const invFromAPI = catalogData.productos.map(p => ({
-                                id: p.id, nombre: p.nombre, cantInicial: p.stock || 50,
-                                vendido: 0, cantFinal: p.stock || 50, precioVenta: p.precio,
-                                costoUnitario: p.costo || 0
+                                id: p.id, nombre: p.nombre,
+                                categoria: p.categoria ?? 'General', um: p.um ?? 'Un',
+                                cantInicial: Number(p.stock) || 0, vendido: 0,
+                                cantFinal: Number(p.stock) || 0,
+                                precioVenta: Number(p.precio) || 0,
+                                precioCosto: Number(p.costo) || 0,
+                                costoUnitario: Number(p.costo) || 0,
+                                importe: 0, comision: 0, gananciaNeta: 0
                             }));
                             const todayInv = new Date().toISOString().split('T')[0];
                             tpvState = {
@@ -5238,10 +5264,18 @@ async function tpv_refreshFromServer() {
             tpvState.productos = d.productos;
             tpvState.categorias = d.categorias || [...new Set(d.productos.map(p=>p.categoria))].sort();
             tpvState.inventarios[hoy] = d.productos.map(p => ({
-                id: p.id, nombre: p.nombre, cantInicial: p.stock || 50,
-                vendido: 0, cantFinal: p.stock || 50, precioVenta: p.precio,
-                costoUnitario: p.costo || 0
+                id: p.id, nombre: p.nombre,
+                categoria: p.categoria ?? 'General', um: p.um ?? 'Un',
+                cantInicial: Number(p.stock) || 0, vendido: 0,
+                cantFinal: Number(p.stock) || 0,
+                precioVenta: Number(p.precio) || 0,
+                precioCosto: Number(p.costo) || 0,
+                costoUnitario: Number(p.costo) || 0,
+                importe: 0, comision: 0, gananciaNeta: 0
             }));
+            if (typeof inv_recalcularVentasDelDia === 'function') {
+                try { inv_recalcularVentasDelDia(hoy); } catch(_e) {}
+            }
             if (typeof tpv_renderizarProductos === 'function') tpv_renderizarProductos();
             if (typeof tpv_renderizarFiltroCategorias === 'function') tpv_renderizarFiltroCategorias();
             if (typeof inv_renderizarTabla === 'function') inv_renderizarTabla(hoy);

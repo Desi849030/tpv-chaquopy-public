@@ -745,6 +745,20 @@ def listar_clientes():
         return jsonify({"ok": True, "clientes": clientes})
     except: return jsonify({"ok": True, "clientes": []})
 
+@app.route('/api/auth/auto-backup', methods=['POST'])
+def auto_backup():
+    """Alias de respaldo automático que llama el frontend periódicamente.
+    Antes devolvía 405 porque la ruta no existía."""
+    try:
+        import shutil, os
+        from db_connection import DB_FILE
+        backup_path = DB_FILE + '.backup'
+        shutil.copy2(DB_FILE, backup_path)
+        return jsonify({"ok": True, "backup": backup_path})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 200  # no romper el polling
+
+
 @app.route('/api/db/backup', methods=['POST'])
 def backup_bd():
     try:
@@ -1671,4 +1685,7 @@ if __name__ == '__main__':
     print(f" ✅ URL: http://localhost:5000\n")
     logging.basicConfig(level=logging.WARNING)
     port = int(os.environ.get('TPV_PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    # threaded=True: el servidor de desarrollo es monohilo por defecto y el
+    # polling del frontend (pedidos, métricas, health) lo saturaba provocando
+    # 'Failed to fetch'. Con hilos atiende peticiones concurrentes.
+    app.run(host='0.0.0.0', port=port, debug=False, threaded=True)

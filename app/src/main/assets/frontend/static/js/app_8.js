@@ -145,21 +145,45 @@ function _dbgInit() {
         _origWarn.apply(console, args);
     };
 
-    // Monitorear fetch para errores de red/API
+    // Monitorear fetch para errores de red/API + tiempo de respuesta
     const _origFetch = window.fetch;
+    window._DBG.stats = window._DBG.stats || { req: 0, err: 0, slow: 0 };
     window.fetch = function(url, opts) {
+        const t0 = performance.now();
+        window._DBG.stats.req++;
         return _origFetch(url, opts).then(res => {
+            const ms = Math.round(performance.now() - t0);
             if (!res.ok && res.status >= 400) {
-                _dbgLog(`⚠️ [API] ${res.status} ${res.statusText} → ${url}`, 'warning');
+                window._DBG.stats.err++;
+                _dbgLog(`⚠️ [API ${ms}ms] ${res.status} ${res.statusText} → ${url}`, 'warning');
+            } else if (ms > 1500) {
+                window._DBG.stats.slow++;
+                _dbgLog(`🐌 [LENTO ${ms}ms] ${url}`, 'warning');
             }
             return res;
         }).catch(err => {
+            window._DBG.stats.err++;
             _dbgLog(`❌ [FETCH] ${err.message} → ${url}`, 'error', err.message);
             throw err;
         });
     };
 
     window._DBG.activo = true;
+    window._DBG.iniciado = Date.now();
+    // Información del entorno (útil para diagnosticar en el dispositivo del usuario)
+    try {
+        var nav = navigator;
+        _dbgLog('🖥️ ' + (nav.userAgent || '').slice(0, 80), 'info');
+        _dbgLog('📐 Pantalla ' + screen.width + 'x' + screen.height +
+                ' · viewport ' + window.innerWidth + 'x' + window.innerHeight +
+                ' · DPR ' + (window.devicePixelRatio || 1), 'info');
+        if (nav.connection) {
+            _dbgLog('📶 Red: ' + (nav.connection.effectiveType || '?') +
+                    ' · online: ' + nav.onLine, 'info');
+        }
+        if (nav.deviceMemory) _dbgLog('🧠 RAM aprox: ' + nav.deviceMemory + ' GB', 'info');
+        if (nav.hardwareConcurrency) _dbgLog('⚙️ CPU: ' + nav.hardwareConcurrency + ' núcleos', 'info');
+    } catch(e) {}
     _dbgLog('🚀 Debugger TPV activado — modo desarrollador', 'success');
 }
 

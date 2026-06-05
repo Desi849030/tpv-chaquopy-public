@@ -20,12 +20,14 @@ Sistema de Punto de Venta Profesional con IA integrada, biometria, roles multini
 - Traduccion: Google Translate ES/EN
 - Supabase: Sincronizacion cloud opcional
 
-## Estadisticas
+## Estadisticas (reales)
 
-- 142 tests unitarios + 38 simulación maestra + 7 stress test + 47 auditoría = 679+ pruebas totales
-- Backend modular: 195 archivos Python, 33,718 líneas totales, 347 archivos + Agente Proactivo con monitoreo background
-- Frontend: 62 modulos JavaScript
-- IA Agentiva + Proactiva: 13 herramientas, 5 skills, 17 categorías, alertas automáticas, briefing
+- Backend: ~172 archivos Python (~19,400 líneas), 187 rutas Flask registradas
+- Frontend: 84 archivos JavaScript + 5 hojas CSS
+- Tests: suite estable de 51 pruebas verdes + 5 skip (ver `pytest.ini`)
+- Smoke test: arranque + rutas críticas + agente + SQLi (`scripts/smoke_test.py`)
+- IA Agentiva + Proactiva: herramientas, skills, categorías, alertas, briefing
+- 100% offline: todas las librerías y fuentes servidas localmente (sin CDN)
 
 ## Jerarquia de Roles
 
@@ -59,7 +61,20 @@ python app.py
 
 ## Compilar APK
 
-Push a main dispara build automatico en GitHub Actions (tests + APK).
+Push a `main` dispara el workflow `.github/workflows/ci.yml`:
+
+1. **test** — instala deps, corre la suite estable de pytest y el smoke test.
+2. **build** — (solo si test pasa) genera APK debug + release firmado y los
+   sube como artefactos descargables.
+
+Probar el backend en local / Termux antes de subir:
+
+```bash
+pip install -r requirements.txt
+python scripts/smoke_test.py      # red de seguridad: arranque + rutas + agente
+python -m pytest                  # suite estable
+cd app/src/main/python && python app.py   # abrir http://127.0.0.1:5050
+```
 
 ## Estructura
 

@@ -1481,7 +1481,7 @@ _init_db_if_empty()
 # ========== INICIO ==========
 # ========== PRODUCTS BLUEPRINT ==========
 try:
-    from routes.products import prod_bp
+    from modules.products import prod_bp
     app.register_blueprint(prod_bp)
     print("✅ Products blueprint activo")
 except Exception as e:
@@ -1489,21 +1489,21 @@ except Exception as e:
 
 # ========== VENTAS BLUEPRINT ==========
 try:
-    from routes.sales import sales_bp
+    from modules.sales import sales_bp
     app.register_blueprint(sales_bp)
     print("✅ Ventas blueprint activo")
 except Exception as e:
     print(f"⚠️ Ventas: {e}")
 
 try:
-    from routes.inventory import inv_bp
+    from modules.inventory import inv_bp
     app.register_blueprint(inv_bp)
     print("✅ Inventory blueprint activo")
 except Exception as e:
     print(f"⚠️ Inventory: {e}")
 
 try:
-    from routes.system import system_bp
+    from modules.system import system_bp
     app.register_blueprint(system_bp)
     print("✅ System blueprint activo")
 except Exception as e:
@@ -1512,53 +1512,53 @@ except Exception as e:
 
 # ========== MÁS BLUEPRINTS ==========
 try:
-    from routes.auth import auth_bp; app.register_blueprint(auth_bp)
+    from modules.auth import auth_bp; app.register_blueprint(auth_bp)
     print("✅ Auth BP")
 except Exception as e: print(f"⚠️ Auth: {e}")
 
 try:
-    from routes.agent import agent_bp; app.register_blueprint(agent_bp)
+    from modules.agent import agent_bp; app.register_blueprint(agent_bp)
     print("✅ Agent BP")
 except Exception as e: print(f"⚠️ Agent: {e}")
 
 try:
-    from routes.metrics import metrics_bp; app.register_blueprint(metrics_bp)
+    from modules.metrics import metrics_bp; app.register_blueprint(metrics_bp)
     print("✅ Metrics BP")
 except Exception as e: print(f"⚠️ Metrics: {e}")
 
 try:
-    from routes.tienda_bp import tienda_bp; app.register_blueprint(tienda_bp)
+    from modules.tienda_bp import tienda_bp; app.register_blueprint(tienda_bp)
     print("✅ Tienda BP")
 except Exception as e: print(f"⚠️ Tienda: {e}")
 
 try:
-    from routes.ai_bp import ai_bp; app.register_blueprint(ai_bp)
+    from modules.ai_bp import ai_bp; app.register_blueprint(ai_bp)
     print("✅ AI BP")
 except Exception as e: print(f"⚠️ AI: {e}")
 
 try:
-    from routes.ventas_bp import ventas_bp; app.register_blueprint(ventas_bp)
+    from modules.ventas_bp import ventas_bp; app.register_blueprint(ventas_bp)
     print("✅ Ventas BP")
 except Exception as e: print(f"⚠️ Ventas: {e}")
 
 try:
-    from routes.settings_bp import settings_bp; app.register_blueprint(settings_bp)
+    from modules.settings_bp import settings_bp; app.register_blueprint(settings_bp)
     print("✅ Settings BP")
 except Exception as e: print(f"⚠️ Settings: {e}")
 
 try:
-    from routes.admin_bp import admin_bp; app.register_blueprint(admin_bp)
+    from modules.admin_bp import admin_bp; app.register_blueprint(admin_bp)
     print("✅ Admin BP")
 except Exception as e: print(f"⚠️ Admin: {e}")
 
 
 try:
-    from routes.loyalty_bp import loyalty_bp; app.register_blueprint(loyalty_bp)
+    from modules.loyalty_bp import loyalty_bp; app.register_blueprint(loyalty_bp)
     print("✅ Loyalty BP")
 except Exception as e: print(f"⚠️ Loyalty: {e}")
 
 try:
-    from routes.assistant_bp import assistant_bp; app.register_blueprint(assistant_bp)
+    from modules.assistant_bp import assistant_bp; app.register_blueprint(assistant_bp)
     print("✅ Assistant BP")
 except Exception as e: print(f"⚠️ Assistant: {e}")
 

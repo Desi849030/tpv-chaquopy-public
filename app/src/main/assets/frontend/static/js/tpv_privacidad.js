@@ -1,4 +1,22 @@
 // tpv_privacidad.js — Configuración de privacidad y datos personales
+
+// Inicializa el panel de Privilegios al abrir la pestaña: detecta el rol del
+// usuario actual y carga automáticamente una tabla (antes había que adivinar
+// que debías pulsar un botón de rol y _priv_mi_rol quedaba undefined).
+function priv_init() {
+    try {
+        var rol = 'desarrollador';
+        if (window.AUTH && AUTH.usuario && AUTH.usuario.rol) rol = AUTH.usuario.rol;
+        else if (window.tpvState && tpvState.usuarioActual && tpvState.usuarioActual.rol) rol = tpvState.usuarioActual.rol;
+        priv_mostrarMenu(rol);
+        // Cargar la primera tabla: admin ve su propio rol; dev empieza por admin.
+        var rolInicial = (rol === 'administrador') ? 'vendedor' : 'administrador';
+        priv_cargarRol(rolInicial);
+    } catch (e) {
+        priv_cargarRol('administrador');
+    }
+}
+
 function priv_mostrarMenu(rol) {
     // Mostrar/ocultar el menú de Privilegios según el rol
     _priv_mi_rol = rol;  // Guardar rol del usuario actual

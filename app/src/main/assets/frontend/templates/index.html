@@ -252,7 +252,7 @@
                         <i class="bi bi-shield-check me-2 text-danger"></i>Licencias</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><h6 class="dropdown-header text-muted small">ADMINISTRACIÓN</h6></li>
-                    <li><a class="dropdown-item" id="privilegios-tab" data-bs-toggle="tab" data-bs-target="#privilegios-tab-pane" href="#" role="tab">
+                    <li><a class="dropdown-item" id="privilegios-tab" data-bs-toggle="tab" data-bs-target="#privilegios-tab-pane" href="#" role="tab" onclick="if(typeof priv_init==='function')priv_init()">
                         <i class="bi bi-shield-lock-fill me-2 text-primary"></i>Privilegios</a></li>
                     <li><a class="dropdown-item" id="seguridad-tab" data-bs-toggle="tab" data-bs-target="#seguridad-tab-pane" href="#" role="tab" onclick="if(typeof seguridad_cargarDashboard==='function')seguridad_cargarDashboard()">
                         <i class="bi bi-shield-shaded me-2 text-success"></i>Seguridad y Biometría</a></li>

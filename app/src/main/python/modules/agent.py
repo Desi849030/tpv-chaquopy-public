@@ -13,7 +13,12 @@ def requiere_login(f):
         return f(*args, **kwargs)
     return wrapper
 
-def usuario_actual(): return session.get("usuario", {})
+def usuario_actual():
+    u = session.get("usuario", {}) or {}
+    # Normaliza: garantizar 'usuario_id' aunque la sesion solo tenga 'id'.
+    if u and "usuario_id" not in u:
+        u["usuario_id"] = u.get("id") or u.get("username") or "anon"
+    return u
 
 @login_required
 @agent_bp.route('/agent/query', methods=['POST'])

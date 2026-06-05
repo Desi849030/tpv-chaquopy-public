@@ -830,7 +830,7 @@ function tpv_renderizarProductos() {
                 <div class="col">
                     <div class="product-card" onclick="tpv_mostrarConfirmacionAgregar('${p.id}')">
                         <div class="product-img" style="position:relative;">
-                            ${(() => { if(!p.imagen) return '<i class="bi bi-image-alt"></i>'; const e=/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}]/u; if(e.test(p.imagen)) return '<span style="font-size:2.5rem;line-height:1">'+p.imagen+'</span>'; return '<img src="'+p.imagen+'" style="max-width:100%;max-height:100%;object-fit:contain" onerror="this.outerHTML=\'<i class=bi-image-alt></i>\'">'\; })()}
+                            ${(() => { if(!p.imagen) return '<i class="bi bi-image-alt"></i>'; const e=/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}]/u; if(e.test(p.imagen)) return '<span style="font-size:2.5rem;line-height:1">'+p.imagen+'</span>'; return '<img src="'+p.imagen+'" style="max-width:100%;max-height:100%;object-fit:contain" onerror="this.outerHTML=\'<i class=bi-image-alt></i>\'">'; })()}
                             ${tpv_stockBadge(stock)}
                         </div>
                         <div class="product-info">

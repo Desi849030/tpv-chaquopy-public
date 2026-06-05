@@ -23,6 +23,21 @@ def sanitize_data(data):
 
 _SQLI_PATTERNS = ["'; ", "--", "/*", "*/", "xp_", "UNION ", "SELECT ", "INSERT ", "DELETE ", "UPDATE ", "DROP "]
 
+# Patrones regex para vectores que no se detectan por subcadena simple:
+# - Tautologias:  ' OR '1'='1 ,  " OR 1=1 ,  ) OR (1=1
+# - Comentarios de fin de linea:  admin'--  ,  admin'#
+# - Apilado de sentencias:  ; DROP TABLE
+# - Funciones peligrosas:  SLEEP( , BENCHMARK( , LOAD_FILE(
+_SQLI_REGEX = re.compile(
+    r"('|\"|\)|\s)\s*(OR|AND)\s+\(?\s*[\w'\"]+\s*=\s*[\w'\"]+"  # OR/AND tautologico (admite parentesis)
+    r"|('|\")\s*(OR|AND)\s+\d"                            # ' OR 1...
+    r"|;\s*(DROP|DELETE|UPDATE|INSERT|TRUNCATE|ALTER)\b"  # sentencias apiladas
+    r"|\b(SLEEP|BENCHMARK|LOAD_FILE|WAITFOR\s+DELAY)\s*\(" # time-based / files
+    r"|('|\")\s*(--|#)",                                   # comentario tras comilla
+    re.IGNORECASE,
+)
+
+
 def check_sql_injection(data):
     if isinstance(data, dict):
         return any(check_sql_injection(v) for v in data.values())
@@ -30,7 +45,9 @@ def check_sql_injection(data):
         return any(check_sql_injection(i) for i in data)
     elif isinstance(data, str):
         d = data.upper()
-        return any(p.upper() in d for p in _SQLI_PATTERNS)
+        if any(p.upper() in d for p in _SQLI_PATTERNS):
+            return True
+        return bool(_SQLI_REGEX.search(data))
     return False
 
 # ══════════════════════════════════════════════════════════════

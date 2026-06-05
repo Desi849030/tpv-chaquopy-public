@@ -229,6 +229,22 @@ body {
   transition: border-color var(--tpv-dur) var(--tpv-ease), box-shadow var(--tpv-dur) var(--tpv-ease);
 }
 
+/* Inputs pequeños (tablas de inventario, filtros): respetar su tamaño compacto
+   para que el número no quede oculto/cortado. */
+.form-control-sm, .form-select-sm {
+  padding: 0.25rem 0.5rem !important;
+  font-size: 0.85rem !important;
+  border-radius: 0.4rem !important;
+}
+.inventory-input {
+  max-width: 90px;
+  min-width: 56px;
+  text-align: center;
+  padding: 0.25rem 0.4rem !important;
+}
+/* La celda de la tabla no debe recortar el contenido */
+.table td, .table th { overflow: visible; white-space: nowrap; }
+
 /* Respetar utilidades de color de Bootstrap (evita texto ilegible).
    Si un elemento trae bg-dark/bg-* o text-white, NO lo pisamos. */
 .form-control.bg-dark, .form-select.bg-dark,

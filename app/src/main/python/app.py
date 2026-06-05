@@ -51,10 +51,15 @@ def login():
     user = usuarios.get(u)
     if user:
         user['username'] = u
+        # Compatibilidad: los blueprints usan 'usuario_id'; el login guardaba
+        # solo 'id'. Exponer ambas claves evita KeyError/500 (p.ej. importar
+        # catálogo, registrar entradas de inventario).
+        user['usuario_id'] = user['id']
         session['usuario'] = user
         return jsonify({"ok": True, "usuario": user})
     # Si no existe, crear con rol vendedor
-    session['usuario'] = {'username': u, 'nombre': u, 'rol': 'vendedor', 'id': 'auto-001'}
+    session['usuario'] = {'username': u, 'nombre': u, 'rol': 'vendedor',
+                          'id': 'auto-001', 'usuario_id': 'auto-001'}
     return jsonify({"ok": True, "usuario": session['usuario']})
 
 @app.route('/api/auth/logout', methods=['POST'])
@@ -233,61 +238,17 @@ def admin_delete(uid):
 
 
 
-# ========== INVENTARIO COMPLETO ==========
-@app.route('/api/inventario/general')
-def mock_inventario_general():
-    prods = []
-    for p in [{"id":"p1","nombre":"Arroz Premium 1kg","categoria":"Alimentos","precio":25.50,"stock":45,"um":"Kg","costo":18.20},
-              {"id":"p2","nombre":"Frijoles Negros 500g","categoria":"Alimentos","precio":18.75,"stock":32,"um":"Bolsa","costo":12.50},
-              {"id":"p3","nombre":"Aceite Vegetal 1L","categoria":"Alimentos","precio":45.00,"stock":28,"um":"L","costo":32.00},
-              {"id":"p4","nombre":"Refresco Cola 2L","categoria":"Bebidas","precio":32.00,"stock":60,"um":"Botella","costo":22.00},
-              {"id":"p5","nombre":"Jabón Líquido Multiusos","categoria":"Limpieza","precio":55.00,"stock":25,"um":"Botella","costo":35.00},
-              {"id":"p6","nombre":"Azúcar Morena 1kg","categoria":"Alimentos","precio":22.30,"stock":50,"um":"Kg","costo":15.80},
-              {"id":"p7","nombre":"Café Molido 250g","categoria":"Bebidas","precio":65.00,"stock":40,"um":"Paquete","costo":45.00},
-              {"id":"p8","nombre":"Leche Entera 1L","categoria":"Lácteos","precio":28.00,"stock":55,"um":"L","costo":20.00},
-              {"id":"p9","nombre":"Huevos 12un","categoria":"Lácteos","precio":42.00,"stock":35,"um":"Caja","costo":30.00},
-              {"id":"p10","nombre":"Pan Integral","categoria":"Panadería","precio":35.00,"stock":20,"um":"Pieza","costo":22.00},
-              {"id":"p11","nombre":"Detergente Líquido 500ml","categoria":"Limpieza","precio":38.00,"stock":30,"um":"Botella","costo":25.00},
-              {"id":"p12","nombre":"Pasta Dental","categoria":"Higiene","precio":28.00,"stock":45,"um":"Unidad","costo":18.00}]:
-        prods.append({"producto_id":p["id"],"nombre":p["nombre"],"categoria":p["categoria"],"stock_actual":p["stock"],"precio_venta":p["precio"],"precio_costo":p["costo"],"um":p["um"],"codigo":p["id"].upper()})
-    return jsonify({"ok":True,"inventario":prods,"total":len(prods)})
-
-@app.route('/api/inventario/diario/<fecha>')
-def mock_inventario_diario(fecha):
-    return jsonify({"ok":True,"fecha":fecha,"inventario":{},"conteo":[]})
-
-@app.route('/api/inventario/diario/conteo/<fecha>')
-def mock_inventario_conteo(fecha):
-    return jsonify({"ok":True,"fecha":fecha,"conteo":[]})
-
-@app.route('/api/inventario/importar-catalogo', methods=['POST'])
-def mock_inventario_importar():
-    return jsonify({"ok":True,"nuevos":12,"existentes":0,"mensaje":"Catálogo importado"})
-
-@app.route('/api/inventario/asignar-diario', methods=['POST'])
-def mock_inventario_asignar():
-    return jsonify({"ok":True,"mensaje":"Inventario diario asignado"})
-
-@app.route('/api/inventario/cierre-admin', methods=['POST'])
-def mock_inventario_cierre():
-    return jsonify({"ok":True,"mensaje":"Cierre procesado"})
-
-@app.route('/api/stock/masivo', methods=['POST'])
-def mock_stock_masivo():
-    return jsonify({"ok":True,"mensaje":"Stock actualizado"})
-
-@app.route('/api/historial/diario', methods=['GET','POST'])
-def mock_historial_diario():
-    return jsonify({"ok":True,"historial":[]})
-
-
-@app.route('/api/licencias')
-def mock_licencias():
-    return jsonify({"ok": True, "licencias": [], "activa": True, "tipo": "premium", "dias_restantes": 365})
-
-@app.route('/api/licencias/estado')
-def mock_licencia_estado():
-    return jsonify({"ok": True, "activa": True, "tipo": "desarrollador", "expiracion": "2027-12-31", "dias_restantes": 365})
+# ========== INVENTARIO ==========
+# NOTA: Los endpoints MOCK de inventario/licencias se ELIMINARON. Devolvían
+# datos falsos (12 productos hardcoded, "importado" sin escribir nada) y, al
+# registrarse antes que los blueprints reales, TAPABAN la funcionalidad real:
+#   - /api/inventario/general        -> modules/inventory.py (almacén real)
+#   - /api/inventario/importar-catalogo -> modules/inventory.py (Excel real)
+#   - /api/inventario/diario, asignar-diario, cierre-admin -> modules/inventory.py
+#   - /api/stock/masivo              -> modules/inventory.py
+#   - /api/historial/diario          -> modules/system.py
+#   - /api/licencias, /api/licencias/estado -> modules/auth.py
+# Esto causaba que el Excel "dijera importado" sin actualizar el almacén general.
 
 
 # ========== HERRAMIENTAS IA (ENDPOINTS REALES) ==========
@@ -1314,10 +1275,8 @@ def listar_usuarios():
 def sincronizar_completo():
     return jsonify({"ok": True, "mensaje": "Sincronizacion completada"})
 
-@app.route('/api/inventario/diario/conteo', methods=['POST'])
-def inventario_diario_conteo_post():
-    d = request.get_json(silent=True) or {}
-    return jsonify({"ok": True, "mensaje": "Conteo registrado"})
+# NOTA: mock /api/inventario/diario/conteo eliminado (tapaba el blueprint real
+# inventory.api_conteo_vendedor que sí registra el conteo).
 
 
 # ========== CATCH-ALL ==========
@@ -1346,42 +1305,8 @@ def api_usuarios():
 
 
 # ═══ HOTFIX v8.0.2: RECONSTRUIR DESDE PRODUCTOS ═══
-@app.route('/api/reconstruir-desde-productos', methods=['POST'])
-def api_reconstruir_desde_productos():
-    d = request.get_json(silent=True) or {}
-    productos = d.get('productos', [])
-    if not productos:
-        return jsonify({"ok":False,"error":"No hay productos"}),400
-    try:
-        from db_connection import obtener_conexion
-        from datetime import datetime
-        conn = obtener_conexion()
-        cursor = conn.cursor()
-        ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        total = 0
-        for p in productos:
-            pid = p.get("id","")
-            if not pid: continue
-            nom = p.get("nombre","")
-            pv = float(p.get("precio",0) or 0)
-            pc = float(p.get("costoUnitario",p.get("costo",0)) or 0)
-            cat = p.get("categoria","General") or "General"
-            um = p.get("um",p.get("unidadMedida","C/U")) or "C/U"
-            img = p.get("imagen","")
-            stock = p.get("stock_actual",p.get("stock",None))
-            cursor.execute("INSERT OR REPLACE INTO productos (producto_id,nombre,precio,costo,categoria,unidad_medida,imagen,activo) VALUES (?,?,?,?,?,?,?,1)",
-                          (pid,nom,pv,pc,cat,um,img))
-            if stock is not None:
-                cursor.execute("INSERT OR REPLACE INTO inventario_general (producto_id,nombre,stock_actual,stock_minimo,precio_compra,precio_venta,categoria,unidad_medida,actualizado) VALUES (?,?,?,5,?,?,?,?,?)",
-                              (pid,nom,float(stock),pc,pv,cat,um,ahora))
-            else:
-                cursor.execute("INSERT INTO inventario_general (producto_id,nombre,stock_actual,stock_minimo,precio_compra,precio_venta,categoria,unidad_medida,actualizado) VALUES (?,?,0,5,?,?,?,?,?) ON CONFLICT(producto_id) DO UPDATE SET nombre=excluded.nombre,precio_venta=excluded.precio_venta,categoria=excluded.categoria,actualizado=excluded.actualizado",
-                              (pid,nom,pc,pv,cat,um,ahora))
-            total += 1
-        conn.commit(); conn.close()
-        return jsonify({"ok":True,"total":total,"mensaje":f"{total} productos reconstruidos"})
-    except Exception as e:
-        return jsonify({"ok":False,"error":str(e)}),500
+# NOTA: segunda definición de /api/reconstruir-desde-productos eliminada
+# (era código muerto: Flask usaba la primera 'reconstruir_desde_productos').
 
 
 

@@ -119,51 +119,55 @@
 
         // --- LÓGICA DE ALMACENAMIENTO INDEXEDDB ---
         const dbHelper = {
-            // Abre la BD garantizando que el store exista. Si la BD está
-            // corrupta/incompleta (creada sin el store por una versión previa
-            // u otro módulo), la elimina y la recrea limpia. Maneja onblocked.
+            // Abre la BD garantizando que el store exista. Abre SIN versión fija
+            // para adoptar la versión existente (evita VersionError si una versión
+            // previa la subió). Si falta el store, sube versión para crearlo y,
+            // como último recurso, borra y recrea limpia. Maneja onblocked.
             openDb: () => new Promise((resolve, reject) => {
-                const abrir = (version) => {
-                    let req;
-                    try {
-                        req = version ? indexedDB.open(DB_NAME, version) : indexedDB.open(DB_NAME);
-                    } catch (err) { return reject(err); }
-                    req.onupgradeneeded = e => {
-                        const db = e.target.result;
-                        if (!db.objectStoreNames.contains(STORE_NAME)) {
-                            db.createObjectStore(STORE_NAME);
+                // Paso 1: abrir sin versión (toma la actual, sea 1, 2, ...).
+                let req;
+                try { req = indexedDB.open(DB_NAME); }
+                catch (err) { return reject(err); }
+                req.onblocked = () => {};
+                req.onerror = e => reject(e.target.error);
+                req.onsuccess = e => {
+                    const db = e.target.result;
+                    if (db.objectStoreNames.contains(STORE_NAME)) {
+                        return resolve(db); // todo OK
+                    }
+                    // Falta el store: reabrir con versión+1 para crearlo.
+                    const nextVer = (db.version || 1) + 1;
+                    db.close();
+                    let up;
+                    try { up = indexedDB.open(DB_NAME, nextVer); }
+                    catch (err) { return reject(err); }
+                    up.onupgradeneeded = ev => {
+                        const db2 = ev.target.result;
+                        if (!db2.objectStoreNames.contains(STORE_NAME)) {
+                            db2.createObjectStore(STORE_NAME);
                         }
                     };
-                    req.onblocked = () => { /* otra pestaña/conexión bloquea; esperar */ };
-                    req.onsuccess = e => {
-                        const db = e.target.result;
-                        if (db.objectStoreNames.contains(STORE_NAME)) {
-                            return resolve(db);
-                        }
-                        // Falta el store: reabrir con versión superior para crearlo.
-                        const nextVer = (db.version || 1) + 1;
-                        db.close();
-                        const up = indexedDB.open(DB_NAME, nextVer);
-                        up.onupgradeneeded = ev => {
-                            const db2 = ev.target.result;
-                            if (!db2.objectStoreNames.contains(STORE_NAME)) {
-                                db2.createObjectStore(STORE_NAME);
-                            }
+                    up.onblocked = () => {};
+                    up.onsuccess = ev => {
+                        const db2 = ev.target.result;
+                        if (db2.objectStoreNames.contains(STORE_NAME)) return resolve(db2);
+                        // Último recurso: borrar y recrear desde cero.
+                        db2.close();
+                        const del = indexedDB.deleteDatabase(DB_NAME);
+                        del.onsuccess = del.onerror = del.onblocked = () => {
+                            const fresh = indexedDB.open(DB_NAME, 1);
+                            fresh.onupgradeneeded = fe => {
+                                const db3 = fe.target.result;
+                                if (!db3.objectStoreNames.contains(STORE_NAME)) {
+                                    db3.createObjectStore(STORE_NAME);
+                                }
+                            };
+                            fresh.onsuccess = fe => resolve(fe.target.result);
+                            fresh.onerror = fe => reject(fe.target.error);
                         };
-                        up.onblocked = () => {};
-                        up.onsuccess = ev => {
-                            const db2 = ev.target.result;
-                            if (db2.objectStoreNames.contains(STORE_NAME)) return resolve(db2);
-                            // Último recurso: borrar y recrear desde cero.
-                            db2.close();
-                            const del = indexedDB.deleteDatabase(DB_NAME);
-                            del.onsuccess = del.onerror = () => abrir(1);
-                        };
-                        up.onerror = ev => reject(ev.target.error);
                     };
-                    req.onerror = e => reject(e.target.error);
+                    up.onerror = ev => reject(ev.target.error);
                 };
-                abrir(DB_VERSION);
             }),
             save: (db, data) => new Promise((resolve, reject) => {
                 if (!db.objectStoreNames.contains(STORE_NAME)) {

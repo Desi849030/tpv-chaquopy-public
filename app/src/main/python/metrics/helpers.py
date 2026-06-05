@@ -211,6 +211,39 @@ def _dev_only(func):
     return decorated
 
 
+def _tablas_info(db_path):
+    """Lista las tablas reales de la BD con su número de filas."""
+    result = {"tablas": [], "total_tablas": 0, "total_filas": 0, "error": None}
+    if not db_path or not os.path.exists(db_path):
+        result["error"] = "BD no encontrada"
+        return result
+    try:
+        import sqlite3
+        con = sqlite3.connect(db_path)
+        nombres = [r[0] for r in con.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' "
+            "AND name NOT LIKE 'sqlite_%' ORDER BY name")]
+        for t in nombres:
+            try:
+                n = con.execute('SELECT COUNT(*) FROM "%s"' % t).fetchone()[0]
+            except Exception:
+                n = -1
+            result["tablas"].append({"nombre": t, "filas": n})
+            if n > 0:
+                result["total_filas"] += n
+        result["total_tablas"] = len(nombres)
+        con.close()
+    except Exception as e:
+        result["error"] = str(e)
+    return result
+
+
 def get_system_metrics():
     db_path = _get_db_path()
-    return {"ram":_ram_info(),"storage":_storage_info(db_path),"inventario":_inventario_formulas(db_path),"db_path":db_path}
+    return {
+        "ram": _ram_info(),
+        "storage": _storage_info(db_path),
+        "tablas": _tablas_info(db_path),
+        "inventario": _inventario_formulas(db_path),
+        "db_path": db_path,
+    }

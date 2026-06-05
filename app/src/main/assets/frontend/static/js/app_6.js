@@ -228,6 +228,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span id="lbtn-txt"><i class="bi bi-box-arrow-in-right me-2"></i>Entrar</span>
                 <span id="lbtn-spin" style="display:none"><span class="spinner-border spinner-border-sm me-2"></span>Verificando...</span>
             </button>
+            <button id="login-bio-btn" class="login-btn" style="display:none;margin-top:.6rem;background:linear-gradient(135deg,#0ea5e9,#06b6d4)" onclick="auth_loginBiometrico()">
+                <i class="bi bi-fingerprint me-2"></i>Entrar con huella / rostro
+            </button>
             <div class="login-footer"><i class="bi bi-shield-lock me-1"></i>Acceso restringido al personal</div>
         </div>
         <div id="panel-cliente" style="display:none">
@@ -634,6 +637,7 @@ function auth_setModo(modo) {
         btnCliente.style.background= 'transparent';
         btnCliente.style.color     = '#64748b';
         setTimeout(() => document.getElementById('login-username')?.focus(), 50);
+        try { auth_bioActualizarBoton(); } catch(e) {}
     } else {
         panelStaff.style.display   = 'none';
         panelCliente.style.display = '';
@@ -805,6 +809,15 @@ async function auth_login() {
         const data = await res.json();
         if (res.ok && data.ok) {
             AUTH.usuario = data.usuario;
+            // Ofrecer registrar huella para próximos accesos (si el equipo lo permite)
+            try {
+                if (await auth_bioDisponible() && !localStorage.getItem(_BIO_KEY)) {
+                    var quiere = (typeof tpvConfirm === 'function')
+                        ? await tpvConfirm({ title:'Acceso con huella', message:'¿Activar inicio de sesión con huella/rostro en este dispositivo?', okText:'Activar', cancelText:'Ahora no' })
+                        : confirm('¿Activar inicio con huella en este dispositivo?');
+                    if (quiere) await auth_bioRegistrar(usr);
+                }
+            } catch(e) {}
             _auth_mostrarApp();
         } else {
             _loginErr(data.error || 'Usuario o contraseña incorrectos.');
@@ -818,6 +831,111 @@ async function auth_login() {
         document.getElementById('login-btn').disabled = false;
         document.getElementById('lbtn-txt').style.display  = '';
         document.getElementById('lbtn-spin').style.display = 'none';
+    }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  BIOMETRÍA EN EL LOGIN (WebAuthn + puente Android nativo)
+//  Funciona si el móvil/navegador lo permite. En el APK, MainActivity
+//  puede exponer window.AndroidBiometric para usar la huella nativa.
+// ══════════════════════════════════════════════════════════════
+var _BIO_KEY = 'tpv_bio_cred';
+
+async function auth_bioDisponible() {
+    // 1) Puente nativo Android (APK)
+    if (window.AndroidBiometric && typeof window.AndroidBiometric.isAvailable === 'function') {
+        try { return !!window.AndroidBiometric.isAvailable(); } catch(e) {}
+    }
+    // 2) WebAuthn (navegador moderno con sensor)
+    if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
+        try { return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(); }
+        catch(e) { return false; }
+    }
+    return false;
+}
+
+// Mostrar el botón de biometría si hay credencial guardada y el dispositivo lo permite
+async function auth_bioActualizarBoton() {
+    var btn = document.getElementById('login-bio-btn');
+    if (!btn) return;
+    var disponible = await auth_bioDisponible();
+    var hayCred = false;
+    try { hayCred = !!localStorage.getItem(_BIO_KEY); } catch(e) {}
+    btn.style.display = (disponible && hayCred) ? '' : 'none';
+}
+
+function _b64ToBuf(b64) {
+    var bin = atob(b64.replace(/-/g,'+').replace(/_/g,'/'));
+    var buf = new Uint8Array(bin.length);
+    for (var i=0;i<bin.length;i++) buf[i]=bin.charCodeAt(i);
+    return buf.buffer;
+}
+function _bufToB64(buf) {
+    var bytes = new Uint8Array(buf), bin='';
+    for (var i=0;i<bytes.length;i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+
+// Registrar la huella tras un login exitoso (vincula al usuario actual)
+async function auth_bioRegistrar(username) {
+    try {
+        // Puente Android nativo
+        if (window.AndroidBiometric && typeof window.AndroidBiometric.register === 'function') {
+            var okN = window.AndroidBiometric.register(username);
+            if (okN) { localStorage.setItem(_BIO_KEY, JSON.stringify({u:username,nativo:true})); }
+            return !!okN;
+        }
+        if (!(window.PublicKeyCredential)) return false;
+        var challenge = crypto.getRandomValues(new Uint8Array(32));
+        var userId = crypto.getRandomValues(new Uint8Array(16));
+        var cred = await navigator.credentials.create({ publicKey: {
+            challenge: challenge,
+            rp: { name: 'TPV UltraSmart' },
+            user: { id: userId, name: username, displayName: username },
+            pubKeyCredParams: [{ type:'public-key', alg:-7 }, { type:'public-key', alg:-257 }],
+            authenticatorSelection: { authenticatorAttachment:'platform', userVerification:'required' },
+            timeout: 60000, attestation: 'none'
+        }});
+        if (cred) {
+            localStorage.setItem(_BIO_KEY, JSON.stringify({ u: username, id: _bufToB64(cred.rawId) }));
+            return true;
+        }
+    } catch(e) { console.warn('bio registrar:', e.message); }
+    return false;
+}
+
+// Login con huella usando la credencial guardada
+async function auth_loginBiometrico() {
+    var raw;
+    try { raw = JSON.parse(localStorage.getItem(_BIO_KEY) || 'null'); } catch(e) {}
+    if (!raw || !raw.u) { _loginErr('No hay huella registrada en este dispositivo.'); return; }
+    try {
+        // Puente Android nativo
+        if (raw.nativo && window.AndroidBiometric && typeof window.AndroidBiometric.authenticate === 'function') {
+            var okN = window.AndroidBiometric.authenticate();
+            if (!okN) { _loginErr('Autenticación biométrica cancelada.'); return; }
+        } else if (window.PublicKeyCredential && raw.id) {
+            var challenge = crypto.getRandomValues(new Uint8Array(32));
+            var assertion = await navigator.credentials.get({ publicKey: {
+                challenge: challenge,
+                allowCredentials: [{ type:'public-key', id: _b64ToBuf(raw.id) }],
+                userVerification: 'required', timeout: 60000
+            }});
+            if (!assertion) { _loginErr('No se pudo verificar la huella.'); return; }
+        } else {
+            _loginErr('Biometría no disponible en este dispositivo.'); return;
+        }
+        // Verificación OK -> iniciar sesión del usuario vinculado
+        var res = await fetch('/api/auth/login', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ username: raw.u, password: 'bio', biometrico: true }),
+            credentials:'same-origin'
+        });
+        var data = await res.json();
+        if (res.ok && data.ok) { AUTH.usuario = data.usuario; _auth_mostrarApp(); }
+        else _loginErr('No se pudo iniciar sesión con huella.');
+    } catch(e) {
+        _loginErr('Biometría cancelada o no disponible.');
     }
 }
 

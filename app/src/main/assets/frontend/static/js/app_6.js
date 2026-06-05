@@ -1718,9 +1718,9 @@ async function _admin_asignarUno(pid) {
     const nombre      = cantEl.dataset.nombre||pid;
     const pv          = parseFloat(cantEl.dataset.pv)||0;
     const pc          = parseFloat(cantEl.dataset.pc)||0;
-    if (!vendedor_id) { alert('Selecciona un vendedor'); return; }
-    if (cantidad<=0)  { alert('Ingresa una cantidad mayor a 0'); cantEl.focus(); return; }
-    if (cantidad>stock){ alert(`Stock insuficiente. Disponible: ${stock}`); return; }
+    if (!vendedor_id) { tpvAlert('Selecciona un vendedor'); return; }
+    if (cantidad<=0)  { tpvAlert('Ingresa una cantidad mayor a 0'); cantEl.focus(); return; }
+    if (cantidad>stock){ tpvAlert(`Stock insuficiente. Disponible: ${stock}`); return; }
     const btn = document.querySelector(`#agn-row-${pid} button`);
     if (btn) { btn.disabled=true; btn.innerHTML='<span class="spinner-border spinner-border-sm"></span>'; }
     try {
@@ -1757,11 +1757,11 @@ async function _admin_asignarUno(pid) {
         } else {
             const errMsg = data.errores?.[0] || data.mensaje || 'No se pudo asignar';
             if (typeof showToast==='function') showToast(`❌ ${errMsg}`, 'danger');
-            else alert('Error: ' + errMsg);
+            else tpvAlert('Error: ' + errMsg);
         }
     } catch(e) {
         if (typeof showToast==='function') showToast(`❌ Error de red: ${e.message}`, 'danger');
-        else alert('Error de red: '+e.message);
+        else tpvAlert('Error de red: '+e.message);
     }
     finally { if(btn){btn.disabled=false;btn.innerHTML='<i class="bi bi-send-fill"></i>';} }
 }
@@ -1826,8 +1826,8 @@ async function _admin_limpiarVendedor(vendedor_id, nombre) {
             if (typeof showToast==='function') showToast(`🗑️ Inventario de ${nombre} limpiado`,'warning');
             const hoy = document.getElementById('inv-admin-fecha-vend')?.value||new Date().toISOString().split('T')[0];
             _admin_renderVendedores(hoy);
-        } else { alert('Error: '+data.mensaje); }
-    } catch(e) { alert('Error: '+e.message); }
+        } else { tpvAlert('Error: '+data.mensaje); }
+    } catch(e) { tpvAlert('Error: '+e.message); }
 }
 
 /** Carga stock masivo desde XLSX al almacén general */
@@ -1915,7 +1915,7 @@ function _admin_limpiarInventariosUI() {
     let payload = {};
     if (opc.trim()==='1') payload={fecha:hoy};
     else if (opc.trim()==='2') payload={};
-    else { alert('Opción inválida'); return; }
+    else { tpvAlert('Opción inválida'); return; }
     const desc = opc.trim()==='1' ? `inventarios de HOY (${hoy})` : 'TODOS los inventarios';
     if (!confirm(`⛔ ¿Confirmar eliminación de ${desc}?\n\nLos vendedores quedarán sin stock asignado.`)) return;
     fetch('/api/inventario/diario/limpiar',{
@@ -1927,8 +1927,8 @@ function _admin_limpiarInventariosUI() {
             if (typeof showToast==='function') showToast(`✅ ${data.mensaje}`,'success');
             const fechaEl=document.getElementById('inv-admin-fecha-vend');
             _admin_renderVendedores(fechaEl?.value||hoy);
-        } else { alert('Error: '+data.mensaje); }
-    }).catch(e=>alert('Error: '+e.message));
+        } else { tpvAlert('Error: '+data.mensaje); }
+    }).catch(e=>tpvAlert('Error: '+e.message));
 }
 
 // ══════════════════════════════════════════════
@@ -2255,7 +2255,10 @@ function g_quitarImg() {
 }
 
 async function auth_logout() {
-    if (!confirm('¿Cerrar sesión?')) return;
+    var _ok = (typeof tpvConfirm === 'function')
+        ? await tpvConfirm({ title: 'Cerrar sesión', message: '¿Seguro que deseas cerrar la sesión actual?', okText: 'Cerrar sesión', cancelText: 'Quedarme', danger: true })
+        : confirm('¿Cerrar sesión?');
+    if (!_ok) return;
 
     // Auto-backup antes de salir
     try {

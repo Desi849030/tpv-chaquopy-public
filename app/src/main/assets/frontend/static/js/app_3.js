@@ -1367,7 +1367,7 @@ function tpv_renderizarProductos() {
             if (codigoAprendizaje) {
                 tpvState.codigoAprendizajeActual = codigoAprendizaje;
                 setTimeout(() => {
-                    alert(`🎯 CÓDIGO DE APRENDIZAJE PARA HOY:\n\n"${codigoAprendizaje}"\n\n¡Recuerda aplicarlo durante el día!`);
+                    tpvAlert(`🎯 CÓDIGO DE APRENDIZAJE PARA HOY:\n\n"${codigoAprendizaje}"\n\n¡Recuerda aplicarlo durante el día!`);
                 }, 500);
             }
             
@@ -5099,7 +5099,7 @@ function tpv_renderizarProductos() {
             mensaje += '\n💡 El sistema aprende automáticamente de tus acciones\n';
             mensaje += 'y mejora con cada uso para adaptarse a tus necesidades.';
             
-            alert(mensaje);
+            tpvAlert(mensaje);
         }
         
         /**

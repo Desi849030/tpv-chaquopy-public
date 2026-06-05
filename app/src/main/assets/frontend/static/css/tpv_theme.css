@@ -341,16 +341,18 @@ body.rol-desarrollador #dev-metrics-tab { display: list-item !important; }
 /* ---------------------------------------------------------------------------
    13) NAVEGACIÓN MEJORADA (menús, submenús, dropdowns)
 --------------------------------------------------------------------------- */
-/* Barra de pestañas: scroll horizontal en móvil sin romper el diseño */
+/* IMPORTANTE: NO usar overflow en .nav-tabs porque recorta los dropdowns
+   que se despliegan hacia abajo. En su lugar permitir wrap en móvil. */
 .nav-tabs {
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  flex-wrap: wrap;
+  overflow: visible;
+  row-gap: 0.25rem;
 }
-.nav-tabs::-webkit-scrollbar { display: none; }
-.nav-tabs .nav-item { flex-shrink: 0; }
+.nav-tabs .nav-item { position: static; }
+
+/* El dropdown debe poder salir por encima de todo */
+.nav-item.dropdown { position: relative; }
+.nav-tabs .dropdown-menu { z-index: 1080; }
 
 /* Caret visible en dropdowns del nav */
 .nav-tabs .dropdown-toggle::after {

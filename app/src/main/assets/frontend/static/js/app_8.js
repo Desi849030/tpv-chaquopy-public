@@ -505,7 +505,17 @@ async function _dbgCheckIDB() {
     const label = 'IndexedDB';
     return new Promise(resolve => {
         try {
-            const req = indexedDB.open('tpvDataProfessionalDB', 1);
+            // Abrir SIN forzar versión para no crear una BD vacía sin el store
+            // que usa la app (tpvStateStore). Solo comprobamos accesibilidad.
+            const req = indexedDB.open('tpvDataProfessionalDB');
+            req.onupgradeneeded = e => {
+                // Si la BD no existía, crear el store que espera la app para
+                // evitar 'object store not found' en saveState.
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains('tpvStateStore')) {
+                    db.createObjectStore('tpvStateStore');
+                }
+            };
             req.onsuccess = () => {
                 req.result.close();
                 resolve({ label, ok: true, msg: 'BD local accesible' });

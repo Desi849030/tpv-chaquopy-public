@@ -140,7 +140,7 @@ async function dashboard_cargar() {
                     <span class="fw-bold text-warning fs-5">#${i+1}</span>
                     <div class="flex-grow-1 overflow-hidden">
                         <div class="fw-semibold text-truncate">${p.nombre}</div>
-                        <div class="text-muted small">${p.cant} uds · $${p.total.toFixed(2)}</div>
+                        <div class="text-muted small">${p.cant} uds · $${(Number(p.total)||0).toFixed(2)}</div>
                     </div>
                 </div>
             </div>`).join('');

@@ -127,7 +127,27 @@
                         db.createObjectStore(STORE_NAME);
                     }
                 };
-                request.onsuccess = e => resolve(e.target.result);
+                request.onsuccess = e => {
+                    const db = e.target.result;
+                    // Auto-reparación: si la BD existía pero sin el store (creada
+                    // por una versión previa u otro módulo), reabrir con versión
+                    // superior para crearlo y evitar 'object store not found'.
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        const nextVer = (db.version || 1) + 1;
+                        db.close();
+                        const up = indexedDB.open(DB_NAME, nextVer);
+                        up.onupgradeneeded = ev => {
+                            const db2 = ev.target.result;
+                            if (!db2.objectStoreNames.contains(STORE_NAME)) {
+                                db2.createObjectStore(STORE_NAME);
+                            }
+                        };
+                        up.onsuccess = ev => resolve(ev.target.result);
+                        up.onerror = ev => reject(ev.target.error);
+                        return;
+                    }
+                    resolve(db);
+                };
                 request.onerror = e => reject(e.target.error);
             }),
             save: (db, data) => new Promise((resolve, reject) => {
@@ -1464,15 +1484,15 @@ function tpv_renderizarProductos() {
             const inventarioFiltrado = inventario.filter(i => 
                 (!filtros.nombre || i.nombre.toLowerCase().includes(filtros.nombre)) &&
                 (!filtros.categoria || i.categoria === filtros.categoria) &&
-                (!filtros.pventa || i.precioVenta.toFixed(2).includes(filtros.pventa)) &&
+                (!filtros.pventa || (Number(i.precioVenta)||0).toFixed(2).includes(filtros.pventa)) &&
                 (!filtros.um || i.um?.toLowerCase().includes(filtros.um)) &&
                 (!filtros.cinicial || String(i.cantInicial).includes(filtros.cinicial)) &&
                 (!filtros.cfinal || String(i.cantFinal).includes(filtros.cfinal)) &&
                 (!filtros.vendido || String(i.vendido).includes(filtros.vendido)) &&
-                (!filtros.iventa || i.importe.toFixed(2).includes(filtros.iventa)) &&
-                (!filtros.pcosto || i.precioCosto.toFixed(2).includes(filtros.pcosto)) &&
-                (!filtros.comision || i.comision.toFixed(2).includes(filtros.comision)) &&
-                (!filtros.ganancia || i.gananciaNeta.toFixed(2).includes(filtros.ganancia))
+                (!filtros.iventa || (Number(i.importe)||0).toFixed(2).includes(filtros.iventa)) &&
+                (!filtros.pcosto || (Number(i.precioCosto)||0).toFixed(2).includes(filtros.pcosto)) &&
+                (!filtros.comision || (Number(i.comision)||0).toFixed(2).includes(filtros.comision)) &&
+                (!filtros.ganancia || (Number(i.gananciaNeta)||0).toFixed(2).includes(filtros.ganancia))
             ).sort((a,b) => (a.categoria ?? 'zz').localeCompare(b.categoria ?? 'zz') || a.nombre.localeCompare(b.nombre));
 
             tablaBody.innerHTML = inventarioFiltrado.map((item, index) => `
@@ -1486,7 +1506,7 @@ function tpv_renderizarProductos() {
                     <td><input type="number" class="form-control form-control-sm inventory-input" value="${item.cantFinal}" onchange="inv_updateField('${fecha}','${item.id}','cantFinal',this.valueAsNumber)"></td>
                     <td>${item.vendido}</td>
                     <td class="money-column">${formatCurrency(item.importe)}</td>
-                    <td><input type="number" class="form-control form-control-sm inventory-input" value="${item.precioCosto.toFixed(2)}" step="0.01" onchange="inv_updateField('${fecha}','${item.id}','precioCosto',this.valueAsNumber)"></td>
+                    <td><input type="number" class="form-control form-control-sm inventory-input" value="${(Number(item.precioCosto)||0).toFixed(2)}" step="0.01" onchange="inv_updateField('${fecha}','${item.id}','precioCosto',this.valueAsNumber)"></td>
                     <td class="money-column">${formatCurrency(item.comision)}</td>
                     <td class="fw-bold money-column ${item.gananciaNeta >= 0 ? "text-success" : "text-danger"}">${formatCurrency(item.gananciaNeta)}</td>
                     <td><button class="btn btn-sm btn-danger" onclick="inv_eliminarFila('${fecha}','${item.id}')"><i class="bi bi-trash"></i></button></td>

@@ -1,5 +1,12 @@
 // tpv_privacidad.js — Configuración de privacidad y datos personales
 
+// Estado del módulo de privilegios (declarado explícitamente para evitar
+// globales implícitas que quedaban undefined y dejaban la tabla vacía).
+var _priv_mi_rol = window._priv_mi_rol || '';
+var _priv_rol_actual = window._priv_rol_actual || '';
+var _priv_datos_cache = window._priv_datos_cache || {};
+var _priv_modulos_cache = window._priv_modulos_cache || {};
+
 // Inicializa el panel de Privilegios al abrir la pestaña: detecta el rol del
 // usuario actual y carga automáticamente una tabla (antes había que adivinar
 // que debías pulsar un botón de rol y _priv_mi_rol quedaba undefined).

@@ -54,9 +54,6 @@
       this.renderRam(d.ram);
       this.renderStorage(d.storage);
       this.renderTablas(d.tablas);
-      this.renderInventario(d.inventario);
-      this.renderCategorias(d.inventario);
-      this.renderTop5(d.inventario);
       this.renderFooter(d);
     },
 

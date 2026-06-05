@@ -1,0 +1,317 @@
+/* ============================================================================
+   TPV UltraSmart — Design System v1.0  (tpv_theme.css)
+   Capa de modernización profesional. Se carga DESPUÉS de los CSS existentes
+   y refina la apariencia sin alterar el HTML estructural.
+   100% offline (sin CDN). Compatible con dark mode (.dark-mode en body).
+   ========================================================================= */
+
+/* ---------------------------------------------------------------------------
+   1) TOKENS DE DISEÑO (variables)
+--------------------------------------------------------------------------- */
+:root {
+  /* Paleta de marca — índigo/violeta premium */
+  --tpv-primary: #4f46e5;
+  --tpv-primary-rgb: 79, 70, 229;
+  --tpv-primary-hover: #4338ca;
+  --tpv-primary-soft: rgba(79, 70, 229, 0.10);
+  --tpv-accent: #06b6d4;
+  --tpv-accent-rgb: 6, 182, 212;
+
+  /* Semánticos */
+  --tpv-success: #10b981;
+  --tpv-danger: #ef4444;
+  --tpv-warning: #f59e0b;
+  --tpv-info: #0ea5e9;
+
+  /* Superficies (claro) */
+  --tpv-bg: #eef2f7;
+  --tpv-bg-2: #e6ebf2;
+  --tpv-surface: #ffffff;
+  --tpv-surface-2: #f8fafc;
+  --tpv-text: #1e293b;
+  --tpv-text-muted: #64748b;
+  --tpv-border: #e2e8f0;
+
+  /* Radios */
+  --tpv-radius-sm: 0.5rem;
+  --tpv-radius: 0.85rem;
+  --tpv-radius-lg: 1.25rem;
+  --tpv-radius-pill: 999px;
+
+  /* Sombras en capas (elevación) */
+  --tpv-shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --tpv-shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.08);
+  --tpv-shadow: 0 8px 24px rgba(15, 23, 42, 0.10);
+  --tpv-shadow-lg: 0 18px 40px rgba(15, 23, 42, 0.16);
+  --tpv-ring: 0 0 0 0.2rem rgba(var(--tpv-primary-rgb), 0.28);
+
+  /* Movimiento */
+  --tpv-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --tpv-dur: 0.2s;
+
+  /* Mapear Bootstrap a nuestra marca */
+  --bs-primary: var(--tpv-primary);
+  --bs-primary-rgb: var(--tpv-primary-rgb);
+  --bs-link-color: var(--tpv-primary);
+  --bs-link-hover-color: var(--tpv-primary-hover);
+  --bs-body-font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+}
+
+body.dark-mode {
+  --tpv-bg: #0f141b;
+  --tpv-bg-2: #0b0f15;
+  --tpv-surface: #1a212b;
+  --tpv-surface-2: #222b37;
+  --tpv-text: #e8edf4;
+  --tpv-text-muted: #94a3b8;
+  --tpv-border: #2b3542;
+  --tpv-primary: #818cf8;
+  --tpv-primary-rgb: 129, 140, 248;
+  --tpv-primary-hover: #a5b4fc;
+  --tpv-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --tpv-shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.45);
+  --tpv-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  --tpv-shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.6);
+}
+
+/* ---------------------------------------------------------------------------
+   2) BASE
+--------------------------------------------------------------------------- */
+body {
+  font-family: var(--bs-body-font-family);
+  background: radial-gradient(1200px 600px at 100% -10%, rgba(var(--tpv-accent-rgb), 0.08), transparent 60%),
+              radial-gradient(1000px 500px at -10% 110%, rgba(var(--tpv-primary-rgb), 0.10), transparent 55%),
+              linear-gradient(160deg, var(--tpv-bg), var(--tpv-bg-2)) !important;
+  color: var(--tpv-text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection { background: rgba(var(--tpv-primary-rgb), 0.25); }
+
+/* Scrollbar moderna */
+* { scrollbar-width: thin; scrollbar-color: var(--tpv-border) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb {
+  background: var(--tpv-border);
+  border-radius: var(--tpv-radius-pill);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--tpv-text-muted); background-clip: padding-box; }
+
+/* Foco accesible y consistente */
+.btn:focus-visible,
+.form-control:focus,
+.form-select:focus,
+.nav-link:focus-visible,
+.dropdown-item:focus-visible {
+  outline: none !important;
+  box-shadow: var(--tpv-ring) !important;
+  border-color: var(--tpv-primary) !important;
+}
+
+/* ---------------------------------------------------------------------------
+   3) HEADER
+--------------------------------------------------------------------------- */
+.app-header {
+  background: linear-gradient(135deg, var(--tpv-primary), #6366f1 45%, var(--tpv-accent)) !important;
+  border-radius: var(--tpv-radius-lg) !important;
+  box-shadow: var(--tpv-shadow) !important;
+  padding: 1.6rem 1.75rem !important;
+  position: relative;
+  overflow: hidden;
+}
+.app-header::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(420px 160px at 12% -40%, rgba(255,255,255,0.30), transparent 70%);
+  pointer-events: none;
+}
+.app-header h1 {
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.25);
+}
+
+/* ---------------------------------------------------------------------------
+   4) TARJETAS (glass + sólidas)
+--------------------------------------------------------------------------- */
+.glass-card,
+.card {
+  background: var(--tpv-surface) !important;
+  border: 1px solid var(--tpv-border) !important;
+  border-radius: var(--tpv-radius-lg) !important;
+  box-shadow: var(--tpv-shadow-sm) !important;
+  transition: box-shadow var(--tpv-dur) var(--tpv-ease),
+              transform var(--tpv-dur) var(--tpv-ease);
+}
+.glass-card {
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  background: color-mix(in srgb, var(--tpv-surface) 88%, transparent) !important;
+}
+.card:hover { box-shadow: var(--tpv-shadow) !important; }
+.card-header {
+  background: transparent !important;
+  border-bottom: 1px solid var(--tpv-border) !important;
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------------
+   5) BOTONES
+--------------------------------------------------------------------------- */
+.btn {
+  --bs-btn-border-radius: var(--tpv-radius-sm);
+  border-radius: var(--tpv-radius-sm);
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  padding: 0.55rem 1.1rem;
+  transition: transform var(--tpv-dur) var(--tpv-ease),
+              box-shadow var(--tpv-dur) var(--tpv-ease),
+              filter var(--tpv-dur) var(--tpv-ease);
+}
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+.btn-lg { border-radius: var(--tpv-radius); padding: 0.8rem 1.4rem; }
+.btn-sm { border-radius: 0.45rem; }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--tpv-primary), #6366f1) !important;
+  border: none !important;
+  box-shadow: 0 6px 16px rgba(var(--tpv-primary-rgb), 0.35) !important;
+}
+.btn-primary:hover { filter: brightness(1.05); box-shadow: 0 10px 22px rgba(var(--tpv-primary-rgb), 0.45) !important; }
+
+.btn-success { background: linear-gradient(135deg, #10b981, #059669) !important; border: none !important; box-shadow: 0 6px 16px rgba(16,185,129,0.32) !important; }
+.btn-danger  { background: linear-gradient(135deg, #ef4444, #dc2626) !important; border: none !important; box-shadow: 0 6px 16px rgba(239,68,68,0.32) !important; }
+.btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706) !important; border: none !important; color: #1f1300 !important; box-shadow: 0 6px 16px rgba(245,158,11,0.30) !important; }
+.btn-info    { background: linear-gradient(135deg, #0ea5e9, #0284c7) !important; border: none !important; color: #fff !important; box-shadow: 0 6px 16px rgba(14,165,233,0.30) !important; }
+.btn-secondary { background: linear-gradient(135deg, #64748b, #475569) !important; border: none !important; }
+
+.btn-outline-primary { color: var(--tpv-primary) !important; border: 1.5px solid var(--tpv-primary) !important; }
+.btn-outline-primary:hover { background: var(--tpv-primary) !important; color: #fff !important; }
+
+/* ---------------------------------------------------------------------------
+   6) NAV TABS (segmentado moderno)
+--------------------------------------------------------------------------- */
+.nav-tabs {
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--tpv-border) !important;
+  padding-bottom: 0.25rem;
+}
+.nav-tabs .nav-link {
+  border: none !important;
+  border-radius: var(--tpv-radius-sm) !important;
+  color: var(--tpv-text-muted) !important;
+  font-weight: 600;
+  padding: 0.6rem 1rem !important;
+  transition: background var(--tpv-dur) var(--tpv-ease), color var(--tpv-dur) var(--tpv-ease);
+}
+.nav-tabs .nav-link:hover { background: var(--tpv-primary-soft) !important; color: var(--tpv-primary) !important; }
+.nav-tabs .nav-link.active,
+.nav-tabs .nav-link.dropdown-toggle.active {
+  color: var(--tpv-primary) !important;
+  background: var(--tpv-primary-soft) !important;
+  box-shadow: inset 0 -3px 0 var(--tpv-primary);
+}
+
+/* ---------------------------------------------------------------------------
+   7) FORMULARIOS
+--------------------------------------------------------------------------- */
+.form-control, .form-select {
+  border-radius: var(--tpv-radius-sm) !important;
+  border: 1.5px solid var(--tpv-border) !important;
+  background: var(--tpv-surface-2) !important;
+  color: var(--tpv-text) !important;
+  padding: 0.6rem 0.9rem;
+  transition: border-color var(--tpv-dur) var(--tpv-ease), box-shadow var(--tpv-dur) var(--tpv-ease);
+}
+.form-control::placeholder { color: var(--tpv-text-muted); opacity: 0.8; }
+.form-label { font-weight: 600; color: var(--tpv-text); margin-bottom: 0.35rem; }
+.input-group-text {
+  border-radius: var(--tpv-radius-sm);
+  background: var(--tpv-surface-2);
+  border: 1.5px solid var(--tpv-border);
+  color: var(--tpv-text-muted);
+}
+
+/* ---------------------------------------------------------------------------
+   8) TABLAS
+--------------------------------------------------------------------------- */
+.table {
+  --bs-table-bg: transparent;
+  color: var(--tpv-text);
+}
+.table > thead th {
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.6px;
+  color: var(--tpv-text-muted);
+  border-bottom: 2px solid var(--tpv-border) !important;
+  font-weight: 700;
+}
+.table > tbody tr { transition: background var(--tpv-dur) var(--tpv-ease); }
+.table-hover > tbody > tr:hover > * { background: var(--tpv-primary-soft) !important; }
+.table td, .table th { border-color: var(--tpv-border) !important; vertical-align: middle; }
+
+/* ---------------------------------------------------------------------------
+   9) BADGES, DROPDOWN, MODALES
+--------------------------------------------------------------------------- */
+.badge { border-radius: var(--tpv-radius-pill); font-weight: 600; padding: 0.4em 0.7em; }
+
+.dropdown-menu {
+  border: 1px solid var(--tpv-border);
+  border-radius: var(--tpv-radius);
+  box-shadow: var(--tpv-shadow);
+  background: var(--tpv-surface);
+  padding: 0.4rem;
+}
+.dropdown-item { border-radius: var(--tpv-radius-sm); color: var(--tpv-text); padding: 0.5rem 0.8rem; }
+.dropdown-item:hover { background: var(--tpv-primary-soft); color: var(--tpv-primary); }
+.dropdown-item.active { background: var(--tpv-primary) !important; color: #fff !important; }
+.dropdown-header { color: var(--tpv-text-muted); font-weight: 700; font-size: 0.7rem; letter-spacing: 0.6px; }
+
+.modal-content {
+  border: 1px solid var(--tpv-border);
+  border-radius: var(--tpv-radius-lg);
+  box-shadow: var(--tpv-shadow-lg);
+  background: var(--tpv-surface);
+  color: var(--tpv-text);
+}
+.modal-header, .modal-footer { border-color: var(--tpv-border); }
+
+/* ---------------------------------------------------------------------------
+   10) PRODUCT CARDS (POS)
+--------------------------------------------------------------------------- */
+.product-card {
+  border-radius: var(--tpv-radius) !important;
+  border: 1px solid var(--tpv-border) !important;
+  box-shadow: var(--tpv-shadow-xs);
+  transition: transform var(--tpv-dur) var(--tpv-ease), box-shadow var(--tpv-dur) var(--tpv-ease);
+}
+.product-card:hover { transform: translateY(-3px); box-shadow: var(--tpv-shadow) !important; }
+
+/* ---------------------------------------------------------------------------
+   11) UTILIDADES Y ESTADOS
+--------------------------------------------------------------------------- */
+.text-muted { color: var(--tpv-text-muted) !important; }
+hr { border-color: var(--tpv-border); opacity: 1; }
+.list-group-item { background: var(--tpv-surface); color: var(--tpv-text); border-color: var(--tpv-border); }
+
+#status-badge { border-radius: var(--tpv-radius-pill); font-weight: 600; }
+
+/* Animación de entrada suave para paneles */
+.tab-pane.active.show, .glass-card {
+  animation: tpv-fade-in 0.32s var(--tpv-ease) both;
+}
+@keyframes tpv-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Respeto a usuarios con preferencia de menos movimiento */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

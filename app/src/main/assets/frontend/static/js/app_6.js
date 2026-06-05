@@ -34,7 +34,7 @@ window.AUTH = { usuario: null, pollingNotif: null };
 
 const ROL_INFO = {
     desarrollador: { color:'#7c3aed', icono:'bi-code-slash',    label:'Desarrollador' },
-    administrador: { color:'#0d6efd', icono:'bi-shield-fill',   label:'Administrador' },
+    administrador: { color:'#4f46e5', icono:'bi-shield-fill',   label:'Administrador' },
     supervisor:    { color:'#0891b2', icono:'bi-eye-fill',       label:'Supervisor'    },
     vendedor:      { color:'#059669', icono:'bi-bag-check-fill', label:'Vendedor'      }
 };
@@ -74,7 +74,7 @@ const _css = document.createElement('style');
 _css.textContent = `
 #login-screen {
     position:fixed;inset:0;z-index:9999;
-    background:linear-gradient(135deg,#0d1b2a 0%,#1a3a5c 55%,#0d6efd 100%);
+    background:linear-gradient(135deg,#1e1b4b 0%,#4338ca 55%,#6366f1 100%);
     display:flex;align-items:center;justify-content:center;
     padding:1rem;overflow-y:auto;
 }
@@ -87,10 +87,10 @@ _css.textContent = `
 @keyframes loginIn{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
 .login-logo{
     width:72px;height:72px;border-radius:50%;
-    background:linear-gradient(135deg,#0d6efd,#0a58ca);
+    background:linear-gradient(135deg,#4f46e5,#6366f1);
     color:white;font-size:2rem;
     display:flex;align-items:center;justify-content:center;
-    margin:0 auto 1rem;box-shadow:0 8px 20px rgba(13,110,253,.35);
+    margin:0 auto 1rem;box-shadow:0 8px 20px rgba(79,70,229,.38);
 }
 .login-title{text-align:center;font-weight:800;color:#1e293b;margin:0;font-size:1.6rem}
 .login-sub{text-align:center;color:#64748b;font-size:.88rem;margin-bottom:1.5rem}
@@ -113,21 +113,21 @@ _css.textContent = `
     border:2px solid #e2e8f0;font-size:1rem;outline:none;
     transition:border-color .2s;box-sizing:border-box;background:white;
 }
-.login-input:focus{border-color:#0d6efd;box-shadow:0 0 0 3px rgba(13,110,253,.12)}
+.login-input:focus{border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,229,.18)}
 .pw-eye{
     position:absolute;right:.75rem;top:50%;transform:translateY(-50%);
     background:none;border:none;cursor:pointer;color:#94a3b8;
     padding:.3rem;font-size:1rem;line-height:1;transition:color .15s;
 }
-.pw-eye:hover{color:#0d6efd}
+.pw-eye:hover{color:#4f46e5}
 .login-btn{
     width:100%;padding:.85rem;border:none;border-radius:.75rem;
-    background:linear-gradient(135deg,#0d6efd,#0a58ca);color:white;
+    background:linear-gradient(135deg,#4f46e5,#6366f1);color:white;
     font-size:1rem;font-weight:700;cursor:pointer;margin-top:.25rem;
     transition:transform .15s,box-shadow .15s;
-    box-shadow:0 4px 14px rgba(13,110,253,.35);
+    box-shadow:0 4px 14px rgba(79,70,229,.38);
 }
-.login-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 20px rgba(13,110,253,.45)}
+.login-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 20px rgba(79,70,229,.48)}
 .login-btn:disabled{opacity:.65;cursor:not-allowed}
 .login-footer{text-align:center;color:#94a3b8;font-size:.78rem;margin-top:1.25rem}
 /* Barra usuario */
@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <h2 class="login-title">TPV Ultra Smart</h2>
         <div style="display:flex;background:#f1f5f9;border-radius:.75rem;padding:4px;margin-bottom:1.2rem">
             <button id="modo-staff-btn" onclick="auth_setModo('staff')"
-                style="flex:1;padding:.5rem;border:none;border-radius:.6rem;font-weight:600;font-size:.88rem;cursor:pointer;background:#0d6efd;color:white">
+                style="flex:1;padding:.5rem;border:none;border-radius:.6rem;font-weight:600;font-size:.88rem;cursor:pointer;background:#4f46e5;color:white">
                 <i class="bi bi-person-badge me-1"></i>Personal
             </button>
             <button id="modo-cliente-btn" onclick="auth_setModo('cliente')"
@@ -233,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div id="panel-cliente" style="display:none">
             <div style="display:flex;border-bottom:2px solid #e2e8f0;margin-bottom:1rem">
                 <button id="cli-tab-login" onclick="auth_cliTab('login')"
-                    style="flex:1;padding:.55rem;border:none;background:none;font-weight:700;font-size:.88rem;cursor:pointer;color:#0d6efd;border-bottom:2px solid #0d6efd;margin-bottom:-2px">
+                    style="flex:1;padding:.55rem;border:none;background:none;font-weight:700;font-size:.88rem;cursor:pointer;color:#4f46e5;border-bottom:2px solid #4f46e5;margin-bottom:-2px">
                     <i class="bi bi-box-arrow-in-right me-1"></i>Iniciar sesion
                 </button>
                 <button id="cli-tab-reg" onclick="auth_cliTab('registro')"
@@ -260,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span id="cli-lbtn-spin" style="display:none"><span class="spinner-border spinner-border-sm me-2"></span>Verificando...</span>
                 </button>
                 <div class="login-footer" style="margin-top:.8rem">
-                    Sin cuenta: <a href="#" onclick="auth_cliTab('registro');return false" style="color:#0d6efd;font-weight:600">Registrate gratis</a>
+                    Sin cuenta: <a href="#" onclick="auth_cliTab('registro');return false" style="color:#4f46e5;font-weight:600">Registrate gratis</a>
                 </div>
             </div>
             <div id="cli-panel-reg" style="display:none">
@@ -291,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span id="reg-btn-spin" style="display:none"><span class="spinner-border spinner-border-sm me-2"></span>Creando cuenta...</span>
                 </button>
                 <div class="login-footer" style="margin-top:.8rem">
-                    Ya tienes cuenta: <a href="#" onclick="auth_cliTab('login');return false" style="color:#0d6efd;font-weight:600">Inicia sesion</a>
+                    Ya tienes cuenta: <a href="#" onclick="auth_cliTab('login');return false" style="color:#4f46e5;font-weight:600">Inicia sesion</a>
                 </div>
             </div>
         </div>
@@ -355,7 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
           <div class="modal-header text-white fw-bold"
-               style="background:linear-gradient(135deg,#0d6efd,#0a58ca)">
+               style="background:linear-gradient(135deg,#4f46e5,#6366f1)">
             <span><i class="bi bi-people-fill me-2"></i>Gestión de Usuarios</span>
             <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
           </div>
@@ -629,7 +629,7 @@ function auth_setModo(modo) {
     if (modo === 'staff') {
         panelStaff.style.display   = '';
         panelCliente.style.display = 'none';
-        btnStaff.style.background  = '#0d6efd';
+        btnStaff.style.background  = '#4f46e5';
         btnStaff.style.color       = 'white';
         btnCliente.style.background= 'transparent';
         btnCliente.style.color     = '#64748b';
@@ -637,7 +637,7 @@ function auth_setModo(modo) {
     } else {
         panelStaff.style.display   = 'none';
         panelCliente.style.display = '';
-        btnCliente.style.background= '#0d6efd';
+        btnCliente.style.background= '#4f46e5';
         btnCliente.style.color     = 'white';
         btnStaff.style.background  = 'transparent';
         btnStaff.style.color       = '#64748b';
@@ -653,12 +653,12 @@ function auth_cliTab(tab) {
     document.getElementById('login-error').style.display = 'none';
     if (tab === 'login') {
         panelLogin.style.display = ''; panelReg.style.display = 'none';
-        btnLogin.style.color = '#0d6efd'; btnLogin.style.borderBottom = '2px solid #0d6efd'; btnLogin.style.fontWeight = '700';
+        btnLogin.style.color = '#4f46e5'; btnLogin.style.borderBottom = '2px solid #4f46e5'; btnLogin.style.fontWeight = '700';
         btnReg.style.color   = '#94a3b8'; btnReg.style.borderBottom   = '2px solid transparent'; btnReg.style.fontWeight = '600';
         setTimeout(() => document.getElementById('cli-email')?.focus(), 50);
     } else {
         panelLogin.style.display = 'none'; panelReg.style.display = '';
-        btnReg.style.color   = '#0d6efd'; btnReg.style.borderBottom   = '2px solid #0d6efd'; btnReg.style.fontWeight = '700';
+        btnReg.style.color   = '#4f46e5'; btnReg.style.borderBottom   = '2px solid #4f46e5'; btnReg.style.fontWeight = '700';
         btnLogin.style.color = '#94a3b8'; btnLogin.style.borderBottom = '2px solid transparent'; btnLogin.style.fontWeight = '600';
         setTimeout(() => document.getElementById('reg-nombre')?.focus(), 50);
     }
@@ -1668,7 +1668,7 @@ async function _admin_renderVendedores(hoy) {
         }
 
         // ── RESUMEN GLOBAL ──
-        html += `<div class="glass-card" style="border:2px solid #0d6efd44;background:linear-gradient(135deg,#0d6efd0d,#19875411)">
+        html += `<div class="glass-card" style="border:2px solid #4f46e544;background:linear-gradient(135deg,#4f46e50d,#19875411)">
           <h6 class="fw-bold text-center mb-3"><i class="bi bi-graph-up-arrow me-1 text-primary"></i>Resumen Global del Día</h6>
           <div class="row text-center g-2 mb-2">
             <div class="col-6 col-sm-2"><div class="text-muted small">Ingresos</div><div class="fw-bold text-primary fs-6">$${gVentas.toFixed(2)}</div></div>

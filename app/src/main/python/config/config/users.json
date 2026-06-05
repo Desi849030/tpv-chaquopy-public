@@ -1,6 +1,0 @@
-{
-  "desarrollador": { "usuario": "dev", "password": "dev123" },
-  "administradores": [{ "usuario": "admin", "password": "admin123" }],
-  "empleados": [{ "usuario": "empleado", "password": "empleado123" }],
-  "clientes": [{ "usuario": "cliente", "password": "cliente123" }]
-}

@@ -1,23 +1,66 @@
+# ---- Python ----
 __pycache__/
 *.pyc
 *.pyo
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---- Entornos ----
+.env
+.venv/
+venv/
+
+# ---- Bases de datos / runtime ----
 *.db
 *.sqlite
-*.log
-.env
-.DS_Store
-Thumbs.db
+*.sqlite3
 data/tpv.db
-*.bak
-*.swp
-__pycache__/
-*.pyc
-*.bak
-*.backup
-*.danado
-app/src/main/python/static/static/
-app/src/main/python/templates/templates/
-app/src/main/python/21:_TPL*/
 tpv_datos.db
 tpv_datos.db-*
+*.db-journal
+*.db-wal
+*.db-shm
+
+# ---- Secretos generados en runtime ----
+.tpv_secret
+.tpv_hmac_secret
+
+# ---- Logs ----
+*.log
 tpv_server.log
+
+# ---- Backups / restos (no versionar) ----
+*.bak
+*.bak_*
+*.backup
+*.danado
+*.swp
+*.tar.gz
+*_old/
+database_old/
+
+# ---- Android / Gradle ----
+.gradle/
+build/
+app/build/
+local.properties
+*.keystore
+*.jks
+captures/
+.externalNativeBuild/
+.cxx/
+
+# ---- Carpetas anidadas por error (no deben volver) ----
+app/src/main/python/app/
+app/src/main/python/config/config/
+app/src/main/python/static/static/
+app/src/main/python/templates/templates/
+
+# ---- SO / IDE ----
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.iml

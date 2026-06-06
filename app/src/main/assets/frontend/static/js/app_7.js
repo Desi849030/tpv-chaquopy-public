@@ -11,6 +11,27 @@ function isDashboardTabActive() {
 
 async function dashboard_cargar() {
     const hoy   = new Date().toISOString().split('T')[0];
+
+    // Sincronizar ventas del SERVIDOR (BD) hacia tpvState para que el dashboard
+    // refleje los datos reales y no solo lo que haya en memoria del navegador.
+    try {
+        const rv = await fetch('/api/ventas/hoy', { credentials: 'same-origin' });
+        if (rv.ok) {
+            const dv = await rv.json();
+            if (dv && Array.isArray(dv.ventas)) {
+                tpvState.ventasDiarias = tpvState.ventasDiarias || {};
+                tpvState.ventasDiarias[hoy] = dv.ventas.map(v => ({
+                    productoId: v.producto_id || v.productoId || v.id,
+                    producto: v.producto || v.nombre,
+                    nombre: v.nombre || v.producto,
+                    cantidad: Number(v.cantidad) || 1,
+                    total: Number(v.total) || 0,
+                    fecha: v.fecha || hoy
+                }));
+            }
+        }
+    } catch (e) { /* offline: usar lo que haya en tpvState */ }
+
     const ventas = tpvState.ventasDiarias[hoy] || [];
     const hist   = tpvState.historialVentas   || [];
 

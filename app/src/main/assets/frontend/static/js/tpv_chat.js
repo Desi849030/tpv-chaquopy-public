@@ -71,7 +71,7 @@
   // ---- HTML ----
   var box =
     '<div id="chat-box">' +
-      '<div id="chat-head"><span id="chat-head-ic">🤖</span>' +
+      '<div id="chat-head"><span id="chat-head-ic"><i class="bi bi-stars"></i></span>' +
         '<div style="flex:1;line-height:1.1"><div style="font-weight:700;font-size:.85rem">Asistente TPV</div>' +
         '<div id="chat-head-sub" style="font-size:.66rem;opacity:.85"></div></div>' +
         '<button onclick="window.tpvChat.toggle()" style="background:none;border:none;color:#fff;cursor:pointer;font-size:1.1rem">✕</button>' +
@@ -83,7 +83,7 @@
         '<button id="chat-send" onclick="window.tpvChat.send()">Enviar</button>' +
       '</div>' +
     '</div>' +
-    '<button id="chat-btn" title="Asistente IA (arrástrame)">🤖</button>';
+    '<button id="chat-btn" title="Asistente IA (arrástrame)"><i class="bi bi-chat-dots-fill"></i></button>';
 
   var wrap = document.createElement('div');
   wrap.id = 'chat-tpv';

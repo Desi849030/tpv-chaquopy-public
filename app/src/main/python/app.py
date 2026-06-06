@@ -1453,14 +1453,25 @@ def _init_db_if_empty():
         ]
         stocks = [45,32,28,60,25,50,40,55,35,20,30,45]
         emojis = ["🍚","🫘","🫒","🥤","🧴","🍬","☕","🥛","🥚","🍞","🧼","🪥"]
-        # Crear desarrollador por defecto
+        # Crear los usuarios demo con IDs fijos que coinciden con el login,
+        # para que TODOS los roles existan en la BD y tengan acceso real
+        # (inventario general, privilegios, etc.).
         try:
             import hashlib, secrets
-            salt = secrets.token_hex(16)
-            h = hashlib.scrypt("admin123".encode(), salt=bytes.fromhex(salt), n=16384, r=8, p=1).hex()
-            c.execute("INSERT OR IGNORE INTO usuarios (usuario_id,username,nombre,rol,password_hash,password_salt) VALUES (?,?,?,?,?,?)",
-                     ("dev-001","desarrollador","Desarrollador Principal","desarrollador",h,salt))
-        except: pass
+            _demo_users = [
+                ("dev-001", "desarrollador", "Desarrollador Principal", "desarrollador"),
+                ("usr-001", "admin",         "Administrador",           "administrador"),
+                ("usr-002", "supervisor1",   "Maria Supervisora",       "supervisor"),
+                ("usr-003", "vendedor1",     "Juan Vendedor",           "vendedor"),
+                ("usr-004", "cajero1",       "Ana Cajera",              "cajero"),
+            ]
+            for _uid, _un, _nom, _rol in _demo_users:
+                _salt = secrets.token_hex(16)
+                _h = hashlib.scrypt("123456".encode(), salt=bytes.fromhex(_salt), n=16384, r=8, p=1).hex()
+                c.execute("INSERT OR IGNORE INTO usuarios (usuario_id,username,nombre,rol,password_hash,password_salt) VALUES (?,?,?,?,?,?)",
+                          (_uid, _un, _nom, _rol, _h, _salt))
+        except Exception as _e:
+            print("⚠️ Error creando usuarios demo:", _e)
         for i,(pid,nom,pv,pc,cat,um) in enumerate(prods):
             c.execute("INSERT OR IGNORE INTO productos (producto_id,nombre,precio,costo,categoria,unidad_medida,en_oferta,imagen,activo) VALUES (?,?,?,?,?,?,0,?,1)",
                      (pid,nom,pv,pc,cat,um,emojis[i]))

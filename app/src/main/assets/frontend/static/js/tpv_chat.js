@@ -183,6 +183,25 @@
     var btn = document.getElementById('chat-btn');
     var dragging = false, moved = false, sx, sy, ox, oy;
 
+    // El icono <i> dentro del botón no debe capturar los eventos.
+    btn.style.pointerEvents = 'auto';
+    var ic = btn.querySelector('i');
+    if (ic) ic.style.pointerEvents = 'none';
+
+    var _lastToggle = 0;
+    function _toggleSafe() {
+      var now = Date.now();
+      if (now - _lastToggle < 350) return; // evitar doble disparo (touch+click)
+      _lastToggle = now;
+      api.toggle();
+    }
+    // Respaldo: click directo abre/cierra (ratón / WebView).
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (!moved) _toggleSafe();
+      moved = false;
+    });
+
     function start(x, y) {
       dragging = true; moved = false;
       var rect = wrap.getBoundingClientRect();
@@ -191,7 +210,7 @@
     function move(x, y) {
       if (!dragging) return;
       var dx = x - sx, dy = y - sy;
-      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moved = true;
+      if (Math.abs(dx) > 6 || Math.abs(dy) > 6) moved = true;
       var nl = Math.min(Math.max(0, ox + dx), window.innerWidth - 60);
       var nt = Math.min(Math.max(0, oy + dy), window.innerHeight - 60);
       wrap.style.left = nl + 'px'; wrap.style.top = nt + 'px';
@@ -203,15 +222,21 @@
       if (moved) {
         var rect = wrap.getBoundingClientRect();
         try { localStorage.setItem('tpv_chat_pos', JSON.stringify({ left: rect.left, top: rect.top })); } catch (e) {}
-      } else {
-        api.toggle(); // click sin mover = abrir/cerrar
       }
+      // El toggle lo hace el handler 'click' (mejor compatibilidad WebView).
     }
     btn.addEventListener('mousedown', function (e) { start(e.clientX, e.clientY); });
     window.addEventListener('mousemove', function (e) { move(e.clientX, e.clientY); });
     window.addEventListener('mouseup', end);
     btn.addEventListener('touchstart', function (e) { var t = e.touches[0]; start(t.clientX, t.clientY); }, { passive: true });
-    window.addEventListener('touchmove', function (e) { if (dragging) { var t = e.touches[0]; move(t.clientX, t.clientY); e.preventDefault(); } }, { passive: false });
-    window.addEventListener('touchend', end);
+    window.addEventListener('touchmove', function (e) { if (dragging && moved) { var t = e.touches[0]; move(t.clientX, t.clientY); e.preventDefault(); } }, { passive: false });
+    window.addEventListener('touchend', function () {
+      var wasDragging = dragging;
+      end();
+      // En táctil, si no hubo arrastre, disparar toggle (algunos WebView no
+      // generan 'click' sintético tras touch). _toggleSafe evita doble disparo.
+      if (wasDragging && !moved) _toggleSafe();
+      moved = false;
+    });
   })();
 })();

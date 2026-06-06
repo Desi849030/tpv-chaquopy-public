@@ -131,6 +131,46 @@ def dev_metrics():
         return jsonify({"ok": False, "error": str(e)}), 500
 
 
+@app.route('/api/supabase/estado')
+def supabase_estado():
+    """Estado de configuración de Supabase para el panel de diagnóstico."""
+    try:
+        from sync.config_persist import SUPABASE_CONFIG
+        url = SUPABASE_CONFIG.get("url", "") or ""
+        key = SUPABASE_CONFIG.get("anon_key", "") or ""
+        configurado = bool(url.startswith("https://") and len(key) > 20
+                           and "TU-PROYECTO" not in url and "TU_ANON_KEY" not in key)
+        return jsonify({"ok": True, "configurado": configurado,
+                        "url": url, "tablas": {}})
+    except Exception as e:
+        return jsonify({"ok": True, "configurado": False, "url": "", "error": str(e)})
+
+
+@app.route('/api/supabase/config', methods=['GET', 'POST'])
+def supabase_config():
+    """GET: devuelve URL/anon_key actuales. POST: guarda nuevas y persiste."""
+    try:
+        from sync.config_persist import SUPABASE_CONFIG, _guardar_config_a_archivo
+        if request.method == 'GET':
+            return jsonify({"ok": True,
+                            "url": SUPABASE_CONFIG.get("url", ""),
+                            "anon_key": SUPABASE_CONFIG.get("anon_key", "")})
+        d = request.get_json(silent=True) or {}
+        nueva_url = (d.get("url") or "").strip()
+        nueva_key = (d.get("anon_key") or d.get("key") or "").strip()
+        if nueva_url:
+            SUPABASE_CONFIG["url"] = nueva_url
+        if nueva_key:
+            SUPABASE_CONFIG["anon_key"] = nueva_key
+        _guardar_config_a_archivo()
+        configurado = bool(SUPABASE_CONFIG["url"].startswith("https://")
+                           and len(SUPABASE_CONFIG["anon_key"]) > 20)
+        return jsonify({"ok": True, "mensaje": "Configuración de Supabase guardada",
+                        "configurado": configurado})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
 @app.route('/api/productos/precio', methods=['POST'])
 def actualizar_precio_producto():
     """Actualiza precio de venta y/o costo de un producto (precios variables).

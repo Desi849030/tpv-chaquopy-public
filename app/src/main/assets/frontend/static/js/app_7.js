@@ -235,6 +235,56 @@ async function descuentos_eliminar(id) {
 // ══════════════════════════════════════════════════════════
 //  SUPABASE SYNC COMPLETO
 // ══════════════════════════════════════════════════════════
+// Cargar la configuración actual de Supabase en los campos del formulario
+async function supabase_cargarConfig() {
+    try {
+        const r = await fetch('/api/supabase/config', { credentials: 'same-origin' });
+        if (!r.ok) return;
+        const d = await r.json();
+        const u = document.getElementById('sb-cfg-url');
+        const k = document.getElementById('sb-cfg-key');
+        if (u && d.url) u.value = d.url;
+        if (k && d.anon_key) k.value = d.anon_key;
+    } catch (e) { /* sin conexión */ }
+}
+
+// Guardar URL + API key de Supabase
+async function supabase_guardarConfig() {
+    const u = document.getElementById('sb-cfg-url');
+    const k = document.getElementById('sb-cfg-key');
+    const st = document.getElementById('sb-cfg-status');
+    const url = (u && u.value || '').trim();
+    const key = (k && k.value || '').trim();
+    if (!url || !key) {
+        if (st) st.innerHTML = '<span class="text-warning">Completa URL y API Key.</span>';
+        return;
+    }
+    if (st) st.innerHTML = '<div class="spinner-border spinner-border-sm me-1"></div>Guardando...';
+    try {
+        const r = await fetch('/api/supabase/config', {
+            method: 'POST', credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: url, anon_key: key })
+        });
+        const d = await r.json();
+        if (r.ok && d.ok) {
+            if (st) st.innerHTML = d.configurado
+                ? '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Supabase configurado correctamente.</span>'
+                : '<span class="text-warning">Guardado, pero verifica la URL/clave.</span>';
+        } else {
+            if (st) st.innerHTML = '<span class="text-danger">Error: ' + (d.error || '') + '</span>';
+        }
+    } catch (e) {
+        if (st) st.innerHTML = '<span class="text-danger">Sin conexión con el servidor.</span>';
+    }
+}
+// Cargar config al abrir la pestaña de configuración
+document.addEventListener('shown.bs.tab', function (e) {
+    if (e.target && e.target.getAttribute('data-bs-target') === '#conf-config-tab-pane') {
+        supabase_cargarConfig();
+    }
+});
+
 async function supabase_syncFull() {
     const el = document.getElementById('sb-sync-status');
     if (el) el.innerHTML = '<div class="spinner-border spinner-border-sm me-1"></div>Sincronizando...';

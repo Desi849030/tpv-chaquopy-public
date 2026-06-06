@@ -48,7 +48,41 @@
     </script>
     <!-- Fin TPV Ultra Smart PWA -->
 </head>
-<body>
+<body style="background:#0a0e1a">
+
+    <!-- Splash web sincronizado con el splash nativo (mismo color) para evitar
+         el flash "tipo página web" durante 'Iniciando sistema'. Se oculta solo
+         cuando aparece el login o la app (ver script al final). -->
+    <div id="tpv-splash-web" style="position:fixed;inset:0;z-index:99999;display:flex;
+         flex-direction:column;align-items:center;justify-content:center;
+         background:linear-gradient(160deg,#0a0e1a,#111827);color:#fff;font-family:Poppins,sans-serif">
+        <div style="font-size:3rem;font-weight:800;letter-spacing:2px">TPV</div>
+        <div style="font-size:1rem;color:#64748b;margin-top:4px">Ultra Smart</div>
+        <div class="spinner-border text-primary mt-4" role="status" style="width:2rem;height:2rem"></div>
+        <div style="font-size:.8rem;color:#475569;margin-top:16px">Iniciando sistema…</div>
+    </div>
+    <script>
+    // Ocultar el splash web cuando el login o la app estén listos.
+    (function(){
+        function _ocultarSplash(){
+            var sp = document.getElementById('tpv-splash-web');
+            if(!sp) return;
+            var login = document.getElementById('login-screen');
+            var app = document.getElementById('tpv-app');
+            var listo = (login && !login.classList.contains('d-none')) ||
+                        (app && app.style.display !== 'none' && app.style.display !== '');
+            if(listo){
+                sp.style.transition='opacity .35s'; sp.style.opacity='0';
+                setTimeout(function(){ sp.remove(); document.body.style.background=''; }, 360);
+                return true;
+            }
+            return false;
+        }
+        var _t = setInterval(function(){ if(_ocultarSplash()) clearInterval(_t); }, 200);
+        // Failsafe: quitar a los 8s pase lo que pase.
+        setTimeout(function(){ var sp=document.getElementById('tpv-splash-web'); if(sp){sp.remove(); document.body.style.background='';} clearInterval(_t); }, 8000);
+    })();
+    </script>
 
     <!-- TPV Debug — panel nuevo en #dbg-v2, ver tpv_debugger.js al final del body -->
     <script>
@@ -553,8 +587,23 @@
                     <!-- ── SUPABASE SYNC COMPLETO ──────────────────────── -->
                     <div class="col-12 col-md-6" id="cfg-supabase-sync-wrap">
                         <div class="glass-card h-100">
-                            <h5 class="mb-3"><i class="bi bi-cloud-fill me-2 text-info"></i>Supabase — Sync Completo</h5>
-                            <p class="text-muted small">Sincroniza ventas, productos, stock y gastos del día a Supabase.</p>
+                            <h5 class="mb-3"><i class="bi bi-cloud-fill me-2 text-info"></i>Supabase — Configuración y Sync</h5>
+                            <p class="text-muted small">Conecta tu proyecto Supabase (opcional) para sincronizar en la nube.</p>
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold">URL del proyecto</label>
+                                <input type="url" id="sb-cfg-url" class="form-control form-control-sm" placeholder="https://xxxxx.supabase.co">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold">API Key (anon)</label>
+                                <input type="password" id="sb-cfg-key" class="form-control form-control-sm" placeholder="eyJhbGciOi...">
+                            </div>
+                            <div class="d-grid gap-2 mb-3">
+                                <button class="btn btn-primary btn-sm" onclick="supabase_guardarConfig()">
+                                    <i class="bi bi-save me-1"></i>Guardar configuración
+                                </button>
+                            </div>
+                            <div id="sb-cfg-status" class="small mb-2"></div>
+                            <hr>
                             <div class="d-grid gap-2">
                                 <button class="btn btn-info" onclick="supabase_syncFull()">
                                     <i class="bi bi-cloud-upload-fill me-2"></i>Sincronizar Todo Ahora

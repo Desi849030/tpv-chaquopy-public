@@ -7,25 +7,27 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def _fm(agent, text, keywords, threshold=0.6):
+def _fm(agent, text, keywords, threshold=0.85):
     """Fuzzy match: verifica si el texto contiene alguno de los keywords.
-    Usa coincidencia difusa para mayor tolerancia a errores de escritura."""
+    Coincidencia exacta primero; fallback difuso con umbral ALTO (0.85) para
+    evitar falsos positivos (ej. 'critico' confundido con 'comision')."""
     if not text or not keywords:
         return False
     tl = text.lower().strip()
-    # Coincidencia exacta primero (rapido)
+    # Coincidencia exacta primero (rapido y preciso)
     for kw in keywords:
         if kw.lower() in tl:
             return True
-    # Fallback: coincidencia difusa si fuzzy_match esta disponible
+    # Fallback: coincidencia difusa solo para palabras de longitud similar
     try:
         from ia.fuzzy_match import best_match
         for word in tl.split():
-            if len(word) < 3:
+            if len(word) < 4:
                 continue
             match, score = best_match(word, [kw.lower() for kw in keywords],
                                       threshold=threshold * 100)
-            if match:
+            # Exigir longitud parecida para evitar match espurio
+            if match and abs(len(word) - len(match)) <= 2:
                 return True
     except Exception:
         pass

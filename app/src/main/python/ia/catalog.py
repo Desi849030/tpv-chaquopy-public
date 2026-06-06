@@ -182,7 +182,7 @@ class ProductAccessor:
         try:
             from ia.db_utils import q
             rows = q(
-                "SELECT p.nombre n, p.precio_venta p, p.precio_compra c, "
+                "SELECT p.nombre n, p.precio p, p.costo c, "
                 "COALESCE(i.stock_actual, 0) s, p.unidad_medida u, p.categoria cat "
                 "FROM productos p LEFT JOIN inventario_general i "
                 "ON p.producto_id = i.producto_id "
@@ -199,8 +199,8 @@ class ProductAccessor:
             try:
                 from ia.db_utils import q
                 rows = q(
-                    "SELECT nombre n, precio p, precio_compra c, "
-                    "stock_actual s, unidad_medida u, categoria cat "
+                    "SELECT nombre n, precio p, costo c, "
+                    "0 s, unidad_medida u, categoria cat "
                     "FROM productos WHERE activo=1 ORDER BY nombre"
                 )
                 if rows:

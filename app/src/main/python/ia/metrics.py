@@ -91,3 +91,55 @@ class F:
             else:
                 abc['C'].append(r['nombre'])
         return abc
+
+
+    @staticmethod
+    def stock_critico(limite=None):
+        """Productos con stock <= minimo (datos reales de inventario_general)."""
+        return q(
+            "SELECT nombre, stock_actual, stock_minimo "
+            "FROM inventario_general "
+            "WHERE stock_actual <= COALESCE(NULLIF(stock_minimo,0),5) "
+            "ORDER BY stock_actual ASC LIMIT 15")
+
+    @staticmethod
+    def stock_resumen():
+        """Resumen del inventario general (totales reales)."""
+        rows = q(
+            "SELECT COUNT(*) total, "
+            "SUM(CASE WHEN stock_actual<=0 THEN 1 ELSE 0 END) agotados, "
+            "SUM(CASE WHEN stock_actual<=COALESCE(NULLIF(stock_minimo,0),5) AND stock_actual>0 THEN 1 ELSE 0 END) criticos, "
+            "SUM(stock_actual) unidades "
+            "FROM inventario_general")
+        return rows[0] if rows else {"total": 0, "agotados": 0, "criticos": 0, "unidades": 0}
+
+    @staticmethod
+    def buscar_stock(nombre):
+        """Stock real de un producto por nombre (LIKE)."""
+        return q(
+            "SELECT nombre, stock_actual, precio_venta "
+            "FROM inventario_general WHERE nombre LIKE ? "
+            "ORDER BY nombre LIMIT 8", ("%" + nombre + "%",))
+
+    @staticmethod
+    def categorias():
+        """Productos y valor por categoria (real)."""
+        return q(
+            "SELECT COALESCE(categoria,'General') cat, COUNT(*) n, "
+            "SUM(stock_actual*precio_venta) valor "
+            "FROM inventario_general GROUP BY cat ORDER BY valor DESC")
+
+    @staticmethod
+    def conteos():
+        """Conteos globales para el agente (productos, clientes, ventas hoy)."""
+        prod = q("SELECT COUNT(*) n FROM productos WHERE activo=1")
+        try:
+            cli = q("SELECT COUNT(*) n FROM clientes")
+        except Exception:
+            cli = [{"n": 0}]
+        ventas = q("SELECT COUNT(*) n FROM historial_ventas WHERE fecha LIKE DATE('now')||'%'")
+        return {
+            "productos": (prod[0]["n"] if prod else 0),
+            "clientes": (cli[0]["n"] if cli else 0),
+            "ventas_hoy": (ventas[0]["n"] if ventas else 0),
+        }

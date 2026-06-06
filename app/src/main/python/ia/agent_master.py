@@ -390,9 +390,10 @@ class AgentMaster:
         if _HAS_HANDLERS and role in self._role_handlers:
             try:
                 handler = self._role_handlers[role]
-                # Los handlers especializados esperan (agent, text, metadata_dict)
-                metadata = {"p": "", "session_id": session_id}
-                result = handler(self, text or '', metadata)
+                # Firma de los handlers: (agent, text, name). handle_admin y
+                # handle_dev usan el 3er arg como NOMBRE del usuario; vendedor y
+                # supervisor lo ignoran. Antes se pasaba un dict y se imprimía crudo.
+                result = handler(self, text or '', name or '')
                 if result and len(result.strip()) > 5:
                     # Agregar contexto de memoria si hay datos del cliente
                     if enriched_ctx and enriched_ctx.get('client_data'):
@@ -454,9 +455,26 @@ class AgentMaster:
             return f"{icon} No tienes acceso a finanzas con tu rol actual."
 
         if 'STOCK' in intent:
-            if 'inventario' in poderes:
-                return f"{icon} Inventario:\n📦 Total: 12 productos | ✅ Stock: 10\n🔴 Críticos: Jabón Líquido (25u), Pan Integral (20u)\n🟡 Atención: Huevos (35u)\n🟢 Óptimo: Arroz, Leche, Refresco"
-            return f"{icon} Stock bajo: Jabón Líquido (25u) y Pan Integral (20u)."
+            if 'inventario' in poderes or 'catalogo' in poderes:
+                if _HAS_METRICS:
+                    try:
+                        r = F.stock_resumen()
+                        crit = F.stock_critico()
+                        total = r['total'] if not hasattr(r, 'keys') else r['total']
+                        agot = r['agotados']; criticos = r['criticos']; unid = r['unidades'] or 0
+                        msg = (f"{icon} Inventario (datos reales):\n"
+                               f"📦 {total} productos · {unid:.0f} unidades\n"
+                               f"🔴 Agotados: {agot} · 🟡 Críticos: {criticos}\n")
+                        if crit:
+                            items = ', '.join(f"{c['nombre']} ({c['stock_actual']:.0f}u)" for c in crit[:5])
+                            msg += f"\n⚠️ Atención: {items}"
+                        else:
+                            msg += "\n✅ Todo el stock está por encima del mínimo."
+                        return msg
+                    except Exception:
+                        pass
+                return f"{icon} Inventario: usa la pestaña Inventario para ver el detalle."
+            return f"{icon} No tienes acceso al inventario con tu rol actual."
 
         if 'SALES' in intent:
             if 'ventas' in poderes:
@@ -470,8 +488,58 @@ class AgentMaster:
                 return f"{icon} Ventas Hoy:\n🛒 12 transacciones | $3,250\n📊 Promedio: $270.83\n⭐ Top: Arroz Premium (5)\n💳 Efectivo: 65% | Tarjeta: 35%"
             return f"{icon} Hoy: 12 ventas por $3,250. ¿Registramos una nueva?"
 
+        if 'TOP_PRODUCTS' in intent:
+            if _HAS_METRICS:
+                try:
+                    top = F.top(dias=7, lim=5)
+                    if top:
+                        lst = '\n'.join(f"  {i+1}. {t['nombre']} — {t['q']:.0f} uds (${t['t']:,.2f})"
+                                        for i, t in enumerate(top))
+                        return f"{icon} Top productos (últimos 7 días):\n{lst}"
+                    return f"{icon} Aún no hay ventas suficientes esta semana para un ranking."
+                except Exception:
+                    pass
+
+        if 'CATEGORIES' in intent or 'categoria' in (text or '').lower():
+            if _HAS_METRICS:
+                try:
+                    cats = F.categorias()
+                    if cats:
+                        lst = '\n'.join(f"  • {c['cat']}: {c['n']} productos (${(c['valor'] or 0):,.2f})"
+                                        for c in cats[:8])
+                        return f"{icon} Categorías del catálogo:\n{lst}"
+                except Exception:
+                    pass
+
+        # Consulta de stock de un producto concreto ("cuanto hay de X")
+        if 'STOCK_QUERY' in intent and _HAS_METRICS:
+            try:
+                import re as _re
+                m = _re.search(r'(?:hay de|stock de|quedan de|cuanto hay de|tengo de)\s+(.+)', (text or '').lower())
+                term = (m.group(1).strip() if m else '')
+                if term:
+                    res = F.buscar_stock(term)
+                    if res:
+                        lst = '\n'.join(f"  {r['nombre']}: {r['stock_actual']:.0f} uds (${r['precio_venta']:,.2f})"
+                                        for r in res[:6])
+                        return f"{icon} Stock de '{term}':\n{lst}"
+                    return f"{icon} No encontré productos que coincidan con '{term}'."
+            except Exception:
+                pass
+
         if 'RECOMMEND' in intent or 'OFFERS' in intent:
-            return f"{icon} Recomendaciones:\n⭐ Estrella: Arroz Premium (40% margen)\n📈 Tendencia: Café Molido (+15%)\n🏷️ Oferta ideal: Frijoles (50% margen)\n🎯 Oportunidad: Combo Despensa $79.25"
+            if _HAS_METRICS:
+                try:
+                    top = F.top(dias=7, lim=3)
+                    if top:
+                        estrella = top[0]['nombre']
+                        return (f"{icon} Recomendaciones (según ventas reales):\n"
+                                f"⭐ Más vendido: {estrella}\n"
+                                f"📈 También destacan: " + ', '.join(t['nombre'] for t in top[1:3]) +
+                                f"\n💡 Considera ofertas en productos de baja rotación.")
+                except Exception:
+                    pass
+            return f"{icon} Recomendaciones: revisa el Dashboard para ver tendencias de venta."
 
         if tools:
             tlist = '\n'.join([f"  {t['icon']} {t['name']}: {t['desc'][:80]}" for t in tools[:4]])

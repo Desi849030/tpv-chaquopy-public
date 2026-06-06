@@ -360,7 +360,57 @@ def handle_admin(agent, t, name):
         msg += f"\nTotal gastos: {fmt_money(total)}"
         return msg
 
-    prods = P.search(t, 10)
+    # Saludo
+    if _fm(agent, t, ['hola', 'buenos dias', 'buenas tardes', 'buenas noches', 'buenas', 'que tal', 'saludos', 'hey']):
+        from datetime import datetime as _dt
+        h = _dt.now().hour
+        s = 'Buenos días' if h < 12 else ('Buenas tardes' if h < 19 else 'Buenas noches')
+        nm = f", {name}" if name else ""
+        return (f"{s}{nm}. Soy tu asistente del TPV. Puedo ayudarte con: "
+                f"finanzas, ventas, stock, productos, ofertas y reportes. "
+                f"¿Qué necesitas consultar?")
+
+    # Agradecimiento / despedida
+    if _fm(agent, t, ['gracias', 'genial', 'perfecto', 'adios', 'hasta luego', 'chao']):
+        return "¡Con gusto! Estoy aquí para lo que necesites. 👍"
+
+    # Productos más vendidos (antes que "ventas" para que 'vendidos' no caiga ahí)
+    if _fm(agent, t, ['mas vendido', 'más vendido', 'top productos', 'mejores productos', 'ranking', 'mas vendidos', 'top vendidos', 'productos mas']):
+        top = F.top(7, 5)
+        if not top:
+            return "Aún no hay ventas suficientes esta semana para un ranking."
+        msg = "Top productos (últimos 7 días):\n"
+        for i, x in enumerate(top):
+            msg += f"{i+1}. {x['nombre']} — {x['q']:.0f} uds ({fmt_money(x['t'])})\n"
+        return msg
+
+    # Listado de catálogo / categorías
+    if _fm(agent, t, ['que productos', 'qué productos', 'catalogo', 'catálogo', 'lista de productos', 'que tienes', 'categoria', 'categoría', 'categorias', 'categorías', 'productos tienes']):
+        cats = F.categorias()
+        total = sum(c['n'] for c in cats) if cats else 0
+        if not cats:
+            return "Aún no hay productos en el catálogo. Importa un Excel para empezar."
+        msg = f"Catálogo: {total} productos en {len(cats)} categorías:\n"
+        for c in cats[:8]:
+            msg += f"• {c['cat']}: {c['n']} productos\n"
+        msg += "\nPregúntame por un producto concreto (ej: 'precio del café')."
+        return msg
+
+    # Ventas del día
+    if _fm(agent, t, ['cuanto vendi', 'cuánto vendí', 'ventas de hoy', 'ventas hoy', 'caja', 'recaude', 'facturacion', 'cobrado', 'ingreso del dia', 'como voy', 'cuanto llevo']):
+        d = F.diario()
+        if d['t'] == 0:
+            return "Aún no hay ventas registradas hoy. ¡A vender! 💪"
+        return (f"Ventas de hoy:\n"
+                f"🛒 {d['t']} transacciones\n"
+                f"💰 Total: {fmt_money(d['r'])}\n"
+                f"📊 Ticket promedio: {fmt_money(d['a'])}")
+
+    # Búsqueda de productos (limpia palabras de relleno como 'precio de', 'cuanto')
+    import re as _re
+    _term = _re.sub(r'\b(precio|costo|valor|cuanto|cuánto|cuesta|vale|de|del|la|el|los|las|hay|tienes|tiene|stock)\b',
+                    ' ', t.lower()).strip()
+    prods = P.search(_term or t, 10)
     if prods:
         if len(prods) == 1:
             p = prods[0]

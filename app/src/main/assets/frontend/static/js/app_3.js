@@ -1530,7 +1530,7 @@ function tpv_renderizarProductos() {
                     <td>${index + 1}</td>
                     <td>${item.nombre}</td>
                     <td>${item.categoria ?? 'N/A'}</td>
-                    <td class="money-column">${formatCurrency(item.precioVenta)}</td>
+                    <td><input type="number" class="form-control form-control-sm inventory-input" value="${(Number(item.precioVenta)||0).toFixed(2)}" step="0.01" min="0" onchange="inv_updateField('${fecha}','${item.id}','precioVenta',this.valueAsNumber)" title="Precio de venta (editable)"></td>
                     <td>${item.um}</td>
                     <td><input type="number" class="form-control form-control-sm inventory-input" value="${item.cantInicial}" onchange="inv_updateField('${fecha}','${item.id}','cantInicial',this.valueAsNumber)"></td>
                     <td><input type="number" class="form-control form-control-sm inventory-input" value="${item.cantFinal}" onchange="inv_updateField('${fecha}','${item.id}','cantFinal',this.valueAsNumber)"></td>
@@ -1550,8 +1550,27 @@ function tpv_renderizarProductos() {
             if (item) {
                 item[campo] = valor;
                 if (campo === 'cantInicial') item.cantFinal = item.cantInicial - item.vendido;
+                // Si cambia el precio de venta o costo, reflejarlo también en el
+                // producto del catálogo (precios variables) y persistir en servidor.
+                if (campo === 'precioVenta' || campo === 'precioCosto') {
+                    const prod = (tpvState.productos || []).find(p => p.id === id);
+                    if (prod) {
+                        if (campo === 'precioVenta') prod.precio = valor;
+                        if (campo === 'precioCosto') prod.costo = valor;
+                    }
+                    try {
+                        await fetch('/api/productos/precio', {
+                            method: 'POST', credentials: 'same-origin',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ id: id,
+                                precio: campo === 'precioVenta' ? valor : undefined,
+                                costo:  campo === 'precioCosto' ? valor : undefined })
+                        });
+                    } catch (e) { /* offline: queda en estado local */ }
+                }
             }
             await inv_aplicarGananciaGlobal(fecha);
+            if (typeof saveState === 'function') { try { await saveState(); } catch(e){} }
         }
 
         async function inv_eliminarFila(fecha, id){

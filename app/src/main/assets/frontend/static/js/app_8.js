@@ -117,6 +117,12 @@ const _DBG_CATEGORIAS = [
 //  INICIALIZACIÓN — solo para desarrollador
 // ══════════════════════════════════════════════════════════════
 function _dbgInit() {
+    // Evitar envolver console/fetch más de una vez (p. ej. tras re-login).
+    if (window._DBG && window._DBG.hooksInstalados) {
+        window._DBG.activo = true;
+        return;
+    }
+    if (window._DBG) window._DBG.hooksInstalados = true;
     // Capturar errores JS globales
     const _origOnerror = window.onerror;
     window.onerror = function(msg, src, line, col, err) {

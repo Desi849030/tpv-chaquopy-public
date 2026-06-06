@@ -131,6 +131,44 @@ def dev_metrics():
         return jsonify({"ok": False, "error": str(e)}), 500
 
 
+@app.route('/api/productos/precio', methods=['POST'])
+def actualizar_precio_producto():
+    """Actualiza precio de venta y/o costo de un producto (precios variables).
+    Refleja el cambio en productos e inventario_general."""
+    d = request.get_json(silent=True) or {}
+    pid = d.get('id') or d.get('producto_id')
+    if not pid:
+        return jsonify({"ok": False, "error": "Falta id de producto"}), 400
+    precio = d.get('precio')
+    costo = d.get('costo')
+    try:
+        from db_connection import obtener_conexion
+        conn = obtener_conexion()
+        c = conn.cursor()
+        sets, params = [], []
+        if precio is not None:
+            sets.append("precio=?"); params.append(float(precio))
+        if costo is not None:
+            sets.append("costo=?"); params.append(float(costo))
+        if not sets:
+            conn.close()
+            return jsonify({"ok": False, "error": "Nada que actualizar"}), 400
+        params.append(pid)
+        c.execute("UPDATE productos SET " + ", ".join(sets) + " WHERE producto_id=?", params)
+        # Reflejar precio de venta en inventario_general si existe la fila
+        if precio is not None:
+            try:
+                c.execute("UPDATE inventario_general SET precio_venta=? WHERE producto_id=?",
+                          (float(precio), pid))
+            except Exception:
+                pass
+        conn.commit()
+        conn.close()
+        return jsonify({"ok": True, "id": pid, "precio": precio, "costo": costo})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
 @app.route('/api/metrics')
 def metrics():
     try:

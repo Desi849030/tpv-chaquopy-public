@@ -2402,8 +2402,13 @@ async function auth_logout() {
     if (_sseConn) { try { _sseConn.close(); } catch(e){} _sseConn = null; }
     if (AUTH.pollingNotif) { clearInterval(AUTH.pollingNotif); AUTH.pollingNotif = null; }
 
-    // Limpiar panel debug al cerrar sesión
+    // Limpiar y OCULTAR el panel debug al cerrar sesión (no debe verse en login)
     if (typeof window._dbg_limpiar === 'function') window._dbg_limpiar();
+    try {
+        var _dbgPanel = document.getElementById('dbg-v2');
+        if (_dbgPanel) _dbgPanel.remove();   // quitar del DOM
+        if (window._DBG) { window._DBG.expanded = false; window._DBG.activo = false; }
+    } catch(e) {}
     AUTH.usuario = null;
     _prevN = -1;
 

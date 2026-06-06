@@ -21,11 +21,27 @@ except Exception:
 from ia.handlers_base import _fm, _follow, _get_sug
 
 # ================================================================
-def handle_vendedor(agent, t, m):
-    if _fm(agent, t, ["ventas","caja","recaudó","cuánto vendí","cómo voy"]):
+def handle_vendedor(agent, t, m=None):
+    name = m if isinstance(m, str) else ''
+
+    # Saludo personalizado
+    if _fm(agent, t, ['hola', 'buenos dias', 'buenas tardes', 'buenas noches', 'buenas', 'que tal', 'saludos', 'hey']):
+        from datetime import datetime as _dt
+        h = _dt.now().hour
+        s = 'Buenos días' if h < 12 else ('Buenas tardes' if h < 19 else 'Buenas noches')
+        nm = f", {name}" if name else ""
+        return (f"{s}{nm} 🛒. Soy tu asistente de ventas. "
+                f"Puedo ayudarte con: tus ventas de hoy, stock bajo, productos "
+                f"más vendidos o el precio de cualquier producto. ¿Qué necesitas?")
+
+    # Agradecimiento
+    if _fm(agent, t, ['gracias', 'genial', 'perfecto', 'adios', 'hasta luego', 'chao']):
+        return "¡Con gusto! Aquí estoy para lo que necesites. 👍"
+
+    if _fm(agent, t, ["ventas","caja","recaudó","cuánto vendí","cuanto vendi","cómo voy","como voy"]):
         d = F.diario()
         if d['t'] == 0:
-            return "Todavía no hay ventas hoy."
+            return "Todavía no hay ventas hoy. ¡A vender! 💪"
         h = datetime.now().hour
         proy = d['r'] / h * 24 if h > 0 else d['r']
         return (f"Al momento: {d['t']} ventas, {fmt_money(d['r'])} facturados. "
@@ -53,9 +69,12 @@ def handle_vendedor(agent, t, m):
                     str(int(r["q"])) + " uds (" + fmt_money(r["t"]) + ")\n")
         return msg
 
-    prods = P.search(t, 10)
+    # Búsqueda de producto (limpia palabras de relleno: 'precio del cafe' -> 'cafe')
+    import re as _re
+    _term = _re.sub(r'\b(precio|costo|valor|cuanto|cuánto|cuesta|vale|de|del|la|el|los|las|hay|tienes|tiene|stock)\b',
+                    ' ', t.lower()).strip()
+    prods = P.search(_term or t, 10)
     if prods:
-        m["p"] = prods[0]["n"]
         msg = "Productos:\n"
         for p in prods[:10]:
             mrg = ((p['p'] - p['c']) / p['p'] * 100) if p['p'] > 0 and p['c'] > 0 else 0
@@ -64,17 +83,29 @@ def handle_vendedor(agent, t, m):
                     + (" | Margen: " + pct(mrg) if mrg > 0 else "") + "\n")
         return msg
 
-    return ("Dime qué necesitas: ventas, stock bajo, top, o nombre de un "
-            "producto.\n\n" + _follow("vendedor"))
+    return ("Dime qué necesitas: tus ventas, stock bajo, productos más vendidos, "
+            "o el nombre de un producto.\n\n" + _follow("vendedor"))
 
 
 # ================================================================
 # SUPERVISOR
 # ================================================================
 def handle_supervisor(agent, t, m=None):
+    name = m if isinstance(m, str) else ''
     d = F.diario()
     w = F.semanal()
     low = sum(1 for p in P.cache if 0 < p['s'] <= 5)
+
+    # Saludo personalizado
+    if _fm(agent, t, ['hola', 'buenos dias', 'buenas tardes', 'buenas noches', 'buenas', 'que tal', 'saludos', 'hey']):
+        from datetime import datetime as _dt
+        h = _dt.now().hour
+        s = 'Buenos días' if h < 12 else ('Buenas tardes' if h < 19 else 'Buenas noches')
+        nm = f", {name}" if name else ""
+        return (f"{s}{nm} 👁️. Soy tu asistente de supervisión. Puedo darte el "
+                f"dashboard, ventas del día, stock bajo y tendencias. ¿Qué reviso?")
+    if _fm(agent, t, ['gracias', 'genial', 'perfecto', 'adios', 'hasta luego', 'chao']):
+        return "¡Con gusto! Aquí estoy para lo que necesites. 👍"
 
     if _fm(agent, t, ["ayuda","qué puedes","menu","opciones"]):
         return ("Como supervisor tienes acceso completo:\n\n"
@@ -214,9 +245,11 @@ def handle_supervisor(agent, t, m=None):
                     " -> " + fmt_money(o["d"]) + " (" + pct(o["m"]) + ")\n")
         return msg
 
-    prods = P.search(t, 10)
+    import re as _re
+    _term = _re.sub(r'\b(precio|costo|valor|cuanto|cuánto|cuesta|vale|de|del|la|el|los|las|hay|tienes|tiene|stock)\b',
+                    ' ', t.lower()).strip()
+    prods = P.search(_term or t, 10)
     if prods:
-        m["p"] = prods[0]["n"]
         msg = "Productos:\n\n"
         for p in prods[:10]:
             mrg = ((p['p'] - p['c']) / p['p'] * 100) if p['p'] > 0 and p['c'] > 0 else 0

@@ -27,8 +27,8 @@
               cliente: 'Cliente' })[r] || r;
   }
   function _rolIcon(r) {
-    return ({ desarrollador: '🧑‍💻', administrador: '👔', supervisor: '🧐',
-              vendedor: '🛍️', cajero: '💵', cliente: '🛒' })[r] || '👤';
+    return ({ desarrollador: '💻', administrador: '👔', supervisor: '👁️',
+              vendedor: '🛒', cajero: '💵', cliente: '🛒' })[r] || '👤';
   }
 
   // Sugerencias contextuales por rol

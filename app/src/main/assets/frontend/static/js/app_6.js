@@ -1001,7 +1001,7 @@ function _auth_mostrarApp() {
                 // Bienvenida personalizada por nombre + rol
                 var _u = AUTH.usuario || {};
                 var _rl = ({desarrollador:'Desarrollador',administrador:'Administrador',supervisor:'Supervisor',vendedor:'Vendedor',cajero:'Cajero',cliente:'Cliente'})[_u.rol] || _u.rol || '';
-                var _ic = ({desarrollador:'🧑‍💻',administrador:'👔',supervisor:'🧐',vendedor:'🛍️',cajero:'💵',cliente:'🛒'})[_u.rol] || '👋';
+                var _ic = ({desarrollador:'💻',administrador:'👔',supervisor:'👁️',vendedor:'🛒',cajero:'💵',cliente:'🛒'})[_u.rol] || '👋';
                 var _h = new Date().getHours();
                 var _s = _h < 12 ? 'Buenos días' : (_h < 19 ? 'Buenas tardes' : 'Buenas noches');
                 var _nom = (_u.nombre || _u.username || '').split(' ')[0];
@@ -2390,13 +2390,17 @@ async function auth_logout() {
         : confirm('¿Cerrar sesión?');
     if (!_ok) return;
 
-    // Auto-backup antes de salir
+    // Auto-backup y logout en segundo plano (no bloquear la salida).
+    // Antes eran 'await' secuenciales y si el backup tardaba, el logout se
+    // quedaba "validando". Ahora se disparan sin esperar, con timeout corto.
     try {
-        showToast('💾 Guardando respaldo automático...', 'info');
-        await fetch('/api/auth/auto-backup', { method:'POST', credentials:'same-origin' });
+        var _ctl = new AbortController();
+        setTimeout(function(){ try{_ctl.abort();}catch(e){} }, 2500);
+        fetch('/api/auth/auto-backup', { method:'POST', credentials:'same-origin', signal:_ctl.signal }).catch(function(){});
     } catch(e) {}
-
-    try { await fetch('/api/auth/logout', { method:'POST' }); } catch(e) {}
+    try {
+        fetch('/api/auth/logout', { method:'POST', credentials:'same-origin' }).catch(function(){});
+    } catch(e) {}
 
     // Cerrar SSE
     if (_sseConn) { try { _sseConn.close(); } catch(e){} _sseConn = null; }

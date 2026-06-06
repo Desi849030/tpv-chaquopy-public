@@ -962,8 +962,8 @@ function tpv_renderizarProductos() {
             badge.classList.remove("d-none");
         }
 
-        function tpv_cancelarPedido(){
-            if(tpvState.ordenActual.length > 0 && confirm(getLang().confirm_cancel_order)){
+        async function tpv_cancelarPedido(){
+            if(tpvState.ordenActual.length > 0 && (await tpvConfirm(getLang().confirm_cancel_order))){
                 tpvState.ordenActual = [];
                 tpv_renderizarPedido();
                 showToast(getLang().toast_order_cancelled, "info");
@@ -1278,7 +1278,7 @@ function tpv_renderizarProductos() {
 
         async function ventas_eliminarVenta(id, confirmado = false){
             const lang = getLang();
-            if(!confirmado && !confirm(lang.confirm_delete_sale)) return;
+            if(!confirmado && !(await tpvConfirm(lang.confirm_delete_sale))) return;
             
             const hoy = getTodayDateString();
             const indexHoy = (tpvState.ventasDiarias[hoy] ?? []).findIndex(v => v.id === id);
@@ -1574,7 +1574,7 @@ function tpv_renderizarProductos() {
         }
 
         async function inv_eliminarFila(fecha, id){
-            if (confirm(getLang().confirm_delete_product_inv)) {
+            if ((await tpvConfirm(getLang().confirm_delete_product_inv))) {
                 tpvState.inventarios[fecha] = tpvState.inventarios[fecha].filter(i => i.id !== id);
                 await inv_aplicarGananciaGlobal(fecha);
             }
@@ -1746,7 +1746,7 @@ function tpv_renderizarProductos() {
 
         // ── Limpia TODOS los almacenes: memoria, IndexedDB y servidor ──────────
         async function gestion_limpiarTodas() {
-            if (!confirm(
+            if (!(await tpvConfirm(
                 '⚠️ LIMPIEZA TOTAL\n\n' +
                 'Borrará productos de:\n' +
                 '  • Catálogo visible (memoria)\n' +
@@ -1754,7 +1754,7 @@ function tpv_renderizarProductos() {
                 '  • Navegador (IndexedDB)\n' +
                 '  • Base de datos del servidor\n\n' +
                 '¿Continuar?'
-            )) return;
+            ))) return;
             showToast('🗑️ Limpiando todos los almacenes...', 'warning');
             try {
                 // 1. Limpiar servidor PRIMERO (verificar que responde bien)
@@ -1855,12 +1855,12 @@ function tpv_renderizarProductos() {
 
         // ── Limpia todo y luego reconstruye desde catálogo JS actual ────────
         async function gestion_resetEImportar() {
-            if (!confirm(
+            if (!(await tpvConfirm(
                 '🔄 LIMPIAR Y REIMPORTAR\n\n' +
                 'Borrará TODO (memoria + navegador + servidor)\n' +
                 'y reconstruirá el servidor desde el catálogo local actual.\n\n' +
                 '¿Continuar?'
-            )) return;
+            ))) return;
             showToast('🗑️ Limpiando todos los almacenes...', 'warning');
             try {
                 const productosBackup = [...tpvState.productos];
@@ -2018,7 +2018,7 @@ function tpv_renderizarProductos() {
         }
 
         async function gestion_eliminarProducto(id){
-            if(confirm(getLang().confirm_delete_product)){
+            if((await tpvConfirm(getLang().confirm_delete_product))){
                 tpvState.productos = tpvState.productos.filter(p => p.id !== id);
                 gestion_renderizarTablaProductos();
                 tpv_renderizarProductos();
@@ -2092,7 +2092,7 @@ function tpv_renderizarProductos() {
         async function gestion_eliminarCategoria(categoria){
             const lang = getLang();
             if (tpvState.categorias.length <= 1) return showToast(lang.confirm_delete_last_category, "warning");
-            if (confirm(lang.confirm_delete_category)) {
+            if ((await tpvConfirm(lang.confirm_delete_category))) {
                 let fallbackCat = 'General' === categoria ? tpvState.categorias.find(c => c !== 'General') : 'General';
                 tpvState.productos.forEach(p => { if (p.categoria === categoria) p.categoria = fallbackCat; });
                 tpvState.categorias = tpvState.categorias.filter(c => c !== categoria);
@@ -3085,7 +3085,7 @@ function tpv_renderizarProductos() {
                     if (confirmarBorrado && tpvState.productos.length > 0) {
                         const mensaje = `⚠️ ATENCIÓN: Esta acción borrará los ${tpvState.productos.length} productos existentes.\n\n` +
                             `¿Deseas continuar?\n\n💡 Recomendación: Exporta un backup antes de importar.`;
-                        if (!confirm(mensaje)) {
+                        if (!(await tpvConfirm(mensaje))) {
                             throw new Error('Importación cancelada por el usuario');
                         }
                     }
@@ -3855,7 +3855,7 @@ function tpv_renderizarProductos() {
          * Importa los datos del TPV de forma inteligente
          * Valida el formato y muestra información detallada
          */
-        function conf_handleImport(event){
+        async function conf_handleImport(event){
             const file = event.target.files[0];
             
             if (!file) {
@@ -3871,7 +3871,7 @@ function tpv_renderizarProductos() {
             }
             
             // Confirmar antes de importar
-            if (!confirm("⚠️ ¿Está seguro de importar este backup?\n\nEsto reemplazará todos los datos actuales.\n\nSe recomienda exportar un backup antes de continuar.")) {
+            if (!(await tpvConfirm("⚠️ ¿Está seguro de importar este backup?\n\nEsto reemplazará todos los datos actuales.\n\nSe recomienda exportar un backup antes de continuar."))) {
                 event.target.value = "";
                 return;
             }
@@ -4319,7 +4319,7 @@ function tpv_renderizarProductos() {
 
         // --- FUNCIÓN PARA DESACTIVAR LICENCIA (ÚTIL PARA PRUEBAS) ---
         async function lic_deactivateLicense() {
-            if(confirm("¿Está seguro que desea desactivar la licencia actual?\n\nEsto es útil para probar diferentes claves de licencia.")){
+            if((await tpvConfirm("¿Está seguro que desea desactivar la licencia actual?\n\nEsto es útil para probar diferentes claves de licencia."))){
                 tpvState.licencia.activada = false;
                 tpvState.licencia.key = "";
                 tpvState.licencia.fechaActivacion = null;
@@ -4383,7 +4383,7 @@ function tpv_renderizarProductos() {
         // --- LÓGICA DE MANTENIMIENTO ---
         async function conf_limpiarVentasHoy() {
             const lang = getLang();
-            if (confirm(lang.confirm_clear_today_sales)) {
+            if ((await tpvConfirm(lang.confirm_clear_today_sales))) {
                 const hoy = getTodayDateString();
                 const ventasHoy = tpvState.ventasDiarias[hoy] ?? [];
                 
@@ -4401,7 +4401,7 @@ function tpv_renderizarProductos() {
 
         async function conf_limpiarCierres() {
             const lang = getLang();
-            if (confirm(lang.confirm_clear_closures)) {
+            if ((await tpvConfirm(lang.confirm_clear_closures))) {
                 tpvState.cierresCaja = [];
                 await saveState();
                 registros_renderizar();
@@ -4411,7 +4411,7 @@ function tpv_renderizarProductos() {
 
         async function conf_limpiarHistorial() {
             const lang = getLang();
-            if (confirm(lang.confirm_clear_history)) {
+            if ((await tpvConfirm(lang.confirm_clear_history))) {
                 tpvState.historialVentas = [];
                 await saveState();
                 registros_renderizar();
@@ -4421,7 +4421,7 @@ function tpv_renderizarProductos() {
 
         async function conf_limpiarInventarios() {
             const lang = getLang();
-            if (confirm(lang.confirm_clear_inventories)) {
+            if ((await tpvConfirm(lang.confirm_clear_inventories))) {
                 tpvState.inventarios = {};
                 await saveState();
                 inv_cargarInventario(getTodayDateString());
@@ -4431,7 +4431,7 @@ function tpv_renderizarProductos() {
 
         async function conf_limpiarTodo() {
             const lang = getLang();
-            if (confirm(lang.confirm_clear_everything)) {
+            if ((await tpvConfirm(lang.confirm_clear_everything))) {
                 const { productos, categorias, config, licencia } = tpvState; // Preserve essential data
                 tpvState = getDefaultState(); // Reset
                 tpvState = { ...tpvState, productos, categorias, config, licencia }; // Restore
@@ -4610,7 +4610,7 @@ function tpv_renderizarProductos() {
         }
         
         async function restaurar_backup_directo(backupKey) {
-            if (!confirm('¿Está seguro de restaurar esta copia de seguridad? Se perderán los cambios no guardados.')) {
+            if (!(await tpvConfirm('¿Está seguro de restaurar esta copia de seguridad? Se perderán los cambios no guardados.'))) {
                 return;
             }
             
@@ -4626,16 +4626,16 @@ function tpv_renderizarProductos() {
             }
         }
         
-        function eliminar_backup_individual(backupKey) {
-            if (confirm('¿Está seguro de eliminar esta copia de seguridad?')) {
+        async function eliminar_backup_individual(backupKey) {
+            if ((await tpvConfirm('¿Está seguro de eliminar esta copia de seguridad?'))) {
                 localStorage.removeItem(backupKey);
                 showToast('Copia eliminada', 'info');
                 actualizar_lista_backups();
             }
         }
         
-        function eliminar_backups() {
-            if (confirm('¿Está seguro de eliminar TODAS las copias de seguridad?')) {
+        async function eliminar_backups() {
+            if ((await tpvConfirm('¿Está seguro de eliminar TODAS las copias de seguridad?'))) {
                 const allBackups = Object.keys(localStorage).filter(key => key.startsWith('tpv_backup_'));
                 allBackups.forEach(key => localStorage.removeItem(key));
                 showToast('Todas las copias han sido eliminadas', 'warning');
@@ -5124,8 +5124,8 @@ function tpv_renderizarProductos() {
         /**
          * Limpiar memoria del sistema de aprendizaje
          */
-        function limpiar_memoria_aprendizaje() {
-            if (confirm('⚠️ ¿Estás seguro de limpiar la memoria del sistema?\n\nEsto eliminará:\n• Configuraciones de importación aprendidas\n• Preferencias de exportación\n• Historial de estructuras\n\nEl sistema volverá a aprender desde cero.')) {
+        async function limpiar_memoria_aprendizaje() {
+            if ((await tpvConfirm('⚠️ ¿Estás seguro de limpiar la memoria del sistema?\n\nEsto eliminará:\n• Configuraciones de importación aprendidas\n• Preferencias de exportación\n• Historial de estructuras\n\nEl sistema volverá a aprender desde cero.'))) {
                 try {
                     localStorage.removeItem('tpv_ultima_estructura');
                     localStorage.removeItem('tpv_preferencias_exportacion');
@@ -5164,8 +5164,8 @@ function tpv_renderizarProductos() {
         // activar_licencia() → delega a lic_activateLicense() (función principal)
         function activar_licencia() { lic_activateLicense(); }
         
-        function eliminar_licencia() {
-            if (confirm('¿Está seguro de eliminar la licencia actual?')) {
+        async function eliminar_licencia() {
+            if ((await tpvConfirm('¿Está seguro de eliminar la licencia actual?'))) {
                 tpvState.licencia.activada = false;
                 tpvState.licencia.key = null;
                 saveState();
@@ -5207,8 +5207,8 @@ function tpv_renderizarProductos() {
             display.innerHTML = logsHTML || '<p>No hay logs disponibles</p>';
         }
         
-        function limpiar_logs() {
-            if (confirm('¿Está seguro de limpiar todos los logs?')) {
+        async function limpiar_logs() {
+            if ((await tpvConfirm('¿Está seguro de limpiar todos los logs?'))) {
                 systemLogs = [];
                 actualizar_logs();
                 showToast('Logs limpiados', 'info');
@@ -5220,7 +5220,7 @@ function tpv_renderizarProductos() {
         
         // ========== FUNCIONES DE ELIMINACIÓN DE REGISTROS ==========
         async function eliminar_cierre(fecha) {
-            if (confirm(`¿Está seguro de eliminar el cierre del día ${fecha}?`)) {
+            if ((await tpvConfirm(`¿Está seguro de eliminar el cierre del día ${fecha}?`))) {
                 tpvState.cierresCaja = tpvState.cierresCaja.filter(c => c.fecha !== fecha);
                 await saveState();
                 showToast('Cierre eliminado exitosamente', 'success');
@@ -5229,7 +5229,7 @@ function tpv_renderizarProductos() {
         }
         
         async function eliminar_todos_cierres() {
-            if (confirm('¿Está seguro de eliminar TODOS los cierres de caja? Esta acción no se puede deshacer.')) {
+            if ((await tpvConfirm('¿Está seguro de eliminar TODOS los cierres de caja? Esta acción no se puede deshacer.'))) {
                 tpvState.cierresCaja = [];
                 await saveState();
                 showToast('Todos los cierres han sido eliminados', 'warning');
@@ -5241,7 +5241,7 @@ function tpv_renderizarProductos() {
             const sortedHistorial = [...tpvState.historialVentas].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
             const venta = sortedHistorial[index];
             
-            if (confirm(`¿Está seguro de eliminar esta venta de ${venta.nombre}?`)) {
+            if ((await tpvConfirm(`¿Está seguro de eliminar esta venta de ${venta.nombre}?`))) {
                 const ventaIndex = tpvState.historialVentas.indexOf(venta);
                 tpvState.historialVentas.splice(ventaIndex, 1);
                 await saveState();
@@ -5251,7 +5251,7 @@ function tpv_renderizarProductos() {
         }
         
         async function eliminar_todas_ventas() {
-            if (confirm('¿Está seguro de eliminar TODO el historial de ventas? Esta acción no se puede deshacer.')) {
+            if ((await tpvConfirm('¿Está seguro de eliminar TODO el historial de ventas? Esta acción no se puede deshacer.'))) {
                 tpvState.historialVentas = [];
                 await saveState();
                 showToast('Todo el historial de ventas ha sido eliminado', 'warning');

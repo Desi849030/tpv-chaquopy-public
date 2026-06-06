@@ -1342,7 +1342,7 @@ async function _vend_cerrarDia() {
     const hoy  = fInp?.value || new Date().toISOString().split('T')[0];
 
     if (!_vend_items.length) { _toast('No hay inventario para cerrar.', 'warning'); return; }
-    if (!confirm(`\u00bfCerrar el d\u00eda ${hoy}?\n\nEsto registrar\u00e1 el resumen de ventas.\nAseg\u00farate de haber anotado todos los conteos finales.`)) return;
+    if (!(await tpvConfirm(`\u00bfCerrar el d\u00eda ${hoy}?\n\nEsto registrar\u00e1 el resumen de ventas.\nAseg\u00farate de haber anotado todos los conteos finales.`))) return;
 
     // Guardar conteos primero
     await _vend_guardarConteos();
@@ -1944,7 +1944,7 @@ async function _admin_actualizarTarjetaVendedor(vendedor_id, fecha) {
 
 /** Limpiar inventario de un vendedor */
 async function _admin_limpiarVendedor(vendedor_id, nombre) {
-    if (!confirm(`⚠️ ¿Eliminar todo el inventario diario de ${nombre}?\n\nEl almacén general NO se modifica.`)) return;
+    if (!(await tpvConfirm(`⚠️ ¿Eliminar todo el inventario diario de ${nombre}?\n\nEl almacén general NO se modifica.`))) return;
     try {
         const res  = await fetch('/api/inventario/diario/limpiar', {
             method:'POST', credentials:'same-origin',
@@ -2038,7 +2038,7 @@ async function _admin_cargarStockXLSX(event) {
 }
 
 /** Diálogo para limpiar inventarios globalmente */
-function _admin_limpiarInventariosUI() {
+async function _admin_limpiarInventariosUI() {
     const hoy = new Date().toISOString().split('T')[0];
     const opc = prompt(`🗑️ LIMPIAR INVENTARIOS DIARIOS\n\n1 — Solo inventarios de HOY (${hoy})\n2 — TODOS los inventarios\n\nEl almacén general NO se modifica.\nEscribe 1 o 2:`);
     if (!opc) return;
@@ -2047,7 +2047,7 @@ function _admin_limpiarInventariosUI() {
     else if (opc.trim()==='2') payload={};
     else { tpvAlert('Opción inválida'); return; }
     const desc = opc.trim()==='1' ? `inventarios de HOY (${hoy})` : 'TODOS los inventarios';
-    if (!confirm(`⛔ ¿Confirmar eliminación de ${desc}?\n\nLos vendedores quedarán sin stock asignado.`)) return;
+    if (!(await tpvConfirm(`⛔ ¿Confirmar eliminación de ${desc}?\n\nLos vendedores quedarán sin stock asignado.`))) return;
     fetch('/api/inventario/diario/limpiar',{
         method:'POST', credentials:'same-origin',
         headers:{'Content-Type':'application/json'},
@@ -2277,7 +2277,7 @@ async function _admin_guardarGasto() {
 }
 
 async function _admin_eliminarGasto(gasto_id) {
-    if (!confirm('¿Eliminar este gasto?')) return;
+    if (!(await tpvConfirm('¿Eliminar este gasto?'))) return;
     try {
         const res = await fetch(`/api/gastos/${gasto_id}`, { method:'DELETE', credentials:'same-origin' });
         if (res.ok) { _toast('Gasto eliminado', 'success'); await _admin_cargarGastos(); }
@@ -2655,7 +2655,7 @@ async function auth_crearUsuario() {
 }
 
 async function auth_desactivar(id, nombre) {
-    if (!confirm(`¿Desactivar a "${nombre}"?\nNo podrá iniciar sesión.`)) return;
+    if (!(await tpvConfirm(`¿Desactivar a "${nombre}"?\nNo podrá iniciar sesión.`))) return;
     try {
         const res  = await fetch(`/api/usuarios/${id}`, { method:'DELETE', credentials:'same-origin' });
         const data = await res.json();
@@ -2861,7 +2861,7 @@ function lic_copiarClave() {
 }
 
 async function lic_revocar(licencia_id, nombre) {
-    if (!confirm(`¿Revocar licencia de "${nombre}"?`)) return;
+    if (!(await tpvConfirm(`¿Revocar licencia de "${nombre}"?`))) return;
     try {
         const res = await fetch(`/api/licencias/${licencia_id}`, { method:'DELETE', credentials:'same-origin' });
         if (res.ok) { _toast('Licencia revocada','success'); _lic_cargarLista(); }

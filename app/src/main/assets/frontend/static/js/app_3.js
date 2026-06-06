@@ -1586,11 +1586,14 @@ function tpv_renderizarProductos() {
 
             // CORRECCIÓN FINAL: Lógica de totalización robusta con bucle for...of para máxima claridad.
             const totals = {
+                pventa: 0, pcosto: 0,
                 cantInicial: 0, cantFinal: 0, vendido: 0, importe: 0,
                 costoVendido: 0, comision: 0, ganancia: 0
             };
 
             for (const item of items) {
+                totals.pventa += Number(item.precioVenta) || 0;
+                totals.pcosto += Number(item.precioCosto) || 0;
                 totals.cantInicial += Number(item.cantInicial) || 0;
                 totals.cantFinal += Number(item.cantFinal) || 0;
                 totals.vendido += Number(item.vendido) || 0;
@@ -1600,19 +1603,18 @@ function tpv_renderizarProductos() {
                 totals.ganancia += Number(item.gananciaNeta) || 0;
             }
 
-            if(document.getElementById("inv-totalCantInicial")) document.getElementById("inv-totalCantInicial").innerText = parseFloat(totals.cantInicial.toFixed(2));
-            if(document.getElementById("inv-totalCantFinal")) document.getElementById("inv-totalCantFinal").innerText = parseFloat(totals.cantFinal.toFixed(2));
-            if(document.getElementById("inv-totalVendido")) document.getElementById("inv-totalVendido").innerText = parseFloat(totals.vendido.toFixed(2));
-            if(document.getElementById("inv-totalImporte")) document.getElementById("inv-totalImporte").innerText = totals.importe.toFixed(2);
-            
-            const totalCostoVendidoCell = document.getElementById("inv-totalCostoVendido");
-            if (totalCostoVendidoCell) {
-                totalCostoVendidoCell.innerText = totals.costoVendido.toFixed(2);
-                totalCostoVendidoCell.title = lang.tooltip_total_investment; // Asigna el tooltip
-            }
-            
-            if(document.getElementById("inv-totalComision")) document.getElementById("inv-totalComision").innerText = totals.comision.toFixed(2);
-            if(document.getElementById("inv-totalGanancia")) document.getElementById("inv-totalGanancia").innerText = totals.ganancia.toFixed(2);
+            const _set = (id, val) => { const e = document.getElementById(id); if (e) e.innerText = val; };
+            _set("inv-totalPventa", '$' + totals.pventa.toFixed(2));
+            _set("inv-totalPcosto", '$' + totals.pcosto.toFixed(2));
+            _set("inv-totalCantInicial", parseFloat(totals.cantInicial.toFixed(2)));
+            _set("inv-totalCantFinal", parseFloat(totals.cantFinal.toFixed(2)));
+            _set("inv-totalVendido", parseFloat(totals.vendido.toFixed(2)));
+            _set("inv-totalImporte", totals.importe.toFixed(2));
+            _set("inv-totalComision", totals.comision.toFixed(2));
+            _set("inv-totalGanancia", totals.ganancia.toFixed(2));
+            // Compat: la celda antigua de costo vendido si aún existe
+            const _cv = document.getElementById("inv-totalCostoVendido");
+            if (_cv) { _cv.innerText = totals.costoVendido.toFixed(2); _cv.title = lang.tooltip_total_investment || ''; }
         }
 
         function inv_abrirModalProducto(){

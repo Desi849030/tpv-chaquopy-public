@@ -809,16 +809,21 @@ async function auth_login() {
         const data = await res.json();
         if (res.ok && data.ok) {
             AUTH.usuario = data.usuario;
-            // Ofrecer registrar huella para próximos accesos (si el equipo lo permite)
-            try {
-                if (await auth_bioDisponible() && !localStorage.getItem(_BIO_KEY)) {
-                    var quiere = (typeof tpvConfirm === 'function')
-                        ? await tpvConfirm({ title:'Acceso con huella', message:'¿Activar inicio de sesión con huella/rostro en este dispositivo?', okText:'Activar', cancelText:'Ahora no' })
-                        : confirm('¿Activar inicio con huella en este dispositivo?');
-                    if (quiere) await auth_bioRegistrar(usr);
-                }
-            } catch(e) {}
+            // Entrar de inmediato (no bloquear el login con la oferta de huella).
             _auth_mostrarApp();
+            // Ofrecer registrar huella DESPUÉS, sin bloquear la entrada.
+            setTimeout(function () {
+                (async function () {
+                    try {
+                        if (await auth_bioDisponible() && !localStorage.getItem(_BIO_KEY)) {
+                            var quiere = (typeof tpvConfirm === 'function')
+                                ? await tpvConfirm({ title: 'Acceso con huella', message: '¿Activar inicio de sesión con huella/rostro en este dispositivo?', okText: 'Activar', cancelText: 'Ahora no' })
+                                : false;
+                            if (quiere) await auth_bioRegistrar(usr);
+                        }
+                    } catch (e) {}
+                })();
+            }, 1200);
         } else {
             _loginErr(data.error || 'Usuario o contraseña incorrectos.');
             document.getElementById('login-password').value = '';

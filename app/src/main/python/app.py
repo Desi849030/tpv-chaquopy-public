@@ -148,6 +148,40 @@ def dev_metrics():
         return jsonify({"ok": False, "error": str(e)}), 500
 
 
+@app.route('/api/diag/crashlog')
+def diag_crashlog():
+    """Devuelve el contenido de crash.log (errores de arranque) para diagnóstico."""
+    try:
+        ruta = os.path.join(os.environ.get("TPV_FILES_DIR", os.getcwd()), "crash.log")
+        if os.path.exists(ruta):
+            with open(ruta, "r", encoding="utf-8") as f:
+                return jsonify({"ok": True, "existe": True, "log": f.read()[-8000:]})
+        return jsonify({"ok": True, "existe": False, "log": "Sin errores registrados ✅"})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)})
+
+
+@app.route('/api/diag/info')
+def diag_info():
+    """Info del entorno para diagnosticar (rutas, módulos, versión Python)."""
+    info = {
+        "ok": True,
+        "python": sys.version,
+        "files_dir": os.environ.get("TPV_FILES_DIR", "(no definido)"),
+        "frontend_dir": os.environ.get("TPV_FRONTEND_DIR", "(no definido)"),
+        "assets_en_uso": _ASSETS,
+        "index_existe": os.path.exists(os.path.join(_TPL, "index.html")),
+        "rutas": len(list(app.url_map.iter_rules())),
+    }
+    for mod in ("flask", "psutil", "qrcode", "dotenv"):
+        try:
+            __import__(mod)
+            info["mod_" + mod] = "ok"
+        except Exception as e:
+            info["mod_" + mod] = "FALTA (%s)" % e
+    return jsonify(info)
+
+
 @app.route('/api/supabase/estado')
 def supabase_estado():
     """Estado de configuración de Supabase + tablas requeridas."""

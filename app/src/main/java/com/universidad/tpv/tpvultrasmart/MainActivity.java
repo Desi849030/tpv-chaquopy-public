@@ -80,8 +80,13 @@ public class MainActivity extends FragmentActivity {
         requestCameraPermission();
         new Thread(() -> {
             try {
+                // ORDEN CORRECTO: primero Python.start() con AndroidPlatform,
+                // LUEGO getInstance(). Al revés lanza:
+                // "Cannot use GenericPlatform on Android".
+                if (!Python.isStarted()) {
+                    Python.start(new AndroidPlatform(MainActivity.this));
+                }
                 Python py = Python.getInstance();
-                if (!Python.isStarted()) Python.start(new AndroidPlatform(MainActivity.this));
                 py.getModule("start_server");
             } catch (Throwable t) {
                 // En vez de crashear, mostrar el error de Python en pantalla.

@@ -62,7 +62,10 @@ android {
             // requiere reglas keep muy cuidadosas (ver proguard-rules.pro).
             minifyEnabled false
             shrinkResources false
-            signingConfig signingConfigs.release
+            // Firmar solo si el keystore existe (evita fallo de build sin el).
+            if (file('tpv-ultrasmart.keystore').exists()) {
+                signingConfig signingConfigs.release
+            }
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {

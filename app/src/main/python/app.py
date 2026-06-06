@@ -6,9 +6,26 @@ from flask import Flask, request, jsonify, send_from_directory
 
 _CD = os.path.dirname(os.path.abspath(__file__))
 _MAIN = os.path.dirname(_CD)
-_ASSETS = os.path.join(_MAIN, 'assets', 'frontend')
+
+# Localizar el frontend. En la APK (Chaquopy) los assets se copian a
+# getFilesDir()/frontend y MainActivity expone TPV_FRONTEND_DIR; en
+# Termux/navegador se usa la ruta del repo (assets/frontend).
+_ENV_FRONTEND = os.environ.get('TPV_FRONTEND_DIR', '')
+_CANDIDATOS = [
+    _ENV_FRONTEND,
+    os.path.join(_MAIN, 'assets', 'frontend'),        # repo / Termux
+    os.path.join(_CD, 'frontend'),                     # por si está junto al py
+]
+_ASSETS = ''
+for _c in _CANDIDATOS:
+    if _c and os.path.isdir(os.path.join(_c, 'templates')):
+        _ASSETS = _c
+        break
+if not _ASSETS:
+    _ASSETS = _ENV_FRONTEND or os.path.join(_MAIN, 'assets', 'frontend')
 _TPL = os.path.join(_ASSETS, 'templates')
 _STAT = os.path.join(_ASSETS, 'static')
+print("📁 Frontend en uso:", _ASSETS)
 
 app = Flask(__name__, static_folder=_STAT, static_url_path='/static')
 app.config['PERMANENT_SESSION_LIFETIME'] = 86400 * 365  # 1 año

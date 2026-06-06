@@ -38,18 +38,10 @@ __all__ = ['_get_db', 'init', 'save', 'recall', 'search', 'forget', 'get_summary
 def _get_db():
     global _DB_PATH
     if not _DB_PATH:
-        # Ruta por defecto: junto al backend (python/tpv_datos.db).
-        # Si la BD aun no existe, sqlite la creara al conectar (memoria IA
-        # comparte el mismo archivo que el resto de la app).
-        default_path = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            'tpv_datos.db')
-        for p in ['tpv_datos.db', default_path]:
-            if os.path.exists(p):
-                _DB_PATH = p
-                break
-        if not _DB_PATH:
-            _DB_PATH = default_path
+        # Usar TPV_FILES_DIR (escribible en la APK). La carpeta del código es
+        # de SOLO LECTURA en Chaquopy, por eso no se usa abspath(__file__).
+        files_dir = os.environ.get("TPV_FILES_DIR", os.getcwd())
+        _DB_PATH = os.path.join(files_dir, 'tpv_datos.db')
     try:
         conn = sqlite3.connect(_DB_PATH, timeout=3, check_same_thread=False)
         conn.row_factory = sqlite3.Row

@@ -150,17 +150,18 @@ def dev_metrics():
 
 @app.route('/api/supabase/estado')
 def supabase_estado():
-    """Estado de configuración de Supabase para el panel de diagnóstico."""
+    """Estado de configuración de Supabase + tablas requeridas."""
     try:
         from sync.config_persist import SUPABASE_CONFIG
         url = SUPABASE_CONFIG.get("url", "") or ""
         key = SUPABASE_CONFIG.get("anon_key", "") or ""
         configurado = bool(url.startswith("https://") and len(key) > 20
                            and "TU-PROYECTO" not in url and "TU_ANON_KEY" not in key)
+        tablas = [v for k, v in SUPABASE_CONFIG.items() if k.startswith("tabla_")]
         return jsonify({"ok": True, "configurado": configurado,
-                        "url": url, "tablas": {}})
+                        "url": url, "tablas": tablas})
     except Exception as e:
-        return jsonify({"ok": True, "configurado": False, "url": "", "error": str(e)})
+        return jsonify({"ok": True, "configurado": False, "url": "", "tablas": [], "error": str(e)})
 
 
 @app.route('/api/supabase/config', methods=['GET', 'POST'])

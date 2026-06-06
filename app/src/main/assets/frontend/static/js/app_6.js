@@ -1702,16 +1702,16 @@ async function _admin_renderVendedores(hoy) {
                     <td colspan="2" class="text-end">TOTALES</td>
                     <td class="text-center">${general.reduce((s,p)=>s+(parseFloat(p.stock_actual)||0),0).toFixed(0)}</td>
                     <td class="text-center text-warning">
-                      $${(general.reduce((s,p)=>s+(parseFloat(p.precio_compra)||0)*(parseFloat(p.stock_actual)||0),0)).toFixed(2)}
+                      $${(general.reduce((s,p)=>s+(parseFloat(p.precio_compra)||0),0)).toFixed(2)}
                     </td>
                     <td class="text-center">
-                      $${(general.reduce((s,p)=>s+(parseFloat(p.precio_venta)||0)*(parseFloat(p.stock_actual)||0),0)).toFixed(2)}
+                      $${(general.reduce((s,p)=>s+(parseFloat(p.precio_venta)||0),0)).toFixed(2)}
                     </td>
                     <td colspan="3"></td>
                   </tr>
                   <tr class="table-primary">
                     <td colspan="8" class="text-end small">
-                      <span class="me-3">💰 <strong>Inversión total en almacén:</strong>
+                      <span class="me-3">💰 <strong>Inversión total (costo×stock):</strong>
                         $${(general.reduce((s,p)=>s+(parseFloat(p.precio_compra)||0)*(parseFloat(p.stock_actual)||0),0)).toFixed(2)}
                       </span>
                       <span>📈 <strong>Valor total a precio venta:</strong>

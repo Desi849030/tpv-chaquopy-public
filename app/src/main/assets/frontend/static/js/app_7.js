@@ -39,7 +39,8 @@ async function dashboard_cargar() {
     const ingHoy  = ventas.reduce((s,v) => s + (v.total||0), 0);
     const costoHoy= ventas.reduce((s,v) => {
         const p = tpvState.productos.find(p=>p.id===v.productoId);
-        return s + ((p?.costoUnitario||0)*(v.cantidad||1));
+        const costo = (p && (p.costoUnitario != null ? p.costoUnitario : p.costo)) || 0;
+        return s + (Number(costo) * (v.cantidad||1));
     }, 0);
     const gananHoy = ingHoy - costoHoy;
     const txHoy    = ventas.length;
@@ -246,6 +247,25 @@ async function supabase_cargarConfig() {
         if (u && d.url) u.value = d.url;
         if (k && d.anon_key) k.value = d.anon_key;
     } catch (e) { /* sin conexión */ }
+}
+
+// Mostrar las tablas que deben existir en el proyecto Supabase
+async function supabase_verTablas() {
+    const el = document.getElementById('sb-tablas');
+    if (!el) return;
+    el.innerHTML = '<div class="spinner-border spinner-border-sm me-1"></div>Consultando...';
+    try {
+        const r = await fetch('/api/supabase/estado', { credentials: 'same-origin' });
+        const d = await r.json();
+        const tablas = d.tablas || [];
+        if (!tablas.length) { el.innerHTML = '<span class="text-muted">Sin tablas definidas.</span>'; return; }
+        el.innerHTML = '<div class="border rounded p-2 mt-1">' +
+            '<strong>Crea estas ' + tablas.length + ' tablas en tu Supabase:</strong><br>' +
+            tablas.map(function(t){ return '<code>' + t + '</code>'; }).join(' · ') +
+            '<br><span class="text-muted">Estado: ' + (d.configurado ? '✅ configurado' : '⚠️ sin configurar') + '</span></div>';
+    } catch (e) {
+        el.innerHTML = '<span class="text-danger">No se pudo consultar.</span>';
+    }
 }
 
 // Guardar URL + API key de Supabase

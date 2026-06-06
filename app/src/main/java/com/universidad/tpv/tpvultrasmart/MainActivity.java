@@ -79,20 +79,34 @@ public class MainActivity extends FragmentActivity {
         initBiometricPrompt();
         requestCameraPermission();
         new Thread(() -> {
+            try {
                 Python py = Python.getInstance();
                 if (!Python.isStarted()) Python.start(new AndroidPlatform(MainActivity.this));
                 py.getModule("start_server");
-            for (int i = 0; i < 40; i++) {
+            } catch (Throwable t) {
+                // En vez de crashear, mostrar el error de Python en pantalla.
+                final String err = android.util.Log.getStackTraceString(t);
+                android.util.Log.e("TPV", "Error arrancando Python", t);
+                runOnUiThread(() -> mostrarErrorArranque(err));
+                return;
+            }
+            boolean ok = false;
+            for (int i = 0; i < 60; i++) {
                 try {
                     java.net.HttpURLConnection conn = (java.net.HttpURLConnection)
                         new java.net.URL("http://127.0.0.1:5050/api/health").openConnection();
                     conn.setConnectTimeout(300); conn.setReadTimeout(300);
                     int code = conn.getResponseCode(); conn.disconnect();
-                    if (code == 200 || code == 401 || code == 404) break;
+                    if (code == 200 || code == 401 || code == 404) { ok = true; break; }
                 } catch (Exception e) {}
                 try { Thread.sleep(250); } catch (Exception ex) {}
             }
-            runOnUiThread(() -> setupWebView());
+            final boolean serverOk = ok;
+            runOnUiThread(() -> {
+                if (serverOk) setupWebView();
+                else mostrarErrorArranque("El servidor no respondió en 15 segundos.\n"
+                    + "Revisa el logcat (etiqueta TPV) para más detalles.");
+            });
         }).start();
     }
 
@@ -143,6 +157,32 @@ public class MainActivity extends FragmentActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == CAMERA_PERMISSION_REQUEST) {
             cameraPermissionGranted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+        }
+    }
+
+    // Muestra el error de arranque en pantalla (en vez de cerrar la app).
+    private void mostrarErrorArranque(String detalle) {
+        try {
+            android.widget.ScrollView sv = new android.widget.ScrollView(this);
+            LinearLayout box = new LinearLayout(this);
+            box.setOrientation(LinearLayout.VERTICAL);
+            box.setPadding(40, 80, 40, 40);
+            box.setBackgroundColor(Color.parseColor("#0a0e1a"));
+            TextView t = new TextView(this);
+            t.setText("⚠️ TPV no pudo iniciar el servidor");
+            t.setTextColor(Color.parseColor("#f87171"));
+            t.setTextSize(18f);
+            t.setPadding(0, 0, 0, 20);
+            TextView d = new TextView(this);
+            d.setText(detalle == null ? "Error desconocido" : detalle);
+            d.setTextColor(Color.parseColor("#cbd5e1"));
+            d.setTextSize(11f);
+            d.setTypeface(android.graphics.Typeface.MONOSPACE);
+            box.addView(t); box.addView(d);
+            sv.addView(box);
+            setContentView(sv);
+        } catch (Exception e) {
+            android.util.Log.e("TPV", "No se pudo mostrar el error", e);
         }
     }
 

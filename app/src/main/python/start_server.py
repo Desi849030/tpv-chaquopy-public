@@ -19,6 +19,24 @@ from datetime import datetime
 _SERVER_THREAD = None
 
 
+def configurar(files_dir, frontend_dir):
+    """Recibe las rutas DESDE Java y las pone en os.environ.
+
+    CLAVE: Java usa System.setProperty(), que NO aparece en os.environ de
+    Python. Por eso MainActivity debe llamar a esta función pasando las rutas;
+    así Python sí las ve. Llamar ANTES de que se importe 'app'.
+    """
+    try:
+        if files_dir:
+            os.environ['TPV_FILES_DIR'] = str(files_dir)
+        if frontend_dir:
+            os.environ['TPV_FRONTEND_DIR'] = str(frontend_dir)
+        print("⚙️ Config recibida de Java: files=%s frontend=%s" % (files_dir, frontend_dir))
+    except Exception:
+        traceback.print_exc()
+    return True
+
+
 def _files_dir():
     return os.environ.get('TPV_FILES_DIR', os.path.dirname(os.path.abspath(__file__)))
 
@@ -109,8 +127,28 @@ def start_server():
     return _SERVER_THREAD
 
 
-# --- Arranque automático al IMPORTAR el módulo (clave para Chaquopy) ---
-start_server()
+def iniciar(files_dir=None, frontend_dir=None):
+    """Punto de entrada que llama MainActivity: configura rutas y arranca.
+    Se invoca con callAttr('iniciar', filesDir, frontendDir). Configura las
+    rutas en os.environ ANTES de importar 'app' (dentro de start_server)."""
+    configurar(files_dir, frontend_dir)
+    return start_server()
+
+
+# Auto-arranque SOLO si una variable de entorno ya está disponible (Termux/CI)
+# o si nadie va a llamar iniciar(). En la APK, MainActivity llama iniciar(...)
+# con las rutas correctas, así que NO autoarrancamos aquí para no hacerlo antes
+# de recibir las rutas (evita el 'TPV no encontrado').
+_EN_ANDROID = False
+try:
+    import java  # noqa: F401  (solo existe dentro de Chaquopy/Android)
+    _EN_ANDROID = True
+except Exception:
+    _EN_ANDROID = False
+
+if not _EN_ANDROID:
+    # Termux / navegador / CI: arrancar al importar (no hay Java que llame iniciar)
+    start_server()
 
 
 if __name__ == '__main__':

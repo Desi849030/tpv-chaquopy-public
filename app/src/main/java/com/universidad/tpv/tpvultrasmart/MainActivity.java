@@ -87,7 +87,12 @@ public class MainActivity extends FragmentActivity {
                     Python.start(new AndroidPlatform(MainActivity.this));
                 }
                 Python py = Python.getInstance();
-                py.getModule("start_server");
+                // Pasar las rutas a Python LLAMANDO una función (System.setProperty
+                // de Java NO llega a os.environ de Python). iniciar() las pone en
+                // os.environ y arranca el servidor.
+                String _filesDir = getFilesDir().getAbsolutePath();
+                String _frontendDir = _filesDir + "/frontend";
+                py.getModule("start_server").callAttr("iniciar", _filesDir, _frontendDir);
             } catch (Throwable t) {
                 // En vez de crashear, mostrar el error de Python en pantalla.
                 final String err = android.util.Log.getStackTraceString(t);

@@ -2630,10 +2630,17 @@ function tpv_renderizarProductos() {
                     metodo: 'unknown'
                 };
         
-                // Estrategia 1: Buscar encabezados explícitos
+                // Estrategia 1: Buscar encabezados explícitos.
+                // Si encontramos una fila de encabezados válida (nombre + precio o
+                // cantidad), SIEMPRE la usamos: es la intención explícita del usuario
+                // y es muchísimo más fiable que adivinar por contenido. Antes se
+                // exigía confianza > 0.6 (4+ columnas), lo que descartaba archivos
+                // normales de 3 columnas y caía al patrón hardcodeado (bug del
+                // "mismo número para todos").
                 const resultadoEncabezados = this.buscarEncabezadosExplicitos(rawData);
-                if (resultadoEncabezados.confianza > 0.6) {
-                    console.log('✅ Encabezados explícitos detectados');
+                if (resultadoEncabezados.filaEncabezado >= 0 &&
+                    resultadoEncabezados.columnas.nombre !== undefined) {
+                    console.log('✅ Encabezados explícitos detectados', resultadoEncabezados.columnas);
                     return resultadoEncabezados;
                 }
         
@@ -2673,20 +2680,32 @@ function tpv_renderizarProductos() {
                         const celda = String(fila[j] || "").toLowerCase().trim();
                         if (!celda) continue;
                 
-                        // Verificar contra patrones de encabezados
+                        // Verificar contra patrones de encabezados.
+                        // El orden de this.patterns.headers da prioridad a costo y
+                        // cantidad ANTES que precio (evita que "Precio de Compra"
+                        // se asigne a precio). Normalizamos la clave 'producto' a
+                        // 'nombre' para que coincida con el bucle de procesamiento.
                         for (const [tipo, patron] of Object.entries(this.patterns.headers)) {
-                            if (patron.test(celda) && !colsEncontradas[tipo]) {
-                                colsEncontradas[tipo] = j;
+                            const key = (tipo === 'producto') ? 'nombre' : tipo;
+                            if (patron.test(celda) && colsEncontradas[key] === undefined) {
+                                colsEncontradas[key] = j;
                                 coincidencias++;
                                 if (this.DEBUG) {
-                                    console.log(`  📌 Fila ${i+1}, Col ${j+1}: "${celda}" → ${tipo}`);
+                                    console.log(`  📌 Fila ${i+1}, Col ${j+1}: "${celda}" → ${key}`);
                                 }
                             }
                         }
                     }
             
-                    // Si encontramos al menos producto y precio, es probable que sea encabezado
-                    if (coincidencias >= 2 && colsEncontradas.producto !== undefined && colsEncontradas.precio !== undefined) {
+                    // Es una fila de encabezados si tiene la columna de NOMBRE más al
+                    // menos una columna numérica (precio o cantidad). No exigimos
+                    // precio obligatorio: un archivo solo de inventario puede traer
+                    // Nombre + Stock sin precio.
+                    const tieneNombre = colsEncontradas.nombre !== undefined;
+                    const tieneNumerica = colsEncontradas.precio !== undefined ||
+                                          colsEncontradas.cantidad !== undefined ||
+                                          colsEncontradas.costo !== undefined;
+                    if (tieneNombre && tieneNumerica) {
                         resultado.filaEncabezado = i;
                         resultado.filaInicioDatos = i + 1;
                         resultado.columnas = colsEncontradas;

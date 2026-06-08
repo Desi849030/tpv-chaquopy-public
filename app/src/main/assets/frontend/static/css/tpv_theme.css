@@ -449,3 +449,21 @@ body.rol-desarrollador #dev-metrics-tab { display: list-item !important; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ---------------------------------------------------------------------------
+   14) ANTI-DESBORDE (tarjetas que se salían de la pantalla en móvil)
+--------------------------------------------------------------------------- */
+html, body { max-width: 100%; overflow-x: hidden; }
+.container, .container-fluid { max-width: 100%; overflow-x: hidden; }
+.glass-card, .card { max-width: 100%; overflow-wrap: anywhere; word-break: break-word; }
+/* Tablas anchas: scroll horizontal dentro de su tarjeta, no desbordan */
+.table-responsive { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+/* Códigos/URLs largos (Supabase, rutas) no rompen el layout */
+code, pre, .text-break { overflow-wrap: anywhere; word-break: break-word; white-space: normal; }
+/* Inputs y selects nunca más anchos que su contenedor */
+.form-control, .form-select, input, select, textarea { max-width: 100%; }
+/* Filas de KPI / grid: sin margen negativo que cause scroll horizontal */
+.row { margin-left: 0; margin-right: 0; }
+.row > [class^="col"], .row > [class*=" col"] { padding-left: .5rem; padding-right: .5rem; }
+/* Canvas de gráficos: responsive */
+canvas { max-width: 100% !important; height: auto !important; }

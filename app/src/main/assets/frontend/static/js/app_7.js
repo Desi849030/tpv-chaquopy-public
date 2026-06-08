@@ -70,12 +70,15 @@ async function dashboard_cargar() {
     });
     const top5 = Object.values(prodMap).sort((a,b)=>b.cant-a.cant).slice(0,5);
 
-    // ── Stock crítico ──────────────────────────────────────
+    // ── Stock crítico + total de productos (refleja la importación Excel) ──
     let stockCritico = [];
+    let totalProductos = 0;
     try {
         const r = await fetch('/api/inventario/general',{credentials:'same-origin'});
         const d = await r.json();
-        stockCritico = (d.inventario||[]).filter(p => parseFloat(p.stock_actual||0) <= parseFloat(p.stock_minimo||5));
+        const inv = d.inventario || [];
+        totalProductos = inv.length;
+        stockCritico = inv.filter(p => parseFloat(p.stock_actual||0) <= parseFloat(p.stock_minimo||5));
     } catch(e){}
 
     // ── Vendedores hoy ─────────────────────────────────────
@@ -113,6 +116,13 @@ async function dashboard_cargar() {
                 <div style="font-size:2rem">⚠️</div>
                 <div class="fw-bold fs-4 text-danger">${stockCritico.length}</div>
                 <div class="text-muted small">Stock crítico</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="glass-card text-center py-3">
+                <div style="font-size:2rem">📦</div>
+                <div class="fw-bold fs-4 text-info">${totalProductos}</div>
+                <div class="text-muted small">Productos</div>
             </div>
         </div>`;
 

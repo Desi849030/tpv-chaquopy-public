@@ -159,11 +159,16 @@ class ProductAccessor:
         self._cache = []
         self._cats = []
         self._loaded = False
+        self._loaded_at = 0
+        self._ttl = 15  # segundos: refrescar para ver cambios (importación, stock)
 
     def _ensure_loaded(self):
-        if not self._loaded:
+        import time as _t
+        ahora = _t.time()
+        if (not self._loaded) or (ahora - self._loaded_at > self._ttl):
             self._load()
             self._loaded = True
+            self._loaded_at = ahora
 
     @property
     def cache(self):

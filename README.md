@@ -1,6 +1,12 @@
 # TPV UltraSmart v2.5.5
 
-Sistema de Punto de Venta Profesional con IA integrada, biometria, roles multinivel y sincronizacion offline. Compilado 100% desde Android con Termux + Chaquopy.
+[![CI — Tests & APK](https://github.com/Desi849030/tpv-chaquopy/actions/workflows/ci.yml/badge.svg)](https://github.com/Desi849030/tpv-chaquopy/actions/workflows/ci.yml)
+![Python 3.10](https://img.shields.io/badge/python-3.10-blue)
+![Android minSdk 21](https://img.shields.io/badge/Android-minSdk%2021%2B-green)
+![Offline first](https://img.shields.io/badge/offline-100%25-success)
+![License MIT](https://img.shields.io/badge/license-MIT-lightgrey)
+
+Sistema de Punto de Venta Profesional con IA integrada, biometria, roles multinivel y sincronizacion offline. Compilado 100% desde Android con Termux + Chaquopy (WebView + Flask embebido).
 
 ## Caracteristicas Principales
 
@@ -23,15 +29,43 @@ Sistema de Punto de Venta Profesional con IA integrada, biometria, roles multini
 - Debug del desarrollador: captura de errores/fetch con tiempos y estadisticas
 - Licencias, Dashboard con graficos, traduccion ES/EN, Supabase opcional
 
-## Estadisticas (reales)
+## Estadisticas (reales, verificadas)
 
-- Backend: ~172 archivos Python, 177 rutas Flask registradas
-- Frontend: 86 archivos JavaScript + 6 hojas CSS (incl. design system)
-- Tests: suite estable de 51 pruebas verdes + 5 skip (ver `pytest.ini`)
-- Smoke test: arranque + rutas críticas + agente + SQLi (`scripts/smoke_test.py`)
-- 100% offline: todas las librerías y fuentes servidas localmente (sin CDN)
+- Backend: 157 archivos Python, **181 rutas Flask** registradas
+- Frontend: **14 archivos JavaScript activos** + 6 hojas CSS (incl. design system)
+  - Codigo heredado archivado en `docs/_legacy_js/` y `docs/_legacy_py/` (fuera del APK)
+- Tests: **54 pruebas pytest verdes** + 5 skip + suite de regresion del import Excel
+- Smoke test: arranque + rutas criticas + agente + SQLi (`scripts/smoke_test.py`)
+- Arranque del backend (import de `app.py`): **~0.3 s**
+- Peso del frontend empaquetado: ~4.9 MB (2.9 MB son librerias offline locales)
+- 100% offline: todas las librerias y fuentes servidas localmente (sin CDN)
 
 > Detalle completo de las mejoras recientes en `docs/CHANGELOG_refactor.md`.
+
+## Arquitectura (vista general)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Dispositivo Android                      │
+│                                                               │
+│  ┌────────────────┐   callAttr("iniciar")   ┌─────────────┐  │
+│  │  MainActivity   │ ───────────────────────▶│  Chaquopy   │  │
+│  │   (Java)        │                          │  Python 3.10│  │
+│  │                 │                          └──────┬──────┘  │
+│  │  ┌───────────┐  │                                 │         │
+│  │  │  WebView  │  │  HTTP 127.0.0.1:5050      ┌──────▼──────┐ │
+│  │  │ (frontend)│◀─┼──────────────────────────│ Flask app.py│ │
+│  │  └───────────┘  │                           │ + blueprints│ │
+│  │  TPVNative      │   biometria nativa        │  (modules/) │ │
+│  │  (BiometricPrompt)                          └──────┬──────┘ │
+│  └────────────────┘                                   │        │
+│                                              ┌─────────▼──────┐ │
+│   Frontend: index.html + 14 JS + CSS         │ SQLite (18 tbl)│ │
+│   IndexedDB (cache) + service-worker (offline)│ ia/ agente NLP│ │
+│                                              └────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+        (Termux/navegador: Flask autoarranca en 127.0.0.1:5000)
+```
 
 ## Jerarquia de Roles
 
@@ -59,9 +93,12 @@ Backend organizado en packages con facades backward-compatible:
 
 ## Inicio Rapido (Termux)
 
-bash install.sh
-cd app/src/main/python
-python app.py
+```bash
+bash tpv_termux_setup.sh        # instala dependencias (Python + Flask)
+bash tpv_termux_run.sh          # arranca el backend en 127.0.0.1:5000
+# o manualmente:
+cd app/src/main/python && python app.py
+```
 
 ## Compilar APK
 
@@ -82,21 +119,23 @@ cd app/src/main/python && python app.py   # abrir http://127.0.0.1:5050
 
 ## Estructura
 
-- app/src/main/python/ - Backend Flask (modular)
-- app/src/main/assets/ - Frontend (JS, CSS, templates)
-- app/src/main/java/ - Android (Chaquopy + WebView + Biometria)
-- tests/ - Tests pytest (142 tests)
-- .github/workflows/ - CI/CD GitHub Actions
+- app/src/main/python/ - Backend Flask (modular: db/, ia/, modules/, security/, sync/, metrics/, tools/)
+- app/src/main/assets/ - Frontend (14 JS activos, CSS, templates, libs offline)
+- app/src/main/java/ - Android (Chaquopy + WebView + Biometria nativa)
+- tests/ - Tests pytest (suite estable de 54 + regresion)
+- scripts/smoke_test.py - Red de seguridad: arranque + rutas + agente + SQLi
+- docs/_legacy_js, docs/_legacy_py - Codigo heredado archivado (no entra al APK)
+- .github/workflows/ - CI/CD GitHub Actions (test -> build APK)
 
 ## Tech Stack
 
 - Frontend: Bootstrap 5, Chart.js, html5-qrcode
 - Backend: Flask + Blueprints, SQLite
 - Android: Chaquopy, WebView, Biometria nativa
-- IA: NLP engine, intents, fuzzy matching, 150 tools
+- IA: NLP engine, intents, fuzzy matching, herramientas (tools/)
 - Cache: IndexedDB + SQLite dual sync
 - Cloud: Supabase (opcional)
-- Testing: pytest (679+ pruebas)
+- Testing: pytest (suite estable de 54) + smoke test + regresion import Excel
 
 ## Documentacion
 

@@ -1457,38 +1457,9 @@ def api_usuarios():
 
 
 
-# ═══ HOTFIX v8.0.2: CATALOGO SYNC ═══
-@app.route('/api/catalogo/sync', methods=['POST'])
-def api_catalogo_sync():
-    d = request.get_json(silent=True) or {}
-    productos = d.get('productos', [])
-    if not productos:
-        return jsonify({"ok":False,"error":"No hay productos"}),400
-    try:
-        from db_connection import obtener_conexion
-        from datetime import datetime
-        import uuid
-        conn = obtener_conexion()
-        cursor = conn.cursor()
-        ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        sync = 0
-        for p in productos:
-            pid = p.get("id",f"prod-{uuid.uuid4().hex[:8]}")
-            nom = p.get("nombre","")
-            pv = float(p.get("precio",0) or 0)
-            pc = float(p.get("costo",pv*0.7) or 0)
-            cat = p.get("categoria","General") or "General"
-            um = p.get("um","C/U") or "C/U"
-            stock = int(p.get("stock",0) or 0)
-            cursor.execute("INSERT OR REPLACE INTO productos (producto_id,nombre,precio,costo,categoria,unidad_medida,activo) VALUES (?,?,?,?,?,?,1)",
-                          (pid,nom,pv,pc,cat,um))
-            cursor.execute("INSERT OR REPLACE INTO inventario_general (producto_id,nombre,stock_actual,stock_minimo,precio_compra,precio_venta,categoria,unidad_medida,actualizado) VALUES (?,?,?,5,?,?,?,?,?)",
-                          (pid,nom,stock,pc,pv,cat,um,ahora))
-            sync += 1
-        conn.commit(); conn.close()
-        return jsonify({"ok":True,"sincronizados":sync})
-    except Exception as e:
-        return jsonify({"ok":False,"error":str(e)}),500
+# NOTA: segunda definición de /api/catalogo/sync eliminada (código muerto).
+# Flask usaba siempre la primera 'catalogo_sync' (línea ~1166), que preserva
+# el stock al guardar fotos. Esta duplicada ponía stock=0 y nunca se ejecutaba.
 
 
 

@@ -41,13 +41,29 @@ def test_normaliza_producto_a_nombre():
 
 
 def test_encabezados_no_exigen_precio_obligatorio():
-    """Un encabezado valido debe aceptar nombre + (precio O cantidad O costo)."""
+    """Un encabezado valido se acepta con al menos una columna numerica."""
     src = _src()
-    assert "tieneNombre" in src and "tieneNumerica" in src, \
+    assert "tieneNumerica" in src, \
         "Falta la logica flexible de validacion de encabezados"
     # Ya NO debe exigir producto Y precio a la vez como unica condicion
     assert "colsEncontradas.producto !== undefined && colsEncontradas.precio" not in src, \
         "Reintroducida la condicion rigida que exigia precio obligatorio"
+
+
+def test_infiere_columna_nombre_sin_encabezado():
+    """Debe existir el inferidor de la columna de nombre sin encabezado."""
+    src = _src()
+    assert "_inferirColumnaNombre" in src, \
+        "Falta _inferirColumnaNombre (Excel con columna de nombre sin titulo)"
+
+
+def test_reconoce_inicio_como_cantidad():
+    """El patron de cantidad debe reconocer 'Inicio'/'Inicial' (Excel del usuario)."""
+    src = _src()
+    m = re.search(r"cantidad:\s*/\((.*?)\)/i", src)
+    assert m, "No se encontro el patron de cantidad"
+    patron = m.group(1)
+    assert "inicio" in patron, "El patron de cantidad ya no reconoce 'inicio'"
 
 
 def test_encabezados_explicitos_tienen_prioridad():

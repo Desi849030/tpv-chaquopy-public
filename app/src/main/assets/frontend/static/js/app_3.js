@@ -2597,7 +2597,7 @@ function tpv_renderizarProductos() {
                         // a costo/cantidad antes que precio para evitar confusiones.
                         producto: /(producto|nombre|item|descripci[oó]n|art[ií]culo|descripcion)/i,
                         costo: /(costo|p\.?\s*costo|compra|inversi[oó]n|precio.*compra|\bcost\b)/i,
-                        cantidad: /(cantidad|stock|existencia|\bcant\b|inventario|\bqty\b|unidades|exist|cant.*inicial|stock.*actual)/i,
+                        cantidad: /(cantidad|stock|existencia|\bcant\b|inventario|\bqty\b|unidades|exist|cant.*inicial|stock.*actual|\binicio\b|\binicial\b|\bentrada\b)/i,
                         precio: /(precio|p\.?\s*venta|pvp|precio.*venta|\bvalor\b|\bventa\b|\bprice\b)/i,
                         um: /(unidad|u\.?\s*m|\bum\b|medida|\bund\b|\bunit\b|c\/u)/i,
                         categoria: /(categor[ií]a|tipo|clasificaci[oó]n|\bcategory\b|rubro)/i
@@ -2697,28 +2697,82 @@ function tpv_renderizarProductos() {
                         }
                     }
             
-                    // Es una fila de encabezados si tiene la columna de NOMBRE más al
-                    // menos una columna numérica (precio o cantidad). No exigimos
-                    // precio obligatorio: un archivo solo de inventario puede traer
-                    // Nombre + Stock sin precio.
-                    const tieneNombre = colsEncontradas.nombre !== undefined;
+                    // Es una fila de encabezados si tiene AL MENOS una columna
+                    // numérica reconocida (precio, cantidad o costo). No exigimos
+                    // precio obligatorio.
                     const tieneNumerica = colsEncontradas.precio !== undefined ||
                                           colsEncontradas.cantidad !== undefined ||
                                           colsEncontradas.costo !== undefined;
-                    if (tieneNombre && tieneNumerica) {
-                        resultado.filaEncabezado = i;
-                        resultado.filaInicioDatos = i + 1;
-                        resultado.columnas = colsEncontradas;
-                        resultado.confianza = Math.min(coincidencias / 6, 1); // Máximo 6 columnas esperadas
-                
-                        if (this.DEBUG) {
-                            console.log(`✓ Encabezados encontrados en fila ${i+1} (${coincidencias} columnas, confianza: ${resultado.confianza.toFixed(2)})`);
+                    if (tieneNumerica) {
+                        // Si la columna de NOMBRE no tiene encabezado (muy común: la
+                        // primera columna del Excel suele ir sin título), la inferimos
+                        // buscando la primera columna que contenga texto largo en las
+                        // filas de datos siguientes y que no esté ya asignada.
+                        if (colsEncontradas.nombre === undefined) {
+                            const colNombre = this._inferirColumnaNombre(rawData, i + 1, colsEncontradas);
+                            if (colNombre !== -1) {
+                                colsEncontradas.nombre = colNombre;
+                                if (this.DEBUG) console.log(`  🔎 Columna de nombre inferida: ${colNombre + 1}`);
+                            }
                         }
-                        return resultado;
+                        // Sólo aceptamos si finalmente tenemos columna de nombre.
+                        if (colsEncontradas.nombre !== undefined) {
+                            resultado.filaEncabezado = i;
+                            resultado.filaInicioDatos = i + 1;
+                            resultado.columnas = colsEncontradas;
+                            resultado.confianza = Math.min(coincidencias / 6, 1); // Máximo 6 columnas esperadas
+                    
+                            if (this.DEBUG) {
+                                console.log(`✓ Encabezados encontrados en fila ${i+1} (${coincidencias} columnas, confianza: ${resultado.confianza.toFixed(2)})`);
+                            }
+                            return resultado;
+                        }
                     }
                 }
         
                 return resultado;
+            }
+    
+            /**
+             * Infiere qué columna contiene los NOMBRES de producto cuando esa
+             * columna no tiene encabezado. Recorre las filas de datos y elige la
+             * primera columna (no asignada a otro tipo) cuyos valores sean
+             * mayoritariamente texto de más de 2 caracteres y no numérico.
+             */
+            _inferirColumnaNombre(rawData, filaInicio, colsAsignadas) {
+                const usadas = new Set(Object.values(colsAsignadas));
+                // Tomar hasta 15 filas de muestra a partir de filaInicio
+                const muestras = [];
+                for (let i = filaInicio; i < Math.min(filaInicio + 25, rawData.length); i++) {
+                    const fila = rawData[i];
+                    if (fila && fila.length > 0) muestras.push(fila);
+                    if (muestras.length >= 15) break;
+                }
+                if (muestras.length === 0) return -1;
+                const numCols = Math.max(...muestras.map(f => f.length));
+                let mejorCol = -1, mejorPuntaje = 0;
+                for (let c = 0; c < numCols; c++) {
+                    if (usadas.has(c)) continue;
+                    let textos = 0, total = 0;
+                    for (const fila of muestras) {
+                        const v = fila[c];
+                        if (v === null || v === undefined || v === '') continue;
+                        total++;
+                        const str = String(v).trim();
+                        const esNumero = !isNaN(parseFloat(str.replace(/[^0-9.,-]/g, ''))) &&
+                                         /^[\d.,\s$-]+$/.test(str);
+                        // Texto válido = no numérico y con más de 2 caracteres
+                        if (!esNumero && str.length > 2 && !/^c\/u$/i.test(str)) textos++;
+                    }
+                    if (total === 0) continue;
+                    const puntaje = textos / total;
+                    // La columna de nombres debe ser mayoritariamente texto
+                    if (puntaje > 0.6 && puntaje > mejorPuntaje) {
+                        mejorPuntaje = puntaje;
+                        mejorCol = c;
+                    }
+                }
+                return mejorCol;
             }
     
             /**
@@ -3185,8 +3239,9 @@ function tpv_renderizarProductos() {
                     
                             const nombre = String(nombreRaw).trim();
                     
-                            // Omitir filas de totales o agregados
-                            if (nombre.match(/^(total|===|subtotal|suma|resumen)/i)) {
+                            // Omitir filas de totales, agregados o títulos de sección
+                            // (p.ej. una fila "Productos" intercalada como encabezado).
+                            if (nombre.match(/^(total|===|subtotal|suma|resumen|productos?|inventario|categor[ií]a)\s*$/i)) {
                                 continue;
                             }
                     
@@ -4471,7 +4526,10 @@ function tpv_renderizarProductos() {
             const indicator = document.getElementById('offline-indicator');
             const statusBadge = document.getElementById('status-badge');
             const statusText = document.getElementById('status-text');
-            if (indicator) indicator.style.display = isOnline ? 'none' : 'block';
+            // El cartel naranja "Modo Sin Conexión" ya no es necesario: el propio
+            // badge se pone ROJO con texto "Offline". Lo mantenemos siempre oculto
+            // para no duplicar el aviso.
+            if (indicator) indicator.style.display = 'none';
             if (statusBadge && statusText) {
                 const icon = statusBadge.querySelector('i');
                 statusBadge.classList.toggle('bg-success', isOnline);

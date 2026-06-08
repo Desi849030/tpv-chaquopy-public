@@ -1376,7 +1376,14 @@ def reconstruir_desde_productos():
             costo = float(p_item.get('costo', precio * 0.7))
             categoria = p_item.get('categoria', 'General')
             um = p_item.get('um', 'Un')
-            stock = int(p_item.get('stock', 50))
+            # El frontend envía el stock real del Excel como 'stock_actual'
+            # (cantInicial). Aceptamos ambos nombres; default 0 (NO 50, que
+            # falseaba el inventario al importar).
+            _stock_raw = p_item.get('stock_actual', p_item.get('stock', 0))
+            try:
+                stock = int(float(_stock_raw))
+            except (TypeError, ValueError):
+                stock = 0
             cursor.execute("SELECT producto_id FROM productos WHERE producto_id=? OR nombre=?", (pid, nombre))
             existente = cursor.fetchone()
             if existente:

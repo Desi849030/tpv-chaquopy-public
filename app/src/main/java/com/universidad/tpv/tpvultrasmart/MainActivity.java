@@ -258,7 +258,17 @@ public class MainActivity extends FragmentActivity {
         @android.webkit.JavascriptInterface
         public boolean canAuthenticate() {
             if (Build.VERSION.SDK_INT < 23) return false;
-            return BiometricManager.from(MainActivity.this).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS;
+            BiometricManager bm = BiometricManager.from(MainActivity.this);
+            // En Android 11+ aceptamos también la credencial de pantalla (PIN /
+            // patrón / contraseña) como método válido: así el usuario puede
+            // entrar aunque el rostro/huella no se reconozca o no esté enrolado.
+            if (Build.VERSION.SDK_INT >= 30) {
+                int combo = bm.canAuthenticate(
+                    BiometricManager.Authenticators.BIOMETRIC_STRONG
+                    | BiometricManager.Authenticators.DEVICE_CREDENTIAL);
+                if (combo == BiometricManager.BIOMETRIC_SUCCESS) return true;
+            }
+            return bm.canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS;
         }
         @android.webkit.JavascriptInterface
         public void authenticate(String title, String subtitle, String desc) {
@@ -267,12 +277,23 @@ public class MainActivity extends FragmentActivity {
                     BiometricPrompt.PromptInfo.Builder b = new BiometricPrompt.PromptInfo.Builder()
                         .setTitle(title != null ? title : "TPV Ultra Smart")
                         .setSubtitle(subtitle != null ? subtitle : "Verificacion de identidad")
-                        .setDescription(desc != null ? desc : "Usa tu huella o rostro");
-                    // IMPORTANTE: DEVICE_CREDENTIAL es INCOMPATIBLE con
-                    // setNegativeButtonText() y lanza IllegalArgumentException
-                    // (crash). Usar SOLO biometría fuerte + botón Cancelar.
-                    b.setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG);
-                    b.setNegativeButtonText("Cancelar");
+                        .setDescription(desc != null ? desc : "Usa tu huella, rostro o el PIN de pantalla");
+                    // En Android 11+ (API 30) DEVICE_CREDENTIAL convive bien con
+                    // BIOMETRIC_STRONG: si el rostro/huella no se reconoce, el
+                    // propio diálogo ofrece el PIN/patrón/contraseña de pantalla
+                    // como respaldo. En esa combinación NO se debe llamar a
+                    // setNegativeButtonText() (lanzaría IllegalArgumentException),
+                    // porque el botón pasa a ser "Usar PIN".
+                    // En versiones anteriores usamos solo biometría fuerte +
+                    // botón Cancelar (evita el crash conocido).
+                    if (Build.VERSION.SDK_INT >= 30) {
+                        b.setAllowedAuthenticators(
+                            BiometricManager.Authenticators.BIOMETRIC_STRONG
+                            | BiometricManager.Authenticators.DEVICE_CREDENTIAL);
+                    } else {
+                        b.setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG);
+                        b.setNegativeButtonText("Cancelar");
+                    }
                     biometricPrompt.authenticate(b.build());
                 } catch (Throwable t) {
                     android.util.Log.e("TPV", "Error biometría", t);

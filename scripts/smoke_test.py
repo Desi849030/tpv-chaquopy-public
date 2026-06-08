@@ -72,7 +72,7 @@ def main() -> int:
 
     # 4) Login de prueba
     try:
-        resp = client.post("/api/auth/login", json={"username": "admin", "password": "x"})
+        resp = client.post("/api/auth/login", json={"username": "admin", "password": "123456"})
         data = resp.get_json(silent=True) or {}
         if resp.status_code == 200 and data.get("ok"):
             print(f"[{OK}] POST /api/auth/login -> usuario '{data.get('usuario', {}).get('username')}'")

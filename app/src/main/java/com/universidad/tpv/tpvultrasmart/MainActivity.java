@@ -263,16 +263,21 @@ public class MainActivity extends FragmentActivity {
         @android.webkit.JavascriptInterface
         public void authenticate(String title, String subtitle, String desc) {
             runOnUiThread(() -> {
-                BiometricPrompt.PromptInfo.Builder b = new BiometricPrompt.PromptInfo.Builder()
-                    .setTitle(title != null ? title : "TPV Ultra Smart")
-                    .setSubtitle(subtitle != null ? subtitle : "Verificacion de identidad")
-                    .setDescription(desc != null ? desc : "Usa tu huella o rostro")
-                    .setNegativeButtonText("Cancelar");
-                if (Build.VERSION.SDK_INT >= 30) {
-                    try { b.setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG | BiometricManager.Authenticators.DEVICE_CREDENTIAL); }
-                    catch (Exception ignored) {}
+                try {
+                    BiometricPrompt.PromptInfo.Builder b = new BiometricPrompt.PromptInfo.Builder()
+                        .setTitle(title != null ? title : "TPV Ultra Smart")
+                        .setSubtitle(subtitle != null ? subtitle : "Verificacion de identidad")
+                        .setDescription(desc != null ? desc : "Usa tu huella o rostro");
+                    // IMPORTANTE: DEVICE_CREDENTIAL es INCOMPATIBLE con
+                    // setNegativeButtonText() y lanza IllegalArgumentException
+                    // (crash). Usar SOLO biometría fuerte + botón Cancelar.
+                    b.setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG);
+                    b.setNegativeButtonText("Cancelar");
+                    biometricPrompt.authenticate(b.build());
+                } catch (Throwable t) {
+                    android.util.Log.e("TPV", "Error biometría", t);
+                    notifyWebView(false, "Biometría no disponible: " + t.getMessage());
                 }
-                biometricPrompt.authenticate(b.build());
             });
         }
         @android.webkit.JavascriptInterface

@@ -1183,23 +1183,37 @@ def catalogo_sync():
             categoria = p.get('categoria', 'General')
             um = p.get('um', 'Un')
             costo = float(p.get('costo', precio * 0.7))
-            stock = int(p.get('stock', 0))
+            imagen = p.get('imagen', '')
+            # El stock SOLO se actualiza si viene explícito en el producto.
+            # tpvState.productos normalmente NO trae 'stock' (vive en inventarios),
+            # así que NO debemos poner 0 y borrar el stock existente.
+            tiene_stock = ('stock' in p and p.get('stock') is not None) or \
+                          ('stock_actual' in p and p.get('stock_actual') is not None)
+            stock = None
+            if tiene_stock:
+                try: stock = int(float(p.get('stock', p.get('stock_actual', 0)) or 0))
+                except Exception: stock = 0
             pid = p.get('id', '')
             if pid:
                 cursor.execute("SELECT producto_id FROM productos WHERE producto_id=?", (pid,))
                 if cursor.fetchone():
-                    cursor.execute("UPDATE productos SET precio=?, costo=?, categoria=?, unidad_medida=?, activo=1 WHERE producto_id=?",
-                                 (precio, costo, categoria, um, pid))
-                    cursor.execute("UPDATE inventario_general SET stock_actual=?, precio_venta=?, actualizado=? WHERE producto_id=?",
-                                 (stock, precio, datetime.now().isoformat(), pid))
+                    cursor.execute("UPDATE productos SET precio=?, costo=?, categoria=?, unidad_medida=?, imagen=?, activo=1 WHERE producto_id=?",
+                                 (precio, costo, categoria, um, imagen, pid))
+                    if stock is not None:
+                        cursor.execute("UPDATE inventario_general SET stock_actual=?, precio_venta=?, actualizado=? WHERE producto_id=?",
+                                     (stock, precio, datetime.now().isoformat(), pid))
+                    else:
+                        # Preservar stock: solo actualizar precio (no tocar stock_actual)
+                        cursor.execute("UPDATE inventario_general SET precio_venta=?, actualizado=? WHERE producto_id=?",
+                                     (precio, datetime.now().isoformat(), pid))
                     actualizados += 1
                     continue
-            # New product
-            pid = f"prod-{uuid.uuid4().hex[:8]}"
-            cursor.execute("INSERT INTO productos (producto_id, nombre, precio, costo, categoria, unidad_medida, activo) VALUES (?,?,?,?,?,?,1)",
-                         (pid, nombre, precio, costo, categoria, um))
-            cursor.execute("INSERT INTO inventario_general (producto_id, nombre, stock_actual, stock_minimo, precio_venta, actualizado) VALUES (?,?,?,5,?,?)",
-                         (pid, nombre, stock, precio, datetime.now().isoformat()))
+            # Producto nuevo
+            pid = pid or ("prod-" + uuid.uuid4().hex[:8])
+            cursor.execute("INSERT OR IGNORE INTO productos (producto_id, nombre, precio, costo, categoria, unidad_medida, imagen, activo) VALUES (?,?,?,?,?,?,?,1)",
+                         (pid, nombre, precio, costo, categoria, um, imagen))
+            cursor.execute("INSERT OR IGNORE INTO inventario_general (producto_id, nombre, stock_actual, stock_minimo, precio_venta, actualizado) VALUES (?,?,?,5,?,?)",
+                         (pid, nombre, (stock if stock is not None else 0), precio, datetime.now().isoformat()))
             importados += 1
         conn.commit()
         conn.close()

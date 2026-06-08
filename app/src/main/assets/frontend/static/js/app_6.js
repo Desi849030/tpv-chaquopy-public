@@ -962,15 +962,10 @@ function _auth_mostrarApp() {
                 dbg('✅ initializeUI OK');
             } catch(e) { dbg('❌ initializeUI CRASH: '+e.message); }
             try {
-                // Bienvenida personalizada por nombre + rol
-                var _u = AUTH.usuario || {};
-                var _rl = ({desarrollador:'Desarrollador',administrador:'Administrador',supervisor:'Supervisor',vendedor:'Vendedor',cajero:'Cajero',cliente:'Cliente'})[_u.rol] || _u.rol || '';
-                var _ic = ({desarrollador:'💻',administrador:'👔',supervisor:'👁️',vendedor:'🛒',cajero:'💵',cliente:'🛒'})[_u.rol] || '👋';
-                var _h = new Date().getHours();
-                var _s = _h < 12 ? 'Buenos días' : (_h < 19 ? 'Buenas tardes' : 'Buenas noches');
-                var _nom = (_u.nombre || _u.username || '').split(' ')[0];
-                if (typeof showToast === 'function') {
-                    showToast(_ic + ' ' + _s + ', ' + _nom + ' — ' + _rl, 'success');
+                // El AGENTE es quien da la bienvenida (no un cartel). Se abre solo
+                // y saluda por nombre y rol. Más dinámico y proactivo.
+                if (window.tpvChat && typeof window.tpvChat.bienvenida === 'function') {
+                    setTimeout(function () { window.tpvChat.bienvenida(); }, 900);
                 }
             } catch(e) {}
             try {

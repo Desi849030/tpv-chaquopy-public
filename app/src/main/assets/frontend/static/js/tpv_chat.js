@@ -137,6 +137,32 @@
     pintarSugerencias();
   }
 
+  // Detecta si el mensaje pide una ACCIÓN que modifica datos. Devuelve el plan
+  // (url, método, body, descripción para confirmar) o null si es una consulta.
+  function _detectarAccion(texto) {
+    var t = (texto || '').toLowerCase();
+    var rol = _rol();
+    var puedeAdmin = (rol === 'administrador' || rol === 'desarrollador');
+
+    // Respaldo / backup
+    if (/\b(respaldo|backup|copia de seguridad|guarda(r)? copia)\b/.test(t)) {
+      return { descripcion: '¿Crear un respaldo (backup) de la base de datos ahora?',
+               url: '/api/db/backup', metodo: 'POST', exito: 'Respaldo creado.' };
+    }
+    // Sincronizar con Supabase
+    if (/\b(sincroniz|sube a la nube|subir a supabase|sync)\b/.test(t) && puedeAdmin) {
+      return { descripcion: '¿Sincronizar todos los datos con Supabase ahora?',
+               url: '/api/supabase/sync-full', metodo: 'POST', exito: 'Sincronización lanzada.' };
+    }
+    // Importar catálogo a inventario
+    if (/\b(importar catalogo|importar catálogo|reabastec|cargar catalogo|importar productos al almac)\b/.test(t) && puedeAdmin) {
+      return { descripcion: '¿Importar el catálogo de productos al almacén general?',
+               url: '/api/inventario/importar-catalogo', metodo: 'POST',
+               exito: 'Catálogo importado al almacén.', refrescar: 'dashboard_cargar' };
+    }
+    return null;
+  }
+
   var api = {
     toggle: function () {
       var b = document.getElementById('chat-box');
@@ -144,12 +170,67 @@
       b.style.display = abrir ? 'block' : 'none';
       if (abrir) { saludar(); document.getElementById('chat-inp').focus(); }
     },
+    // El agente da la bienvenida al entrar: abre el chat, saluda y avisa
+    // proactivamente de cosas importantes (stock crítico).
+    bienvenida: async function () {
+      var b = document.getElementById('chat-box');
+      if (b) b.style.display = 'block';
+      saludar();
+      // Aviso proactivo de stock crítico (si el rol tiene acceso a inventario).
+      try {
+        var r = await fetch('/api/inventario/general', { credentials: 'same-origin' });
+        if (r.ok) {
+          var d = await r.json();
+          var inv = d.inventario || [];
+          var criticos = inv.filter(function (p) {
+            return parseFloat(p.stock_actual || 0) <= parseFloat(p.stock_minimo || 5);
+          });
+          if (criticos.length) {
+            var nombres = criticos.slice(0, 4).map(function (p) { return p.nombre; }).join(', ');
+            burbuja('🔔 Aviso: tienes ' + criticos.length + ' producto(s) con stock crítico' +
+                    (nombres ? ' (' + nombres + ')' : '') + '. ¿Quieres que prepare un pedido de reabastecimiento?', 'a');
+          }
+        }
+      } catch (e) {}
+      // Auto-ocultar a los 9s si el usuario no interactúa (no molestar).
+      setTimeout(function () {
+        if (b && !window._tpvChatInteract) b.style.display = 'none';
+      }, 9000);
+    },
     send: async function () {
       var inp = document.getElementById('chat-inp');
       var msg = (inp.value || '').trim();
       if (!msg) return;
+      window._tpvChatInteract = true;  // el usuario está interactuando
       burbuja(msg, 'u');
       inp.value = '';
+
+      // ¿Es una ACCIÓN que modifica datos? Pedir confirmación antes de ejecutar.
+      var accion = _detectarAccion(msg);
+      if (accion) {
+        var ok = (typeof tpvConfirm === 'function')
+          ? await tpvConfirm({ title: 'Confirmar acción', message: accion.descripcion, okText: 'Sí, hazlo', cancelText: 'Cancelar', danger: accion.peligrosa })
+          : confirm(accion.descripcion);
+        if (!ok) { burbuja('De acuerdo, no hice ningún cambio. 👍', 'a'); return; }
+        burbuja('⏳ Ejecutando…', 'a');
+        try {
+          var rr = await fetch(accion.url, {
+            method: accion.metodo || 'POST', credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: accion.body ? JSON.stringify(accion.body) : null
+          });
+          var dd = await rr.json().catch(function () { return {}; });
+          burbuja(rr.ok && (dd.ok !== false)
+            ? '✅ ' + (accion.exito || 'Hecho.') + (dd.mensaje ? ' ' + dd.mensaje : '')
+            : '⚠️ No se pudo completar: ' + (dd.error || dd.mensaje || 'error'), 'a');
+          if (accion.refrescar && typeof window[accion.refrescar] === 'function') {
+            try { window[accion.refrescar](); } catch (e) {}
+          }
+        } catch (e) {
+          burbuja('⚠️ Error de conexión al ejecutar la acción.', 'a');
+        }
+        return;
+      }
       var typing = document.createElement('div');
       typing.className = 'chat-typing';
       typing.textContent = 'Asistente escribiendo…';

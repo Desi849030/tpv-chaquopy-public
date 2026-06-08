@@ -212,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <p class="login-sub" style="margin-bottom:1rem">Acceso para empleados</p>
             <div class="login-field">
                 <label><i class="bi bi-person me-1"></i>Usuario</label>
-                <input id="login-username" class="login-input" type="text" placeholder="ej: desarrollador" autocomplete="username">
+                <input id="login-username" class="login-input" type="text" placeholder="Usuario" autocomplete="username">
             </div>
             <div class="login-field">
                 <label><i class="bi bi-lock me-1"></i>Contrasena</label>
@@ -606,16 +606,10 @@ async function _auth_init(intentos = 0) {
         if (intentos < 30) setTimeout(() => _auth_init(intentos + 1), 150);
         return;
     }
+    // Siempre pedir login al abrir (no entrar automático aunque haya sesión).
+    // Cerrar cualquier sesión previa del servidor para forzar autenticación.
     try {
-        const ctrl = new AbortController();
-        setTimeout(() => ctrl.abort(), 4000);
-        const res  = await fetch('/api/auth/me', { signal: ctrl.signal, credentials: 'same-origin' });
-        const data = await res.json();
-        if (res.ok && data.autenticado && data.usuario) {
-            AUTH.usuario = data.usuario;
-            _auth_mostrarApp();
-            return;
-        }
+        await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
     } catch(e) {}
     auth_setModo('staff');
 }

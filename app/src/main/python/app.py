@@ -55,29 +55,32 @@ def login():
     d = request.get_json(silent=True) or {}
     u = d.get('username', '').strip()
     p = d.get('password', '').strip()
-    
-    # Aceptar cualquier contraseña para los usuarios conocidos
-    usuarios = {
-        'desarrollador': {'nombre': 'Desarrollador Principal', 'rol': 'desarrollador', 'id': 'dev-001'},
-        'admin': {'nombre': 'Administrador', 'rol': 'administrador', 'id': 'usr-001'},
-        'supervisor1': {'nombre': 'María Supervisora', 'rol': 'supervisor', 'id': 'usr-002'},
-        'vendedor1': {'nombre': 'Juan Vendedor', 'rol': 'vendedor', 'id': 'usr-003'},
-        'cajero1': {'nombre': 'Ana Cajera', 'rol': 'cajero', 'id': 'usr-004'}
-    }
-    
-    user = usuarios.get(u)
-    if user:
-        user['username'] = u
-        # Compatibilidad: los blueprints usan 'usuario_id'; el login guardaba
-        # solo 'id'. Exponer ambas claves evita KeyError/500 (p.ej. importar
-        # catálogo, registrar entradas de inventario).
-        user['usuario_id'] = user['id']
+
+    if not u or not p:
+        return jsonify({"ok": False, "error": "Usuario y contraseña requeridos"}), 400
+
+    # Validar credenciales REALES contra la BD (con protección anti-fuerza bruta).
+    try:
+        from db.users import login_usuario
+        res = login_usuario(u, p)
+    except Exception as e:
+        res = None
+        print("⚠️ login_usuario error:", e)
+
+    if isinstance(res, dict) and res.get("error") == "bloqueado":
+        return jsonify({"ok": False, "error": res.get("mensaje", "Cuenta bloqueada")}), 429
+
+    if res and res.get("usuario_id"):
+        user = {
+            "id": res["usuario_id"], "usuario_id": res["usuario_id"],
+            "username": res["username"], "nombre": res.get("nombre", res["username"]),
+            "rol": res.get("rol", "vendedor"),
+        }
         session['usuario'] = user
         return jsonify({"ok": True, "usuario": user})
-    # Si no existe, crear con rol vendedor
-    session['usuario'] = {'username': u, 'nombre': u, 'rol': 'vendedor',
-                          'id': 'auto-001', 'usuario_id': 'auto-001'}
-    return jsonify({"ok": True, "usuario": session['usuario']})
+
+    # Credenciales incorrectas
+    return jsonify({"ok": False, "error": "Usuario o contraseña incorrectos"}), 401
 
 @app.route('/api/auth/logout', methods=['POST'])
 def logout():

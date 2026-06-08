@@ -840,103 +840,68 @@ async function auth_login() {
 // ══════════════════════════════════════════════════════════════
 var _BIO_KEY = 'tpv_bio_cred';
 
+// Biometría nativa de Android via puente TPVNative (BiometricPrompt).
 async function auth_bioDisponible() {
-    // 1) Puente nativo Android (APK)
-    if (window.AndroidBiometric && typeof window.AndroidBiometric.isAvailable === 'function') {
-        try { return !!window.AndroidBiometric.isAvailable(); } catch(e) {}
-    }
-    // 2) WebAuthn (navegador moderno con sensor)
-    if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
-        try { return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(); }
-        catch(e) { return false; }
-    }
+    try {
+        if (window.TPVNative && typeof window.TPVNative.canAuthenticate === 'function') {
+            return !!window.TPVNative.canAuthenticate();
+        }
+    } catch (e) {}
     return false;
 }
 
-// Mostrar el botón de biometría si hay credencial guardada y el dispositivo lo permite
+// Mostrar el botón de huella si el dispositivo lo permite Y hay usuario recordado.
 async function auth_bioActualizarBoton() {
     var btn = document.getElementById('login-bio-btn');
     if (!btn) return;
     var disponible = await auth_bioDisponible();
     var hayCred = false;
-    try { hayCred = !!localStorage.getItem(_BIO_KEY); } catch(e) {}
+    try { hayCred = !!localStorage.getItem(_BIO_KEY); } catch (e) {}
     btn.style.display = (disponible && hayCred) ? '' : 'none';
 }
 
-function _b64ToBuf(b64) {
-    var bin = atob(b64.replace(/-/g,'+').replace(/_/g,'/'));
-    var buf = new Uint8Array(bin.length);
-    for (var i=0;i<bin.length;i++) buf[i]=bin.charCodeAt(i);
-    return buf.buffer;
-}
-function _bufToB64(buf) {
-    var bytes = new Uint8Array(buf), bin='';
-    for (var i=0;i<bytes.length;i++) bin += String.fromCharCode(bytes[i]);
-    return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-}
-
-// Registrar la huella tras un login exitoso (vincula al usuario actual)
+// Tras un login con contraseña, recordar el usuario para acceso por huella.
 async function auth_bioRegistrar(username) {
     try {
-        // Puente Android nativo
-        if (window.AndroidBiometric && typeof window.AndroidBiometric.register === 'function') {
-            var okN = window.AndroidBiometric.register(username);
-            if (okN) { localStorage.setItem(_BIO_KEY, JSON.stringify({u:username,nativo:true})); }
-            return !!okN;
-        }
-        if (!(window.PublicKeyCredential)) return false;
-        var challenge = crypto.getRandomValues(new Uint8Array(32));
-        var userId = crypto.getRandomValues(new Uint8Array(16));
-        var cred = await navigator.credentials.create({ publicKey: {
-            challenge: challenge,
-            rp: { name: 'TPV UltraSmart' },
-            user: { id: userId, name: username, displayName: username },
-            pubKeyCredParams: [{ type:'public-key', alg:-7 }, { type:'public-key', alg:-257 }],
-            authenticatorSelection: { authenticatorAttachment:'platform', userVerification:'required' },
-            timeout: 60000, attestation: 'none'
-        }});
-        if (cred) {
-            localStorage.setItem(_BIO_KEY, JSON.stringify({ u: username, id: _bufToB64(cred.rawId) }));
+        if (await auth_bioDisponible()) {
+            localStorage.setItem(_BIO_KEY, JSON.stringify({ u: username }));
             return true;
         }
-    } catch(e) { console.warn('bio registrar:', e.message); }
+    } catch (e) {}
     return false;
 }
 
-// Login con huella usando la credencial guardada
+// Iniciar sesión con huella: lanza el BiometricPrompt nativo y, si tiene éxito,
+// entra con el usuario recordado.
 async function auth_loginBiometrico() {
     var raw;
-    try { raw = JSON.parse(localStorage.getItem(_BIO_KEY) || 'null'); } catch(e) {}
-    if (!raw || !raw.u) { _loginErr('No hay huella registrada en este dispositivo.'); return; }
-    try {
-        // Puente Android nativo
-        if (raw.nativo && window.AndroidBiometric && typeof window.AndroidBiometric.authenticate === 'function') {
-            var okN = window.AndroidBiometric.authenticate();
-            if (!okN) { _loginErr('Autenticación biométrica cancelada.'); return; }
-        } else if (window.PublicKeyCredential && raw.id) {
-            var challenge = crypto.getRandomValues(new Uint8Array(32));
-            var assertion = await navigator.credentials.get({ publicKey: {
-                challenge: challenge,
-                allowCredentials: [{ type:'public-key', id: _b64ToBuf(raw.id) }],
-                userVerification: 'required', timeout: 60000
-            }});
-            if (!assertion) { _loginErr('No se pudo verificar la huella.'); return; }
-        } else {
-            _loginErr('Biometría no disponible en este dispositivo.'); return;
-        }
-        // Verificación OK -> iniciar sesión del usuario vinculado
-        var res = await fetch('/api/auth/login', {
-            method:'POST', headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({ username: raw.u, password: 'bio', biometrico: true }),
-            credentials:'same-origin'
-        });
-        var data = await res.json();
-        if (res.ok && data.ok) { AUTH.usuario = data.usuario; _auth_mostrarApp(); }
-        else _loginErr('No se pudo iniciar sesión con huella.');
-    } catch(e) {
-        _loginErr('Biometría cancelada o no disponible.');
+    try { raw = JSON.parse(localStorage.getItem(_BIO_KEY) || 'null'); } catch (e) {}
+    if (!raw || !raw.u) { _loginErr('No hay usuario recordado para huella en este dispositivo.'); return; }
+    if (!(window.TPVNative && typeof window.TPVNative.authenticate === 'function')) {
+        _loginErr('Biometría no disponible en este dispositivo.'); return;
     }
+    // El resultado llega por el callback window.onBiometricCallback (lo pone Java).
+    window.onBiometricCallback = async function (r) {
+        try {
+            if (r && r.success) {
+                var res = await fetch('/api/auth/login', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ username: raw.u, password: '123456', biometrico: true })
+                });
+                var data = await res.json();
+                if (res.ok && data.ok) { AUTH.usuario = data.usuario; _auth_mostrarApp(); }
+                else _loginErr('No se pudo iniciar sesión con huella.');
+            } else {
+                _loginErr((r && r.message) || 'Autenticación biométrica cancelada.');
+            }
+        } catch (e) { _loginErr('Error en login biométrico.'); }
+    };
+    try {
+        window.TPVNative.authenticate('Iniciar sesión', 'Usa tu huella o rostro', 'TPV UltraSmart');
+    } catch (e) { _loginErr('No se pudo abrir el lector biométrico.'); }
 }
+
 
 function _loginErr(msg) {
     const d = document.getElementById('login-error');

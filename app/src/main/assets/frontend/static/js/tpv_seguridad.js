@@ -25,26 +25,18 @@
   function detectarBiometria() {
     var el = document.getElementById('seguridad-bio');
     if (!el) return;
-    var puente = window.AndroidBiometric || window.Android || null;
-    var tienePuente = puente && (typeof puente.isBiometricAvailable === 'function' ||
-                                 typeof puente.authenticate === 'function');
-    // WebAuthn como alternativa estándar del navegador
-    var tieneWebAuthn = !!(window.PublicKeyCredential);
-    if (tienePuente) {
-      var disponible = true;
-      try {
-        if (typeof puente.isBiometricAvailable === 'function') {
-          disponible = !!puente.isBiometricAvailable();
-        }
-      } catch (e) { disponible = true; }
+    // Puente nativo real de la APK: window.TPVNative (BiometricPrompt).
+    var nativo = window.TPVNative && (typeof window.TPVNative.canAuthenticate === 'function');
+    if (nativo) {
+      var disponible = false;
+      var estado = '';
+      try { disponible = !!window.TPVNative.canAuthenticate(); } catch (e) {}
+      try { if (window.TPVNative.getBiometricStatus) estado = window.TPVNative.getBiometricStatus(); } catch (e) {}
       el.innerHTML = disponible
-        ? badge('<i class="bi bi-fingerprint me-1"></i>Disponible (Android)', 'success')
-        : badge('No configurada en el dispositivo', 'warning');
-    } else if (tieneWebAuthn) {
-      el.innerHTML = badge('WebAuthn disponible (navegador)', 'info') +
-        ' <span class="text-muted small ms-1">huella/rostro nativos al ejecutar como APK</span>';
+        ? badge('<i class="bi bi-fingerprint me-1"></i>Disponible y activa', 'success')
+        : badge('Sin huella/rostro configurado en el dispositivo', 'warning');
     } else {
-      el.innerHTML = badge('Solo en APK', 'secondary') +
+      el.innerHTML = badge('Solo en la APK', 'secondary') +
         ' <span class="text-muted small ms-1">la biometría nativa requiere el dispositivo Android</span>';
     }
   }

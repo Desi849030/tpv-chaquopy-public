@@ -196,9 +196,7 @@
         // updateOnlineStatus → reemplazada por updateNetworkStatus()
         
         // updateUITranslations → funcionalidad integrada en conf_setLanguage()
-
-        window.addEventListener('online',  function(){ updateNetworkStatus(true); });
-        window.addEventListener('offline', function(){ updateNetworkStatus(true); });
+        // (listeners online/offline ahora los gestiona _monitorRed con ping real)
 
         // --- INICIALIZACIÓN Y MANEJO DE ESTADO ---
         document.addEventListener('DOMContentLoaded', async () => {
@@ -2593,12 +2591,16 @@ function tpv_renderizarProductos() {
                 this.patterns = {
                     // Palabras clave en encabezados
                     headers: {
-                        producto: /^(producto|nombre|item|descripcion|descripción|articulo|artículo|productos)$/i,
-                        precio: /^(precio|valor|venta|p\.venta|pvp|precio.*venta|price)$/i,
-                        um: /^(unidad|u\.m|um|medida|und|unit|c\/u)$/i,
-                        costo: /^(costo|p\.costo|inver|compra|precio.*costo|cost|inversion|inversión)$/i,
-                        cantidad: /^(cantidad|stock|existencia|cant|inventario|qty|final)$/i,
-                        categoria: /^(categoria|categoría|tipo|clasificacion|clasificación|category)$/i
+                        // Patrones flexibles (sin anclar al final) para aceptar
+                        // cabeceras compuestas como 'Stock Actual', 'Cantidad Inicial',
+                        // 'Precio de Venta', etc. El orden de evaluación da prioridad
+                        // a costo/cantidad antes que precio para evitar confusiones.
+                        producto: /(producto|nombre|item|descripci[oó]n|art[ií]culo|descripcion)/i,
+                        costo: /(costo|p\.?\s*costo|compra|inversi[oó]n|precio.*compra|\bcost\b)/i,
+                        cantidad: /(cantidad|stock|existencia|\bcant\b|inventario|\bqty\b|unidades|exist|cant.*inicial|stock.*actual)/i,
+                        precio: /(precio|p\.?\s*venta|pvp|precio.*venta|\bvalor\b|\bventa\b|\bprice\b)/i,
+                        um: /(unidad|u\.?\s*m|\bum\b|medida|\bund\b|\bunit\b|c\/u)/i,
+                        categoria: /(categor[ií]a|tipo|clasificaci[oó]n|\bcategory\b|rubro)/i
                     },
             
                     // Patrones de valores para inferir tipo de columna
@@ -4444,8 +4446,9 @@ function tpv_renderizarProductos() {
         }
 
         // updateNetworkStatus: actualiza badge + indicador offline
-        function updateNetworkStatus(showToastMsg) {
-            const isOnline = navigator.onLine;
+        // Pinta el estado. Si se pasa 'estadoReal' (bool) lo usa; si no, navigator.onLine.
+        function updateNetworkStatus(showToastMsg, estadoReal) {
+            const isOnline = (typeof estadoReal === 'boolean') ? estadoReal : navigator.onLine;
             const indicator = document.getElementById('offline-indicator');
             const statusBadge = document.getElementById('status-badge');
             const statusText = document.getElementById('status-text');
@@ -4469,6 +4472,36 @@ function tpv_renderizarProductos() {
                 }
             }
         }
+
+        // Chequeo REAL de internet: navigator.onLine en el WebView siempre es true
+        // (hay red hacia 127.0.0.1). Hacemos un fetch real a un recurso externo.
+        async function _checkInternetReal() {
+            if (!navigator.onLine) return false;
+            try {
+                const ctrl = new AbortController();
+                setTimeout(() => ctrl.abort(), 3500);
+                // Recurso liviano y permisivo con CORS; no-cors evita bloqueos.
+                await fetch('https://www.gstatic.com/generate_204',
+                            { method: 'GET', mode: 'no-cors', cache: 'no-store', signal: ctrl.signal });
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        let _netPrev = null;
+        async function _monitorRed(conToast) {
+            const real = await _checkInternetReal();
+            if (real !== _netPrev) {
+                updateNetworkStatus(conToast === true && _netPrev !== null, real);
+                _netPrev = real;
+            }
+        }
+        // Polling cada 8s + reacción inmediata a eventos del navegador.
+        setInterval(() => _monitorRed(true), 8000);
+        window.addEventListener('online',  () => _monitorRed(true));
+        window.addEventListener('offline', () => { _netPrev = false; updateNetworkStatus(true, false); });
+        setTimeout(() => _monitorRed(false), 1500);
         
         window.addEventListener('load', function() {
             conf_loadTPVName();

@@ -287,6 +287,7 @@ function _dbgConstruirPanel() {
          ${window._DBG.expanded ? '' : 'display:none!important'}">
         <!-- Tabs de navegación -->
         <button onclick="_dbgTab('log')"     id="dbg-tab-log"     style="${_dbgTabStyle(true)}">📋 Log</button>
+        <button onclick="_dbgTab('red')"     id="dbg-tab-red"     style="${_dbgTabStyle(false)}">📡 Red</button>
         <button onclick="_dbgTab('health')"  id="dbg-tab-health"  style="${_dbgTabStyle(false)}">❤️ Salud</button>
         <button onclick="_dbgTab('supabase')"id="dbg-tab-supabase"style="${_dbgTabStyle(false)}">☁️ Supa</button>
         <button onclick="_dbgTab('hist')"    id="dbg-tab-hist"    style="${_dbgTabStyle(false)}">📅 Hist</button>
@@ -312,6 +313,9 @@ function _dbgConstruirPanel() {
         <div id="dbg-pane-log">
             <div id="dbg-log-entries" style="display:flex;flex-direction:column;gap:2px"></div>
         </div>
+
+        <!-- TAB: RED / TELECOMUNICACIONES (dinámico) -->
+        <div id="dbg-pane-red" style="display:none"></div>
 
         <!-- TAB: SALUD (oculto inicialmente) -->
         <div id="dbg-pane-health" style="display:none"></div>
@@ -430,8 +434,9 @@ function _dbgLimpiar() {
     _dbgLog('🧹 Log limpiado', 'info');
 }
 
+var _dbgRedTimer = null;
 function _dbgTab(nombre) {
-    ['log','health','supabase','hist'].forEach(t => {
+    ['log','red','health','supabase','hist'].forEach(t => {
         const pane = document.getElementById(`dbg-pane-${t}`);
         const tab  = document.getElementById(`dbg-tab-${t}`);
         if (pane) pane.style.display = t === nombre ? '' : 'none';
@@ -441,9 +446,67 @@ function _dbgTab(nombre) {
             tab.style.borderBottom  = t === nombre ? '2px solid #3b82f6' : '2px solid transparent';
         }
     });
+    // Detener refresco de Red al salir de esa pestaña
+    if (_dbgRedTimer) { clearInterval(_dbgRedTimer); _dbgRedTimer = null; }
+    if (nombre === 'red') {
+        _dbgRenderRed();
+        _dbgRedTimer = setInterval(_dbgRenderRed, 3000); // dinámico cada 3s
+    }
     if (nombre === 'health')   _dbgRenderSalud();
     if (nombre === 'supabase') _dbgRenderSupabase();
     if (nombre === 'hist')     _dbgCargarHistorial();
+}
+
+// Panel de RED / TELECOMUNICACIONES en tiempo real
+async function _dbgRenderRed() {
+    const pane = document.getElementById('dbg-pane-red');
+    if (!pane) return;
+    const nav = navigator;
+    const con = nav.connection || nav.mozConnection || nav.webkitConnection || {};
+    // Ping real a internet para latencia y estado
+    let pingMs = '—', netReal = false;
+    try {
+        const t0 = performance.now();
+        const ctrl = new AbortController(); setTimeout(() => ctrl.abort(), 3000);
+        await fetch('https://www.gstatic.com/generate_204', { mode: 'no-cors', cache: 'no-store', signal: ctrl.signal });
+        pingMs = Math.round(performance.now() - t0) + ' ms';
+        netReal = true;
+    } catch (e) { pingMs = 'sin conexión'; netReal = false; }
+    // Ping al servidor local (Flask)
+    let localMs = '—';
+    try {
+        const t1 = performance.now();
+        await fetch('/api/health', { cache: 'no-store' });
+        localMs = Math.round(performance.now() - t1) + ' ms';
+    } catch (e) { localMs = 'error'; }
+
+    const stats = (window._DBG && window._DBG.stats) || { req: 0, err: 0, slow: 0 };
+    const fila = (k, v, color) => `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #1e293b">
+        <span style="color:#94a3b8">${k}</span><span style="color:${color || '#e2e8f0'};font-weight:600">${v}</span></div>`;
+
+    pane.innerHTML = `
+      <div style="font-size:11px;font-family:monospace">
+        <div style="color:#38bdf8;font-weight:700;margin:4px 0">📡 ESTADO DE RED (vivo)</div>
+        ${fila('Internet', netReal ? '🟢 Conectado' : '🔴 Sin conexión', netReal ? '#4ade80' : '#f87171')}
+        ${fila('Latencia internet', pingMs, '#7dd3fc')}
+        ${fila('Servidor local (Flask)', localMs, '#7dd3fc')}
+        ${fila('navigator.onLine', String(nav.onLine), '#cbd5e1')}
+        <div style="color:#38bdf8;font-weight:700;margin:8px 0 4px">📶 CONEXIÓN</div>
+        ${fila('Tipo', con.effectiveType || 'desconocido', '#cbd5e1')}
+        ${fila('Velocidad (downlink)', con.downlink ? con.downlink + ' Mbps' : '—', '#cbd5e1')}
+        ${fila('RTT', con.rtt != null ? con.rtt + ' ms' : '—', '#cbd5e1')}
+        ${fila('Ahorro de datos', con.saveData ? 'Sí' : 'No', '#cbd5e1')}
+        <div style="color:#38bdf8;font-weight:700;margin:8px 0 4px">📊 PETICIONES (sesión)</div>
+        ${fila('Total', stats.req, '#cbd5e1')}
+        ${fila('Errores', stats.err, stats.err > 0 ? '#f87171' : '#4ade80')}
+        ${fila('Lentas (>1.5s)', stats.slow, '#fbbf24')}
+        <div style="color:#38bdf8;font-weight:700;margin:8px 0 4px">🖥️ DISPOSITIVO</div>
+        ${fila('RAM aprox', nav.deviceMemory ? nav.deviceMemory + ' GB' : '—', '#cbd5e1')}
+        ${fila('CPU núcleos', nav.hardwareConcurrency || '—', '#cbd5e1')}
+        ${fila('Pantalla', screen.width + '×' + screen.height, '#cbd5e1')}
+        ${fila('Idioma', nav.language || '—', '#cbd5e1')}
+        <div style="color:#475569;font-size:9px;margin-top:8px;text-align:center">Actualización automática cada 3s</div>
+      </div>`;
 }
 
 // ══════════════════════════════════════════════════════════════

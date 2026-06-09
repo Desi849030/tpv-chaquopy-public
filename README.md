@@ -1,4 +1,4 @@
-# TPV UltraSmart v2.5.5
+# TPV UltraSmart v8.0
 
 [![CI — Tests & APK](https://github.com/Desi849030/tpv-chaquopy/actions/workflows/ci.yml/badge.svg)](https://github.com/Desi849030/tpv-chaquopy/actions/workflows/ci.yml)
 ![Python 3.10](https://img.shields.io/badge/python-3.10-blue)
@@ -6,146 +6,151 @@
 ![Offline first](https://img.shields.io/badge/offline-100%25-success)
 ![License MIT](https://img.shields.io/badge/license-MIT-lightgrey)
 
-Sistema de Punto de Venta Profesional con IA integrada, biometria, roles multinivel y sincronizacion offline. Compilado 100% desde Android con Termux + Chaquopy (WebView + Flask embebido).
+Sistema de Punto de Venta profesional con IA integrada, biometría, roles multinivel y sincronización offline-first. Compilado 100% desde Android con Termux + Chaquopy (WebView + Flask embebido).
 
-## Caracteristicas Principales
+---
 
-- Autenticacion multinivel: Desarrollador, Administrador, Supervisor, Vendedor, Cajero
-- Biometria en el login: huella/rostro (WebAuthn en navegador + puente Android nativo en APK)
-- Bienvenida personalizada por nombre, rol y hora del dia
-- Punto de venta: Catalogo, carrito, escaner QR, pagos, descuentos, tickets
-- Inventario: Stock diario, alertas bajo stock, cierres de caja, comisiones
-- Gestion de productos: CRUD completo, categorias, import/export Excel inteligente
-- IA Asistente: motor NLP con herramientas y memoria; chat personalizado por rol,
-  boton flotante arrastrable, sugerencias contextuales, 100% offline
-- Privilegios por rol: activar/desactivar modulos por rol (admin/desarrollador)
-- Seguridad y Biometria: panel PCI-DSS, HET (anti-amenazas), WebSocket
-- Panel de Metricas del Sistema: RAM, almacenamiento real y tablas de la BD
-- Importacion Excel: fuzzy matching, validacion UTF-8 (actualiza almacen real)
-- Tienda online: Clientes, pedidos, notificaciones, cola offline
-- Offline-first: librerias y fuentes locales (sin CDN), IndexedDB + SQLite
-- Seguridad: SQLi reforzado (tautologias/time-based), XSS, RBAC, auditoria
-- Diseño moderno: design system propio, dark mode completo, dialogos con estilo
-- Debug del desarrollador: captura de errores/fetch con tiempos y estadisticas
-- Licencias, Dashboard con graficos, traduccion ES/EN, Supabase opcional
+## ✨ Características
 
-## Estadisticas (reales, verificadas)
+### Punto de Venta
+- Catálogo de productos con CRUD completo, categorías e imágenes
+- Carrito, escáner QR, múltiples métodos de pago
+- Cierres de caja con desglose efectivo/tarjeta/transferencia
+- Descuentos configurables (% y fijo)
+- Importación inteligente desde Excel con fuzzy matching
 
-- Backend: 157 archivos Python, **181 rutas Flask** registradas
-- Frontend: **14 archivos JavaScript activos** + 6 hojas CSS (incl. design system)
-  - Codigo heredado archivado en `docs/_legacy_js/` y `docs/_legacy_py/` (fuera del APK)
-- Tests: **54 pruebas pytest verdes** + 5 skip + suite de regresion del import Excel
-- Smoke test: arranque + rutas criticas + agente + SQLi (`scripts/smoke_test.py`)
-- Arranque del backend (import de `app.py`): **~0.3 s**
-- Peso del frontend empaquetado: ~4.9 MB (2.9 MB son librerias offline locales)
-- 100% offline: todas las librerias y fuentes servidas localmente (sin CDN)
+### Roles y Seguridad
+- **5 roles**: Desarrollador, Administrador, Supervisor, Vendedor, Cajero
+- Privilegios configurables por rol (25 módulos, incl. biometría)
+- Autenticación con scrypt KDF + bloqueo anti-brute force
+- Biometría nativa Android (BiometricPrompt) / WebAuthn en navegador
+- Guardrails: SQLi, XSS, PCI-DSS, rate limiting, auditoría
 
-> Detalle completo de las mejoras recientes en `docs/CHANGELOG_refactor.md`.
+### Agente IA (100% offline)
+- Motor NLP con **25 intenciones** (TF-IDF + Softmax)
+- 13 herramientas por rol (finanzas, ABC, EOQ, predicciones, etc.)
+- Memoria avanzada persistente en SQLite
+- Motor ReAct para razonamiento multi-paso
+- Handlers especializados por rol con datos REALES de BD
+- Chat flotante arrastrable con sugerencias contextuales
+- Agente proactivo: alerta stock crítico sin preguntar
 
-## Arquitectura (vista general)
+### Infraestructura
+- **Offline-first**: librerías y fuentes locales (sin CDN)
+- Sincronización opcional con Supabase (nube)
+- Design system propio con dark mode
+- Internacionalización ES/EN
+
+---
+
+## 📊 Estadísticas
+
+| Métrica | Valor |
+|---------|-------|
+| Backend Python | ~160 archivos, 18 tablas SQLite |
+| Blueprints Flask | 20+ (modulares) |
+| Frontend | 14 JS activos + 6 CSS |
+| NLP intenciones | 25 |
+| Herramientas IA | 13 por rol |
+| Tests pytest | 54+ verdes |
+| Arranque backend | ~0.3s |
+| Peso frontend | ~4.9 MB (2.9 MB libs offline) |
+
+---
+
+## 🏗️ Arquitectura
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      Dispositivo Android                      │
-│                                                               │
-│  ┌────────────────┐   callAttr("iniciar")   ┌─────────────┐  │
-│  │  MainActivity   │ ───────────────────────▶│  Chaquopy   │  │
-│  │   (Java)        │                          │  Python 3.10│  │
-│  │                 │                          └──────┬──────┘  │
-│  │  ┌───────────┐  │                                 │         │
-│  │  │  WebView  │  │  HTTP 127.0.0.1:5050      ┌──────▼──────┐ │
-│  │  │ (frontend)│◀─┼──────────────────────────│ Flask app.py│ │
-│  │  └───────────┘  │                           │ + blueprints│ │
-│  │  TPVNative      │   biometria nativa        │  (modules/) │ │
-│  │  (BiometricPrompt)                          └──────┬──────┘ │
-│  └────────────────┘                                   │        │
-│                                              ┌─────────▼──────┐ │
-│   Frontend: index.html + 14 JS + CSS         │ SQLite (18 tbl)│ │
-│   IndexedDB (cache) + service-worker (offline)│ ia/ agente NLP│ │
-│                                              └────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-        (Termux/navegador: Flask autoarranca en 127.0.0.1:5000)
+┌──────────────────────────────────────────────────────────┐
+│                    Dispositivo Android                    │
+│                                                          │
+│  ┌──────────────┐  callAttr("iniciar")  ┌────────────┐  │
+│  │ MainActivity  │─────────────────────▶│  Chaquopy   │  │
+│  │   (Java)      │                      │ Python 3.10 │  │
+│  │               │                      └──────┬──────┘  │
+│  │ ┌──────────┐  │                             │         │
+│  │ │ WebView  │  │  HTTP 127.0.0.1:5050  ┌─────▼──────┐  │
+│  │ │(frontend)│◀─┼──────────────────────│ Flask      │  │
+│  │ └──────────┘  │                      │ app.py     │  │
+│  │ TPVNative     │  biometría nativa    │ +blueprints│  │
+│  │(BiometricPrompt)                     └─────┬──────┘  │
+│  └──────────────┘                             │         │
+│                                        ┌──────▼───────┐  │
+│  Frontend: index.html + 14 JS + CSS   │SQLite 18 tbl │  │
+│  IndexedDB + service-worker            │ia/ agente NLP│  │
+│                                        └──────────────┘  │
+└──────────────────────────────────────────────────────────┘
 ```
 
-## Jerarquia de Roles
+### Backend modular (app/src/main/python/)
 
-| Rol | Permisos |
-|-----|----------|
-| Desarrollador | Todo sin limites + licencias + debug + dev metrics |
-| Administrador | Tienda completa (NO licencias) |
-| Supervisor | Solo lectura/reportes |
-| Vendedor | Solo vender + IA basica |
+```
+app.py                 ← 274 líneas: setup + auth + registro de blueprints
+├── modules/           ← 20+ blueprints (catalogo, ventas, reportes, tools, etc.)
+├── ia/                ← Agente IA (36 archivos: NLP, ReAct, handlers, memoria)
+├── db/                ← Schema + DAOs (users, products, inventario)
+├── security/          ← Crypto, validation, audit
+├── sync/              ← Supabase sync
+├── tools/             ← 13 herramientas IA
+├── models/            ← TypedDicts (ventas, inventario, sistema)
+├── metrics/           ← Métricas del sistema
+└── decorators.py      ← Auth unificado (login_required, role_required)
+```
 
-## Arquitectura Modular
+---
 
-Backend organizado en packages con facades backward-compatible:
+## 🔐 Jerarquía de Roles
 
-- models/ - TypedDicts por dominio (ventas, inventario, sistema)
-- routes/ - Blueprints Flask (ventas, admin, assistant, ai, diccionario)
-- security/ - crypto, validation, audit
-- license/ - helpers, core
-- dictionary/ - helpers, routes
-- response_validators/ - models, checks
-- ia/ - agent.py, state.py
-- db/ - users, config_inventario
-- sync/ - supabase_sync
-- metrics/ - routes
+| Rol | Nivel | Permisos |
+|-----|-------|----------|
+| Desarrollador | 0 | Todo sin límites + debug + privilegios + licencias |
+| Administrador | 1 | Tienda completa (no debug/privilegios) |
+| Supervisor | 2 | Ventas, reportes, inventario, catálogo |
+| Vendedor | 3 | Vender + catálogo + IA básica |
+| Cajero | 3 | Cobros + catálogo + biometría |
 
-## Inicio Rapido (Termux)
+---
 
+## 🚀 Inicio Rápido
+
+### Termux (Android)
 ```bash
-bash tpv_termux_setup.sh        # instala dependencias (Python + Flask)
-bash tpv_termux_run.sh          # arranca el backend en 127.0.0.1:5000
-# o manualmente:
-cd app/src/main/python && python app.py
+cd app/src/main/python
+pip install flask
+python app.py
+# Abrir http://127.0.0.1:5000
+# Login: desarrollador / 123456
 ```
 
-## Compilar APK
+### Compilar APK
+Push a `main` dispara el workflow CI:
+1. **test** — pytest + smoke test
+2. **build** — APK debug + release firmado → artefactos descargables
 
-Push a `main` dispara el workflow `.github/workflows/ci.yml`:
+---
 
-1. **test** — instala deps, corre la suite estable de pytest y el smoke test.
-2. **build** — (solo si test pasa) genera APK debug + release firmado y los
-   sube como artefactos descargables.
+## 📁 Estructura del proyecto
 
-Probar el backend en local / Termux antes de subir:
-
-```bash
-pip install -r requirements.txt
-python scripts/smoke_test.py      # red de seguridad: arranque + rutas + agente
-python -m pytest                  # suite estable
-cd app/src/main/python && python app.py   # abrir http://127.0.0.1:5050
+```
+.github/workflows/ci.yml        ← CI/CD unificado (test → build APK)
+app/src/main/python/             ← Backend Flask modular
+app/src/main/assets/frontend/    ← Frontend (JS, CSS, templates, libs offline)
+app/src/main/java/               ← Android (Chaquopy + WebView + Biometría)
+tests/                           ← Tests pytest (54+)
+scripts/smoke_test.py            ← Smoke test (arranque + rutas + agente)
+docs/                            ← Documentación técnica
 ```
 
-## Estructura
+## 🛠️ Tech Stack
 
-- app/src/main/python/ - Backend Flask (modular: db/, ia/, modules/, security/, sync/, metrics/, tools/)
-- app/src/main/assets/ - Frontend (14 JS activos, CSS, templates, libs offline)
-- app/src/main/java/ - Android (Chaquopy + WebView + Biometria nativa)
-- tests/ - Tests pytest (suite estable de 54 + regresion)
-- scripts/smoke_test.py - Red de seguridad: arranque + rutas + agente + SQLi
-- docs/_legacy_js, docs/_legacy_py - Codigo heredado archivado (no entra al APK)
-- .github/workflows/ - CI/CD GitHub Actions (test -> build APK)
+- **Frontend**: Bootstrap 5, Chart.js, html5-qrcode, SheetJS (Excel)
+- **Backend**: Flask + Blueprints, SQLite (WAL mode)
+- **Android**: Chaquopy, WebView, BiometricPrompt
+- **IA**: NLP TF-IDF, ReAct engine, fuzzy matching, 13 tools
+- **Cache**: IndexedDB + SQLite dual sync
+- **Cloud**: Supabase (opcional)
+- **CI/CD**: GitHub Actions (test → build APK)
 
-## Tech Stack
+## 📄 Licencia
 
-- Frontend: Bootstrap 5, Chart.js, html5-qrcode
-- Backend: Flask + Blueprints, SQLite
-- Android: Chaquopy, WebView, Biometria nativa
-- IA: NLP engine, intents, fuzzy matching, herramientas (tools/)
-- Cache: IndexedDB + SQLite dual sync
-- Cloud: Supabase (opcional)
-- Testing: pytest (suite estable de 54) + smoke test + regresion import Excel
-
-## Documentacion
-
-- docs/API_REFERENCE.md
-- docs/DATABASE_SCHEMA.md
-- docs/ARCHITECTURE.md
-- docs/CONTRIBUTING.md
-- CHANGELOG.md
-
-## Licencia
-
-MIT License - Proyecto Academico Universidad
-
+MIT License — Proyecto Académico Universidad

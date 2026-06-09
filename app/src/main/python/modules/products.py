@@ -5,40 +5,15 @@ from database import obtener_productos_catalogo, sincronizar_productos_catalogo,
 
 prod_bp = Blueprint('products', __name__, url_prefix='/api')
 
-def requiere_login(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        if not session.get("usuario"):
-            return jsonify({"error": "No autenticado"}), 401
-        return f(*args, **kwargs)
-    return wrapper
 
-def requiere_rol(*roles):
-    def decorator(f):
-        @wraps(f)
-        def wrapper(*args, **kwargs):
-            u = session.get("usuario")
-            if not u or u.get("rol") not in roles:
-                return jsonify({"error": "Permiso denegado"}), 403
-            return f(*args, **kwargs)
-        return wrapper
-    return decorator
 
-def usuario_actual():
-    u = session.get("usuario", {}) or {}
-    # Normaliza: garantizar 'usuario_id' aunque la sesion solo tenga 'id'.
-    if u and "usuario_id" not in u:
-        u["usuario_id"] = u.get("id") or u.get("username") or "anon"
-    return u
 
-@login_required
 @prod_bp.route("/catalogo", methods=["GET"])
-@requiere_login
+@login_required
 def api_get_catalogo():
     productos = obtener_productos_catalogo()
     return jsonify({"ok": True, "productos": productos, "total": len(productos)})
 
-@login_required
 @prod_bp.route("/catalogo/sync", methods=["POST"])
 @requiere_rol("administrador", "desarrollador")
 def api_sync_catalogo():

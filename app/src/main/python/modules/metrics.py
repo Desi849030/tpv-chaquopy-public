@@ -5,22 +5,9 @@ from datetime import datetime, timedelta
 from database import obtener_conexion, agregar_log
 
 metrics_bp = Blueprint('metrics', __name__, url_prefix='/api')
-def requiere_login(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        if not session.get("usuario"): return jsonify({"error": "No autenticado"}), 401
-        return f(*args, **kwargs)
-    return wrapper
-def usuario_actual():
-    u = session.get("usuario", {}) or {}
-    # Normaliza: garantizar 'usuario_id' aunque la sesion solo tenga 'id'.
-    if u and "usuario_id" not in u:
-        u["usuario_id"] = u.get("id") or u.get("username") or "anon"
-    return u
 
-@login_required
 @metrics_bp.route('/dashboard/kpis', methods=['GET'])
-@requiere_login
+@login_required
 def api_kpis_dashboard():
     u = usuario_actual()
     rol = u.get('rol', 'vendedor')

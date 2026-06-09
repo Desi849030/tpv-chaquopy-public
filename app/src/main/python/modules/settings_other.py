@@ -5,9 +5,8 @@ from modules.settings_helpers import *
 from modules.settings_supabase import _sse_clientes, _sse_lock, _sse_broadcast
 
 
-@login_required
 @settings_bp.route("/api/sse")
-@requiere_login
+@login_required
 def api_sse():
     u = usuario_actual()
     uid = u["usuario_id"]
@@ -33,7 +32,6 @@ def api_sse():
 #  DEBUG
 # ══════════════════════════════════════════════════════════════
 
-@login_required
 @settings_bp.route('/api/biometric/check', methods=['GET'])
 def api_biometric_check():
     try:
@@ -41,9 +39,8 @@ def api_biometric_check():
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
 
-@login_required
 @settings_bp.route('/api/biometric/setup', methods=['POST'])
-@requiere_login
+@login_required
 def api_biometric_setup():
     u = usuario_actual()
     return jsonify({"ok": True, "setup": quick_login_setup(u.get("username", ""))})
@@ -52,9 +49,8 @@ def api_biometric_setup():
 #  TOKENIZACIÓN PAGO
 # ══════════════════════════════════════════════════════════════
 
-@login_required
 @settings_bp.route('/api/payment/tokenize', methods=['POST'])
-@requiere_login
+@login_required
 def api_payment_tokenize():
     datos = request.get_json(force=True, silent=True) or {}
     amount = float(datos.get("amount", 0))
@@ -69,17 +65,15 @@ def api_payment_tokenize():
 #  RLS / SUCURSALES
 # ══════════════════════════════════════════════════════════════
 
-@login_required
 @settings_bp.route('/api/branch/info', methods=['GET'])
-@requiere_login
+@login_required
 def api_branch_info():
     branch_id = get_branch_id()
     headers = get_rls_headers()
     return jsonify({"ok": True, "branch_id": branch_id, "rls_enabled": True, "headers": headers})
 
-@login_required
 @settings_bp.route('/api/branch/filter', methods=['POST'])
-@requiere_login
+@login_required
 def api_branch_filter():
     datos = request.get_json(force=True, silent=True) or {}
     items = datos.get("items", [])
@@ -91,9 +85,8 @@ def api_branch_filter():
 #  IA CHAT SECURE
 # ══════════════════════════════════════════════════════════════
 
-@login_required
 @settings_bp.route('/api/ia/chat/secure', methods=['POST'])
-@requiere_login
+@login_required
 def ia_chat_secure():
     data = request.get_json(force=True, silent=True) or {}
     query = data.get('query', data.get('question', ''))

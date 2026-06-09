@@ -1,7 +1,6 @@
 from auth_decorator import login_required
 from modules.assistant_helpers import assistant_bp, request, jsonify, session, requiere_login, _ia_module, _process_question, _get_status, _get_proactive_alerts, _set_session_role, _get_session_info, _mem_module, mem_extract, mem_context
 @requiere_login
-@login_required
 @assistant_bp.route('/ping')
 def ping():
     try:
@@ -15,7 +14,6 @@ def ping():
 
 
 @requiere_login
-@login_required
 @assistant_bp.route("/public-chat", methods=["POST"])
 def public_chat():
     try:
@@ -31,7 +29,6 @@ def public_chat():
         return jsonify({"answer": f"Error: {e}", "suggestions": ["productos"]})
 
 @requiere_login
-@login_required
 @assistant_bp.route('/chat', methods=['POST'])
 def chat():
     if not _ia_module:
@@ -68,7 +65,6 @@ def chat():
 
 
 @requiere_login
-@login_required
 @assistant_bp.route('/role', methods=['POST'])
 def set_role():
     if not _ia_module:
@@ -78,7 +74,6 @@ def set_role():
 
 
 @requiere_login
-@login_required
 @assistant_bp.route('/alerts', methods=['GET'])
 def alerts():
     try:
@@ -90,7 +85,6 @@ def alerts():
 
 
 @requiere_login
-@login_required
 @assistant_bp.route('/status')
 def status():
     try:

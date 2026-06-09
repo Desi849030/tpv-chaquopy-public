@@ -9,35 +9,11 @@ import uuid
 # DEFINIR BLUEPRINT CON url_prefix='/api'
 sales_bp = Blueprint('sales', __name__, url_prefix='/api')
 
-def requiere_login(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        if not session.get("usuario"):
-            return jsonify({"error": "No autenticado"}), 401
-        return f(*args, **kwargs)
-    return wrapper
 
-def requiere_rol(*roles):
-    def decorator(f):
-        @wraps(f)
-        def wrapper(*args, **kwargs):
-            u = session.get("usuario")
-            if not u or u.get("rol") not in roles:
-                return jsonify({"error": "Permiso denegado"}), 403
-            return f(*args, **kwargs)
-        return wrapper
-    return decorator
 
-def usuario_actual():
-    u = session.get("usuario", {}) or {}
-    # Normaliza: garantizar 'usuario_id' aunque la sesion solo tenga 'id'.
-    if u and "usuario_id" not in u:
-        u["usuario_id"] = u.get("id") or u.get("username") or "anon"
-    return u
 
-@login_required
 @sales_bp.route("/gastos", methods=["GET"])
-@requiere_login
+@login_required
 def api_listar_gastos():
     u = usuario_actual()
     if u["rol"] not in ("desarrollador", "administrador", "supervisor"):
@@ -54,9 +30,8 @@ def api_listar_gastos():
     finally:
         conn.close()
 
-@login_required
 @sales_bp.route("/gastos", methods=["POST"])
-@requiere_login
+@login_required
 def api_crear_gasto():
     u = usuario_actual()
     if u["rol"] not in ("desarrollador", "administrador"):
@@ -83,9 +58,8 @@ def api_crear_gasto():
     finally:
         conn.close()
 
-@login_required
 @sales_bp.route("/gastos/<gasto_id>", methods=["DELETE"])
-@requiere_login
+@login_required
 def api_eliminar_gasto(gasto_id):
     u = usuario_actual()
     if u["rol"] not in ("desarrollador", "administrador"):
@@ -100,9 +74,8 @@ def api_eliminar_gasto(gasto_id):
     finally:
         conn.close()
 
-@login_required
 @sales_bp.route("/reportes/ventas", methods=["GET"])
-@requiere_login
+@login_required
 def api_reporte_ventas():
     u = usuario_actual()
     vid = u["usuario_id"] if u.get("rol") == "vendedor" else request.args.get("vendedor_id")
@@ -112,23 +85,20 @@ def api_reporte_ventas():
         vid
     )})
 
-@login_required
 @sales_bp.route("/reportes/resumen", methods=["GET"])
-@requiere_login
+@login_required
 def api_resumen():
     u = usuario_actual()
     vid = u["usuario_id"] if u.get("rol") == "vendedor" else request.args.get("vendedor_id")
     return jsonify(consultar_resumen_ventas(vid))
 
-@login_required
 @sales_bp.route("/reportes/ganancias", methods=["GET"])
 @requiere_rol("administrador","desarrollador","supervisor")
 def api_ganancias():
     return jsonify({"ganancias": consultar_ganancias_por_dia()})
 
-@login_required
 @sales_bp.route("/descuentos", methods=["GET"])
-@requiere_login
+@login_required
 def api_listar_descuentos():
     try:
         conn = obtener_conexion()

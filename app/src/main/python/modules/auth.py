@@ -8,33 +8,9 @@ import threading, supabase_sync as _sb
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api')
 
-def requiere_login(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        if not session.get("usuario"):
-            return jsonify({"error": "No autenticado"}), 401
-        return f(*args, **kwargs)
-    return wrapper
 
-def requiere_rol(*roles):
-    def decorator(f):
-        @wraps(f)
-        def wrapper(*args, **kwargs):
-            u = session.get("usuario")
-            if not u or u.get("rol") not in roles:
-                return jsonify({"error": f"Se requiere: {', '.join(roles)}"}), 403
-            return f(*args, **kwargs)
-        return wrapper
-    return decorator
 
-def usuario_actual():
-    u = session.get("usuario", {}) or {}
-    # Normaliza: garantizar 'usuario_id' aunque la sesion solo tenga 'id'.
-    if u and "usuario_id" not in u:
-        u["usuario_id"] = u.get("id") or u.get("username") or "anon"
-    return u
 
-@login_required
 @auth_bp.route("/auth/login", methods=["POST"])
 def api_login():
     datos = request.get_json(force=True, silent=True) or {}
@@ -49,13 +25,11 @@ def api_login():
         return jsonify({"ok": True, "usuario": resultado})
     return jsonify({"error": "Credenciales incorrectas"}), 401
 
-@login_required
 @auth_bp.route("/auth/logout", methods=["POST"])
 def api_logout():
     session.pop("usuario", None)
     return jsonify({"ok": True})
 
-@login_required
 @auth_bp.route("/auth/me", methods=["GET"])
 def api_me():
     u = session.get("usuario")
@@ -63,16 +37,14 @@ def api_me():
         return jsonify({"autenticado": True, "usuario": u})
     return jsonify({"autenticado": False}), 401
 
-@login_required
 @auth_bp.route("/auth/cambiar-password", methods=["POST"])
-@requiere_login
+@login_required
 def api_cambiar_password():
     datos = request.get_json(force=True, silent=True) or {}
     u = usuario_actual()
     resultado = cambiar_password(u["usuario_id"], datos.get("password_actual",""), datos.get("password_nueva",""))
     return jsonify(resultado), (200 if resultado["ok"] else 400)
 
-@login_required
 @auth_bp.route("/usuarios/crear", methods=["POST"])
 @requiere_rol("desarrollador", "administrador")
 def api_crear_usuario():
@@ -83,7 +55,6 @@ def api_crear_usuario():
         threading.Thread(target=_sb.sincronizar_usuario_nuevo, args=(resultado["usuario_id"],), daemon=True).start()
     return jsonify(resultado), (200 if resultado["ok"] else 400)
 
-@login_required
 @auth_bp.route("/usuarios", methods=["GET"])
 @requiere_rol("desarrollador", "administrador")
 def api_listar_usuarios():
@@ -94,7 +65,6 @@ def api_listar_usuarios():
     except Exception as e:
         return jsonify({"error": f"Error al listar usuarios: {str(e)}"}), 500
 
-@login_required
 @auth_bp.route("/usuarios/<usuario_id>", methods=["DELETE"])
 @requiere_rol("desarrollador","administrador")
 def api_desactivar_usuario(usuario_id):
@@ -102,7 +72,6 @@ def api_desactivar_usuario(usuario_id):
     resultado = desactivar_usuario(usuario_id, u["usuario_id"])
     return jsonify(resultado), (200 if resultado["ok"] else 400)
 
-@login_required
 @auth_bp.route("/usuarios/<usuario_id>/reset-password", methods=["POST"])
 @requiere_rol("desarrollador", "administrador")
 def api_reset_password(usuario_id):
@@ -111,7 +80,6 @@ def api_reset_password(usuario_id):
     resultado = resetear_password(usuario_id, datos.get("password_nueva",""), u["usuario_id"])
     return jsonify(resultado), (200 if resultado["ok"] else 400)
 
-@login_required
 @auth_bp.route("/licencias", methods=["GET"])
 @requiere_rol("desarrollador", "administrador")
 def api_listar_licencias():
@@ -120,7 +88,6 @@ def api_listar_licencias():
     licencias = listar_licencias(u["usuario_id"], admin_filtro)
     return jsonify({"licencias": licencias, "total": len(licencias)})
 
-@login_required
 @auth_bp.route("/licencias/crear", methods=["POST"])
 @requiere_rol("desarrollador")
 def api_crear_licencia():
@@ -136,7 +103,6 @@ def api_crear_licencia():
     )
     return jsonify(resultado), (200 if resultado["ok"] else 400)
 
-@login_required
 @auth_bp.route("/licencias/<licencia_id>", methods=["DELETE"])
 @requiere_rol("desarrollador")
 def api_desactivar_licencia(licencia_id):
@@ -144,7 +110,6 @@ def api_desactivar_licencia(licencia_id):
     resultado = desactivar_licencia(licencia_id, u["usuario_id"])
     return jsonify(resultado), (200 if resultado["ok"] else 400)
 
-@login_required
 @auth_bp.route("/licencias/verificar/<admin_id>", methods=["GET"])
 @requiere_rol("desarrollador","administrador")
 def api_verificar_licencia(admin_id):

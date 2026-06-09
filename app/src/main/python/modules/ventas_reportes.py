@@ -7,9 +7,8 @@ from modules.ventas_helpers import ventas_bp, request, jsonify, requiere_login, 
 #  REPORTES
 # ══════════════════════════════════════════════════════════════
 
-@login_required
 @ventas_bp.route("/api/reportes/ventas", methods=["GET"])
-@requiere_login
+@login_required
 def api_reporte_ventas():
     u = usuario_actual()
     fecha_inicio = request.args.get("desde", "2000-01-01")
@@ -17,24 +16,21 @@ def api_reporte_ventas():
     vid = u["usuario_id"] if u.get("rol") == "vendedor" else request.args.get("vendedor_id")
     return jsonify({"ventas": consultar_ventas_por_fecha(fecha_inicio, fecha_fin, vid)})
 
-@login_required
 @ventas_bp.route("/api/reportes/resumen", methods=["GET"])
-@requiere_login
+@login_required
 def api_resumen():
     u = usuario_actual()
     vid = u["usuario_id"] if u.get("rol") == "vendedor" else request.args.get("vendedor_id")
     return jsonify(consultar_resumen_ventas(vid))
 
-@login_required
 @ventas_bp.route("/api/reportes/ganancias", methods=["GET"])
 @requiere_rol("administrador","desarrollador","supervisor")
 def api_ganancias():
     return jsonify({"ganancias": consultar_ganancias_por_dia()})
 
 
-@login_required
 @ventas_bp.route("/api/dashboard/data", methods=["GET"])
-@requiere_login
+@login_required
 def api_dashboard_data():
     from datetime import datetime, timedelta
     conn = obtener_conexion()

@@ -11,33 +11,9 @@ from datetime import datetime
 
 inv_bp = Blueprint('inventory', __name__, url_prefix='/api')
 
-def requiere_login(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        if not session.get("usuario"):
-            return jsonify({"error": "No autenticado"}), 401
-        return f(*args, **kwargs)
-    return wrapper
 
-def requiere_rol(*roles):
-    def decorator(f):
-        @wraps(f)
-        def wrapper(*args, **kwargs):
-            u = session.get("usuario")
-            if not u or u.get("rol") not in roles:
-                return jsonify({"error": "Permiso denegado"}), 403
-            return f(*args, **kwargs)
-        return wrapper
-    return decorator
 
-def usuario_actual():
-    u = session.get("usuario", {}) or {}
-    # Normaliza: garantizar 'usuario_id' aunque la sesion solo tenga 'id'.
-    if u and "usuario_id" not in u:
-        u["usuario_id"] = u.get("id") or u.get("username") or "anon"
-    return u
 
-@login_required
 @inv_bp.route("/inventario/entrada", methods=["POST"])
 @requiere_rol("administrador","desarrollador")
 def api_entrada_producto():
@@ -46,7 +22,6 @@ def api_entrada_producto():
     resultado = registrar_entrada_producto(datos, u["usuario_id"])
     return jsonify(resultado), (200 if resultado["ok"] else 400)
 
-@login_required
 @inv_bp.route("/inventario/general", methods=["GET"])
 @requiere_rol("administrador", "desarrollador")
 def api_inventario_general():
@@ -56,7 +31,6 @@ def api_inventario_general():
     except Exception as e:
         return jsonify({"error": f"Error inventario general: {str(e)}"}), 500
 
-@login_required
 @inv_bp.route("/inventario/importar-catalogo", methods=["POST"])
 @requiere_rol("administrador", "desarrollador")
 def api_importar_catalogo():
@@ -64,7 +38,6 @@ def api_importar_catalogo():
     r = importar_catalogo_a_inventario(u["usuario_id"])
     return jsonify(r), (200 if r["ok"] else 400)
 
-@login_required
 @inv_bp.route("/inventario/general/eliminar", methods=["POST"])
 @requiere_rol("administrador", "desarrollador")
 def api_eliminar_inventario_general():
@@ -73,14 +46,12 @@ def api_eliminar_inventario_general():
     r = eliminar_producto_inventario_general(datos.get("producto_id",""), u["usuario_id"])
     return jsonify(r), (200 if r["ok"] else 400)
 
-@login_required
 @inv_bp.route("/catalogo/sync-desde-inventario", methods=["POST"])
 @requiere_rol("administrador", "desarrollador")
 def api_sync_desde_inventario():
     prods = obtener_productos_catalogo()
     return jsonify({"ok": True, "productos": prods, "total": len(prods)})
 
-@login_required
 @inv_bp.route("/sincronizar-completo", methods=["POST"])
 @requiere_rol("administrador", "desarrollador")
 def api_sincronizar_completo():
@@ -91,7 +62,6 @@ def api_sincronizar_completo():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@login_required
 @inv_bp.route("/stock/masivo", methods=["POST"])
 @requiere_rol("administrador", "desarrollador")
 def api_stock_masivo():
@@ -104,7 +74,6 @@ def api_stock_masivo():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@login_required
 @inv_bp.route("/limpiar-tablas", methods=["POST"])
 @requiere_rol("administrador", "desarrollador")
 def api_limpiar_tablas():
@@ -115,7 +84,6 @@ def api_limpiar_tablas():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@login_required
 @inv_bp.route("/reconstruir-desde-productos", methods=["POST"])
 @requiere_rol("administrador", "desarrollador")
 def api_reconstruir_desde_productos():
@@ -128,7 +96,6 @@ def api_reconstruir_desde_productos():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@login_required
 @inv_bp.route("/inventario/entradas", methods=["GET"])
 @requiere_rol("administrador","desarrollador")
 def api_historial_entradas():
@@ -136,7 +103,6 @@ def api_historial_entradas():
     producto_id = request.args.get("producto_id")
     return jsonify({"entradas": obtener_historial_entradas(u["usuario_id"], producto_id)})
 
-@login_required
 @inv_bp.route("/inventario/asignar-diario", methods=["POST"])
 @requiere_rol("administrador", "desarrollador")
 def api_asignar_inventario():
@@ -147,9 +113,8 @@ def api_asignar_inventario():
     resultado = asignar_inventario_diario(vendedor_id, productos, u["usuario_id"])
     return jsonify(resultado), (200 if resultado["ok"] else 400)
 
-@login_required
 @inv_bp.route("/inventario/diario/<vendedor_id>", methods=["GET"])
-@requiere_login
+@login_required
 def api_inventario_diario(vendedor_id):
     try:
         fecha = request.args.get("fecha")
@@ -157,9 +122,8 @@ def api_inventario_diario(vendedor_id):
     except Exception as e:
         return jsonify({"error": f"Error inventario diario: {str(e)}"}), 500
 
-@login_required
 @inv_bp.route("/inventario/diario/conteo", methods=["POST"])
-@requiere_login
+@login_required
 def api_conteo_vendedor():
     datos = request.get_json(force=True, silent=True) or {}
     u = usuario_actual()
@@ -180,9 +144,8 @@ def api_conteo_vendedor():
     finally:
         conn.close()
 
-@login_required
 @inv_bp.route("/inventario/diario/cierre", methods=["POST"])
-@requiere_login
+@login_required
 def api_cierre_vendedor():
     datos = request.get_json(force=True, silent=True) or {}
     u = usuario_actual()
@@ -231,7 +194,6 @@ def api_cierre_vendedor():
     finally:
         conn.close()
 
-@login_required
 @inv_bp.route("/inventario/cierre-admin", methods=["POST"])
 @requiere_rol("administrador", "desarrollador")
 def api_cierre_admin():
@@ -255,7 +217,6 @@ def api_cierre_admin():
     finally:
         conn.close()
 
-@login_required
 @inv_bp.route("/inventario/diario/limpiar", methods=["POST"])
 @requiere_rol("administrador", "desarrollador")
 def api_limpiar_inventarios():
@@ -266,9 +227,8 @@ def api_limpiar_inventarios():
     resultado = limpiar_inventarios_diarios(u["usuario_id"], vendedor_id, fecha)
     return jsonify(resultado), (200 if resultado["ok"] else 400)
 
-@login_required
 @inv_bp.route("/inventario/diario/historial/<vendedor_id>", methods=["GET"])
-@requiere_login
+@login_required
 def api_historial_cierres(vendedor_id):
     u = usuario_actual()
     if u["rol"] == "vendedor" and u["usuario_id"] != vendedor_id:

@@ -16,7 +16,7 @@ USUARIOS = """CREATE TABLE IF NOT EXISTS usuarios (
             username      TEXT    NOT NULL UNIQUE,
             nombre        TEXT    NOT NULL,
             rol           TEXT    NOT NULL CHECK(rol IN
-                          ('desarrollador','administrador','supervisor','vendedor')),
+                          ('desarrollador','administrador','supervisor','vendedor','cajero')),
             password_hash TEXT    NOT NULL,
             password_salt TEXT    NOT NULL,
             creado_por    TEXT    DEFAULT NULL,
@@ -43,7 +43,7 @@ LICENCIAS = """CREATE TABLE IF NOT EXISTS licencias (
 
 HISTORIAL_VENTAS = """CREATE TABLE IF NOT EXISTS historial_ventas (
             id              INTEGER PRIMARY KEY AUTOINCREMENT,
-            venta_id        TEXT    NOT NULL UNIQUE,
+            venta_id        TEXT    NOT NULL,
             producto_id     TEXT    NOT NULL,
             nombre          TEXT    NOT NULL,
             cantidad        REAL    NOT NULL DEFAULT 1,
@@ -143,6 +143,9 @@ CIERRES_CAJA = """CREATE TABLE IF NOT EXISTS cierres_caja (
             total_comisiones  REAL    DEFAULT 0,
             ganancia_total    REAL    DEFAULT 0,
             num_transacciones INTEGER DEFAULT 0,
+            efectivo          REAL    DEFAULT 0,
+            tarjeta           REAL    DEFAULT 0,
+            transferencia     REAL    DEFAULT 0,
             cerrado_por       TEXT    DEFAULT NULL,
             creado            TEXT    DEFAULT (datetime('now','localtime'))
         )"""
@@ -214,101 +217,33 @@ HISTORIAL_DIARIO = """CREATE TABLE IF NOT EXISTS historial_diario (
             ts_guardado       TEXT    DEFAULT (datetime('now','localtime'))
         )"""
 
-TBL_17 = """SELECT l.*, u.username
-                    FROM licencias l
-                    LEFT JOIN usuarios u ON l.admin_id = u.usuario_id
-                    WHERE l.admin_id = ? ORDER BY l.creado DESC"""
 
-TBL_18 = """SELECT l.*, u.username
-                    FROM licencias l
-                    LEFT JOIN usuarios u ON l.admin_id = u.usuario_id
-                    ORDER BY l.creado DESC"""
 
-TBL_19 = """SELECT l.*, u.username
-                FROM licencias l
-                LEFT JOIN usuarios u ON l.admin_id = u.usuario_id
-                WHERE l.admin_id = ? ORDER BY l.creado DESC"""
 
-TBL_20 = """SELECT licencia_id, tipo, fecha_expira, dias
-            FROM licencias
-            WHERE admin_id = ? AND activa = 1 AND fecha_expira >= ?
-            ORDER BY fecha_expira DESC LIMIT 1"""
 
-TBL_21 = """INSERT INTO inventario_general
-                    (producto_id, nombre, stock_actual, stock_minimo,
-                     precio_compra, precio_venta, categoria, unidad_medida, actualizado)
-                VALUES (?, ?, 0, 5, ?, ?, ?, ?, ?)
-                ON CONFLICT(producto_id) DO UPDATE SET
-                    nombre        = excluded.nombre,
-                    precio_venta  = excluded.precio_venta,
-                    precio_compra = CASE WHEN excluded.precio_compra > 0
-                                    THEN excluded.precio_compra
-                                    ELSE inventario_general.precio_compra END,
-                    categoria     = excluded.categoria,
-                    unidad_medida = excluded.unidad_medida,
-                    actualizado   = excluded.actualizado"""
 
-TBL_22 = """SELECT * FROM inventario_general
-            WHERE producto_id NOT IN (SELECT producto_id FROM productos)"""
 
-TBL_23 = """INSERT OR IGNORE INTO productos
-                    (producto_id, nombre, precio, costo, categoria,
-                     unidad_medida, en_oferta, imagen, activo)
-                VALUES (?, ?, ?, ?, ?, ?, 0, '', 1)"""
 
-TBL_24 = """INSERT OR REPLACE INTO productos
-                    (producto_id, nombre, precio, costo, categoria,
-                     unidad_medida, en_oferta, imagen, activo)
-                VALUES (?,?,?,?,?,?,?,?,1)"""
 
-TBL_25 = """INSERT OR REPLACE INTO inventario_general
-                        (producto_id, nombre, stock_actual, stock_minimo,
-                         precio_compra, precio_venta, categoria, unidad_medida, actualizado)
-                    VALUES (?,?,?,5,?,?,?,?,?)"""
 
-TBL_26 = """INSERT INTO inventario_general
-                        (producto_id, nombre, stock_actual, stock_minimo,
-                         precio_compra, precio_venta, categoria, unidad_medida, actualizado)
-                    VALUES (?,?,0,5,?,?,?,?,?)
-                    ON CONFLICT(producto_id) DO UPDATE SET
-                        nombre        = excluded.nombre,
-                        precio_venta  = excluded.precio_venta,
-                        precio_compra = CASE WHEN excluded.precio_compra > 0
-                                        THEN excluded.precio_compra
-                                        ELSE inventario_general.precio_compra END,
-                        categoria     = excluded.categoria,
-                        unidad_medida = excluded.unidad_medida,
-                        actualizado   = excluded.actualizado"""
 
-TBL_27 = """INSERT OR REPLACE INTO app_state (clave, valor, actualizado) VALUES (?, ?, ?)"""
 
-TBL_28 = """INSERT OR IGNORE INTO historial_ventas
-                    (venta_id, producto_id, nombre, cantidad, precio_unit,
-                     total, metodo_pago, vendedor_id, vendedor_nombre, fecha)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
 
-TBL_29 = """INSERT OR REPLACE INTO productos
-                    (producto_id, nombre, precio, costo, categoria,
-                     unidad_medida, en_oferta, imagen)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""
 
-TBL_30 = """INSERT INTO inventario_general
-                    (producto_id, nombre, stock_actual, stock_minimo,
-                     precio_compra, precio_venta, categoria, unidad_medida, actualizado)
-                VALUES (?, ?, 0, 5, ?, ?, ?, ?, ?)
-                ON CONFLICT(producto_id) DO UPDATE SET
-                    nombre        = excluded.nombre,
-                    precio_venta  = excluded.precio_venta,
-                    precio_compra = CASE WHEN excluded.precio_compra > 0
-                                    THEN excluded.precio_compra
-                                    ELSE inventario_general.precio_compra END,
-                    categoria     = excluded.categoria,
-                    unidad_medida = excluded.unidad_medida,
-                    actualizado   = excluded.actualizado"""
 
-TBL_31 = """INSERT OR IGNORE INTO cierres_caja
-                    (fecha, total_ventas, total_costos, total_comisiones, ganancia_total)
-                VALUES (?, ?, ?, ?, ?)"""
+
+CLIENTES = """CREATE TABLE IF NOT EXISTS clientes (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            cliente_id    TEXT    NOT NULL UNIQUE,
+            nombre        TEXT    NOT NULL,
+            telefono      TEXT    DEFAULT '',
+            email         TEXT    DEFAULT '',
+            puntos        INTEGER DEFAULT 0,
+            nivel         TEXT    DEFAULT 'bronce',
+            notas         TEXT    DEFAULT '',
+            activo        INTEGER DEFAULT 1,
+            creado        TEXT    DEFAULT (datetime('now','localtime'))
+        )"""
 
 ALL_TABLES = [
     APP_STATE,
@@ -328,6 +263,7 @@ ALL_TABLES = [
     AUDITORIA,
     DESCUENTOS_CONFIG,
     HISTORIAL_DIARIO,
+    CLIENTES,
 ]
 
 def crear_tablas_schema(conn):

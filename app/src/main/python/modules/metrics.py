@@ -1,4 +1,4 @@
-from auth_decorator import login_required
+from decorators import login_required
 from flask import Blueprint, request, jsonify, session
 from functools import wraps
 from datetime import datetime, timedelta

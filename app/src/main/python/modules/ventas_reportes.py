@@ -1,6 +1,6 @@
 from db_connection import obtener_conexion
 from flask import request
-from auth_decorator import login_required
+from decorators import login_required
 from database import obtener_conexion
 from modules.ventas_helpers import ventas_bp, request, jsonify, requiere_login, requiere_rol, usuario_actual, datetime, consultar_ventas_por_fecha, consultar_resumen_ventas, consultar_ganancias_por_dia, _sb
 # ══════════════════════════════════════════════════════════════

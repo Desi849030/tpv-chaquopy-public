@@ -1,4 +1,4 @@
-from auth_decorator import login_required
+from decorators import login_required
 from modules.assistant_helpers import assistant_bp, request, jsonify, session, requiere_login, _ia_module, _process_question, _get_status, _get_proactive_alerts, _set_session_role, _get_session_info, _mem_module, mem_extract, mem_context
 @requiere_login
 @assistant_bp.route('/ping')

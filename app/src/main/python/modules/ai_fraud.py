@@ -1,4 +1,4 @@
-from auth_decorator import login_required
+from decorators import login_required
 from modules.ai_helpers import ai_bp, requiere_login, jsonify
 # ══════════════════════════════════════════════════════════════
 #  ANTI-FRAUDE — /api/ai/fraud/dashboard

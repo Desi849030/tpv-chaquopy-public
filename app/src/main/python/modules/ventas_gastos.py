@@ -1,6 +1,6 @@
 from db_connection import obtener_conexion
 from flask import request
-from auth_decorator import login_required
+from decorators import login_required
 from modules.ventas_helpers import ventas_bp, uuid, request, jsonify, requiere_login, usuario_actual, agregar_log, datetime, obtener_conexion, _sb
 # ══════════════════════════════════════════════════════════════
 #  GASTOS / INVERSIÓN

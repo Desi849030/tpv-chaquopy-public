@@ -1,5 +1,4 @@
-from auth_decorator import login_required
-from decorators import requiere_login
+from decorators import login_required
 """ai_modules.py v2.0 — Rutas API IA Edge FIXED
 Todas las rutas que el frontend espera, correctamente mapeadas.
 """

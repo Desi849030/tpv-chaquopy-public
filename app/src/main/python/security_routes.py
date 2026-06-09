@@ -1,4 +1,4 @@
-from auth_decorator import login_required, admin_required
+from decorators import login_required, admin_required
 import json
 from datetime import datetime
 from flask import Blueprint,request,jsonify

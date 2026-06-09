@@ -1,5 +1,5 @@
 from db_connection import obtener_conexion
-from auth_decorator import login_required
+from decorators import login_required
 from modules.ai_helpers import ai_bp, requiere_login, jsonify
 # ══════════════════════════════════════════════════════════════
 #  PREDICCIONES — /api/ai/predict/dashboard

@@ -1,4 +1,4 @@
-from auth_decorator import login_required
+from decorators import login_required
 from modules.ai_helpers import analytics_bp, requiere_login, jsonify, Blueprint
 
 @requiere_login

@@ -1,4 +1,4 @@
-from auth_decorator import login_required
+from decorators import login_required
 from modules.assistant_helpers import assistant_bp, request, jsonify, requiere_login, _mem_module, mem_save, mem_recall, mem_search, mem_forget, mem_summary
 @requiere_login
 @assistant_bp.route('/memory/recall', methods=['POST'])

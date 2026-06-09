@@ -1,65 +1,79 @@
             <div class="tab-pane fade" id="privilegios-tab-pane" role="tabpanel">
                 <div class="glass-card">
-                    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                         <h4 class="mb-0"><i class="bi bi-shield-lock-fill me-2 text-primary" translate="no"></i>Gestión de Privilegios</h4>
-                        <span class="badge bg-info" id="priv-badge-rol">Admin / Dev</span>
+                        <span class="badge bg-info" id="priv-badge-rol" style="font-size:0.85em;padding:0.5em 1em">Admin / Dev</span>
                     </div>
-                    <p class="text-muted small mb-4">
+                    <p class="text-muted mb-4" style="font-size:0.92em;line-height:1.5">
                         Asigna permisos a cada rol. El administrador y supervisor no pueden acceder a los módulos desactivados.
                         Los cambios toman efecto al iniciar sesión de cada usuario.
                     </p>
 
-                    <!-- Selector de rol -->
+                    <!-- ── Selector de Rol (tarjetas táctiles) ── -->
                     <div class="mb-4">
-                        <label class="form-label fw-bold"><i class="bi bi-person-badge me-1" translate="no"></i>Seleccionar Rol:</label>
-                        <div class="d-flex gap-2 flex-wrap">
-                            <button class="btn btn-outline-primary btn-sm" onclick="priv_cargarRol('administrador')" id="priv-btn-administrador">
-                                <i class="bi bi-person-gear me-1" translate="no"></i>Administrador
-                            </button>
-                            <button class="btn btn-outline-warning btn-sm" onclick="priv_cargarRol('supervisor')" id="priv-btn-supervisor">
-                                <i class="bi bi-person-check me-1" translate="no"></i>Supervisor
-                            </button>
-                            <button class="btn btn-outline-success btn-sm" onclick="priv_cargarRol('vendedor')" id="priv-btn-vendedor">
-                                <i class="bi bi-person me-1" translate="no"></i>Vendedor
-                            </button>
-                            <button class="btn btn-outline-secondary btn-sm" onclick="priv_cargarRol('desarrollador')" id="priv-btn-desarrollador">
-                                <i class="bi bi-code-slash me-1" translate="no"></i>Desarrollador
-                            </button>
+                        <label class="form-label fw-bold mb-3" style="font-size:1.05em"><i class="bi bi-person-badge me-1" translate="no"></i> Seleccionar Rol:</label>
+                        <div class="row g-2">
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <button class="btn w-100 priv-rol-card" onclick="priv_cargarRol('administrador')" id="priv-btn-administrador"
+                                        style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 10px;border-radius:14px;border:2px solid var(--tpv-border);background:var(--tpv-surface);font-weight:600;transition:all 0.2s">
+                                    <i class="bi bi-person-gear" style="font-size:1.8em;color:var(--tpv-primary)" translate="no"></i>
+                                    <span>Administrador</span>
+                                </button>
+                            </div>
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <button class="btn w-100 priv-rol-card" onclick="priv_cargarRol('supervisor')" id="priv-btn-supervisor"
+                                        style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 10px;border-radius:14px;border:2px solid var(--tpv-border);background:var(--tpv-surface);font-weight:600;transition:all 0.2s">
+                                    <i class="bi bi-person-check" style="font-size:1.8em;color:var(--tpv-warning)" translate="no"></i>
+                                    <span>Supervisor</span>
+                                </button>
+                            </div>
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <button class="btn w-100 priv-rol-card" onclick="priv_cargarRol('vendedor')" id="priv-btn-vendedor"
+                                        style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 10px;border-radius:14px;border:2px solid var(--tpv-border);background:var(--tpv-surface);font-weight:600;transition:all 0.2s">
+                                    <i class="bi bi-person" style="font-size:1.8em;color:var(--tpv-success)" translate="no"></i>
+                                    <span>Vendedor</span>
+                                </button>
+                            </div>
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <button class="btn w-100 priv-rol-card" onclick="priv_cargarRol('cajero')" id="priv-btn-cajero"
+                                        style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 10px;border-radius:14px;border:2px solid var(--tpv-border);background:var(--tpv-surface);font-weight:600;transition:all 0.2s">
+                                    <i class="bi bi-cash-stack" style="font-size:1.8em;color:#e67e22" translate="no"></i>
+                                    <span>Cajero</span>
+                                </button>
+                            </div>
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <button class="btn w-100 priv-rol-card" onclick="priv_cargarRol('desarrollador')" id="priv-btn-desarrollador"
+                                        style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 10px;border-radius:14px;border:2px solid var(--tpv-border);background:var(--tpv-surface);font-weight:600;transition:all 0.2s">
+                                    <i class="bi bi-code-slash" style="font-size:1.8em;color:#8b5cf6" translate="no"></i>
+                                    <span>Desarrollador</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Tabla de privilegios -->
+                    <!-- ── Tabla de módulos ── -->
                     <div id="priv-tabla-wrap" style="display:none">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle">
-                                <thead>
-                                    <tr class="table-light">
-                                        <th style="width:40%">Módulo</th>
-                                        <th style="width:35%">Descripción</th>
-                                        <th class="text-center" style="width:25%">
-                                            <span id="priv-rol-activo">—</span>
-                                            <i class="bi bi-toggle-on text-success ms-1" translate="no"></i>
-                                        </th>
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <span class="fw-bold text-uppercase" style="font-size:0.95em" id="priv-rol-activo">—</span>
+                            <i class="bi bi-toggle-on text-success" translate="no"></i>
+                        </div>
+                        <div class="table-responsive" style="border-radius:12px;border:1px solid var(--tpv-border)">
+                            <table class="table table-hover align-middle mb-0" style="font-size:0.92em">
+                                <thead style="background:var(--tpv-surface-2)">
+                                    <tr>
+                                        <th style="min-width:160px;padding:12px 16px">Módulo</th>
+                                        <th class="d-none d-md-table-cell" style="padding:12px 16px">Descripción</th>
+                                        <th class="text-center" style="width:80px;padding:12px 16px">Acceso</th>
                                     </tr>
                                 </thead>
-                                <tbody id="priv-tabla-body">
-                                    <!-- JS renderiza las filas -->
-                                </tbody>
+                                <tbody id="priv-tabla-body"></tbody>
                             </table>
                         </div>
-
-                        <!-- Botones de acción -->
-                        <div class="d-flex gap-2 mt-3 flex-wrap">
-                            <button class="btn btn-primary" onclick="priv_guardar()">
-                                <i class="bi bi-floppy-fill me-1" translate="no"></i>Guardar Cambios
-                            </button>
-                            <button class="btn btn-outline-warning" onclick="priv_restablecer()">
-                                <i class="bi bi-arrow-counterclockwise me-1" translate="no"></i>Restablecer a Default
-                            </button>
+                        <div class="d-flex gap-2 mt-4 flex-wrap">
+                            <button class="btn btn-primary px-4" onclick="priv_guardar()"><i class="bi bi-floppy-fill me-2" translate="no"></i>Guardar Cambios</button>
+                            <button class="btn btn-outline-warning px-3" onclick="priv_restablecer()"><i class="bi bi-arrow-counterclockwise me-2" translate="no"></i>Restablecer</button>
                         </div>
                         <div id="priv-msg" class="mt-3" style="display:none"></div>
                     </div>
                 </div>
             </div>
-
-            <!-- ══════════ PESTAÑA SEGURIDAD / BLINDAJES ══════════ -->

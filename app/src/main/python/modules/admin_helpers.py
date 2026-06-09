@@ -14,26 +14,54 @@ import sync.supabase_sync as _sb
 admin_bp = Blueprint('admin', __name__)
 # ── Privilegios ──────────────────────────────────────────────
 _MODULOS_DISPONIBLES = {
-    "catalogo":"Gestion de catalogo","productos":"CRUD productos",
-    "categorias":"Gestion categorias","dashboard":"Panel estadisticas",
-    "ventas":"Registro ventas","orden":"Gestion ordenes",
-    "inventario":"Control inventario","registros":"Historial",
-    "tienda":"Tienda online","herramientas":"Herramientas",
-    "configuracion":"Configuracion","usuarios":"Gestion usuarios",
-    "licencias":"Gestion licencias","debug":"Panel depuracion",
-    "privilegios":"Gestion privilegios","blindajes":"Panel blindajes",
-    "ia_edge":"IA Edge Analytics","lealtad":"Programa Lealtad",
-    "asistente_ia":"Asistente IA","caja":"Caja y cobros","descuentos":"Descuentos","supabase":"Configuracion Supabase","seguridad":"Seguridad","exportar":"Exportar datos","copias":"Copias de seguridad"
+    "catalogo": "Gestión de catálogo de productos",
+    "productos": "CRUD de productos (crear, editar, eliminar)",
+    "categorias": "Gestión de categorías",
+    "dashboard": "Panel de estadísticas y KPIs",
+    "ventas": "Registro y consulta de ventas",
+    "orden": "Gestión de órdenes y pedidos",
+    "inventario": "Control de inventario y stock",
+    "registros": "Historial y registros del sistema",
+    "tienda": "Tienda online y pedidos web",
+    "herramientas": "Herramientas del sistema",
+    "configuracion": "Configuración general",
+    "usuarios": "Gestión de usuarios",
+    "licencias": "Gestión de licencias",
+    "debug": "Panel de depuración (dev)",
+    "privilegios": "Gestión de privilegios por rol",
+    "blindajes": "Panel de blindajes de seguridad",
+    "ia_edge": "IA Edge Analytics",
+    "lealtad": "Programa de Lealtad y puntos",
+    "asistente_ia": "Asistente IA conversacional",
+    "caja": "Caja y cobros",
+    "descuentos": "Gestión de descuentos y ofertas",
+    "supabase": "Configuración de Supabase (nube)",
+    "seguridad": "Panel de seguridad",
+    "biometria": "Autenticación biométrica (huella/rostro)",
+    "exportar": "Exportar datos (CSV, Excel)",
+    "copias": "Copias de seguridad",
 }
 
 _PRIVILEGIOS_DEFAULT = {
     "desarrollador": {m: True for m in _MODULOS_DISPONIBLES},
-    "administrador": {m: True for m in _MODULOS_DISPONIBLES if m not in ("debug","privilegios")},
-    "supervisor": {"catalogo":True,"productos":True,"categorias":True,"dashboard":True,
-                   "ventas":True,"orden":True,"inventario":True,"registros":True,
-                   "tienda":True,"ia_edge":True,"lealtad":True,"asistente_ia":True},
-    "vendedor": {"catalogo":True,"ventas":True,"orden":True,"dashboard":True,
-                 "ia_edge":True,"lealtad":True,"asistente_ia":True}
+    "administrador": {m: True for m in _MODULOS_DISPONIBLES
+                      if m not in ("debug", "privilegios")},
+    "supervisor": {
+        "catalogo": True, "productos": True, "categorias": True,
+        "dashboard": True, "ventas": True, "orden": True,
+        "inventario": True, "registros": True, "tienda": True,
+        "ia_edge": True, "lealtad": True, "asistente_ia": True,
+        "caja": True, "biometria": True,
+    },
+    "vendedor": {
+        "catalogo": True, "ventas": True, "orden": True,
+        "dashboard": True, "ia_edge": True, "lealtad": True,
+        "asistente_ia": True, "caja": True, "biometria": True,
+    },
+    "cajero": {
+        "catalogo": True, "ventas": True, "caja": True,
+        "dashboard": True, "biometria": True,
+    },
 }
 
 def _obtener_privilegios_rol(rol):

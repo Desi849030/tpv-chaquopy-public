@@ -67,3 +67,5 @@ Thumbs.db
 
 # Preview de desarrollo del design system (no va en el APK)
 app/src/main/assets/frontend/static/_preview_theme.html
+apply_refactor.sh
+*.patch

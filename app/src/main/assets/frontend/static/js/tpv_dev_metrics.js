@@ -198,3 +198,11 @@
   // Exportar para uso externo
   window.DM = DM;
 })();
+
+
+// Alias global para el botón onclick="devmetrics_cargar()"
+window.devmetrics_cargar = function() {
+    if (typeof DM !== 'undefined' && DM.fetch) {
+        DM.fetch();
+    }
+};

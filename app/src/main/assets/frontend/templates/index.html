@@ -1315,6 +1315,7 @@
     <!-- CSS movido al final para no bloquear render -->
 <link rel="stylesheet" href="/static/css/modulo_3.css">
 <link rel="stylesheet" href="/static/css/tpv_theme.css">
+    <link rel="stylesheet" href="/static/css/tpv_modals.css">
 <!-- ══════════════════════════════════════════════════════════
      DASHBOARD — Gráficos y KPIs
 ══════════════════════════════════════════════════════════ -->
@@ -1517,7 +1518,6 @@ window.toggleDark = function() {
 </script>
 
 
-<script src="/static/lib/chart.umd.min.js"></script>
 <canvas id="ventasChart" style="max-height:200px;margin-top:16px;display:none"></canvas>
 <script>
 window.dibujarGrafico = async function() {

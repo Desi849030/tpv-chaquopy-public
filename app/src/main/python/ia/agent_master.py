@@ -467,7 +467,11 @@ class AgentMaster:
                                 f"💵 Ganancia: ${prof:,.2f}")
                     except Exception:
                         pass
-                return f"{icon} Balance Financiero:\n💰 Ventas hoy: $3,250 (12 transacciones)\n📊 Ventas mes: $45,230\n📈 Margen: 28%\n💵 Ganancia hoy: $890\n\nTop: Arroz Premium $637.50"
+                try:
+                    d = F.diario()
+                    return f"{icon} Balance Financiero:\n💰 Ventas hoy: ${d['r']:,.2f} ({d['t']} transacciones)\n📊 Ticket promedio: ${d['a']:,.2f}\n💵 Gastos: ${d['g']:,.2f}\n📈 Neto: ${d['r']-d['g']:,.2f}"
+                except Exception:
+                    return f"{icon} No hay datos financieros disponibles aún. Registre ventas para ver el balance."
             return f"{icon} No tienes acceso a finanzas con tu rol actual."
 
         if 'STOCK' in intent:
@@ -501,8 +505,16 @@ class AgentMaster:
                                 f"📊 Promedio: ${d['a']:,.2f}")
                     except Exception:
                         pass
-                return f"{icon} Ventas Hoy:\n🛒 12 transacciones | $3,250\n📊 Promedio: $270.83\n⭐ Top: Arroz Premium (5)\n💳 Efectivo: 65% | Tarjeta: 35%"
-            return f"{icon} Hoy: 12 ventas por $3,250. ¿Registramos una nueva?"
+                try:
+                    d = F.diario()
+                    return f"{icon} Ventas Hoy:\n🛒 {d['t']} transacciones | ${d['r']:,.2f}\n📊 Promedio: ${d['a']:,.2f}"
+                except Exception:
+                    return f"{icon} Sin datos de ventas disponibles."
+            try:
+                d = F.diario()
+                return f"{icon} Hoy: {d['t']} ventas por ${d['r']:,.2f}. ¿Registramos una nueva?"
+            except Exception:
+                return f"{icon} ¿Registramos una venta?"
 
         if 'TOP_PRODUCTS' in intent:
             if _HAS_METRICS:

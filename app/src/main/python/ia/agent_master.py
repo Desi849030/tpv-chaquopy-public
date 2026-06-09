@@ -336,24 +336,40 @@ class AgentMaster:
     # Fallback de deteccion de intencion por keywords
     # ----------------------------------------------------------------
     def _keyword_fallback(self, text):
-        """Fallback: detecta intencion por keywords cuando NLP falla."""
+        """Fallback: detecta intención por keywords cuando NLP tiene baja confianza."""
         if not text:
             return None, 0
         tl = text.lower()
-        if any(kw in tl for kw in ['recomiendame', 'recomendar', 'sugerir']):
-            return 'RECOMMEND', 0.7
-        elif any(kw in tl for kw in ['stock', 'inventario', 'critico', 'agotado']):
-            return 'STOCK', 0.7
-        elif any(kw in tl for kw in ['finanza', 'balance', 'ganancia', 'margen']):
-            return 'FINANCE', 0.7
-        elif any(kw in tl for kw in ['venta', 'cuanto vendi', 'caja']):
-            return 'SALES', 0.7
-        elif any(kw in tl for kw in ['hola', 'buenos dias', 'saludos']):
-            return 'GREETING', 0.7
-        elif any(kw in tl for kw in ['oferta', 'descuento', 'rebaja', 'promo']):
-            return 'OFFERS', 0.7
-        elif any(kw in tl for kw in ['top', 'mas vendido', 'ranking']):
-            return 'TRENDS', 0.7
+        # Orden: más específico primero
+        _MAP = [
+            ('STOCK_QUERY', ['cuanto hay de', 'stock de', 'quedan de', 'tengo de', 'existencia de']),
+            ('TOP_PRODUCTS', ['top productos', 'mas vendidos', 'productos estrella']),
+            ('ABC', ['analisis abc', 'pareto', 'clasificacion abc']),
+            ('EOQ', ['eoq', 'lote optimo', 'pedido optimo']),
+            ('PREDICTIONS', ['prediccion', 'pronostico', 'proyeccion', 'forecast']),
+            ('ROTATION', ['rotacion', 'indice rotacion']),
+            ('EXPENSES', ['gastos', 'egresos', 'costos fijos']),
+            ('DASHBOARD', ['dashboard', 'resumen', 'estado general', 'kpi']),
+            ('CATEGORIES', ['categorias', 'catalogo', 'secciones', 'que tienen']),
+            ('LOYALTY', ['puntos', 'lealtad', 'fidelidad', 'recompensa']),
+            ('HISTORY', ['historial', 'compras', 'recibo', 'factura']),
+            ('LOGIN', ['login', 'iniciar sesion', 'entrar', 'contrasena']),
+            ('PAYMENT', ['metodo pago', 'pagar', 'efectivo', 'tarjeta', 'cobrar']),
+            ('SYSTEM', ['estado sistema', 'logs', 'debug', 'errores']),
+            ('BACKUP', ['respaldo', 'backup', 'copia seguridad']),
+            ('RECOMMEND', ['recomiendame', 'recomendar', 'sugerir', 'sugerencia']),
+            ('STOCK', ['stock', 'inventario', 'critico', 'agotado', 'reabastecer']),
+            ('FINANCE', ['finanza', 'balance', 'ganancia', 'margen', 'ingreso']),
+            ('SALES', ['venta', 'cuanto vendi', 'caja', 'facturacion']),
+            ('OFFERS', ['oferta', 'descuento', 'rebaja', 'promo']),
+            ('TRENDS', ['top', 'mas vendido', 'ranking', 'popular', 'tendencia']),
+            ('HELP', ['ayuda', 'que puedes', 'opciones', 'menu', 'como funciona']),
+            ('GOODBYE', ['adios', 'hasta luego', 'chao', 'nos vemos', 'bye']),
+            ('GREETING', ['hola', 'buenos dias', 'buenas tardes', 'buenas noches', 'saludos']),
+        ]
+        for intent, keywords in _MAP:
+            if any(kw in tl for kw in keywords):
+                return intent, 0.75
         return None, 0
 
     # ----------------------------------------------------------------

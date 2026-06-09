@@ -46,14 +46,21 @@ try:
     @app.after_request
     def compress_response(response):
         if (response.status_code < 200 or response.status_code >= 300
+                or response.direct_passthrough
                 or 'Content-Encoding' in response.headers
-                or not response.content_type.startswith(('application/json', 'text/'))
-                or len(response.get_data()) < 500):
+                or not response.content_type
+                or not response.content_type.startswith(('application/json', 'text/'))):
+            return response
+        try:
+            data_raw = response.get_data()
+        except RuntimeError:
+            return response
+        if len(data_raw) < 500:
             return response
         accept = request.headers.get('Accept-Encoding', '')
         if 'gzip' not in accept:
             return response
-        data = gzip.compress(response.get_data(), compresslevel=6)
+        data = gzip.compress(data_raw, compresslevel=6)
         response.set_data(data)
         response.headers['Content-Encoding'] = 'gzip'
         response.headers['Content-Length'] = len(data)

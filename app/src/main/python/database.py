@@ -1,5 +1,9 @@
-"""database.py - Facade DAO: re-exporta funciones de modulos DAO para compatibilidad.
-Los modulos reales estan en: db_connection, db_users, db_products, db_ventas, db_config"""
+"""database.py — Facade DAO (DEPRECADO — importar desde los módulos directos).
+
+Re-exporta funciones de: db_connection, db_users, db_products, db_ventas, db_config
+para mantener compatibilidad con los ~38 archivos que aún lo importan.
+TODO: migrar imports directos y eliminar este archivo.
+"""
 from __future__ import annotations
 from models import Producto, Venta, Usuario, Cliente, DetalleVenta
 from typing import Optional, List, Dict, Any, Tuple

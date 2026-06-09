@@ -30,7 +30,7 @@ def importar_excel():
             categoria = p.get('categoria', 'General')
             stock = int(p.get('stock', 0))
             um = p.get('um', 'Un')
-            costo = float(p.get('costo', precio * 0.7))
+            costo = float(p.get('costo', p.get('costoUnitario', p.get('precioCosto', precio * 0.7))))
 
             # Verificar si existe
             cursor.execute("SELECT producto_id FROM productos WHERE nombre = ?", (nombre,))

@@ -204,7 +204,7 @@ def crear_producto():
         cursor = conn.cursor()
         pid = f"prod-{uuid.uuid4().hex[:8]}"
         precio = float(d.get('precio', 0))
-        costo = float(d.get('costo', 0))
+        costo = float(d.get('costo', d.get('costoUnitario', d.get('precioCosto', 0))))
         categoria = d.get('categoria', 'General')
         um = d.get('um', 'Un')
         stock = int(d.get('stock', 0))
@@ -288,7 +288,7 @@ def reconstruir_desde_productos():
                 continue
             pid = p_item.get('id', '')
             precio = float(p_item.get('precio', 0))
-            costo = float(p_item.get('costo', precio * 0.7))
+            costo = float(p_item.get('costo', p_item.get('costoUnitario', p_item.get('precioCosto', precio * 0.7))))
             categoria = p_item.get('categoria', 'General')
             um = p_item.get('um', 'Un')
             _stock_raw = p_item.get('stock_actual', p_item.get('stock', 0))
@@ -323,6 +323,6 @@ def reconstruir_desde_productos():
         conn.commit()
         conn.close()
         return jsonify({"ok": True, "mensaje": f"{reconstruidos} productos reconstruidos",
-                        "reconstruidos": reconstruidos})
+                        "reconstruidos": reconstruidos, "total": reconstruidos})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500

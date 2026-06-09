@@ -1,4 +1,3 @@
-from auth_decorator import login_required
 """
 ╔══════════════════════════════════════════════════════════════╗
 ║   ventas.py  —  TPV ULTRA SMART  v7.0 (COMPLETO)           ║
@@ -8,6 +7,7 @@ from auth_decorator import login_required
 from flask import Blueprint, request, jsonify, session
 from functools import wraps
 from datetime import datetime, timedelta
+from decorators import login_required, requiere_rol, usuario_actual
 from database import (
     consultar_ventas_por_fecha, consultar_resumen_ventas, 
     consultar_ganancias_por_dia, obtener_conexion, agregar_log,

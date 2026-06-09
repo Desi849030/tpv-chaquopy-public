@@ -1,6 +1,5 @@
-from auth_decorator import login_required
 from flask import Blueprint, request, jsonify, session
-from functools import wraps
+from decorators import login_required, requiere_rol, usuario_actual
 from database import (registrar_entrada_producto, obtener_inventario_general, obtener_historial_entradas,
                       asignar_inventario_diario, obtener_inventario_diario, actualizar_vendido_diario,
                       importar_catalogo_a_inventario, eliminar_producto_inventario_general,
@@ -23,7 +22,7 @@ def api_entrada_producto():
     return jsonify(resultado), (200 if resultado["ok"] else 400)
 
 @inv_bp.route("/inventario/general", methods=["GET"])
-@requiere_rol("administrador", "desarrollador")
+@requiere_rol("administrador", "desarrollador", "supervisor", "vendedor")
 def api_inventario_general():
     try:
         u = usuario_actual()

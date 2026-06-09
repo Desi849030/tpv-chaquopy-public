@@ -1,6 +1,6 @@
-from auth_decorator import login_required
 from flask import Blueprint, request, jsonify, session
 from functools import wraps
+from decorators import login_required, requiere_rol, usuario_actual
 from database import (login_usuario, crear_usuario, cambiar_password, resetear_password,
                       listar_usuarios, desactivar_usuario, crear_licencia, listar_licencias,
                       verificar_licencia_activa, desactivar_licencia)

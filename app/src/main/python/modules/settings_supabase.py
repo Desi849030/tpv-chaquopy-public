@@ -1,4 +1,4 @@
-from auth_decorator import login_required
+from decorators import login_required, requiere_rol, usuario_actual
 from modules.settings_bp import settings_bp
 from modules.settings_helpers import *
 

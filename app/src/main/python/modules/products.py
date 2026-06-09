@@ -1,6 +1,6 @@
-from auth_decorator import login_required
 from flask import Blueprint, request, jsonify, session
 from functools import wraps
+from decorators import login_required, requiere_rol, usuario_actual
 from database import obtener_productos_catalogo, sincronizar_productos_catalogo, sincronizar_estado_completo
 
 prod_bp = Blueprint('products', __name__, url_prefix='/api')

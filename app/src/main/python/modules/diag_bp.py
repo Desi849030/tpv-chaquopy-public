@@ -202,6 +202,30 @@ def sincronizar_completo():
     return jsonify({"ok": True, "mensaje": "Sincronización completada"})
 
 
+
+
+@diag_bp.route('/api/pedidos')
+def api_pedidos():
+    """Lista pedidos (tienda online). Filtra por estado si se pasa ?estado=."""
+    estado = request.args.get('estado', '')
+    try:
+        from db_connection import obtener_conexion
+        conn = obtener_conexion()
+        c = conn.cursor()
+        # Intentar leer tabla pedidos si existe
+        try:
+            if estado:
+                c.execute("SELECT * FROM pedidos WHERE estado=? ORDER BY rowid DESC LIMIT 50", (estado,))
+            else:
+                c.execute("SELECT * FROM pedidos ORDER BY rowid DESC LIMIT 50")
+            pedidos = [dict(r) for r in c.fetchall()]
+        except Exception:
+            pedidos = []
+        conn.close()
+        return jsonify({"ok": True, "pedidos": pedidos, "total": len(pedidos)})
+    except Exception:
+        return jsonify({"ok": True, "pedidos": [], "total": 0})
+
 @diag_bp.route('/api/state', methods=['GET'])
 def api_get_state():
     """Obtener estado persistido de la app."""

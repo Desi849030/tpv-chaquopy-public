@@ -1,4 +1,3 @@
-from auth_decorator import login_required
 """
 ╔══════════════════════════════════════════════════════════════╗
 ║   system.py  —  TPV ULTRA SMART  v7.0 (COMPLETO)           ║
@@ -9,6 +8,7 @@ from flask import Blueprint, request, jsonify, session, Response
 from functools import wraps
 from datetime import datetime
 import json, os
+from decorators import login_required, requiere_rol, usuario_actual
 from database import (
     obtener_info_db, DB_FILE, cargar_estado, guardar_estado,
     obtener_historial_diario_local, guardar_historial_diario_local,

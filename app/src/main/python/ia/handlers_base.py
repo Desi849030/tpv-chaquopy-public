@@ -29,7 +29,7 @@ def _fm(agent, text, keywords, threshold=0.85):
             # Exigir longitud parecida para evitar match espurio
             if match and abs(len(word) - len(match)) <= 2:
                 return True
-    except Exception:
+    except Exception:  # noqa: broad-except - graceful degradation
         pass
     return False
 

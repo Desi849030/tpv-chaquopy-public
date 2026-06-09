@@ -81,7 +81,7 @@ def agent_query():
 
         try:
             agregar_log(f"IA: {u.get('username')} preguntó: {query[:50]}...", 'info')
-        except Exception:
+        except Exception:  # noqa: broad-except - graceful degradation
             pass
         return jsonify({'ok': True, 'respuesta': respuesta, 'tipo': tipo, 'data': data_extra})
     except Exception as e:

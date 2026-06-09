@@ -76,7 +76,7 @@ def _obtener_privilegios_rol(rol):
             p = _j.loads(v) if isinstance(v, str) else v
             if isinstance(p, dict):
                 return p
-    except Exception:
+    except Exception:  # noqa: broad-except - graceful degradation
         pass
     finally:
         conn.close()

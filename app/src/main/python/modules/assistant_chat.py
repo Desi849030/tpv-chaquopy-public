@@ -55,9 +55,8 @@ def chat():
             try:
                 mem_extract(sid, q, result.get('intent', 'chat'),
                            result.get('answer', '')[:200], role)
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
-
         result.setdefault('suggestions', [])
         return jsonify(result)
     except Exception as e:

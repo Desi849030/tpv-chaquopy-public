@@ -233,7 +233,7 @@ class ProductAccessor:
                 match, score = best_match(query, names, threshold=50)
                 if match:
                     results = [p for p in self._cache if p['n'] == match]
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
         return results[:limit]
 

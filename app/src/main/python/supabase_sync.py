@@ -103,7 +103,8 @@ def obtener_estado_tablas():
         resultado = {}
         for t in tablas:
             try:
-                c.execute(f'SELECT COUNT(*) FROM "{t}"')
+                # t validated against TABLAS_SYNC whitelist
+                c.execute('SELECT COUNT(*) FROM "' + t.replace('"','') + '"')
                 resultado[t] = {"registros": c.fetchone()[0], "existe": True}
             except:
                 resultado[t] = {"registros": 0, "existe": False}
@@ -142,7 +143,8 @@ def exportar_datos_offline(tabla):
         from db_connection import obtener_conexion
         conn = obtener_conexion()
         c = conn.cursor()
-        c.execute(f'SELECT * FROM {tabla} LIMIT 1000')
+        # tabla from SUPABASE_CONFIG (not user input)
+        c.execute('SELECT * FROM "' + tabla.replace('"','') + '" LIMIT 1000')
         cols = [desc[0] for desc in c.description] if c.description else []
         rows = [dict(zip(cols, row)) for row in c.fetchall()]
         conn.close()

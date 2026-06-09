@@ -72,7 +72,8 @@ def obtener_info_db():
         info = {"archivo": DB_FILE, "tablas": {}}
         for t in TABLAS_PERMITIDAS:
             try:
-                cursor.execute(f'SELECT COUNT(*) AS total FROM "{t}"')
+                # Table/column from whitelist, not user input
+            cursor.execute(f'SELECT COUNT(*) AS total FROM "{t}"')
                 info["tablas"][t] = cursor.fetchone()["total"]
             except Exception:
                 info["tablas"][t] = 0

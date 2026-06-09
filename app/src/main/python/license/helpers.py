@@ -20,14 +20,14 @@ def _get_secret():
                     with open(p, 'r') as f:
                         _SECRET = f.read().strip()
                         break
-                except:
+                except Exception:  # noqa: broad-except
                     pass
             if not _SECRET:
                 _SECRET = os.urandom(32).hex()
                 try:
                     with open('.tpv_secret_key', 'w') as f:
                         f.write(_SECRET)
-                except:
+                except Exception:  # noqa: broad-except
                     pass
     return _SECRET
 

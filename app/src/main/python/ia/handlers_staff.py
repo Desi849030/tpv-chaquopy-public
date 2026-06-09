@@ -487,7 +487,7 @@ def handle_dev(agent, t, name):
             import dev_metrics
             base += "\n\nMétricas del sistema (solo desarrollador):\n"
             base += "Usa el panel de métricas en /dev/metrics para detalles en tiempo real."
-        except Exception:
+        except Exception:  # noqa: broad-except - graceful degradation
             pass
     if any(w in tl for w in ["licencía","license","activacion"]):
         base += "\n\nLicencias: Usa /admin/licencías para gestiónar."

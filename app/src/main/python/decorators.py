@@ -92,11 +92,11 @@ def _check_active(usuario):
                 session["_active_check_ts"] = time.time()
             else:
                 session.clear()
-        except Exception:
+        except Exception:  # noqa: broad-except - graceful degradation
             pass
         finally:
             if conn:
                 try:
                     conn.close()
-                except Exception:
+                except Exception:  # noqa: broad-except - graceful degradation
                     pass

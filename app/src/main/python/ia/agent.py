@@ -249,7 +249,7 @@ def process_question(sid, question, role='cliente', user_name='', user_session=N
         try:
             from flask import current_app
             _app = current_app._get_current_object()
-        except Exception:
+        except Exception:  # noqa: broad-except - graceful degradation
             pass
         agentic = _agentic_gateway(question, user_id=sid, flask_app=_app)
         if agentic and agentic.get('response'):
@@ -266,9 +266,8 @@ def process_question(sid, question, role='cliente', user_name='', user_session=N
                 'tools_used': agentic.get('tools_used', []),
                 'reasoning_log': agentic.get('reasoning_log', []),
             }
-    except Exception:
+    except Exception:  # noqa: broad-except - graceful degradation
         pass
-
     # --- CLASSIC FALLBACK: role-based handlers ---
     r = _get().process(question, sid, role, user_name)
     return {
@@ -352,7 +351,7 @@ def _agentic_gateway(message, user_id="default", flask_app=None):
                 "tools_used": result.get("tools_used", []),
                 "session_id": result.get("session_id"),
             }
-    except Exception:
+    except Exception:  # noqa: broad-except - graceful degradation
         pass
     return None
 

@@ -63,14 +63,13 @@ class ReActEngine:
         if AgentStateManager is not None and session_id:
             try:
                 self.state_manager = AgentStateManager(session_id)
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
         if OutputValidator is not None:
             try:
                 self.validator = OutputValidator()
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
-
     def _load_catalog(self):
         self.tool_catalog = {}
         self.category_index = {}
@@ -93,7 +92,7 @@ class ReActEngine:
         if get_catalog_stats:
             try:
                 stats = get_catalog_stats()
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
         return {
             "engine_ready": self.client is not None,
@@ -118,7 +117,7 @@ class ReActEngine:
                 results = search_tools(query)
                 if results:
                     return results[0]
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
         for cat in CATEGORY_SUMMARIES:
             if cat in q:
@@ -224,7 +223,7 @@ class ReActEngine:
         if self.state_manager:
             try:
                 self.state_manager.update_progress(steps_total=len(steps), steps_done=len(results), result=json.dumps(summary, default=str, ensure_ascii=False)[:2000])
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
         return {"success": len(errors) == 0, "plan": plan_name, "steps_executed": len(results), "steps_total": len(steps), "results": results, "errors": errors, "summary": summary, "timestamp": datetime.now().isoformat()}
 

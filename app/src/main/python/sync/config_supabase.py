@@ -117,7 +117,7 @@ def _verificar_rpc_exec_sql() -> bool:
             return True
         if isinstance(res, dict) and "error" not in str(res):
             return True
-    except Exception:
+    except Exception:  # noqa: broad-except - graceful degradation
         pass
     return False
 

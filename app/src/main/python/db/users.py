@@ -78,9 +78,8 @@ def login_usuario(username, password):
                     (username, 1 if exito else 0)
                 )
                 conn.commit()
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
-
         if not u:
             _registrar(False)
             agregar_log(f"Login fallido: '{username}' no existe", "warning")

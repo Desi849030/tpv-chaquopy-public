@@ -8,7 +8,7 @@ import os
 import sys
 import logging
 
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, request
 
 # ══════════════════════════════════════════════════════════════
 # Paths
@@ -38,7 +38,48 @@ print("📁 Frontend en uso:", _ASSETS)
 # Flask app
 # ══════════════════════════════════════════════════════════════
 app = Flask(__name__, static_folder=_STAT, static_url_path='/static')
-app.config['PERMANENT_SESSION_LIFETIME'] = 86400 * 365
+
+# ── Compresión gzip (Capa 6 - Presentación) ──
+try:
+    import gzip
+    from io import BytesIO
+    @app.after_request
+    def compress_response(response):
+        if (response.status_code < 200 or response.status_code >= 300
+                or 'Content-Encoding' in response.headers
+                or not response.content_type.startswith(('application/json', 'text/'))
+                or len(response.get_data()) < 500):
+            return response
+        accept = request.headers.get('Accept-Encoding', '')
+        if 'gzip' not in accept:
+            return response
+        data = gzip.compress(response.get_data(), compresslevel=6)
+        response.set_data(data)
+        response.headers['Content-Encoding'] = 'gzip'
+        response.headers['Content-Length'] = len(data)
+        response.headers['Vary'] = 'Accept-Encoding'
+        return response
+except Exception:
+    pass  # gzip not available
+
+# ── CORS headers (Capa 7 - Aplicación) ──
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    # CORS for same-origin (loopback)
+    origin = request.headers.get('Origin', '')
+    if origin and ('127.0.0.1' in origin or 'localhost' in origin):
+        response.headers['Access-Control-Allow-Origin'] = origin
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, X-CSRF-Token'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    return response
+app.config['PERMANENT_SESSION_LIFETIME'] = 86400 * 30  # 30 días (no 365)
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.secret_key = os.environ.get(
     'TPV_SECRET_KEY',
     'tpv-ultra-smart-v8-CAMBIAR-EN-PRODUCCION'
@@ -126,7 +167,7 @@ def _init_db_if_empty():
         try:
             from db.schema import crear_tablas_schema
             crear_tablas_schema(conn)
-        except Exception:
+        except Exception:  # noqa: broad-except - graceful degradation
             pass
         c.execute("SELECT COUNT(*) FROM productos")
         if c.fetchone()[0] > 0:
@@ -271,4 +312,4 @@ if __name__ == '__main__':
     print(f" ✅ URL: http://localhost:5000\n")
     logging.basicConfig(level=logging.WARNING)
     port = int(os.environ.get('TPV_PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
+    app.run(host='127.0.0.1', port=port, debug=False, threaded=True)

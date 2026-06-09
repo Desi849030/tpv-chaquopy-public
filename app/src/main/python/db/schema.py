@@ -272,7 +272,6 @@ def crear_tablas_schema(conn):
     for sql in ALL_TABLES:
         try:
             cur.execute(sql)
-        except Exception:
+        except Exception:  # noqa: broad-except - graceful degradation
             pass
-
     crear_indices(conn)

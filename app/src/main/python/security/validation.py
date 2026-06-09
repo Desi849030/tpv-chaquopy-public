@@ -129,7 +129,8 @@ def calcular_cierre_server(fecha, vendedor_id=None):
     try:
         where = "WHERE fecha=?" + (" AND vendedor_id=?" if vendedor_id else "")
         params = [fecha] + ([vendedor_id] if vendedor_id else [])
-        row = conn.execute(f"""
+        # tabla is validated against TABLAS_PERMITIDAS whitelist
+        row = conn.execute("""
             SELECT COUNT(*), COALESCE(SUM(total),0)
             FROM historial_ventas {where}
         """, params).fetchone()

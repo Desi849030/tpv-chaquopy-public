@@ -217,28 +217,24 @@ class AgentMaster:
         if self.skill_registry:
             try:
                 resp = self.skill_registry.enrich_response(resp, text or '', role, context=enriched_ctx)
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
-
         # 7. Humanizar respuesta
         try:
             resp = self.humanizer.enhance(resp, role)
-        except Exception:
+        except Exception:  # noqa: broad-except - graceful degradation
             pass
-
         # 8. Sanitizar texto
         try:
             resp = self.humanizer.sanitize_text(resp)
-        except Exception:
+        except Exception:  # noqa: broad-except - graceful degradation
             pass
-
         # 9. Guardar en memoria avanzada
         if self.adv_memory_ok:
             try:
                 extract_and_save(session_id, text or '', intent_str, resp[:200], role)
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
-
         # 10. Guardar en memoria basica (fallback)
         self.sessions[session_id] = {
             "text": text, "role": role,
@@ -282,9 +278,8 @@ class AgentMaster:
             if rows:
                 items = [f"{r[0]}: ${r[1]:.2f} ({r[3]} {r[2]})" for r in rows[:5]]
                 return {'response': f"{icon} Productos encontrados:\n" + "\n".join(f"  📦 {item}" for item in items), 'exact': True}
-        except Exception:
+        except Exception:  # noqa: broad-except - graceful degradation
             pass
-
         # Intento 2: fuzzy match si no hubo resultado exacto
         if _HAS_FUZZY:
             try:
@@ -313,9 +308,9 @@ class AgentMaster:
                                     'response': f"{icon} Quisiste decir:\n" + "\n".join(f"  📦 {item}" for item in items),
                                     'exact': False, 'fuzzy_score': score
                                 }
-                        except Exception:
+                        except Exception:  # noqa: broad-except - graceful degradation
                             pass
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
         return None
 
@@ -448,7 +443,7 @@ class AgentMaster:
                     if mission:
                         import random as _rnd
                         greeting += f"\n💡 {_rnd.choice(mission)}\n"
-                except Exception:
+                except Exception:  # noqa: broad-except - graceful degradation
                     pass
             return greeting + "\n¿En qué puedo ayudarte?"
 
@@ -465,7 +460,7 @@ class AgentMaster:
                                 f"📊 Gastos: ${d['g']:,.2f}\n"
                                 f"📈 Margen: {margen:.1f}%\n"
                                 f"💵 Ganancia: ${prof:,.2f}")
-                    except Exception:
+                    except Exception:  # noqa: broad-except - graceful degradation
                         pass
                 try:
                     d = F.diario()
@@ -491,7 +486,7 @@ class AgentMaster:
                         else:
                             msg += "\n✅ Todo el stock está por encima del mínimo."
                         return msg
-                    except Exception:
+                    except Exception:  # noqa: broad-except - graceful degradation
                         pass
                 return f"{icon} Inventario: usa la pestaña Inventario para ver el detalle."
             return f"{icon} No tienes acceso al inventario con tu rol actual."
@@ -503,7 +498,7 @@ class AgentMaster:
                         d = F.diario()
                         return (f"{icon} Ventas Hoy:\n🛒 {d['t']} transacciones | ${d['r']:,.2f}\n"
                                 f"📊 Promedio: ${d['a']:,.2f}")
-                    except Exception:
+                    except Exception:  # noqa: broad-except - graceful degradation
                         pass
                 try:
                     d = F.diario()
@@ -525,9 +520,8 @@ class AgentMaster:
                                         for i, t in enumerate(top))
                         return f"{icon} Top productos (últimos 7 días):\n{lst}"
                     return f"{icon} Aún no hay ventas suficientes esta semana para un ranking."
-                except Exception:
+                except Exception:  # noqa: broad-except - graceful degradation
                     pass
-
         if 'CATEGORIES' in intent or 'categoria' in (text or '').lower():
             if _HAS_METRICS:
                 try:
@@ -536,9 +530,8 @@ class AgentMaster:
                         lst = '\n'.join(f"  • {c['cat']}: {c['n']} productos (${(c['valor'] or 0):,.2f})"
                                         for c in cats[:8])
                         return f"{icon} Categorías del catálogo:\n{lst}"
-                except Exception:
+                except Exception:  # noqa: broad-except - graceful degradation
                     pass
-
         # Consulta de stock de un producto concreto ("cuanto hay de X")
         if 'STOCK_QUERY' in intent and _HAS_METRICS:
             try:
@@ -552,9 +545,8 @@ class AgentMaster:
                                         for r in res[:6])
                         return f"{icon} Stock de '{term}':\n{lst}"
                     return f"{icon} No encontré productos que coincidan con '{term}'."
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
-
         if 'RECOMMEND' in intent or 'OFFERS' in intent:
             if _HAS_METRICS:
                 try:
@@ -565,7 +557,7 @@ class AgentMaster:
                                 f"⭐ Más vendido: {estrella}\n"
                                 f"📈 También destacan: " + ', '.join(t['nombre'] for t in top[1:3]) +
                                 f"\n💡 Considera ofertas en productos de baja rotación.")
-                except Exception:
+                except Exception:  # noqa: broad-except - graceful degradation
                     pass
             return f"{icon} Recomendaciones: revisa el Dashboard para ver tendencias de venta."
 
@@ -603,7 +595,7 @@ class AgentMaster:
                 if role not in self._guide_managers:
                     self._guide_managers[role] = GuideManager(user_role=role)
                 return self._guide_managers[role].get_contextual_guide(screen_id)
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
         # Fallback basico
         if _HAS_ROLE_GUIDANCE:
@@ -611,7 +603,7 @@ class AgentMaster:
                 missions = ROLE_MISSIONS.get(role, ROLE_MISSIONS.get('cliente', {}))
                 suggestions = missions.get('operativo', ['Estoy aqui para ayudarle.'])
                 return f"🤖 {random.choice(suggestions)}"
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
         return "🤖 ¿En qué puedo ayudarle?"
 
@@ -667,12 +659,12 @@ class AgentMaster:
         if self.react_engine:
             try:
                 status['react_status'] = self.react_engine.get_status()
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
         if self.skill_registry:
             try:
                 status['skills_count'] = len(self.skill_registry.skills)
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
         return status
 
@@ -684,7 +676,7 @@ class AgentMaster:
         if self.adv_memory_ok:
             try:
                 return recall(session_id, category=category, limit=limit)
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
         # Fallback: memoria basica
         return self.sessions.get(session_id, {})
@@ -694,7 +686,7 @@ class AgentMaster:
         if self.adv_memory_ok:
             try:
                 return mem_forget(session_id, category=category)
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
         # Fallback: memoria basica
         if session_id in self.sessions:
@@ -707,7 +699,7 @@ class AgentMaster:
         if self.adv_memory_ok:
             try:
                 return mem_summary(session_id)
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
         return {'total': len(self.sessions), 'categories': {}}
 

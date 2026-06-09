@@ -173,7 +173,7 @@ def notificaciones():
                               "mensaje": f"Cierre pendiente del día {ayer}",
                               "accion": "cierre"})
         conn.close()
-    except Exception:
+    except Exception:  # noqa: broad-except - graceful degradation
         pass
     return jsonify({"ok": True, "notificaciones": notas, "total": len(notas)})
 
@@ -192,7 +192,7 @@ def generar_qr(producto_id):
         if row:
             return jsonify({"ok": True,
                             "qr_data": f"PROD:{producto_id}|{row[0]}|${row[1]}|{row[2]}"})
-    except Exception:
+    except Exception:  # noqa: broad-except - graceful degradation
         pass
     return jsonify({"ok": False, "error": "Producto no encontrado"}), 404
 

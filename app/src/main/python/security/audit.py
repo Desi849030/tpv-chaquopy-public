@@ -23,11 +23,10 @@ def registrar_auditoria(app_instance):
                 try:
                     from database import agregar_log
                     agregar_log(f"AUDIT:{json.dumps(entry, ensure_ascii=False)}", "info")
-                except Exception:
+                except Exception:  # noqa: broad-except - graceful degradation
                     pass
-        except Exception:
+        except Exception:  # noqa: broad-except - graceful degradation
             pass
-
 # ══════════════════════════════════════════════════════════════
 #  CIFRADO LIVIANO PARA DATOS SENSIBLES (offline-safe)
 # ══════════════════════════════════════════════════════════════

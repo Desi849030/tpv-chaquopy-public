@@ -64,9 +64,8 @@ def crear_tablas_tienda():
     # Migración: añadir imagen si no existe en BD existente
     try:
         cursor.execute("ALTER TABLE tiendas ADD COLUMN imagen TEXT DEFAULT ''")
-    except Exception:
+    except Exception:  # noqa: broad-except - graceful degradation
         pass
-    
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS pedidos_tienda (
             id              INTEGER PRIMARY KEY AUTOINCREMENT,

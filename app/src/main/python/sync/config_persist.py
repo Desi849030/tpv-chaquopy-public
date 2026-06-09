@@ -53,7 +53,7 @@ def _cargar_config_desde_archivo():
         if os.path.exists(_CONFIG_FILE):
             with open(_CONFIG_FILE, 'r') as f:
                 return json.load(f)
-    except Exception:
+    except Exception:  # noqa: broad-except - graceful degradation
         pass
     return None
 

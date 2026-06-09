@@ -179,6 +179,36 @@ def sincronizar_todo() -> dict:
     except Exception as e:
         print(f"  Error sync inventario: {e}")
 
+    # Sync productos
+    try:
+        conn = obtener_conexion()
+        rows = conn.execute("SELECT * FROM productos WHERE activo=1 ORDER BY nombre").fetchall()
+        conn.close()
+        if rows:
+            resultados["productos"] = guardar_en_supabase({"productos": [dict(r) for r in rows]})
+    except Exception as e:
+        print(f"  Error sync productos: {e}")
+
+    # Sync gastos
+    try:
+        conn = obtener_conexion()
+        rows = conn.execute("SELECT * FROM gastos ORDER BY fecha DESC LIMIT 200").fetchall()
+        conn.close()
+        if rows:
+            resultados["gastos"] = guardar_en_supabase({"gastos": [dict(r) for r in rows]})
+    except Exception as e:
+        print(f"  Error sync gastos: {e}")
+
+    # Sync cierres de caja
+    try:
+        conn = obtener_conexion()
+        rows = conn.execute("SELECT * FROM cierres_caja ORDER BY fecha DESC LIMIT 90").fetchall()
+        conn.close()
+        if rows:
+            resultados["cierres"] = guardar_en_supabase({"cierres": [dict(r) for r in rows]})
+    except Exception as e:
+        print(f"  Error sync cierres: {e}")
+
     return {
         "ok":         True,
         "estado":     resultados.get("estado", False),
@@ -186,6 +216,9 @@ def sincronizar_todo() -> dict:
         "clientes":   resultados.get("clientes", {}),
         "ventas":     resultados.get("ventas", False),
         "inventario": resultados.get("inventario", False),
+        "productos":  resultados.get("productos", False),
+        "gastos":     resultados.get("gastos", False),
+        "cierres":    resultados.get("cierres", False),
     }
 
 # ══════════════════════════════════════════════════════════════

@@ -96,6 +96,10 @@ SUPABASE_CONFIG = {
     "tabla_tiendas":        "tpv_tiendas",
     "tabla_pedidos":        "tpv_pedidos_tienda",
     "tabla_items_pedido":   "tpv_items_pedido",
+    "tabla_cierres_caja":  "tpv_cierres_caja",
+    "tabla_inventarios":   "tpv_inventarios",
+    "tabla_ventas_hist":   "tpv_ventas",
+    "tabla_pedidos_all":   "tpv_pedidos",
     "registro_id":          1,
 }
 

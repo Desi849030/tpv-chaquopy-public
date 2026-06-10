@@ -278,7 +278,7 @@ try:
     from sync.config_supabase import (
         verificar_tablas_supabase, setup_supabase, obtener_sql_completo,
         guardar_historial_diario, obtener_historial_diario,
-        obtener_historial_detalle,
+        obtener_historial_detalle, cargar_desde_supabase,
     )
     from sync.config_persist import TABLAS_SQL
 except ImportError:
@@ -289,4 +289,5 @@ except ImportError:
     def guardar_historial_diario(s): return {"ok": False}
     def obtener_historial_diario(l=30): return {"ok": True, "dias": []}
     def obtener_historial_detalle(f): return {}
+    def cargar_desde_supabase(): return None
     TABLAS_SQL = {}

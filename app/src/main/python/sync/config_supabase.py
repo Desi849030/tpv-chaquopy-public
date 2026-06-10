@@ -12,8 +12,8 @@ import urllib.request
 import urllib.error
 import urllib.parse
 from datetime import datetime
+from sync.config_persist import SUPABASE_CONFIG, TABLAS_SQL
 
-from sync.config_persist import SUPABASE_CONFIG
 SUPABASE_OK = False
 try:
     from dotenv import load_dotenv

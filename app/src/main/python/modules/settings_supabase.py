@@ -2,6 +2,7 @@ import json, threading, queue as _queue
 from decorators import login_required, requiere_rol, usuario_actual
 from modules.settings_helpers import settings_bp
 import sync.config_supabase as _csb_mod
+import sync.config_supabase as _csb_mod
 import sync.supabase_sync as _sb
 from modules.settings_helpers import (request, jsonify, session,
     cargar_estado, guardar_estado, obtener_config_actual,

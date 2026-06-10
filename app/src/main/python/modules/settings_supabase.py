@@ -114,9 +114,11 @@ def api_supabase_sync_full():
 @login_required
 def api_supabase_estado():
     try:
-        config = obtener_config_actual()
-        tablas = verificar_tablas_supabase() if config.get("configurado") else {}
-        return jsonify({"ok":True,"configurado":config.get("configurado",False),"url":config.get("url",""),"tablas":tablas})
+        url = _sb.SUPABASE_CONFIG.get("url","")
+        key = _sb.SUPABASE_CONFIG.get("anon_key","")
+        ok = bool(url.startswith("https://") and len(key)>20)
+        tablas = verificar_tablas_supabase() if ok else {}
+        return jsonify({"ok":True,"configurado":ok,"url":url,"tablas":tablas})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
 

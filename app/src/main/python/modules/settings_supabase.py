@@ -1,12 +1,22 @@
+import json, threading, queue as _queue
 from decorators import login_required, requiere_rol, usuario_actual
-from modules.settings_bp import settings_bp
-from modules.settings_helpers import *
+from modules.settings_helpers import settings_bp
+import sync.supabase_sync as _sb
+from modules.settings_helpers import (request, jsonify, session,
+    cargar_estado, guardar_estado, obtener_config_actual,
+    sincronizar_todo, probar_conexion, guardar_en_supabase,
+    cargar_desde_supabase, verificar_tablas_supabase, setup_supabase,
+    obtener_sql_completo, TABLAS_SQL)
 
 @settings_bp.route("/api/supabase/config", methods=["GET"])
 @requiere_rol("administrador","desarrollador")
 def get_supabase_config():
     try:
-        return jsonify(_sb.obtener_config_completa())
+        url = _sb.SUPABASE_CONFIG.get("url", "")
+        key = _sb.SUPABASE_CONFIG.get("anon_key", "")
+        k = key[:8] + "..." + key[-4:] if len(key) > 12 else "no configurada"
+        return jsonify({"url": url, "anon_key": key, "anon_key_preview": k,
+                        "configurado": _sb.SUPABASE_OK})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

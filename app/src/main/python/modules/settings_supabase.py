@@ -1,6 +1,7 @@
 import json, threading, queue as _queue
 from decorators import login_required, requiere_rol, usuario_actual
 from modules.settings_helpers import settings_bp
+import sync.config_supabase as _csb_mod
 import sync.supabase_sync as _sb
 from modules.settings_helpers import (request, jsonify, session,
     cargar_estado, guardar_estado, obtener_config_actual,
@@ -16,7 +17,7 @@ def get_supabase_config():
         key = _sb.SUPABASE_CONFIG.get("anon_key", "")
         k = key[:8] + "..." + key[-4:] if len(key) > 12 else "no configurada"
         return jsonify({"url": url, "anon_key": key, "anon_key_preview": k,
-                        "configurado": _sb.SUPABASE_OK})
+                        "configurado": _csb_mod.SUPABASE_OK})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -47,7 +48,7 @@ def test_supabase():
 @settings_bp.route("/api/supabase/push", methods=["POST"])
 @requiere_rol("administrador","desarrollador")
 def push_supabase():
-    if not _sb.SUPABASE_OK:
+    if not _csb_mod.SUPABASE_OK:
         return jsonify({"error": "Supabase no configurado"}), 400
     estado = cargar_estado()
     if not estado:
@@ -57,7 +58,7 @@ def push_supabase():
 @settings_bp.route("/api/supabase/pull", methods=["POST"])
 @requiere_rol("administrador","desarrollador")
 def pull_supabase():
-    if not _sb.SUPABASE_OK:
+    if not _csb_mod.SUPABASE_OK:
         return jsonify({"error": "Supabase no configurado"}), 400
     estado = cargar_desde_supabase()
     if not estado:
@@ -67,7 +68,7 @@ def pull_supabase():
 @settings_bp.route("/api/supabase/sync-full", methods=["POST"])
 @requiere_rol("administrador","desarrollador")
 def api_supabase_sync_full():
-    if not _sb.SUPABASE_OK:
+    if not _csb_mod.SUPABASE_OK:
         return jsonify({"ok": False, "mensaje": "Supabase no configurado"}), 400
     try:
         from database import obtener_conexion
@@ -88,7 +89,7 @@ def api_supabase_sync_full():
         url = _sb.SUPABASE_CONFIG["url"]
         def upsert(tabla, datos):
             if not datos: return 0
-            from sync.supabase_sync import _peticion, _headers
+            from sync.config_supabase import _peticion, _headers
             import urllib.request as _ur, json as _j
             req = _ur.Request(f"{url}/rest/v1/{tabla}",
                 data=_j.dumps(datos, ensure_ascii=False, default=str).encode(), method="POST")

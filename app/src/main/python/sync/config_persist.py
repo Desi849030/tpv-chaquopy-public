@@ -103,7 +103,7 @@ SUPABASE_CONFIG = {
     "registro_id":          1,
 }
 
-SUPABASE_OK = False
+# SUPABASE_OK movido a config_supabase.py
 
 # ══════════════════════════════════════════════════════════════
 #  SQL DINÁMICO PARA CADA TABLA

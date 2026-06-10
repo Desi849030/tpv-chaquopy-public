@@ -1,4 +1,5 @@
 from sync.config import *
+import sync.config_supabase as _cfg
 
 def guardar_en_supabase(estado: dict) -> bool:
     if not SUPABASE_OK:

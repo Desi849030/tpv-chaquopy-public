@@ -269,3 +269,24 @@ def obtener_config_completa() -> dict:
 
 # Inicializar al importar
 verificar_supabase()
+
+
+# ══════════════════════════════════════════════════════════════
+#  Re-exports de config_supabase (para compatibilidad con settings_helpers)
+# ══════════════════════════════════════════════════════════════
+try:
+    from sync.config_supabase import (
+        verificar_tablas_supabase, setup_supabase, obtener_sql_completo,
+        guardar_historial_diario, obtener_historial_diario,
+        obtener_historial_detalle,
+    )
+    from sync.config_persist import TABLAS_SQL
+except ImportError:
+    # Fallbacks si config_supabase no está disponible
+    def verificar_tablas_supabase(): return {}
+    def setup_supabase(): return {"ok": False, "mensaje": "config_supabase no disponible"}
+    def obtener_sql_completo(): return ""
+    def guardar_historial_diario(s): return {"ok": False}
+    def obtener_historial_diario(l=30): return {"ok": True, "dias": []}
+    def obtener_historial_detalle(f): return {}
+    TABLAS_SQL = {}

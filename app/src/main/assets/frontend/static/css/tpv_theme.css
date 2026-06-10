@@ -495,3 +495,29 @@ canvas { max-width: 100% !important; height: auto !important; }
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ── Debug panel: no desbordar pantalla ── */
+#debug-panel,
+.debug-panel,
+[id*="debug"] {
+  max-height: 50vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+#debug-panel .log-container,
+.debug-log-list {
+  max-height: 40vh;
+  overflow-y: auto;
+  font-size: 0.72rem;
+  word-break: break-all;
+}
+/* Barra debug inferior: no tapar contenido */
+.debug-bar-bottom {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9990;
+  max-height: 32px;
+  overflow: hidden;
+}

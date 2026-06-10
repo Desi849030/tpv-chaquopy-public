@@ -470,10 +470,22 @@ def handle_admin(agent, t, name):
             msg += f"- {p['n']}: {fmt_money(p['p'])} | Stock: {p['s']:.0f}\n"
         return msg
 
-    return ("Gestor completo a su disposición. Puede consultar:\n"
-            "Finanzas | ABC | Punto equilibrio\n"
-            "Stock | Predicciones | Ofertas\n"
-            "Rotación | Gastos | EOQ")
+    # Respuesta contextual con datos reales en vez de menú genérico
+    try:
+        resumen = F.diario()
+        low_count = sum(1 for p in P.cache if 0 < p.get('s', 0) <= 5)
+        resp = f"Resumen rápido:\n"
+        resp += f"💰 Ventas hoy: ${resumen['r']:,.2f} ({resumen['t']} transacciones)\n"
+        resp += f"📊 Ticket promedio: ${resumen['a']:,.2f}\n"
+        if low_count > 0:
+            resp += f"⚠️ {low_count} productos con stock bajo\n"
+        resp += f"\n¿Qué necesita? (finanzas, ABC, stock, predicciones, gastos, EOQ)"
+        return resp
+    except Exception:  # noqa: broad-except
+        return ("¿Qué necesita consultar? Opciones:\n"
+                "💰 Finanzas · 📊 ABC · ⚖️ Punto equilibrio\n"
+                "📦 Stock · 🔮 Predicciones · 🏷️ Ofertas\n"
+                "🔄 Rotación · 🧾 Gastos · 📐 EOQ")
 
 
 # ================================================================

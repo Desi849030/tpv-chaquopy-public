@@ -8,11 +8,9 @@ from flask import Blueprint, request, jsonify, session
 
 diag_bp = Blueprint('diag', __name__)
 
-
 @diag_bp.route('/api/health')
 def health():
     return jsonify({"status": "ok", "version": "8.0", "db": True})
-
 
 @diag_bp.route('/api/dev/metrics')
 def dev_metrics():
@@ -29,7 +27,6 @@ def dev_metrics():
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
 
-
 @diag_bp.route('/api/diag/crashlog')
 def diag_crashlog():
     """Devuelve el contenido de crash.log."""
@@ -41,7 +38,6 @@ def diag_crashlog():
         return jsonify({"ok": True, "existe": False, "log": "Sin errores registrados ✅"})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)})
-
 
 @diag_bp.route('/api/diag/info')
 def diag_info():
@@ -62,7 +58,6 @@ def diag_info():
             info["mod_" + mod] = "FALTA (%s)" % e
     return jsonify(info)
 
-
 @diag_bp.route('/api/auth/auto-backup', methods=['POST'])
 def auto_backup():
     """Backup automático periódico."""
@@ -73,7 +68,6 @@ def auto_backup():
         return jsonify({"ok": True, "backup": backup_path})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 200
-
 
 @diag_bp.route('/api/db/backup', methods=['POST'])
 def backup_bd():
@@ -87,59 +81,12 @@ def backup_bd():
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)})
 
-
-@diag_bp.route('/api/supabase/estado')
-def supabase_estado():
-    """Estado de configuración de Supabase."""
-    try:
-        from sync.config_persist import SUPABASE_CONFIG
-        url = SUPABASE_CONFIG.get("url", "") or ""
-        key = SUPABASE_CONFIG.get("anon_key", "") or ""
-        configurado = bool(
-            url.startswith("https://") and len(key) > 20
-            and "TU-PROYECTO" not in url and "TU_ANON_KEY" not in key
-        )
-        tablas = [v for k, v in SUPABASE_CONFIG.items() if k.startswith("tabla_")]
-        return jsonify({"ok": True, "configurado": configurado, "url": url, "tablas": tablas})
-    except Exception as e:
-        return jsonify({"ok": True, "configurado": False, "url": "", "tablas": [],
-                        "error": str(e)})
-
-
-@diag_bp.route('/api/supabase/config', methods=['GET', 'POST'])
-def supabase_config():
-    """GET: URL/anon_key actuales. POST: guarda nuevas."""
-    try:
-        from sync.config_persist import SUPABASE_CONFIG, _guardar_config_a_archivo
-        if request.method == 'GET':
-            return jsonify({"ok": True,
-                            "url": SUPABASE_CONFIG.get("url", ""),
-                            "anon_key": SUPABASE_CONFIG.get("anon_key", "")})
-        d = request.get_json(silent=True) or {}
-        nueva_url = (d.get("url") or "").strip()
-        nueva_key = (d.get("anon_key") or d.get("key") or "").strip()
-        if nueva_url:
-            SUPABASE_CONFIG["url"] = nueva_url
-        if nueva_key:
-            SUPABASE_CONFIG["anon_key"] = nueva_key
-        _guardar_config_a_archivo()
-        configurado = bool(
-            SUPABASE_CONFIG["url"].startswith("https://")
-            and len(SUPABASE_CONFIG["anon_key"]) > 20
-        )
-        return jsonify({"ok": True, "mensaje": "Configuración de Supabase guardada",
-                        "configurado": configurado})
-    except Exception as e:
-        return jsonify({"ok": False, "error": str(e)}), 500
-
-
 @diag_bp.route('/api/seguridad/check')
 def seguridad_check():
     """Verificación de seguridad del sistema."""
     checks = {"csrf": True, "xss_proteccion": True, "sql_injection": True,
               "rate_limiting": True, "https": False, "nivel": "alto"}
     return jsonify({"ok": True, "seguridad": checks})
-
 
 @diag_bp.route('/api/notificaciones')
 def notificaciones():
@@ -177,7 +124,6 @@ def notificaciones():
         pass
     return jsonify({"ok": True, "notificaciones": notas, "total": len(notas)})
 
-
 @diag_bp.route('/api/qr/<producto_id>')
 def generar_qr(producto_id):
     """Genera datos para código QR de un producto."""
@@ -196,13 +142,9 @@ def generar_qr(producto_id):
         pass
     return jsonify({"ok": False, "error": "Producto no encontrado"}), 404
 
-
 @diag_bp.route('/api/sincronizar-completo', methods=['POST'])
 def sincronizar_completo():
     return jsonify({"ok": True, "mensaje": "Sincronización completada"})
-
-
-
 
 @diag_bp.route('/api/pedidos')
 def api_pedidos():
@@ -252,7 +194,6 @@ def api_get_state():
         return jsonify({"ok": True, "estado": None})
     except Exception:
         return jsonify({"ok": True, "estado": None})
-
 
 @diag_bp.route('/api/state', methods=['POST'])
 def api_save_state():

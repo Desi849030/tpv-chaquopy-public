@@ -2,7 +2,9 @@ import json, threading, queue as _queue
 from decorators import login_required, requiere_rol, usuario_actual
 from modules.settings_helpers import settings_bp
 import sync.config_supabase as _csb_mod
+from sync.config_persist import _guardar_config_a_archivo, TABLAS_SQL, SQL_COMPLETO
 import sync.config_supabase as _csb_mod
+from sync.config_persist import _guardar_config_a_archivo, TABLAS_SQL, SQL_COMPLETO
 import sync.supabase_sync as _sb
 from modules.settings_helpers import (request, jsonify, session,
     cargar_estado, guardar_estado, obtener_config_actual,
@@ -31,7 +33,11 @@ def save_supabase_config():
         key = d.get("anon_key", "").strip()
         if not url or not key:
             return jsonify({"error": "URL y anon_key son obligatorios"}), 400
-        resultado = _sb.actualizar_config(url, key)
+        _csb_mod.SUPABASE_CONFIG["url"] = url.rstrip("/")
+        _csb_mod.SUPABASE_CONFIG["anon_key"] = key
+        _guardar_config_a_archivo()
+        _csb_mod.verificar_supabase()
+        resultado = {"ok": True}
         return jsonify({"ok": True, "mensaje": "Config guardada y persistida", "resultado": resultado})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -145,7 +151,7 @@ def api_supabase_sql():
     if u.get("rol") not in ("desarrollador",):
         return jsonify({"ok": False, "mensaje": "Solo Desarrollador"}), 403
     return jsonify({
-        "ok": True, "sql": obtener_sql_completo(),
+        "ok": True, "sql": SQL_COMPLETO,
         "sql_por_tabla": {tabla: sql.strip() for tabla, sql in TABLAS_SQL.items()}
     })
 

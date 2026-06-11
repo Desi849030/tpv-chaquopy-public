@@ -33,11 +33,18 @@ def save_supabase_config():
         key = d.get("anon_key", "").strip()
         if not url or not key:
             return jsonify({"error": "URL y anon_key son obligatorios"}), 400
-        _csb_mod.SUPABASE_CONFIG["url"] = url.rstrip("/")
-        _csb_mod.SUPABASE_CONFIG["anon_key"] = key
-        _guardar_config_a_archivo()
-        _csb_mod.verificar_supabase()
-        resultado = {"ok": True}
+        from sync.config_persist import SUPABASE_CONFIG as _SC
+            _SC["url"] = url.rstrip("/")
+            _SC["anon_key"] = key
+            _csb_mod.SUPABASE_CONFIG["url"] = url.rstrip("/")
+            _csb_mod.SUPABASE_CONFIG["anon_key"] = key
+            # Guardar a disco
+            import json as _json2, os as _os2
+            _cfg_path = _os2.path.join(_os2.environ.get("TPV_FILES_DIR", _os2.getcwd()), "supabase_config.json")
+            with open(_cfg_path, "w") as _f2:
+                _json2.dump({"url": url.rstrip("/"), "anon_key": key}, _f2)
+            _csb_mod.verificar_supabase()
+            resultado = {"ok": True, "configurado": _csb_mod.SUPABASE_OK}
         return jsonify({"ok": True, "mensaje": "Config guardada y persistida", "resultado": resultado})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -128,7 +135,19 @@ def api_supabase_estado():
         url = _csb_mod.SUPABASE_CONFIG.get("url","")
         key = _csb_mod.SUPABASE_CONFIG.get("anon_key","")
         ok = bool(url.startswith("https://") and len(key)>20)
-        tablas = verificar_tablas_supabase() if ok else {}
+        tablas = {}
+        if ok:
+            import time as _t
+            _now = _t.time()
+            if not hasattr(api_supabase_estado, '_cache') or _now - api_supabase_estado._cache_t > 60:
+                try:
+                    tablas = verificar_tablas_supabase()
+                    api_supabase_estado._cache = tablas
+                    api_supabase_estado._cache_t = _now
+                except Exception:
+                    tablas = getattr(api_supabase_estado, '_cache', {})
+            else:
+                tablas = api_supabase_estado._cache
         return jsonify({"ok":True,"configurado":ok,"url":url,"tablas":tablas})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500

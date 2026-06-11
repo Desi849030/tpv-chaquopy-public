@@ -14,8 +14,8 @@ from modules.settings_helpers import (request, jsonify, session,
 @requiere_rol("administrador","desarrollador")
 def get_supabase_config():
     try:
-        url = _sb.SUPABASE_CONFIG.get("url", "")
-        key = _sb.SUPABASE_CONFIG.get("anon_key", "")
+        url = _csb_mod.SUPABASE_CONFIG.get("url", "")
+        key = _csb_mod.SUPABASE_CONFIG.get("anon_key", "")
         k = key[:8] + "..." + key[-4:] if len(key) > 12 else "no configurada"
         return jsonify({"url": url, "anon_key": key, "anon_key_preview": k,
                         "configurado": _csb_mod.SUPABASE_OK})
@@ -35,6 +35,11 @@ def save_supabase_config():
         return jsonify({"ok": True, "mensaje": "Config guardada y persistida", "resultado": resultado})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@settings_bp.route("/api/supabase/sync", methods=["POST"])
+@requiere_rol("administrador","desarrollador")
+def sync_alias():
+    return sync_all()
 
 @settings_bp.route("/api/supabase/sync-all", methods=["POST"])
 @requiere_rol("administrador","desarrollador")
@@ -87,7 +92,7 @@ def api_supabase_sync_full():
             "SELECT * FROM gastos WHERE 1=1"
         ).fetchall()]
         conn.close()
-        url = _sb.SUPABASE_CONFIG["url"]
+        url = _csb_mod.SUPABASE_CONFIG["url"]
         def upsert(tabla, datos):
             if not datos: return 0
             from sync.config_supabase import _peticion, _headers
@@ -114,10 +119,10 @@ def api_supabase_sync_full():
 @login_required
 def api_supabase_estado():
     try:
-        url = _sb.SUPABASE_CONFIG.get("url","")
-        key = _sb.SUPABASE_CONFIG.get("anon_key","")
+        url = _csb_mod.SUPABASE_CONFIG.get("url","")
+        key = _csb_mod.SUPABASE_CONFIG.get("anon_key","")
         ok = bool(url.startswith("https://") and len(key)>20)
-        tablas = verificar_tablas_supabase() if ok else {}
+        tablas = {}  # skip tabla check (lento en 4G)
         return jsonify({"ok":True,"configurado":ok,"url":url,"tablas":tablas})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500

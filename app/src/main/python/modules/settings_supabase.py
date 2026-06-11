@@ -128,7 +128,7 @@ def api_supabase_estado():
         url = _csb_mod.SUPABASE_CONFIG.get("url","")
         key = _csb_mod.SUPABASE_CONFIG.get("anon_key","")
         ok = bool(url.startswith("https://") and len(key)>20)
-        tablas = {}  # skip tabla check (lento en 4G)
+        tablas = verificar_tablas_supabase() if ok else {}
         return jsonify({"ok":True,"configurado":ok,"url":url,"tablas":tablas})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500

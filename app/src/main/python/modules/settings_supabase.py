@@ -11,7 +11,7 @@ from modules.settings_helpers import (request, jsonify, session,
     obtener_sql_completo, TABLAS_SQL)
 
 @settings_bp.route("/api/supabase/config", methods=["GET"])
-@requiere_rol("administrador","desarrollador")
+@login_required
 def get_supabase_config():
     try:
         url = _csb_mod.SUPABASE_CONFIG.get("url", "")

@@ -2,15 +2,13 @@ import json, threading, queue as _queue
 from decorators import login_required, requiere_rol, usuario_actual
 from modules.settings_helpers import settings_bp
 import sync.config_supabase as _csb_mod
-from sync.config_persist import _guardar_config_a_archivo, TABLAS_SQL, SQL_COMPLETO
-import sync.config_supabase as _csb_mod
-from sync.config_persist import _guardar_config_a_archivo, TABLAS_SQL, SQL_COMPLETO
+from sync.config_persist import TABLAS_SQL, SQL_COMPLETO
 import sync.supabase_sync as _sb
 from modules.settings_helpers import (request, jsonify, session,
-    cargar_estado, guardar_estado, obtener_config_actual,
+    cargar_estado, guardar_estado,
     sincronizar_todo, probar_conexion, guardar_en_supabase,
-    cargar_desde_supabase, verificar_tablas_supabase, setup_supabase,
-    obtener_sql_completo, TABLAS_SQL)
+    cargar_desde_supabase, verificar_tablas_supabase, setup_supabase)
+
 
 @settings_bp.route("/api/supabase/config", methods=["GET"])
 @login_required
@@ -24,8 +22,9 @@ def get_supabase_config():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 @settings_bp.route("/api/supabase/config", methods=["POST"])
-@requiere_rol("administrador","desarrollador")
+@requiere_rol("administrador", "desarrollador")
 def save_supabase_config():
     try:
         d = request.get_json(silent=True) or {}
@@ -33,39 +32,38 @@ def save_supabase_config():
         key = d.get("anon_key", "").strip()
         if not url or not key:
             return jsonify({"error": "URL y anon_key son obligatorios"}), 400
-        from sync.config_persist import SUPABASE_CONFIG as _SC
-            _SC["url"] = url.rstrip("/")
-            _SC["anon_key"] = key
-            _csb_mod.SUPABASE_CONFIG["url"] = url.rstrip("/")
-            _csb_mod.SUPABASE_CONFIG["anon_key"] = key
-            # Guardar a disco
-            import json as _json2, os as _os2
-            _cfg_path = _os2.path.join(_os2.environ.get("TPV_FILES_DIR", _os2.getcwd()), "supabase_config.json")
-            with open(_cfg_path, "w") as _f2:
-                _json2.dump({"url": url.rstrip("/"), "anon_key": key}, _f2)
-            _csb_mod.verificar_supabase()
-            resultado = {"ok": True, "configurado": _csb_mod.SUPABASE_OK}
-        return jsonify({"ok": True, "mensaje": "Config guardada y persistida", "resultado": resultado})
+        _csb_mod.SUPABASE_CONFIG["url"] = url.rstrip("/")
+        _csb_mod.SUPABASE_CONFIG["anon_key"] = key
+        import os
+        cfg_path = os.path.join(os.environ.get("TPV_FILES_DIR", os.getcwd()), "supabase_config.json")
+        with open(cfg_path, "w") as f:
+            json.dump({"url": url.rstrip("/"), "anon_key": key}, f)
+        _csb_mod.verificar_supabase()
+        return jsonify({"ok": True, "mensaje": "Config guardada", "configurado": _csb_mod.SUPABASE_OK})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 @settings_bp.route("/api/supabase/sync", methods=["POST"])
-@requiere_rol("administrador","desarrollador")
+@requiere_rol("administrador", "desarrollador")
 def sync_alias():
     return sync_all()
 
+
 @settings_bp.route("/api/supabase/sync-all", methods=["POST"])
-@requiere_rol("administrador","desarrollador")
+@requiere_rol("administrador", "desarrollador")
 def sync_all():
     return jsonify(sincronizar_todo())
+
 
 @settings_bp.route("/api/supabase/test", methods=["POST"])
 @requiere_rol("desarrollador")
 def test_supabase():
     return jsonify(probar_conexion())
 
+
 @settings_bp.route("/api/supabase/push", methods=["POST"])
-@requiere_rol("administrador","desarrollador")
+@requiere_rol("administrador", "desarrollador")
 def push_supabase():
     if not _csb_mod.SUPABASE_OK:
         return jsonify({"error": "Supabase no configurado"}), 400
@@ -74,8 +72,9 @@ def push_supabase():
         return jsonify({"error": "Sin datos locales"}), 400
     return jsonify({"ok": guardar_en_supabase(estado)})
 
+
 @settings_bp.route("/api/supabase/pull", methods=["POST"])
-@requiere_rol("administrador","desarrollador")
+@requiere_rol("administrador", "desarrollador")
 def pull_supabase():
     if not _csb_mod.SUPABASE_OK:
         return jsonify({"error": "Supabase no configurado"}), 400
@@ -84,62 +83,66 @@ def pull_supabase():
         return jsonify({"error": "Sin datos en Supabase"}), 500
     return jsonify({"ok": guardar_estado(estado)})
 
+
 @settings_bp.route("/api/supabase/sync-full", methods=["POST"])
-@requiere_rol("administrador","desarrollador")
+@requiere_rol("administrador", "desarrollador")
 def api_supabase_sync_full():
     if not _csb_mod.SUPABASE_OK:
         return jsonify({"ok": False, "mensaje": "Supabase no configurado"}), 400
     try:
         from database import obtener_conexion
+        from sync.config_supabase import _peticion, _headers
         conn = obtener_conexion()
         ventas = [dict(r) for r in conn.execute(
-            "SELECT * FROM historial_ventas WHERE 1=1 ORDER BY fecha DESC LIMIT 500"
-        ).fetchall()]
+            "SELECT * FROM historial_ventas ORDER BY fecha DESC LIMIT 500").fetchall()]
         productos = [dict(r) for r in conn.execute(
-            "SELECT producto_id,nombre,precio,costo,categoria,unidad_medida,en_oferta,activo FROM productos WHERE activo=1"
-        ).fetchall()]
+            "SELECT producto_id,nombre,precio,costo,categoria,unidad_medida,en_oferta,activo FROM productos WHERE activo=1").fetchall()]
         stock = [dict(r) for r in conn.execute(
-            "SELECT producto_id,nombre,stock_actual,precio_venta,categoria FROM inventario_general"
-        ).fetchall()]
-        gastos = [dict(r) for r in conn.execute(
-            "SELECT * FROM gastos WHERE 1=1"
-        ).fetchall()]
-        conn.close()
+            "SELECT producto_id,nombre,stock_actual,precio_venta,categoria FROM inventario_general").fetchall()]
+        gastos = [dict(r) for r in conn.execute("SELECT * FROM gastos").fetchall()]
         url = _csb_mod.SUPABASE_CONFIG["url"]
         def upsert(tabla, datos):
-            if not datos: return 0
-            from sync.config_supabase import _peticion, _headers
-            import urllib.request as _ur, json as _j
-            req = _ur.Request(f"{url}/rest/v1/{tabla}",
-                data=_j.dumps(datos, ensure_ascii=False, default=str).encode(), method="POST")
-            for k,v in _headers().items(): req.add_header(k,v)
-            req.add_header("Prefer","resolution=merge-duplicates")
+            if not datos:
+                return 0
+            import urllib.request as _ur
+            req = _ur.Request(url + "/rest/v1/" + tabla,
+                data=json.dumps(datos, ensure_ascii=False, default=str).encode(), method="POST")
+            for k, v in _headers().items():
+                req.add_header(k, v)
+            req.add_header("Prefer", "resolution=merge-duplicates")
             try:
-                with _ur.urlopen(req, timeout=10) as r: r.read()
+                with _ur.urlopen(req, timeout=15) as r:
+                    r.read()
                 return len(datos)
-            except Exception: return 0
+            except Exception:
+                return 0
         ok_v = upsert("tpv_ventas_dia", ventas)
         ok_p = upsert("tpv_productos", productos)
         ok_s = upsert("tpv_stock", stock)
         ok_g = upsert("tpv_gastos_dia", gastos)
-        estado = cargar_estado()
-        _sb.guardar_en_supabase(estado)
-        return jsonify({"ok":True,"ventas":ok_v,"productos":ok_p,"stock":ok_s,"gastos":ok_g})
+        # Sync usuarios
+        usuarios = [dict(r) for r in conn.execute(
+            "SELECT usuario_id,username,nombre,rol,activo FROM usuarios").fetchall()]
+        conn.close()
+        ok_u = upsert("tpv_usuarios", usuarios)
+        return jsonify({"ok": True, "ventas": ok_v, "productos": ok_p, "stock": ok_s, "gastos": ok_g, "usuarios": ok_u})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
+
 
 @settings_bp.route("/api/supabase/estado", methods=["GET"])
 @login_required
 def api_supabase_estado():
     try:
-        url = _csb_mod.SUPABASE_CONFIG.get("url","")
-        key = _csb_mod.SUPABASE_CONFIG.get("anon_key","")
-        ok = bool(url.startswith("https://") and len(key)>20)
+        url = _csb_mod.SUPABASE_CONFIG.get("url", "")
+        key = _csb_mod.SUPABASE_CONFIG.get("anon_key", "")
+        ok = bool(url.startswith("https://") and len(key) > 20)
         tablas = {}
         if ok:
             import time as _t
             _now = _t.time()
-            if not hasattr(api_supabase_estado, '_cache') or _now - api_supabase_estado._cache_t > 60:
+            _prev = getattr(api_supabase_estado, '_cache_t', 0)
+            if _now - _prev > 120:
                 try:
                     tablas = verificar_tablas_supabase()
                     api_supabase_estado._cache = tablas
@@ -147,10 +150,11 @@ def api_supabase_estado():
                 except Exception:
                     tablas = getattr(api_supabase_estado, '_cache', {})
             else:
-                tablas = api_supabase_estado._cache
-        return jsonify({"ok":True,"configurado":ok,"url":url,"tablas":tablas})
+                tablas = getattr(api_supabase_estado, '_cache', {})
+        return jsonify({"ok": True, "configurado": ok, "url": url, "tablas": tablas})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
+
 
 @settings_bp.route("/api/supabase/setup", methods=["POST"])
 @login_required
@@ -163,6 +167,7 @@ def api_supabase_setup():
     except Exception as e:
         return jsonify({"ok": False, "mensaje": str(e)}), 500
 
+
 @settings_bp.route("/api/supabase/sql", methods=["GET"])
 @login_required
 def api_supabase_sql():
@@ -174,19 +179,18 @@ def api_supabase_sql():
         "sql_por_tabla": {tabla: sql.strip() for tabla, sql in TABLAS_SQL.items()}
     })
 
-# ══════════════════════════════════════════════════════════════
-#  SSE — Server-Sent Events
-# ══════════════════════════════════════════════════════════════
 
 _sse_clientes = {}
 _sse_lock = threading.Lock()
 
 def _sse_broadcast(evento):
-    msg = f"data: {json.dumps(evento, ensure_ascii=False)}\n\n"
+    msg = "data: " + json.dumps(evento, ensure_ascii=False) + "\n\n"
     with _sse_lock:
         muertos = []
         for uid, q in _sse_clientes.items():
-            try: q.put_nowait(msg)
-            except _queue.Full: muertos.append(uid)
-        for uid in muertos: _sse_clientes.pop(uid, None)
-
+            try:
+                q.put_nowait(msg)
+            except _queue.Full:
+                muertos.append(uid)
+        for uid in muertos:
+            _sse_clientes.pop(uid, None)

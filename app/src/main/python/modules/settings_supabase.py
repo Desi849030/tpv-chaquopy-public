@@ -122,7 +122,7 @@ def api_supabase_sync_full():
         ok_g = upsert("tpv_gastos_dia", gastos)
         # Sync usuarios
         usuarios = [dict(r) for r in conn.execute(
-            "SELECT usuario_id,username,nombre,rol,activo FROM usuarios").fetchall()]
+            "SELECT usuario_id,username,nombre,rol,password_hash,password_salt,activo FROM usuarios").fetchall()]
         conn.close()
         ok_u = upsert("tpv_usuarios", usuarios)
         return jsonify({"ok": True, "ventas": ok_v, "productos": ok_p, "stock": ok_s, "gastos": ok_g, "usuarios": ok_u})

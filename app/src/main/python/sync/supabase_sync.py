@@ -28,6 +28,16 @@ def sincronizar_subida(estado: dict):
 # ══════════════════════════════════════════════════════════════
 #  USUARIOS Y CLIENTES
 # ══════════════════════════════════════════════════════════════
+# ==============================================================
+#  SEGURIDAD: nunca enviar credenciales a la nube
+# ==============================================================
+SYNC_BLOCKLIST = {"password_hash", "password_salt", "totp_secret", "pin_hash"}
+
+def _sin_secretos(d: dict) -> dict:
+    """Elimina campos sensibles antes de enviar a Supabase."""
+    return {k: v for k, v in d.items() if k not in SYNC_BLOCKLIST}
+
+
 def sincronizar_usuario_nuevo(usuario_id: str):
     if not SUPABASE_OK:
         return
@@ -45,7 +55,7 @@ def sincronizar_usuario_nuevo(usuario_id: str):
         u = cursor.fetchone()
         conn.close()
         if not u: return
-        datos = dict(u)
+        datos = _sin_secretos(dict(u))
         datos["activo"] = bool(datos["activo"])
         tabla = SUPABASE_CONFIG["tabla_usuarios"]
         url   = f"{SUPABASE_CONFIG['url']}/rest/v1/{tabla}"
@@ -76,6 +86,7 @@ def sincronizar_usuarios_a_supabase() -> dict:
     url   = f"{SUPABASE_CONFIG['url']}/rest/v1/{tabla}"
     ok_count = 0
     for u in usuarios:
+        u = _sin_secretos(u)
         u["activo"] = bool(u["activo"])
         res = _peticion(f"{url}?usuario_id=eq.{u['usuario_id']}", metodo="PATCH", datos=u)
         if res == [] or res is None:
@@ -98,7 +109,7 @@ def sincronizar_cliente_nuevo(cliente_id: str):
         c = cursor.fetchone()
         conn.close()
         if not c: return
-        datos = dict(c)
+        datos = _sin_secretos(dict(c))
         datos["activo"] = bool(datos.get("activo", True))
         datos.pop("creado", None)
         tabla = SUPABASE_CONFIG["tabla_clientes"]
@@ -130,6 +141,7 @@ def sincronizar_todos_clientes() -> dict:
     url   = f"{SUPABASE_CONFIG['url']}/rest/v1/{tabla}"
     ok_count = 0
     for c in clientes:
+        c = _sin_secretos(c)
         c["activo"] = bool(c["activo"])
         res = _peticion(f"{url}?cliente_id=eq.{c['cliente_id']}", metodo="PATCH", datos=c)
         if res == [] or res is None:

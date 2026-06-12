@@ -252,7 +252,6 @@ _BLUEPRINTS = [
     ("modules.usuarios_bp", "usuarios_bp"),
     ("modules.agent_chat_bp", "agent_chat_bp"),
     # ── Existentes ──
-    ("modules.products", "prod_bp"),
     ("modules.sales", "sales_bp"),
     ("modules.inventory", "inv_bp"),
     ("modules.system", "system_bp"),

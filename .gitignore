@@ -69,3 +69,7 @@ Thumbs.db
 app/src/main/assets/frontend/static/_preview_theme.html
 apply_refactor.sh
 *.patch
+
+# ---- Secretos Supabase (NUNCA versionar) ----
+app/src/main/python/supabase_config.json
+app/src/main/python/.supabase_config.json

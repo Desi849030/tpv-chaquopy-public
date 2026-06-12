@@ -16,21 +16,6 @@ _DB_PATH = None
 _DB_LOCK = threading.Lock()
 
 
-# -*- coding: utf-8 -*-
-"""ia/memory.py - Memoria persistente para la IA del TPV
-Almacena en SQLite datos clave de conversaciones:
-- Preferencias de clientes
-- Consultas frecuentes
-- Patrones de venta
-- Contexto de negocio
-No afecta el rendimiento. Funciona 100% offline."""
-
-import sqlite3, os, re, time, threading, json
-from datetime import datetime, timedelta
-
-
-_DB_PATH = None
-_DB_LOCK = threading.Lock()
 
 
 

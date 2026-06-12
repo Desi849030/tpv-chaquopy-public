@@ -9,8 +9,6 @@ from db_connection import obtener_conexion, agregar_log, DB_FILE
 from db_users import _crear_desarrollador_default
 
 from db.schema import crear_tablas_schema
-from db_connection import obtener_conexion
-from db_users import _crear_desarrollador_default
 
 # === ESTADO Y SINCRONIZACION ===
 

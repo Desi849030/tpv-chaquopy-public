@@ -6,7 +6,6 @@ Desarrollado para TPV Ultra Smart
 Modulos conectados:
   - agent_master: Agente principal (integra todos los modulos)
   - agent_pro: Agente proactivo con personalidades
-  - agent_core: Motor base del agente
   - nlp_engine: Clasificador de intenciones (TF-IDF + Softmax)
   - tool_system: Catalogo de herramientas con permisos por rol
   - humanizer: Lenguaje humano profesional + blindaje UTF-8
@@ -57,12 +56,6 @@ try:
 except Exception:
     AgentPro = None
     pro_agent = None
-
-try:
-    from ia.agent_core import AgentCore, agent as core_agent
-except Exception:
-    AgentCore = None
-    core_agent = None
 
 # NLP y herramientas
 try:
@@ -204,13 +197,11 @@ except Exception:
 
 
 def get_agent():
-    """Devuelve el agente principal disponible (master > pro > core)."""
+    """Devuelve el agente principal disponible (master > pro)."""
     if master_agent is not None:
         return master_agent
     if pro_agent is not None:
         return pro_agent
-    if core_agent is not None:
-        return core_agent
     return None
 
 
@@ -220,7 +211,6 @@ def get_all_module_status():
     for name, obj in [
         ('agent_master', AgentMaster),
         ('agent_pro', AgentPro),
-        ('agent_core', AgentCore),
         ('nlp_engine', NLPEngine),
         ('tool_system', TOOLS if TOOLS else None),
         ('humanizer', Humanizer),

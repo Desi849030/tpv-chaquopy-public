@@ -3,9 +3,158 @@ from functools import wraps
 from decorators import login_required, requiere_rol, usuario_actual
 from db_config import crear_licencia, desactivar_licencia, listar_licencias, verificar_licencia_activa
 from db_users import cambiar_password, crear_usuario, desactivar_usuario, listar_usuarios, login_usuario, resetear_password
-import threading, supabase_sync as _sb
+import threading, hashlib, secrets, supabase_sync as _sb
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api')
+
+
+# ══════════════════════════════════════════════════════════════
+#  LOGIN BIOMÉTRICO POR TOKEN DE DISPOSITIVO
+#  La huella/rostro se verifica en Android (BiometricPrompt via
+#  TPVNative). Si pasa, el cliente canjea un token de dispositivo
+#  emitido previamente. El servidor guarda SOLO el hash SHA-256
+#  del token: nunca contraseñas hardcodeadas ni tokens en claro.
+# ══════════════════════════════════════════════════════════════
+
+_BIO_TABLE = """CREATE TABLE IF NOT EXISTS bio_tokens (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    token_hash  TEXT    NOT NULL UNIQUE,
+    usuario_id  TEXT    NOT NULL,
+    device      TEXT    DEFAULT '',
+    activo      INTEGER DEFAULT 1,
+    creado      TEXT    DEFAULT (datetime('now','localtime')),
+    ultimo_uso  TEXT    DEFAULT NULL
+)"""
+
+
+def _bio_conn():
+    from db_connection import obtener_conexion
+    conn = obtener_conexion()
+    conn.execute(_BIO_TABLE)
+    return conn
+
+
+def _bio_hash(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+@auth_bp.route("/auth/bio/registrar", methods=["POST"])
+@login_required
+def api_bio_registrar():
+    """Emite un token de dispositivo para login biométrico.
+
+    Requiere sesión activa (el usuario acaba de entrar con contraseña).
+    El token se devuelve UNA sola vez; el servidor guarda su hash.
+    Un nuevo registro del mismo usuario+dispositivo revoca el anterior.
+    """
+    u = usuario_actual()
+    datos = request.get_json(silent=True) or {}
+    device = str(datos.get("device", ""))[:120]
+    token = secrets.token_urlsafe(32)  # 256 bits aleatorios
+    conn = _bio_conn()
+    try:
+        # Revocar tokens previos de este usuario en este dispositivo
+        conn.execute(
+            "UPDATE bio_tokens SET activo=0 WHERE usuario_id=? AND device=?",
+            (u["usuario_id"], device))
+        conn.execute(
+            "INSERT INTO bio_tokens (token_hash, usuario_id, device) VALUES (?,?,?)",
+            (_bio_hash(token), u["usuario_id"], device))
+        conn.commit()
+    finally:
+        conn.close()
+    return jsonify({"ok": True, "token": token})
+
+
+@auth_bp.route("/auth/bio/login", methods=["POST"])
+def api_bio_login():
+    """Login canjeando un token de dispositivo (tras BiometricPrompt OK).
+
+    Protección anti fuerza bruta: los intentos fallidos se registran en
+    login_intentos bajo el pseudo-usuario 'bio-token' (mismo bloqueo
+    de 5 fallos / 10 min que el login normal).
+    """
+    datos = request.get_json(silent=True) or {}
+    token = datos.get("token", "")
+    if not token or len(token) < 20:
+        return jsonify({"ok": False, "error": "Token requerido"}), 400
+
+    conn = _bio_conn()
+    try:
+        # Bloqueo por intentos fallidos (reutiliza login_intentos)
+        from datetime import datetime, timedelta
+        hace10 = (datetime.now() - timedelta(minutes=10)).strftime("%Y-%m-%d %H:%M:%S")
+        try:
+            fallos = conn.execute(
+                "SELECT COUNT(*) FROM login_intentos "
+                "WHERE username='bio-token' AND exito=0 AND timestamp>?",
+                (hace10,)).fetchone()[0]
+            if fallos >= 5:
+                return jsonify({"ok": False,
+                                "error": "Demasiados intentos. Espera 10 minutos."}), 429
+        except Exception:
+            pass
+
+        fila = conn.execute(
+            "SELECT b.usuario_id, u.username, u.nombre, u.rol "
+            "FROM bio_tokens b JOIN usuarios u ON u.usuario_id = b.usuario_id "
+            "WHERE b.token_hash=? AND b.activo=1 AND u.activo=1",
+            (_bio_hash(token),)).fetchone()
+
+        def _registrar(exito):
+            try:
+                conn.execute(
+                    "INSERT INTO login_intentos(username, exito) VALUES('bio-token',?)",
+                    (1 if exito else 0,))
+                conn.commit()
+            except Exception:
+                pass
+
+        if not fila:
+            _registrar(False)
+            return jsonify({"ok": False,
+                            "error": "Token inválido o revocado. Entra con contraseña."}), 401
+
+        conn.execute(
+            "UPDATE bio_tokens SET ultimo_uso=datetime('now','localtime') "
+            "WHERE token_hash=?", (_bio_hash(token),))
+        conn.commit()
+        _registrar(True)
+
+        user = {
+            "id": fila["usuario_id"], "usuario_id": fila["usuario_id"],
+            "username": fila["username"],
+            "nombre": fila["nombre"] or fila["username"],
+            "rol": fila["rol"] or "vendedor",
+        }
+        session.permanent = True
+        session["usuario"] = user
+        return jsonify({"ok": True, "usuario": user})
+    finally:
+        conn.close()
+
+
+@auth_bp.route("/auth/bio/revocar", methods=["POST"])
+@login_required
+def api_bio_revocar():
+    """Revoca los tokens biométricos del usuario actual (o uno por device)."""
+    u = usuario_actual()
+    datos = request.get_json(silent=True) or {}
+    device = datos.get("device")
+    conn = _bio_conn()
+    try:
+        if device is not None:
+            cur = conn.execute(
+                "UPDATE bio_tokens SET activo=0 WHERE usuario_id=? AND device=?",
+                (u["usuario_id"], str(device)[:120]))
+        else:
+            cur = conn.execute(
+                "UPDATE bio_tokens SET activo=0 WHERE usuario_id=?",
+                (u["usuario_id"],))
+        conn.commit()
+        return jsonify({"ok": True, "revocados": cur.rowcount})
+    finally:
+        conn.close()
 
 
 

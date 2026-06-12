@@ -860,11 +860,32 @@ async function auth_bioActualizarBoton() {
     btn.style.display = (disponible && hayCred) ? '' : 'none';
 }
 
-// Tras un login con contraseña, recordar el usuario para acceso por huella.
+// Identificador estable del dispositivo (para emitir/revocar tokens por device).
+function _bioDeviceId() {
+    try {
+        var id = localStorage.getItem('tpv_bio_device');
+        if (!id) {
+            id = 'dev-' + Math.random().toString(36).slice(2, 10) + '-' + Date.now().toString(36);
+            localStorage.setItem('tpv_bio_device', id);
+        }
+        return id;
+    } catch (e) { return 'dev-unknown'; }
+}
+
+// Tras un login con contraseña, pedir al servidor un TOKEN de dispositivo.
+// El token (no la contraseña) es lo que la huella desbloquea después.
+// Requiere sesión activa: el endpoint /api/auth/bio/registrar exige login.
 async function auth_bioRegistrar(username) {
     try {
-        if (await auth_bioDisponible()) {
-            localStorage.setItem(_BIO_KEY, JSON.stringify({ u: username }));
+        if (!(await auth_bioDisponible())) return false;
+        var res = await fetch('/api/auth/bio/registrar', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ device: _bioDeviceId() })
+        });
+        var data = await res.json();
+        if (res.ok && data.ok && data.token) {
+            localStorage.setItem(_BIO_KEY, JSON.stringify({ u: username, t: data.token }));
             return true;
         }
     } catch (e) {}
@@ -872,11 +893,16 @@ async function auth_bioRegistrar(username) {
 }
 
 // Iniciar sesión con huella: lanza el BiometricPrompt nativo y, si tiene éxito,
-// entra con el usuario recordado.
+// canjea el token de dispositivo (sin contraseñas hardcodeadas).
 async function auth_loginBiometrico() {
     var raw;
     try { raw = JSON.parse(localStorage.getItem(_BIO_KEY) || 'null'); } catch (e) {}
-    if (!raw || !raw.u) { _loginErr('No hay usuario recordado para huella en este dispositivo.'); return; }
+    if (!raw || !raw.t) {
+        // Credencial del formato antiguo (solo usuario, sin token): migrar.
+        try { localStorage.removeItem(_BIO_KEY); } catch (e) {}
+        _loginErr('Entra con tu contraseña una vez para reactivar la huella.');
+        return;
+    }
     if (!(window.TPVNative && typeof window.TPVNative.authenticate === 'function')) {
         _loginErr('Biometría no disponible en este dispositivo.'); return;
     }
@@ -884,14 +910,18 @@ async function auth_loginBiometrico() {
     window.onBiometricCallback = async function (r) {
         try {
             if (r && r.success) {
-                var res = await fetch('/api/auth/login', {
+                var res = await fetch('/api/auth/bio/login', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     credentials: 'same-origin',
-                    body: JSON.stringify({ username: raw.u, password: '123456', biometrico: true })
+                    body: JSON.stringify({ token: raw.t })
                 });
                 var data = await res.json();
                 if (res.ok && data.ok) { AUTH.usuario = data.usuario; _auth_mostrarApp(); }
-                else _loginErr('No se pudo iniciar sesión con huella.');
+                else {
+                    // Token revocado/expirado: limpiar y pedir contraseña.
+                    try { localStorage.removeItem(_BIO_KEY); } catch (e) {}
+                    _loginErr((data && data.error) || 'Huella desactivada. Entra con contraseña.');
+                }
             } else {
                 _loginErr((r && r.message) || 'Autenticación biométrica cancelada.');
             }
@@ -901,6 +931,20 @@ async function auth_loginBiometrico() {
         window.TPVNative.authenticate('Iniciar sesión', 'Usa tu huella o rostro', 'TPV UltraSmart');
     } catch (e) { _loginErr('No se pudo abrir el lector biométrico.'); }
 }
+
+// Desactivar la huella en este dispositivo (revoca el token en el servidor).
+async function auth_bioDesactivar() {
+    try {
+        await fetch('/api/auth/bio/revocar', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ device: _bioDeviceId() })
+        });
+    } catch (e) {}
+    try { localStorage.removeItem(_BIO_KEY); } catch (e) {}
+    if (typeof showToast === 'function') showToast('Huella desactivada en este dispositivo', 'info');
+}
+window.auth_bioDesactivar = auth_bioDesactivar;
 
 
 function _loginErr(msg) {

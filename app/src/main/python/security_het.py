@@ -54,10 +54,45 @@ def sanitize_input(s):
     if not s: return s
     c=str(s).replace("\x00","").replace("<","&lt;").replace(">","&gt;")
     return c.strip()
+def _persistir_alerta(ts,level,atype,source,details):
+    """Guarda la alerta en SQLite. Nunca lanza: la seguridad no debe romperse por la BD."""
+    try:
+        from db_connection import obtener_conexion
+        conn=obtener_conexion()
+        conn.execute("CREATE TABLE IF NOT EXISTS security_alerts ("
+                     "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                     "timestamp TEXT NOT NULL,level TEXT NOT NULL,tipo TEXT NOT NULL,"
+                     "source TEXT DEFAULT '',details TEXT DEFAULT '')")
+        conn.execute("INSERT INTO security_alerts (timestamp,level,tipo,source,details) "
+                     "VALUES (?,?,?,?,?)",(ts,level,atype,source or "",details or ""))
+        conn.commit(); conn.close()
+    except Exception:
+        pass  # degradacion elegante: si falla la BD, queda al menos en memoria
+
 def add_alert(level,atype,source,details=""):
+    ts=datetime.now().isoformat()
     with _LOCK:
-        _threat_alerts.append({"timestamp":datetime.now().isoformat(),"level":level,"type":atype,"source":source,"details":details})
-def get_alerts(level=None,limit=50):
+        _threat_alerts.append({"timestamp":ts,"level":level,"type":atype,"source":source,"details":details})
+    _persistir_alerta(ts,level,atype,source,details)
+def get_alerts(level=None,limit=50,persisted=False):
+    if persisted:
+        try:
+            from db_connection import obtener_conexion
+            conn=obtener_conexion()
+            conn.execute("CREATE TABLE IF NOT EXISTS security_alerts ("
+                         "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                         "timestamp TEXT NOT NULL,level TEXT NOT NULL,tipo TEXT NOT NULL,"
+                         "source TEXT DEFAULT '',details TEXT DEFAULT '')")
+            if level:
+                rows=conn.execute("SELECT timestamp,level,tipo,source,details FROM security_alerts "
+                                  "WHERE level=? ORDER BY id DESC LIMIT ?",(level,limit)).fetchall()
+            else:
+                rows=conn.execute("SELECT timestamp,level,tipo,source,details FROM security_alerts "
+                                  "ORDER BY id DESC LIMIT ?",(limit,)).fetchall()
+            conn.close()
+            return [{"timestamp":r[0],"level":r[1],"type":r[2],"source":r[3],"details":r[4]} for r in rows]
+        except Exception:
+            pass  # si falla la BD, caer a memoria
     with _LOCK: a=list(_threat_alerts)
     if level: a=[x for x in a if x["level"]==level]
     return list(reversed(a[-limit:]))

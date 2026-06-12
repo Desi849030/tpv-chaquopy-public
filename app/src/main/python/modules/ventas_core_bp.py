@@ -18,6 +18,7 @@ def registrar_venta():
     if not items:
         return jsonify({"ok": False, "error": "No hay productos"}), 400
 
+    conn = None
     try:
         from db_connection import obtener_conexion
         conn = obtener_conexion()
@@ -26,6 +27,9 @@ def registrar_venta():
         venta_id = f"vta-{uuid.uuid4().hex[:8]}"
         fecha = datetime.now().isoformat()
         total = 0
+
+        # Transaccion atomica: la venta entera se confirma o se revierte completa
+        cursor.execute("BEGIN")
 
         for item in items:
             producto_id = item.get('id', f'prod-{uuid.uuid4().hex[:6]}')
@@ -51,11 +55,18 @@ def registrar_venta():
             )
 
         conn.commit()
-        conn.close()
         return jsonify({"ok": True, "venta_id": venta_id,
                         "total": round(total, 2), "items": len(items), "fecha": fecha})
     except Exception as e:
+        if conn is not None:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
         return jsonify({"ok": False, "error": str(e)}), 500
+    finally:
+        if conn is not None:
+            conn.close()
 
 
 @ventas_core_bp.route('/api/ventas/hoy')

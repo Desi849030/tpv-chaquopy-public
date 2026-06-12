@@ -18,18 +18,26 @@ import os
 import re
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-APP3 = os.path.join(
-    HERE, "..", "app", "src", "main", "assets", "frontend", "static", "js", "app_3.js"
+# app_3.js fue dividido en módulos (#4): el importador vive en app3/07_importador.js
+APP3_DIR = os.path.join(
+    HERE, "..", "app", "src", "main", "assets", "frontend", "static", "js", "app3"
 )
+APP3 = os.path.join(APP3_DIR, "07_importador.js")
 
 
 def _src():
-    with open(APP3, encoding="utf-8") as f:
-        return f.read()
+    """Concatena todos los módulos app3/*.js (equivalente al antiguo app_3.js)."""
+    partes = []
+    for fname in sorted(os.listdir(APP3_DIR)):
+        if fname.endswith(".js"):
+            with open(os.path.join(APP3_DIR, fname), encoding="utf-8") as f:
+                partes.append(f.read())
+    return "\n".join(partes)
 
 
 def test_app3_existe():
-    assert os.path.isfile(APP3), "app_3.js no encontrado"
+    assert os.path.isdir(APP3_DIR), "directorio app3/ no encontrado"
+    assert os.path.isfile(APP3), "app3/07_importador.js no encontrado"
 
 
 def test_normaliza_producto_a_nombre():

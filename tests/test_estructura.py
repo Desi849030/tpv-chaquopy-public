@@ -80,7 +80,7 @@ for f in android_files:
 
 # 4. Módulos IA
 print("\n🧠 MÓDULOS IA")
-ia_modules = ['agent_master', 'agent_pro', 'agent_core', 'nlp_engine', 'humanizer',
+ia_modules = ['agent_master', 'nlp_engine', 'humanizer',  # agent_pro/agent_core unificados en agent_master (#6)
               'guardrails_v2', 'tool_system', 'react_core', 'catalog', 'skills',
               'role_guidance', 'session_context', 'memory_advanced', 'normalizer',
               'intent_engine', 'anti_slop', 'fuzzy_match', 'handlers']

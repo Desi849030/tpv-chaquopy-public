@@ -1047,7 +1047,17 @@
     </script>
     
     <!-- JavaScript Corregido -->
-    <script src="/static/js/app_3.js"></script>
+    <!-- app_3.js dividido en módulos por dominio (#4) — orden de carga importa -->
+    <script src="/static/js/app3/01_estado.js"></script>
+    <script src="/static/js/app3/02_ui_core.js"></script>
+    <script src="/static/js/app3/03_tpv.js"></script>
+    <script src="/static/js/app3/04_ventas.js"></script>
+    <script src="/static/js/app3/05_inventario.js"></script>
+    <script src="/static/js/app3/06_gestion.js"></script>
+    <script src="/static/js/app3/07_importador.js"></script>
+    <script src="/static/js/app3/08_config.js"></script>
+    <script src="/static/js/app3/09_backup_export.js"></script>
+    <script src="/static/js/app3/10_hotfixes.js"></script>
 
 <!-- ================= EXPORTACIÓN UNIFICADA SEGURA ================= -->
 

@@ -12,17 +12,30 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/api')
 
 @auth_bp.route("/auth/login", methods=["POST"])
 def api_login():
-    datos = request.get_json(force=True, silent=True) or {}
+    """Login con protección contra fuerza bruta (#20: movido desde app.py)."""
+    datos = request.get_json(silent=True) or {}
     username = datos.get("username", "").strip()
-    password = datos.get("password", "")
+    password = datos.get("password", "").strip()
     if not username or not password:
-        return jsonify({"error": "Faltan credenciales"}), 400
-    resultado = login_usuario(username, password)
-    if resultado:
+        return jsonify({"ok": False, "error": "Usuario y contraseña requeridos"}), 400
+    try:
+        resultado = login_usuario(username, password)
+    except Exception as e:
+        resultado = None
+        print("⚠️ login_usuario error:", e)
+    if isinstance(resultado, dict) and resultado.get("error") == "bloqueado":
+        return jsonify({"ok": False, "error": resultado.get("mensaje", "Cuenta bloqueada")}), 429
+    if resultado and resultado.get("usuario_id"):
+        user = {
+            "id": resultado["usuario_id"], "usuario_id": resultado["usuario_id"],
+            "username": resultado["username"],
+            "nombre": resultado.get("nombre", resultado["username"]),
+            "rol": resultado.get("rol", "vendedor"),
+        }
         session.permanent = True
-        session["usuario"] = resultado
-        return jsonify({"ok": True, "usuario": resultado})
-    return jsonify({"error": "Credenciales incorrectas"}), 401
+        session["usuario"] = user
+        return jsonify({"ok": True, "usuario": user})
+    return jsonify({"ok": False, "error": "Usuario o contraseña incorrectos"}), 401
 
 @auth_bp.route("/auth/logout", methods=["POST"])
 def api_logout():

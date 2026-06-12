@@ -114,52 +114,9 @@ def static_serve(f):
 
 
 # ══════════════════════════════════════════════════════════════
-# Auth (login/logout/me) — inline porque son pocas y críticas
-# ══════════════════════════════════════════════════════════════
-
-@app.route('/api/auth/login', methods=['POST'])
-def login():
-    from flask import request, jsonify, session
-    d = request.get_json(silent=True) or {}
-    u = d.get('username', '').strip()
-    p = d.get('password', '').strip()
-    if not u or not p:
-        return jsonify({"ok": False, "error": "Usuario y contraseña requeridos"}), 400
-    try:
-        from db.users import login_usuario
-        res = login_usuario(u, p)
-    except Exception as e:
-        res = None
-        print("⚠️ login_usuario error:", e)
-    if isinstance(res, dict) and res.get("error") == "bloqueado":
-        return jsonify({"ok": False, "error": res.get("mensaje", "Cuenta bloqueada")}), 429
-    if res and res.get("usuario_id"):
-        user = {
-            "id": res["usuario_id"], "usuario_id": res["usuario_id"],
-            "username": res["username"], "nombre": res.get("nombre", res["username"]),
-            "rol": res.get("rol", "vendedor"),
-        }
-        session['usuario'] = user
-        return jsonify({"ok": True, "usuario": user})
-    return jsonify({"ok": False, "error": "Usuario o contraseña incorrectos"}), 401
-
-
-@app.route('/api/auth/logout', methods=['POST'])
-def logout():
-    from flask import jsonify, session
-    session.pop('usuario', None)
-    return jsonify({"ok": True})
-
-
-@app.route('/api/auth/me')
-def auth_me():
-    from flask import jsonify, session
-    user = session.get('usuario')
-    if user:
-        return jsonify({"autenticado": True, "usuario": user})
-    return jsonify({"autenticado": False}), 401
-
-
+# Auth: movido a modules/auth.py (auth_bp) — #20
+# Las rutas /api/auth/login, /api/auth/logout y /api/auth/me
+# se registran via blueprint en la sección "Registro de Blueprints".
 # ══════════════════════════════════════════════════════════════
 # Inicializar BD con datos de ejemplo (si está vacía)
 # ══════════════════════════════════════════════════════════════

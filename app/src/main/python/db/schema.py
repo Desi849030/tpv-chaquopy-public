@@ -1,7 +1,18 @@
 from __future__ import annotations
 from db.indexes import crear_indices
 # -*- coding: utf-8 -*-
-"""db/schema.py - Tablas TPV Smart."""
+"""db/schema.py - Tablas TPV Smart.
+
+Integridad referencial (#18):
+- Se declaran FOREIGN KEYS en las tablas operativas (inventarios, entradas,
+  cierres, licencias) hacia productos(producto_id) y usuarios(usuario_id).
+- Las tablas de auditoría/historial (historial_ventas, auditoria, logs_sistema,
+  login_intentos) NO llevan FK dura: deben conservar el registro aunque el
+  producto/usuario origen se elimine (y aceptan vendedores externos).
+- db_connection.obtener_conexion() ya ejecuta PRAGMA foreign_keys = ON.
+- Nota: CREATE TABLE IF NOT EXISTS no altera tablas ya creadas; las FK
+  aplican a bases de datos nuevas (las existentes siguen funcionando igual).
+"""
 
 APP_STATE = """CREATE TABLE IF NOT EXISTS app_state (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -28,7 +39,8 @@ USUARIOS = """CREATE TABLE IF NOT EXISTS usuarios (
 LICENCIAS = """CREATE TABLE IF NOT EXISTS licencias (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
             licencia_id   TEXT    NOT NULL UNIQUE,
-            admin_id      TEXT    NOT NULL,
+            admin_id      TEXT    NOT NULL
+                          REFERENCES usuarios(usuario_id) ON DELETE CASCADE,
             admin_nombre  TEXT    NOT NULL,
             tipo          TEXT    NOT NULL DEFAULT 'anual'
                           CHECK(tipo IN ('diaria','mensual','anual','personalizada','ilimitada')),
@@ -50,6 +62,8 @@ HISTORIAL_VENTAS = """CREATE TABLE IF NOT EXISTS historial_ventas (
             precio_unit     REAL    NOT NULL DEFAULT 0,
             total           REAL    NOT NULL DEFAULT 0,
             metodo_pago     TEXT    DEFAULT 'efectivo',
+            -- Sin FK dura: el historial conserva ventas de vendedores
+            -- eliminados o externos ('desconocido'); ver docstring (#18)
             vendedor_id     TEXT    DEFAULT NULL,
             vendedor_nombre TEXT    DEFAULT NULL,
             fecha           TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
@@ -71,7 +85,8 @@ PRODUCTOS = """CREATE TABLE IF NOT EXISTS productos (
 
 INVENTARIO_GENERAL = """CREATE TABLE IF NOT EXISTS inventario_general (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
-            producto_id   TEXT    NOT NULL UNIQUE,
+            producto_id   TEXT    NOT NULL UNIQUE
+                          REFERENCES productos(producto_id) ON DELETE CASCADE,
             nombre        TEXT    NOT NULL,
             stock_actual  REAL    NOT NULL DEFAULT 0,
             stock_minimo  REAL    DEFAULT 5,
@@ -85,7 +100,8 @@ INVENTARIO_GENERAL = """CREATE TABLE IF NOT EXISTS inventario_general (
 ENTRADAS_PRODUCTOS = """CREATE TABLE IF NOT EXISTS entradas_productos (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
             entrada_id    TEXT    NOT NULL UNIQUE,
-            producto_id   TEXT    NOT NULL,
+            producto_id   TEXT    NOT NULL
+                          REFERENCES productos(producto_id) ON DELETE CASCADE,
             nombre        TEXT    NOT NULL,
             cantidad      REAL    NOT NULL DEFAULT 0,
             precio_compra REAL    DEFAULT 0,
@@ -98,8 +114,10 @@ ENTRADAS_PRODUCTOS = """CREATE TABLE IF NOT EXISTS entradas_productos (
 INVENTARIO_DIARIO = """CREATE TABLE IF NOT EXISTS inventario_diario (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
             fecha         TEXT    NOT NULL,
-            vendedor_id   TEXT    NOT NULL,
-            producto_id   TEXT    NOT NULL,
+            vendedor_id   TEXT    NOT NULL
+                          REFERENCES usuarios(usuario_id) ON DELETE CASCADE,
+            producto_id   TEXT    NOT NULL
+                          REFERENCES productos(producto_id) ON DELETE CASCADE,
             nombre        TEXT    NOT NULL,
             cant_asignada REAL    NOT NULL DEFAULT 0,
             cant_vendida  REAL    DEFAULT 0,
@@ -113,7 +131,8 @@ INVENTARIO_DIARIO = """CREATE TABLE IF NOT EXISTS inventario_diario (
 
 CIERRES_DIARIO = """CREATE TABLE IF NOT EXISTS cierres_diario (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
-            vendedor_id   TEXT    NOT NULL,
+            vendedor_id   TEXT    NOT NULL
+                          REFERENCES usuarios(usuario_id) ON DELETE CASCADE,
             fecha         TEXT    NOT NULL,
             total_ventas  REAL    DEFAULT 0,
             total_costo   REAL    DEFAULT 0,

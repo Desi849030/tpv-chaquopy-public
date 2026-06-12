@@ -1,5 +1,13 @@
+"""sync/supabase_sync.py — Sincronización con Supabase (#15).
+
+Resiliencia de red: todas las peticiones usan _peticion() de
+sync.config_supabase, que implementa reintentos con backoff
+exponencial + jitter (base 0.5s, máx 8s, 4xx no se reintenta).
+"""
 from sync.config import *
 import sync.config_supabase as _cfg
+# Re-export explícito: _peticion incluye backoff exponencial + jitter
+from sync.config_supabase import _peticion  # noqa: F401  (backoff/jitter)
 
 def guardar_en_supabase(estado: dict) -> bool:
     if not SUPABASE_OK:

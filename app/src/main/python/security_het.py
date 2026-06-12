@@ -7,7 +7,7 @@ _request_log=deque(maxlen=1000)
 _login_attempts={}
 _login_lockouts={}
 _threat_alerts=deque(maxlen=_HET_CONFIG["max_alerts"])
-_SQL=re.compile(r"(?i)(union\s+select|or\s+1\s*=\s*1|drop\s+table|insert\s+into|delete\s+from|'\s*or\s*'|;\s*--|exec\s*\(|xp_cmdshell|information_schema|sleep\s*\()")
+_SQL=re.compile(r"(?i)(union\s+select|\b(or|and)\b\s+[\w'\"]+\s*=\s*[\w'\"]+|drop\s+(table|database)|truncate\s+table|insert\s+into|delete\s+from|update\s+\w+\s+set|'\s*or\s*'|--|/\*|;\s*\w|exec\s*\(|xp_cmdshell|information_schema|pg_sleep\s*\(|sleep\s*\(|load_file\s*\(|into\s+outfile)")
 _XSS=re.compile(r"(?i)(<script|javascript\s*:|onerror\s*=|onload\s*=|<iframe|document\.cookie|document\.location|eval\s*\()")
 def check_rate_limit(ip=None):
     now=time.time(); ma=now-60
@@ -37,7 +37,6 @@ def detect_sql_injection(s,ip=None):
     if not s: return True,"OK"
     m=_SQL.findall(str(s))
     if m:
-        with _LOCK: c=_SQL.count
         add_alert("WARN","SQL_SUSPICIOUS",ip,f"Patron: {m[0]}")
         return False,"WARN"
     return True,"OK"
@@ -49,9 +48,12 @@ def detect_xss(s,ip=None):
         return False,"WARN"
     return True,"OK"
 def sanitize_input(s):
+    # NOTA: la proteccion REAL contra SQLi son las consultas parametrizadas (?).
+    # Aqui solo neutralizamos null-bytes y escapamos HTML para XSS. NO borramos
+    # palabras SQL: hacerlo daba falsa seguridad (bypasseable) y corrompia datos.
     if not s: return s
     c=str(s).replace("\x00","").replace("<","&lt;").replace(">","&gt;")
-    return re.sub(r"(?i)(\b(union|select|drop|insert|delete|update|exec)\b)","",c).strip()
+    return c.strip()
 def add_alert(level,atype,source,details=""):
     with _LOCK:
         _threat_alerts.append({"timestamp":datetime.now().isoformat(),"level":level,"type":atype,"source":source,"details":details})

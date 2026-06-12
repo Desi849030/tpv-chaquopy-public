@@ -12,7 +12,7 @@ DB_PATH = None
 def _get_db():
     global DB_PATH
     if not DB_PATH:
-        from database import DB_FILE
+        from db_connection import DB_FILE
         DB_PATH = DB_FILE
     return DB_PATH
 

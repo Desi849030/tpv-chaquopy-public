@@ -40,7 +40,7 @@ def _get_db_path():
     if _db_path and os.path.exists(_db_path):
         return _db_path
     try:
-        from database import DB_FILE
+        from db_connection import DB_FILE
         if DB_FILE and os.path.exists(DB_FILE):
             _db_path = DB_FILE
             return _db_path

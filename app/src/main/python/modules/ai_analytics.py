@@ -68,7 +68,7 @@ def _kpis_data():
         # Asegurar peak_hour
         if data.get('today') and 'peak_hour' not in data['today']:
             try:
-                from database import obtener_conexion
+                from db_connection import obtener_conexion
                 from datetime import datetime
                 conn = obtener_conexion()
                 today = datetime.now().strftime("%Y-%m-%d")

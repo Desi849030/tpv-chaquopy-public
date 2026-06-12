@@ -43,7 +43,7 @@ def sincronizar_usuario_nuevo(usuario_id: str):
         return
     try:
         import sqlite3
-        from database import DB_FILE
+        from db_connection import DB_FILE
         conn = sqlite3.connect(DB_FILE)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
@@ -72,7 +72,7 @@ def sincronizar_usuarios_a_supabase() -> dict:
         return {"ok": False, "mensaje": "Supabase no configurado"}
     try:
         import sqlite3
-        from database import DB_FILE
+        from db_connection import DB_FILE
         conn = sqlite3.connect(DB_FILE)
         conn.row_factory = sqlite3.Row
         usuarios = [dict(u) for u in conn.execute(
@@ -101,7 +101,7 @@ def sincronizar_cliente_nuevo(cliente_id: str):
         return
     try:
         import sqlite3
-        from database import DB_FILE
+        from db_connection import DB_FILE
         conn = sqlite3.connect(DB_FILE)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
@@ -127,7 +127,7 @@ def sincronizar_todos_clientes() -> dict:
         return {"ok": False, "mensaje": "Supabase no configurado"}
     try:
         import sqlite3
-        from database import DB_FILE
+        from db_connection import DB_FILE
         conn = sqlite3.connect(DB_FILE)
         conn.row_factory = sqlite3.Row
         clientes = [dict(c) for c in conn.execute(
@@ -154,7 +154,7 @@ def sincronizar_todos_clientes() -> dict:
 def sincronizar_todo() -> dict:
     if not SUPABASE_OK:
         return {"ok": False, "mensaje": "Supabase no configurado"}
-    from database import cargar_estado
+    from db_config import cargar_estado
     resultados = {}
     estado = cargar_estado()
     if estado:
@@ -164,7 +164,7 @@ def sincronizar_todo() -> dict:
 
     # Sync ventas
     try:
-        from database import obtener_conexion
+        from db_connection import obtener_conexion
         conn = obtener_conexion()
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM historial_ventas ORDER BY fecha DESC LIMIT 100")
@@ -179,7 +179,7 @@ def sincronizar_todo() -> dict:
 
     # Sync inventario/stock
     try:
-        from database import obtener_conexion
+        from db_connection import obtener_conexion
         conn = obtener_conexion()
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM inventario_general ORDER BY producto_id")

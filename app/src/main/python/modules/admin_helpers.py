@@ -3,11 +3,9 @@ from db_connection import obtener_conexion
 import threading
 from flask import Blueprint, request, jsonify
 from decorators import requiere_login, requiere_rol, usuario_actual
-from database import (
-    crear_usuario, listar_usuarios, desactivar_usuario, resetear_password,
-    crear_licencia, listar_licencias, verificar_licencia_activa,
-    desactivar_licencia, agregar_log
-)
+from db_config import crear_licencia, desactivar_licencia, listar_licencias, verificar_licencia_activa
+from db_connection import agregar_log
+from db_users import crear_usuario, desactivar_usuario, listar_usuarios, resetear_password
 from sync.supabase_sync import sincronizar_usuario_nuevo
 import sync.supabase_sync as _sb
 
@@ -65,7 +63,7 @@ _PRIVILEGIOS_DEFAULT = {
 }
 
 def _obtener_privilegios_rol(rol):
-    from database import obtener_conexion
+    from db_connection import obtener_conexion
     conn = obtener_conexion()
     try:
         rol_seguro = "".join(c for c in rol if c.isalnum() or c == "_")
@@ -83,7 +81,7 @@ def _obtener_privilegios_rol(rol):
     return None
 
 def _guardar_privilegios_rol(rol, priv):
-    from database import obtener_conexion
+    from db_connection import obtener_conexion
     import json as _j
     conn = obtener_conexion()
     try:

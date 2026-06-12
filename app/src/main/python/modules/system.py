@@ -9,11 +9,9 @@ from functools import wraps
 from datetime import datetime
 import json, os
 from decorators import login_required, requiere_rol, usuario_actual
-from database import (
-    obtener_info_db, DB_FILE, cargar_estado, guardar_estado,
-    obtener_historial_diario_local, guardar_historial_diario_local,
-    agregar_log
-)
+from db_config import cargar_estado, guardar_estado
+from db_connection import DB_FILE, agregar_log, obtener_info_db
+from db_ventas import guardar_historial_diario_local, obtener_historial_diario_local
 import supabase_sync as _sb
 
 system_bp = Blueprint('system', __name__, url_prefix='/api')

@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'app', 'src', '
 
 @pytest.fixture(scope="module")
 def _db(tmp_db_dir):
-    from database import crear_tablas
+    from db_config import crear_tablas
     crear_tablas()
     return True
 

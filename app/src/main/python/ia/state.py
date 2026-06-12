@@ -25,7 +25,7 @@ from typing import Any, Dict, List, Optional
 
 def _get_db_path() -> str:
     """Obtiene la ruta de la base de datos."""
-    from database import DB_PATH
+    from db_connection import DB_PATH
     return DB_PATH
 
 

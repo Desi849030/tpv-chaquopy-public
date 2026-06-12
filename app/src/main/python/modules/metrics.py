@@ -2,7 +2,7 @@ from decorators import login_required
 from flask import Blueprint, request, jsonify, session
 from functools import wraps
 from datetime import datetime, timedelta
-from database import obtener_conexion, agregar_log
+from db_connection import agregar_log, obtener_conexion
 
 metrics_bp = Blueprint('metrics', __name__, url_prefix='/api')
 

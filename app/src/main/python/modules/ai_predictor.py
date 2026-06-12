@@ -24,7 +24,7 @@ def _predict_dashboard():
             # Calcular desde los datos disponibles
             conn = None
             try:
-                from database import obtener_conexion
+                from db_connection import obtener_conexion
                 conn = obtener_conexion()
                 rows = conn.execute(
                     "SELECT nombre, stock, precio, costo FROM productos WHERE stock > 0 ORDER BY (precio - COALESCE(costo,0)) DESC LIMIT 5"

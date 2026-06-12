@@ -96,7 +96,7 @@ def validar_totales(data):
 # ══════════════════════════════════════════════════════════════
 
 def validar_stock(items, user_id=None):
-    from database import obtener_conexion
+    from db_connection import obtener_conexion
     conn = obtener_conexion()
     sin_stock = []
     try:
@@ -124,7 +124,7 @@ def validar_stock(items, user_id=None):
 # ══════════════════════════════════════════════════════════════
 
 def calcular_cierre_server(fecha, vendedor_id=None):
-    from database import obtener_conexion
+    from db_connection import obtener_conexion
     conn = obtener_conexion()
     try:
         where = "WHERE fecha=?" + (" AND vendedor_id=?" if vendedor_id else "")

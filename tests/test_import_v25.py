@@ -1,7 +1,9 @@
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "app/src/main/python"))
 
-from database import obtener_conexion, crear_tablas, reconstruir_desde_productos, importar_catalogo_a_inventario
+from db_config import crear_tablas, reconstruir_desde_productos
+from db_connection import obtener_conexion
+from db_products import importar_catalogo_a_inventario
 
 crear_tablas()
 

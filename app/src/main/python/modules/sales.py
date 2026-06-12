@@ -1,8 +1,8 @@
 from flask import Blueprint, request, jsonify, session
 from functools import wraps
 from decorators import login_required, requiere_rol, usuario_actual
-from database import (consultar_ventas_por_fecha, consultar_resumen_ventas, 
-                      consultar_ganancias_por_dia, obtener_conexion, agregar_log)
+from db_connection import agregar_log, obtener_conexion
+from db_ventas import consultar_ganancias_por_dia, consultar_resumen_ventas, consultar_ventas_por_fecha
 from datetime import datetime
 import uuid
 

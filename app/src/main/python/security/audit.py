@@ -21,7 +21,7 @@ def registrar_auditoria(app_instance):
                     "ip": request.remote_addr,
                 }
                 try:
-                    from database import agregar_log
+                    from db_connection import agregar_log
                     agregar_log(f"AUDIT:{json.dumps(entry, ensure_ascii=False)}", "info")
                 except Exception:  # noqa: broad-except - graceful degradation
                     pass

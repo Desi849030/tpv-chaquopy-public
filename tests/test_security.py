@@ -3,15 +3,15 @@ import pytest
 
 class TestPassword:
     def test_hash_tuple(self):
-        from database import _hash_password
+        from db_connection import _hash_password
         h, s = _hash_password("test")
         assert isinstance(h, str) and len(h) == 128
     def test_verify_ok(self):
-        from database import _hash_password, verificar_password
+        from db_connection import _hash_password, verificar_password
         h, s = _hash_password("pass")
         assert verificar_password("pass", h, s) is True
     def test_verify_fail(self):
-        from database import _hash_password, verificar_password
+        from db_connection import _hash_password, verificar_password
         h, s = _hash_password("pass")
         assert verificar_password("wrong", h, s) is False
 

@@ -90,7 +90,7 @@ def api_supabase_sync_full():
     if not _csb_mod.SUPABASE_OK:
         return jsonify({"ok": False, "mensaje": "Supabase no configurado"}), 400
     try:
-        from database import obtener_conexion
+        from db_connection import obtener_conexion
         from sync.config_supabase import _peticion, _headers
         conn = obtener_conexion()
         ventas = [dict(r) for r in conn.execute(

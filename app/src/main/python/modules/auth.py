@@ -1,9 +1,8 @@
 from flask import Blueprint, request, jsonify, session
 from functools import wraps
 from decorators import login_required, requiere_rol, usuario_actual
-from database import (login_usuario, crear_usuario, cambiar_password, resetear_password,
-                      listar_usuarios, desactivar_usuario, crear_licencia, listar_licencias,
-                      verificar_licencia_activa, desactivar_licencia)
+from db_config import crear_licencia, desactivar_licencia, listar_licencias, verificar_licencia_activa
+from db_users import cambiar_password, crear_usuario, desactivar_usuario, listar_usuarios, login_usuario, resetear_password
 import threading, supabase_sync as _sb
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api')

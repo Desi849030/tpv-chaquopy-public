@@ -6,7 +6,7 @@ from datetime import datetime
 from decorators import login_required, usuario_actual
 
 try:
-    from database import obtener_conexion, agregar_log
+    from db_connection import agregar_log, obtener_conexion
     _HAS_DB = True
 except Exception:
     _HAS_DB = False

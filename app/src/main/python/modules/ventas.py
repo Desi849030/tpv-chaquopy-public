@@ -8,11 +8,8 @@ from flask import Blueprint, request, jsonify, session
 from functools import wraps
 from datetime import datetime, timedelta
 from decorators import login_required, requiere_rol, usuario_actual
-from database import (
-    consultar_ventas_por_fecha, consultar_resumen_ventas, 
-    consultar_ganancias_por_dia, obtener_conexion, agregar_log,
-    obtener_historial_cierres
-)
+from db_connection import agregar_log, obtener_conexion
+from db_ventas import consultar_ganancias_por_dia, consultar_resumen_ventas, consultar_ventas_por_fecha
 
 ventas_bp = Blueprint('ventas', __name__, url_prefix='/api')
 

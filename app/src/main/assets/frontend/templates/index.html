@@ -25,6 +25,7 @@
     <!-- Estilos CSS -->
     <link rel="stylesheet" href="/static/css/modulo_0.css">
     <link rel="stylesheet" href="/static/css/modulo_1.css">
+    <link rel="stylesheet" href="/static/css/tpv-ux.css">
 
     
 
@@ -1566,6 +1567,18 @@ const observer = new MutationObserver(function() {
   }
 });
 observer.observe(document.body, {childList: true, subtree: true});
+</script>
+
+
+<!-- Mejoras UX/UI v8.0.2 -->
+<script src="/static/js/tpv_i18n.js"></script>
+<script src="/static/js/tpv-shortcuts.js"></script>
+<script src="/static/js/tpv-sync-manager.js"></script>
+<script>
+  // Inicializar i18n al cargar la página
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof i18n_init === 'function') i18n_init();
+  });
 </script>
 
 </body>

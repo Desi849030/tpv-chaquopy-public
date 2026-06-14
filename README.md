@@ -154,3 +154,29 @@ docs/                            ← Documentación técnica
 ## 📄 Licencia
 
 MIT License — Proyecto Académico Universidad
+
+---
+
+## Estado actual del sprint
+Mejoras recientes implementadas:
+
+- Protección de endpoints de ventas con autenticación
+- Validación atómica de stock en registro de ventas
+- Healthcheck en `/health` y `/api/health`
+- Headers de seguridad básicos
+- Tests críticos automatizados
+- CI básica en GitHub Actions
+
+## Ejecución en desarrollo
+Backend Flask local:
+- URL: `http://127.0.0.1:5000`
+
+Healthcheck:
+- `GET /health`
+- `GET /api/health`
+
+## Documentación técnica
+- `docs/DEFENSA.md`
+- `docs/openapi.yaml`
+- `docs/ARCHITECTURE.md`
+- `docs/DATABASE_SCHEMA.md`

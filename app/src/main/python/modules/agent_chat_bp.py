@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Blueprint: Agente IA chat + status
-El agente es PÚBLICO (no requiere login): antes del login trata a todos
-como 'cliente' (solo info de productos, precios, ofertas).
-Después del login usa el rol real de la sesión."""
+"""Blueprint: Agente IA chat + status"""
+
 from flask import Blueprint, request, jsonify, session
+from datetime import datetime
 
 agent_chat_bp = Blueprint('agent_chat', __name__)
 
-# Cargar agente IA (si está disponible)
 _agent = None
 _agent_loaded = False
 try:
@@ -16,64 +14,84 @@ try:
 except Exception as e:
     print(f"⚠️ Agente IA no disponible: {e}")
 
+def _saludo_inteligente(rol, name):
+    hora = datetime.now().hour
+    tiempo = "Buenos días" if 5 <= hora < 12 else "Buenas tardes" if 12 <= hora < 20 else "Buenas noches"
+    
+    if rol == 'cliente':
+        return f"¡{tiempo}{', ' + name if name else ''}! 👋 Soy el Asistente Virtual de la tienda. Puedo ayudarte a buscar productos, ver precios, consultar ofertas disponibles y decirte dónde encontrarnos. ¿Qué estás buscando hoy?"
+    elif rol == 'vendedor':
+        return f"¡{tiempo}, {name or 'equipo'}! 🛒 Listo para vender. Pregúntame por tus ventas de hoy, busca productos rápido o verifica stock crítico."
+    elif rol == 'administrador':
+        return f"¡{tiempo} Admin {name}! 📈 Sistemas operativos. Pídeme resúmenes de ganancias, gastos o rendimiento del personal."
+    elif rol == 'desarrollador':
+        return f"¡{tiempo} {name}! 💻 Root Access concedido. Pídeme el estado del sistema, integridad de la base de datos o logs."
+    else:
+        return f"¡{tiempo} {name or rol}! ¿En qué te ayudo hoy?"
 
 @agent_chat_bp.route('/api/agent/chat', methods=['POST'])
 def agent_chat():
-    """Chat con el agente IA.
-    NO requiere login: antes de autenticarse, el usuario es tratado como
-    'cliente' y solo puede preguntar por productos, precios y ofertas.
-    Después del login se usa el rol real de la sesión."""
     d = request.get_json(silent=True) or {}
-    msg = d.get('mensaje', '')
-    name = d.get('nombre', '')
+    msg = str(d.get('mensaje', '')).strip()
+    name_from_req = str(d.get('nombre', '')).strip()
 
-    # Determinar rol: si hay sesión activa, usar rol real; si no, 'cliente'
     usuario = session.get('usuario')
+    
+    # Si hay sesión, usa el rol real. Si no, es un cliente visitante.
     if usuario and isinstance(usuario, dict):
         rol = usuario.get('rol', 'cliente')
-        if not name:
-            name = usuario.get('nombre', usuario.get('username', ''))
+        name = usuario.get('nombre') or usuario.get('username') or name_from_req
     else:
-        # Sin sesión = pantalla de login = tratar como cliente
         rol = 'cliente'
-        # Ignorar el rol que envíe el frontend sin sesión (seguridad)
+        name = name_from_req
 
-    if _agent_loaded and _agent and msg:
+    # Inyección de personalidad inicial si el usuario solo entra o saluda
+    if not msg or msg.lower() in ['hola', 'buenas', 'hi', 'ayuda', 'menu']:
+        return jsonify({
+            "ok": True, 
+            "respuesta": _saludo_inteligente(rol, name), 
+            "rol": rol,
+            "intencion": "GREETING"
+        })
+
+    if _agent_loaded and _agent:
         try:
+            # FIX CRÍTICO: Llamamos al AgentMaster exactamente como lo espera (sin sid)
             result = _agent.process(msg, rol, name)
-            tools = [f"{t.get('icon', '')} {t.get('name', '')}"
-                     for t in result.get('tools', [])]
+            
+            tools = [f"{t.get('icon', '')} {t.get('name', '')}" for t in result.get('tools', [])]
+            
             return jsonify({
-                "ok": True, "respuesta": result.get('response', ''),
-                "rol": rol, "intencion": result.get('intent', ''),
+                "ok": True, 
+                "respuesta": result.get('response', ''),
+                "rol": rol, 
+                "intencion": result.get('intent', ''),
                 "confianza": result.get('confidence', 0.9),
                 "herramientas": tools,
+                "ui_action": result.get("ui_action"),
             })
         except Exception as e:
             print(f"Agent error: {e}")
+            return jsonify({
+                "ok": False,
+                "respuesta": f"❌ Hubo un error procesando tu solicitud, pero sigo aquí para ayudarte.",
+                "rol": rol
+            }), 500
 
-    # Fallback: saludo genérico según rol
-    if rol == 'cliente':
-        resp = (f"¡Hola{', ' + name if name else ''}! Soy el asistente del TPV. "
-                "Puedo ayudarte con información de productos, precios y ofertas. "
-                "¿Qué te interesa?")
-    else:
-        resp = (f"¡Hola {name or rol}! Soy tu asistente IA. "
-                "¿En qué puedo ayudarte?")
-
-    return jsonify({"ok": True, "respuesta": resp, "rol": rol})
-
+    # Fallback si falla el motor IA
+    return jsonify({
+        "ok": True, 
+        "respuesta": _saludo_inteligente(rol, name) + " (Modo catálogo básico)", 
+        "rol": rol
+    })
 
 @agent_chat_bp.route('/api/agent/status')
 def agent_status():
-    """Estado del agente IA."""
     return jsonify({
         "ok": True,
         "agent": "active" if _agent_loaded else "fallback",
-        "version": "3.0",
+        "version": "8.0-smart",
     })
 
-
 def is_agent_loaded():
-    """Helper para que otros módulos consulten el estado del agente."""
     return _agent_loaded

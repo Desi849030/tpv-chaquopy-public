@@ -1,4 +1,3 @@
-from auth_decorator import login_required
 """
 ╔══════════════════════════════════════════════════════════════╗
 ║   system.py  —  TPV ULTRA SMART  v7.0 (COMPLETO)           ║
@@ -9,41 +8,20 @@ from flask import Blueprint, request, jsonify, session, Response
 from functools import wraps
 from datetime import datetime
 import json, os
-from database import (
-    obtener_info_db, DB_FILE, cargar_estado, guardar_estado,
-    obtener_historial_diario_local, guardar_historial_diario_local,
-    agregar_log
-)
+from decorators import login_required, requiere_rol, usuario_actual
+from db_config import cargar_estado, guardar_estado
+from db_connection import DB_FILE, agregar_log, obtener_info_db
+from db_ventas import guardar_historial_diario_local, obtener_historial_diario_local
 import supabase_sync as _sb
 
 system_bp = Blueprint('system', __name__, url_prefix='/api')
 
-def requiere_login(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        if not session.get("usuario"):
-            return jsonify({"error": "No autenticado"}), 401
-        return f(*args, **kwargs)
-    return wrapper
 
-def requiere_rol(*roles):
-    def decorator(f):
-        @wraps(f)
-        def wrapper(*args, **kwargs):
-            u = session.get("usuario")
-            if not u or u.get("rol") not in roles:
-                return jsonify({"error": "Permiso denegado"}), 403
-            return f(*args, **kwargs)
-        return wrapper
-    return decorator
 
-def usuario_actual():
-    return session.get("usuario", {})
 
 # ══════════════════════════════════════════════════════════════
 # STATUS DEL SISTEMA
 # ══════════════════════════════════════════════════════════════
-@login_required
 @system_bp.route("/status", methods=["GET"])
 def api_status():
     """Endpoint público de status del servidor."""
@@ -64,7 +42,6 @@ def api_status():
 # ══════════════════════════════════════════════════════════════
 # BACKUPS
 # ══════════════════════════════════════════════════════════════
-@login_required
 @system_bp.route("/backup/export", methods=["GET"])
 @requiere_rol("administrador", "desarrollador")
 def api_export_backup():
@@ -79,7 +56,6 @@ def api_export_backup():
     resp.headers["Content-Disposition"] = f"attachment; filename=tpv_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     return resp
 
-@login_required
 @system_bp.route("/backup/import", methods=["POST"])
 @requiere_rol("administrador", "desarrollador")
 def api_import_backup():
@@ -97,9 +73,8 @@ def api_import_backup():
 # ══════════════════════════════════════════════════════════════
 # HISTORIAL DIARIO
 # ══════════════════════════════════════════════════════════════
-@login_required
 @system_bp.route("/historial/diario", methods=["GET"])
-@requiere_login
+@login_required
 def api_historial_get():
     """Obtiene historial diario local."""
     limite = int(request.args.get("limite", 30))
@@ -109,7 +84,6 @@ def api_historial_get():
     except Exception as e:
         return jsonify({"ok": False, "mensaje": str(e)}), 500
 
-@login_required
 @system_bp.route("/historial/diario", methods=["POST"])
 @requiere_rol("administrador", "desarrollador")
 def api_historial_post():
@@ -127,7 +101,6 @@ def api_historial_post():
 # ══════════════════════════════════════════════════════════════
 # LOGS DEL SISTEMA
 # ══════════════════════════════════════════════════════════════
-@login_required
 @system_bp.route("/logs", methods=["GET"])
 @requiere_rol("desarrollador", "administrador")
 def api_logs():
@@ -149,7 +122,6 @@ def api_logs():
     finally:
         conn.close()
 
-@login_required
 @system_bp.route("/logs/limpiar", methods=["POST"])
 @requiere_rol("desarrollador")
 def api_limpiar_logs():
@@ -168,16 +140,14 @@ def api_limpiar_logs():
 # ══════════════════════════════════════════════════════════════
 # CONFIGURACIÓN
 # ══════════════════════════════════════════════════════════════
-@login_required
 @system_bp.route("/config", methods=["GET"])
-@requiere_login
+@login_required
 def api_get_config():
     """Obtiene configuración del sistema."""
     estado = cargar_estado() or {}
     config = estado.get("config", {})
     return jsonify({"ok": True, "config": config})
 
-@login_required
 @system_bp.route("/config", methods=["POST"])
 @requiere_rol("administrador", "desarrollador")
 def api_update_config():

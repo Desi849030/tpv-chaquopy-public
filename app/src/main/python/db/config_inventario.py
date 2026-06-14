@@ -124,6 +124,7 @@ def limpiar_tablas_completo(admin_id):
             TABLAS_PERMITIDAS = {'productos', 'categorias', 'inventario_general', 'clientes_tienda', 'usuarios', 'ventas', 'configuracion', 'app_state', 'inventarios', 'historial_ventas'}
             if t not in TABLAS_PERMITIDAS:
                 continue
+            # Table/column from whitelist, not user input
             cursor.execute(f'DELETE FROM "{t}"')
             conteos[t] = cursor.rowcount
 

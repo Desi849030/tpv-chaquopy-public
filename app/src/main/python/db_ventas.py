@@ -36,27 +36,26 @@ def consultar_resumen_ventas(vendedor_id=None):
     conn   = obtener_conexion()
     cursor = conn.cursor()
     try:
-        filtro = "WHERE vendedor_id = ?" if vendedor_id else ""  # SQL seguro
-        params = (vendedor_id,) if vendedor_id else ()
-        cursor.execute(f"""
-            SELECT COUNT(*) AS num_ventas, SUM(total) AS total_ingresos,
-                   AVG(total) AS promedio_venta, MAX(total) AS venta_maxima,
-                   MIN(total) AS venta_minima, SUM(cantidad) AS unidades_vendidas
-            FROM historial_ventas {filtro}
-        """, params)
+        base_totales = ("SELECT COUNT(*) AS num_ventas, SUM(total) AS total_ingresos, "
+                        "AVG(total) AS promedio_venta, MAX(total) AS venta_maxima, "
+                        "MIN(total) AS venta_minima, SUM(cantidad) AS unidades_vendidas "
+                        "FROM historial_ventas")
+        base_top = ("SELECT nombre AS producto, SUM(cantidad) AS total_unidades, "
+                    "SUM(total) AS total_ingresos, COUNT(*) AS num_transacciones "
+                    "FROM historial_ventas")
+        base_metodo = ("SELECT metodo_pago, COUNT(*) AS num_ventas, SUM(total) AS total "
+                       "FROM historial_ventas")
+        if vendedor_id:
+            where = " WHERE vendedor_id = ?"
+            params = (vendedor_id,)
+        else:
+            where = ""
+            params = ()
+        cursor.execute(base_totales + where, params)
         totales = dict(cursor.fetchone())
-        cursor.execute(f"""
-            SELECT nombre AS producto, SUM(cantidad) AS total_unidades,
-                   SUM(total) AS total_ingresos, COUNT(*) AS num_transacciones
-            FROM historial_ventas {filtro}
-            GROUP BY nombre ORDER BY total_unidades DESC LIMIT 5
-        """, params)
+        cursor.execute(base_top + where + " GROUP BY nombre ORDER BY total_unidades DESC LIMIT 5", params)
         top = [dict(f) for f in cursor.fetchall()]
-        cursor.execute(f"""
-            SELECT metodo_pago, COUNT(*) AS num_ventas, SUM(total) AS total
-            FROM historial_ventas {filtro}
-            GROUP BY metodo_pago ORDER BY total DESC
-        """, params)
+        cursor.execute(base_metodo + where + " GROUP BY metodo_pago ORDER BY total DESC", params)
         por_metodo = [dict(f) for f in cursor.fetchall()]
         return {"totales": totales, "top_productos": top, "por_metodo_pago": por_metodo}
     finally:

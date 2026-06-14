@@ -10,26 +10,38 @@ def _get_default_password():
     return "Desarrollador2025"
 
 def _crear_desarrollador_default(cursor, conn):
-    _PW_DEV = "123456"
-    cursor.execute("SELECT COUNT(*) AS total FROM usuarios")
-    if cursor.fetchone()["total"] == 0:
-        hash_pw, salt    = _hash_password(_PW_DEV)
-        uid = f"user-{uuid.uuid4().hex[:8]}"
-        cursor.execute("""
-            INSERT INTO usuarios
-                (usuario_id, username, nombre, rol, password_hash, password_salt, creado_por)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (uid, "desarrollador", "Desarrollador Principal",
-              "desarrollador", hash_pw, salt, "sistema"))
-        conn.commit()
-        print(f"✅ Desarrollador creado — usuario: desarrollador | pass: {_PW_DEV}")
-    else:
-        # Siempre actualizar password del desarrollador (temporal)
-        hash_pw, salt = _hash_password(_PW_DEV)
-        cursor.execute("UPDATE usuarios SET password_hash=?, password_salt=? WHERE username=?",
-                       (hash_pw, salt, "desarrollador"))
-        conn.commit()
-        print(f"✅ Password desarrollador actualizada a: {_PW_DEV}")
+    """Crea/asegura los usuarios demo del sistema con IDs FIJOS que coinciden
+    con los del login de app.py (dev-001, usr-001..004). Así todos los roles
+    existen en la tabla 'usuarios' y tienen acceso real (inventario general,
+    privilegios, etc.) — antes solo existía el desarrollador."""
+    _PW = "123456"
+    # (usuario_id, username, nombre, rol)
+    DEMO = [
+        ("dev-001", "desarrollador", "Desarrollador Principal", "desarrollador"),
+        ("usr-001", "admin",         "Administrador",           "administrador"),
+        ("usr-002", "supervisor1",   "María Supervisora",       "supervisor"),
+        ("usr-003", "vendedor1",     "Juan Vendedor",           "vendedor"),
+        ("usr-004", "cajero1",       "Ana Cajera",              "cajero"),
+    ]
+    for uid, username, nombre, rol in DEMO:
+        hash_pw, salt = _hash_password(_PW)
+        cursor.execute("SELECT usuario_id FROM usuarios WHERE username=? OR usuario_id=?",
+                       (username, uid))
+        row = cursor.fetchone()
+        if row:
+            # Actualizar password e id para mantener consistencia con el login
+            cursor.execute(
+                "UPDATE usuarios SET password_hash=?, password_salt=?, rol=?, nombre=? "
+                "WHERE username=?",
+                (hash_pw, salt, rol, nombre, username))
+        else:
+            cursor.execute("""
+                INSERT INTO usuarios
+                    (usuario_id, username, nombre, rol, password_hash, password_salt, creado_por)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (uid, username, nombre, rol, hash_pw, salt, "sistema"))
+    conn.commit()
+    print("✅ Usuarios demo asegurados (dev, admin, supervisor, vendedor, cajero) — pass: %s" % _PW)
 
 # ══════════════════════════════════════════════════════════════
 #  USUARIOS
@@ -66,9 +78,8 @@ def login_usuario(username, password):
                     (username, 1 if exito else 0)
                 )
                 conn.commit()
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
-
         if not u:
             _registrar(False)
             agregar_log(f"Login fallido: '{username}' no existe", "warning")

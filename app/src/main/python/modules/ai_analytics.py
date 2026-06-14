@@ -1,11 +1,10 @@
 from db_connection import obtener_conexion
-from auth_decorator import login_required
+from decorators import login_required
 from modules.ai_helpers import ai_bp, requiere_login, jsonify, request
 # ══════════════════════════════════════════════════════════════
 #  ANALYTICS — /api/ai/analytics/*
 # ══════════════════════════════════════════════════════════════
 @requiere_login
-@login_required
 @ai_bp.route('/analytics', methods=['GET'])
 def analytics():
     """Endpoint combinado para compatibilidad."""
@@ -16,7 +15,6 @@ def analytics():
         return jsonify({"error": str(e)}), 500
 
 @requiere_login
-@login_required
 @ai_bp.route('/analytics/abc', methods=['GET'])
 def analytics_abc():
     try:
@@ -26,7 +24,6 @@ def analytics_abc():
         return jsonify({"error": str(e), "categories": {"A": {"count": 0, "revenue_pct": 0}, "B": {"count": 0, "revenue_pct": 0}, "C": {"count": 0, "revenue_pct": 0}}, "insight": []}), 500
 
 @requiere_login
-@login_required
 @ai_bp.route('/analytics/cross-selling', methods=['GET'])
 def analytics_cross_selling():
     try:
@@ -36,13 +33,11 @@ def analytics_cross_selling():
         return jsonify({"error": str(e), "recommendations": [], "total_baskets": 0}), 500
 
 @requiere_login
-@login_required
 @ai_bp.route('/analytics/prices', methods=['GET'])
 def analytics_prices():
     return _price_optimization()
 
 @requiere_login
-@login_required
 @ai_bp.route('/prices', methods=['GET'])
 def prices():
     """Alias para compatibilidad."""
@@ -59,7 +54,6 @@ def _price_optimization():
 #  KPIs — /api/ai/kpis  y  /api/analytics/kpis
 # ══════════════════════════════════════════════════════════════
 @requiere_login
-@login_required
 @ai_bp.route('/kpis', methods=['GET'])
 def kpis():
     return _kpis_data()
@@ -74,7 +68,7 @@ def _kpis_data():
         # Asegurar peak_hour
         if data.get('today') and 'peak_hour' not in data['today']:
             try:
-                from database import obtener_conexion
+                from db_connection import obtener_conexion
                 from datetime import datetime
                 conn = obtener_conexion()
                 today = datetime.now().strftime("%Y-%m-%d")

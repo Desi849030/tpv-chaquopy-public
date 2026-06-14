@@ -11,9 +11,11 @@ import os
 import urllib.request
 import urllib.error
 import urllib.parse
+import time
+import random
 from datetime import datetime
+from sync.config_persist import SUPABASE_CONFIG, TABLAS_SQL
 
-from sync.config_persist import SUPABASE_CONFIG
 SUPABASE_OK = False
 try:
     from dotenv import load_dotenv
@@ -56,8 +58,14 @@ def _headers():
         "Prefer":        "return=representation"
     }
 
-def _peticion(url, metodo="GET", datos=None, timeout=10, reintentos=2):
-    """HTTP genérico a Supabase con reintentos automáticos."""
+def _peticion(url, metodo="GET", datos=None, timeout=10, reintentos=3,
+              backoff_base=0.5, backoff_max=8.0):
+    """HTTP genérico a Supabase con reintentos y backoff exponencial + jitter.
+
+    - reintentos: nº de reintentos tras el primer fallo (total intentos = reintentos+1).
+    - Espera entre intentos: min(backoff_base * 2**intento, backoff_max) + jitter aleatorio.
+    - Los errores 4xx (cliente) NO se reintentan; los 5xx y de red SÍ.
+    """
     ultimo_error = None
     for intento in range(reintentos + 1):
         try:
@@ -71,13 +79,18 @@ def _peticion(url, metodo="GET", datos=None, timeout=10, reintentos=2):
         except urllib.error.HTTPError as e:
             cuerpo = e.read().decode("utf-8") if e.fp else ""
             ultimo_error = f"HTTP {e.code}: {cuerpo[:200]}"
-            if e.code < 500:  # 4xx → no reintentar
+            if e.code < 500:  # 4xx → error de cliente, no reintentar
                 break
         except urllib.error.URLError as e:
             ultimo_error = f"Red: {e.reason}"
         except Exception as e:
             ultimo_error = str(e)
             break
+        # Si quedan reintentos, esperar con backoff exponencial + jitter
+        if intento < reintentos:
+            espera = min(backoff_base * (2 ** intento), backoff_max)
+            espera += random.uniform(0, espera * 0.25)  # jitter ±25%
+            time.sleep(espera)
     print(f"⚠️  Supabase [{metodo}] {url.split('?')[0]} → {ultimo_error}")
     return None
 
@@ -117,7 +130,7 @@ def _verificar_rpc_exec_sql() -> bool:
             return True
         if isinstance(res, dict) and "error" not in str(res):
             return True
-    except Exception:
+    except Exception:  # noqa: broad-except - graceful degradation
         pass
     return False
 

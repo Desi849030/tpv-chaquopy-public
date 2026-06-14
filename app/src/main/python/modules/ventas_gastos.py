@@ -1,14 +1,13 @@
 from db_connection import obtener_conexion
 from flask import request
-from auth_decorator import login_required
+from decorators import login_required
 from modules.ventas_helpers import ventas_bp, uuid, request, jsonify, requiere_login, usuario_actual, agregar_log, datetime, obtener_conexion, _sb
 # ══════════════════════════════════════════════════════════════
 #  GASTOS / INVERSIÓN
 # ══════════════════════════════════════════════════════════════
 
-@login_required
 @ventas_bp.route("/api/gastos", methods=["GET"])
-@requiere_login
+@login_required
 def api_listar_gastos():
     u = usuario_actual()
     if u["rol"] not in ("desarrollador","administrador","supervisor"):
@@ -25,9 +24,8 @@ def api_listar_gastos():
     finally:
         conn.close()
 
-@login_required
 @ventas_bp.route("/api/gastos", methods=["POST"])
-@requiere_login
+@login_required
 def api_crear_gasto():
     u = usuario_actual()
     if u["rol"] not in ("desarrollador","administrador"):
@@ -57,9 +55,8 @@ def api_crear_gasto():
     finally:
         conn.close()
 
-@login_required
 @ventas_bp.route("/api/gastos/<gasto_id>", methods=["DELETE"])
-@requiere_login
+@login_required
 def api_eliminar_gasto(gasto_id):
     u = usuario_actual()
     if u["rol"] not in ("desarrollador","administrador"):

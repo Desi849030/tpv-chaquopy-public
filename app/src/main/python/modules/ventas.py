@@ -1,4 +1,3 @@
-from auth_decorator import login_required
 """
 ╔══════════════════════════════════════════════════════════════╗
 ║   ventas.py  —  TPV ULTRA SMART  v7.0 (COMPLETO)           ║
@@ -8,42 +7,20 @@ from auth_decorator import login_required
 from flask import Blueprint, request, jsonify, session
 from functools import wraps
 from datetime import datetime, timedelta
-from database import (
-    consultar_ventas_por_fecha, consultar_resumen_ventas, 
-    consultar_ganancias_por_dia, obtener_conexion, agregar_log,
-    obtener_historial_cierres
-)
+from decorators import login_required, requiere_rol, usuario_actual
+from db_connection import agregar_log, obtener_conexion
+from db_ventas import consultar_ganancias_por_dia, consultar_resumen_ventas, consultar_ventas_por_fecha
 
 ventas_bp = Blueprint('ventas', __name__, url_prefix='/api')
 
-def requiere_login(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        if not session.get("usuario"):
-            return jsonify({"error": "No autenticado"}), 401
-        return f(*args, **kwargs)
-    return wrapper
 
-def requiere_rol(*roles):
-    def decorator(f):
-        @wraps(f)
-        def wrapper(*args, **kwargs):
-            u = session.get("usuario")
-            if not u or u.get("rol") not in roles:
-                return jsonify({"error": "Permiso denegado"}), 403
-            return f(*args, **kwargs)
-        return wrapper
-    return decorator
 
-def usuario_actual():
-    return session.get("usuario", {})
 
 # ══════════════════════════════════════════════════════════════
 # GASTOS
 # ══════════════════════════════════════════════════════════════
-@login_required
 @ventas_bp.route("/gastos", methods=["GET"])
-@requiere_login
+@login_required
 def api_gastos():
     u = usuario_actual()
     if u["rol"] not in ("desarrollador", "administrador", "supervisor"):
@@ -61,7 +38,6 @@ def api_gastos():
     finally:
         conn.close()
 
-@login_required
 @ventas_bp.route("/gastos", methods=["POST"])
 @requiere_rol("administrador", "desarrollador")
 def api_crear_gasto():
@@ -93,7 +69,6 @@ def api_crear_gasto():
     finally:
         conn.close()
 
-@login_required
 @ventas_bp.route("/gastos/<gasto_id>", methods=["DELETE"])
 @requiere_rol("administrador", "desarrollador")
 def api_eliminar_gasto(gasto_id):
@@ -110,9 +85,8 @@ def api_eliminar_gasto(gasto_id):
 # ══════════════════════════════════════════════════════════════
 # CIERRES DE CAJA
 # ══════════════════════════════════════════════════════════════
-@login_required
 @ventas_bp.route("/cierres", methods=["GET"])
-@requiere_login
+@login_required
 def api_cierres():
     u = usuario_actual()
     desde = request.args.get("desde", "2000-01-01")
@@ -133,9 +107,8 @@ def api_cierres():
     finally:
         conn.close()
 
-@login_required
 @ventas_bp.route("/cierres/cerrar-dia", methods=["POST"])
-@requiere_login
+@login_required
 def api_cerrar_dia():
     """Cierra el día actual para el vendedor o admin."""
     u = usuario_actual()
@@ -169,9 +142,8 @@ def api_cerrar_dia():
 # ══════════════════════════════════════════════════════════════
 # REPORTES
 # ══════════════════════════════════════════════════════════════
-@login_required
 @ventas_bp.route("/reportes/ventas", methods=["GET"])
-@requiere_login
+@login_required
 def api_reporte_ventas():
     u = usuario_actual()
     desde = request.args.get("desde", "2000-01-01")
@@ -181,16 +153,14 @@ def api_reporte_ventas():
     ventas = consultar_ventas_por_fecha(desde, hasta, vendedor_id)
     return jsonify({"ventas": ventas, "total": len(ventas)})
 
-@login_required
 @ventas_bp.route("/reportes/resumen", methods=["GET"])
-@requiere_login
+@login_required
 def api_resumen_ventas():
     u = usuario_actual()
     vendedor_id = u["usuario_id"] if u["rol"] == "vendedor" else None
     resumen = consultar_resumen_ventas(vendedor_id)
     return jsonify(resumen)
 
-@login_required
 @ventas_bp.route("/reportes/ganancias", methods=["GET"])
 @requiere_rol("administrador", "desarrollador", "supervisor")
 def api_ganancias():

@@ -217,28 +217,24 @@ class AgentMaster:
         if self.skill_registry:
             try:
                 resp = self.skill_registry.enrich_response(resp, text or '', role, context=enriched_ctx)
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
-
         # 7. Humanizar respuesta
         try:
             resp = self.humanizer.enhance(resp, role)
-        except Exception:
+        except Exception:  # noqa: broad-except - graceful degradation
             pass
-
         # 8. Sanitizar texto
         try:
             resp = self.humanizer.sanitize_text(resp)
-        except Exception:
+        except Exception:  # noqa: broad-except - graceful degradation
             pass
-
         # 9. Guardar en memoria avanzada
         if self.adv_memory_ok:
             try:
                 extract_and_save(session_id, text or '', intent_str, resp[:200], role)
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
-
         # 10. Guardar en memoria basica (fallback)
         self.sessions[session_id] = {
             "text": text, "role": role,
@@ -282,9 +278,8 @@ class AgentMaster:
             if rows:
                 items = [f"{r[0]}: ${r[1]:.2f} ({r[3]} {r[2]})" for r in rows[:5]]
                 return {'response': f"{icon} Productos encontrados:\n" + "\n".join(f"  📦 {item}" for item in items), 'exact': True}
-        except Exception:
+        except Exception:  # noqa: broad-except - graceful degradation
             pass
-
         # Intento 2: fuzzy match si no hubo resultado exacto
         if _HAS_FUZZY:
             try:
@@ -313,9 +308,9 @@ class AgentMaster:
                                     'response': f"{icon} Quisiste decir:\n" + "\n".join(f"  📦 {item}" for item in items),
                                     'exact': False, 'fuzzy_score': score
                                 }
-                        except Exception:
+                        except Exception:  # noqa: broad-except - graceful degradation
                             pass
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
         return None
 
@@ -336,24 +331,40 @@ class AgentMaster:
     # Fallback de deteccion de intencion por keywords
     # ----------------------------------------------------------------
     def _keyword_fallback(self, text):
-        """Fallback: detecta intencion por keywords cuando NLP falla."""
+        """Fallback: detecta intención por keywords cuando NLP tiene baja confianza."""
         if not text:
             return None, 0
         tl = text.lower()
-        if any(kw in tl for kw in ['recomiendame', 'recomendar', 'sugerir']):
-            return 'RECOMMEND', 0.7
-        elif any(kw in tl for kw in ['stock', 'inventario', 'critico', 'agotado']):
-            return 'STOCK', 0.7
-        elif any(kw in tl for kw in ['finanza', 'balance', 'ganancia', 'margen']):
-            return 'FINANCE', 0.7
-        elif any(kw in tl for kw in ['venta', 'cuanto vendi', 'caja']):
-            return 'SALES', 0.7
-        elif any(kw in tl for kw in ['hola', 'buenos dias', 'saludos']):
-            return 'GREETING', 0.7
-        elif any(kw in tl for kw in ['oferta', 'descuento', 'rebaja', 'promo']):
-            return 'OFFERS', 0.7
-        elif any(kw in tl for kw in ['top', 'mas vendido', 'ranking']):
-            return 'TRENDS', 0.7
+        # Orden: más específico primero
+        _MAP = [
+            ('STOCK_QUERY', ['cuanto hay de', 'stock de', 'quedan de', 'tengo de', 'existencia de']),
+            ('TOP_PRODUCTS', ['top productos', 'mas vendidos', 'productos estrella']),
+            ('ABC', ['analisis abc', 'pareto', 'clasificacion abc']),
+            ('EOQ', ['eoq', 'lote optimo', 'pedido optimo']),
+            ('PREDICTIONS', ['prediccion', 'pronostico', 'proyeccion', 'forecast']),
+            ('ROTATION', ['rotacion', 'indice rotacion']),
+            ('EXPENSES', ['gastos', 'egresos', 'costos fijos']),
+            ('DASHBOARD', ['dashboard', 'resumen', 'estado general', 'kpi']),
+            ('CATEGORIES', ['categorias', 'catalogo', 'secciones', 'que tienen']),
+            ('LOYALTY', ['puntos', 'lealtad', 'fidelidad', 'recompensa']),
+            ('HISTORY', ['historial', 'compras', 'recibo', 'factura']),
+            ('LOGIN', ['login', 'iniciar sesion', 'entrar', 'contrasena']),
+            ('PAYMENT', ['metodo pago', 'pagar', 'efectivo', 'tarjeta', 'cobrar']),
+            ('SYSTEM', ['estado sistema', 'logs', 'debug', 'errores']),
+            ('BACKUP', ['respaldo', 'backup', 'copia seguridad']),
+            ('RECOMMEND', ['recomiendame', 'recomendar', 'sugerir', 'sugerencia']),
+            ('STOCK', ['stock', 'inventario', 'critico', 'agotado', 'reabastecer']),
+            ('FINANCE', ['finanza', 'balance', 'ganancia', 'margen', 'ingreso']),
+            ('SALES', ['venta', 'cuanto vendi', 'caja', 'facturacion']),
+            ('OFFERS', ['oferta', 'descuento', 'rebaja', 'promo']),
+            ('TRENDS', ['top', 'mas vendido', 'ranking', 'popular', 'tendencia']),
+            ('HELP', ['ayuda', 'que puedes', 'opciones', 'menu', 'como funciona']),
+            ('GOODBYE', ['adios', 'hasta luego', 'chao', 'nos vemos', 'bye']),
+            ('GREETING', ['hola', 'buenos dias', 'buenas tardes', 'buenas noches', 'saludos']),
+        ]
+        for intent, keywords in _MAP:
+            if any(kw in tl for kw in keywords):
+                return intent, 0.75
         return None, 0
 
     # ----------------------------------------------------------------
@@ -390,9 +401,10 @@ class AgentMaster:
         if _HAS_HANDLERS and role in self._role_handlers:
             try:
                 handler = self._role_handlers[role]
-                # Los handlers especializados esperan (agent, text, metadata_dict)
-                metadata = {"p": "", "session_id": session_id}
-                result = handler(self, text or '', metadata)
+                # Firma de los handlers: (agent, text, name). handle_admin y
+                # handle_dev usan el 3er arg como NOMBRE del usuario; vendedor y
+                # supervisor lo ignoran. Antes se pasaba un dict y se imprimía crudo.
+                result = handler(self, text or '', name or '')
                 if result and len(result.strip()) > 5:
                     # Agregar contexto de memoria si hay datos del cliente
                     if enriched_ctx and enriched_ctx.get('client_data'):
@@ -431,7 +443,7 @@ class AgentMaster:
                     if mission:
                         import random as _rnd
                         greeting += f"\n💡 {_rnd.choice(mission)}\n"
-                except Exception:
+                except Exception:  # noqa: broad-except - graceful degradation
                     pass
             return greeting + "\n¿En qué puedo ayudarte?"
 
@@ -448,15 +460,36 @@ class AgentMaster:
                                 f"📊 Gastos: ${d['g']:,.2f}\n"
                                 f"📈 Margen: {margen:.1f}%\n"
                                 f"💵 Ganancia: ${prof:,.2f}")
-                    except Exception:
+                    except Exception:  # noqa: broad-except - graceful degradation
                         pass
-                return f"{icon} Balance Financiero:\n💰 Ventas hoy: $3,250 (12 transacciones)\n📊 Ventas mes: $45,230\n📈 Margen: 28%\n💵 Ganancia hoy: $890\n\nTop: Arroz Premium $637.50"
+                try:
+                    d = F.diario()
+                    return f"{icon} Balance Financiero:\n💰 Ventas hoy: ${d['r']:,.2f} ({d['t']} transacciones)\n📊 Ticket promedio: ${d['a']:,.2f}\n💵 Gastos: ${d['g']:,.2f}\n📈 Neto: ${d['r']-d['g']:,.2f}"
+                except Exception:
+                    return f"{icon} No hay datos financieros disponibles aún. Registre ventas para ver el balance."
             return f"{icon} No tienes acceso a finanzas con tu rol actual."
 
         if 'STOCK' in intent:
-            if 'inventario' in poderes:
-                return f"{icon} Inventario:\n📦 Total: 12 productos | ✅ Stock: 10\n🔴 Críticos: Jabón Líquido (25u), Pan Integral (20u)\n🟡 Atención: Huevos (35u)\n🟢 Óptimo: Arroz, Leche, Refresco"
-            return f"{icon} Stock bajo: Jabón Líquido (25u) y Pan Integral (20u)."
+            if 'inventario' in poderes or 'catalogo' in poderes:
+                if _HAS_METRICS:
+                    try:
+                        r = F.stock_resumen()
+                        crit = F.stock_critico()
+                        total = r['total'] if not hasattr(r, 'keys') else r['total']
+                        agot = r['agotados']; criticos = r['criticos']; unid = r['unidades'] or 0
+                        msg = (f"{icon} Inventario (datos reales):\n"
+                               f"📦 {total} productos · {unid:.0f} unidades\n"
+                               f"🔴 Agotados: {agot} · 🟡 Críticos: {criticos}\n")
+                        if crit:
+                            items = ', '.join(f"{c['nombre']} ({c['stock_actual']:.0f}u)" for c in crit[:5])
+                            msg += f"\n⚠️ Atención: {items}"
+                        else:
+                            msg += "\n✅ Todo el stock está por encima del mínimo."
+                        return msg
+                    except Exception:  # noqa: broad-except - graceful degradation
+                        pass
+                return f"{icon} Inventario: usa la pestaña Inventario para ver el detalle."
+            return f"{icon} No tienes acceso al inventario con tu rol actual."
 
         if 'SALES' in intent:
             if 'ventas' in poderes:
@@ -465,13 +498,68 @@ class AgentMaster:
                         d = F.diario()
                         return (f"{icon} Ventas Hoy:\n🛒 {d['t']} transacciones | ${d['r']:,.2f}\n"
                                 f"📊 Promedio: ${d['a']:,.2f}")
-                    except Exception:
+                    except Exception:  # noqa: broad-except - graceful degradation
                         pass
-                return f"{icon} Ventas Hoy:\n🛒 12 transacciones | $3,250\n📊 Promedio: $270.83\n⭐ Top: Arroz Premium (5)\n💳 Efectivo: 65% | Tarjeta: 35%"
-            return f"{icon} Hoy: 12 ventas por $3,250. ¿Registramos una nueva?"
+                try:
+                    d = F.diario()
+                    return f"{icon} Ventas Hoy:\n🛒 {d['t']} transacciones | ${d['r']:,.2f}\n📊 Promedio: ${d['a']:,.2f}"
+                except Exception:
+                    return f"{icon} Sin datos de ventas disponibles."
+            try:
+                d = F.diario()
+                return f"{icon} Hoy: {d['t']} ventas por ${d['r']:,.2f}. ¿Registramos una nueva?"
+            except Exception:
+                return f"{icon} ¿Registramos una venta?"
 
+        if 'TOP_PRODUCTS' in intent:
+            if _HAS_METRICS:
+                try:
+                    top = F.top(dias=7, lim=5)
+                    if top:
+                        lst = '\n'.join(f"  {i+1}. {t['nombre']} — {t['q']:.0f} uds (${t['t']:,.2f})"
+                                        for i, t in enumerate(top))
+                        return f"{icon} Top productos (últimos 7 días):\n{lst}"
+                    return f"{icon} Aún no hay ventas suficientes esta semana para un ranking."
+                except Exception:  # noqa: broad-except - graceful degradation
+                    pass
+        if 'CATEGORIES' in intent or 'categoria' in (text or '').lower():
+            if _HAS_METRICS:
+                try:
+                    cats = F.categorias()
+                    if cats:
+                        lst = '\n'.join(f"  • {c['cat']}: {c['n']} productos (${(c['valor'] or 0):,.2f})"
+                                        for c in cats[:8])
+                        return f"{icon} Categorías del catálogo:\n{lst}"
+                except Exception:  # noqa: broad-except - graceful degradation
+                    pass
+        # Consulta de stock de un producto concreto ("cuanto hay de X")
+        if 'STOCK_QUERY' in intent and _HAS_METRICS:
+            try:
+                import re as _re
+                m = _re.search(r'(?:hay de|stock de|quedan de|cuanto hay de|tengo de)\s+(.+)', (text or '').lower())
+                term = (m.group(1).strip() if m else '')
+                if term:
+                    res = F.buscar_stock(term)
+                    if res:
+                        lst = '\n'.join(f"  {r['nombre']}: {r['stock_actual']:.0f} uds (${r['precio_venta']:,.2f})"
+                                        for r in res[:6])
+                        return f"{icon} Stock de '{term}':\n{lst}"
+                    return f"{icon} No encontré productos que coincidan con '{term}'."
+            except Exception:  # noqa: broad-except - graceful degradation
+                pass
         if 'RECOMMEND' in intent or 'OFFERS' in intent:
-            return f"{icon} Recomendaciones:\n⭐ Estrella: Arroz Premium (40% margen)\n📈 Tendencia: Café Molido (+15%)\n🏷️ Oferta ideal: Frijoles (50% margen)\n🎯 Oportunidad: Combo Despensa $79.25"
+            if _HAS_METRICS:
+                try:
+                    top = F.top(dias=7, lim=3)
+                    if top:
+                        estrella = top[0]['nombre']
+                        return (f"{icon} Recomendaciones (según ventas reales):\n"
+                                f"⭐ Más vendido: {estrella}\n"
+                                f"📈 También destacan: " + ', '.join(t['nombre'] for t in top[1:3]) +
+                                f"\n💡 Considera ofertas en productos de baja rotación.")
+                except Exception:  # noqa: broad-except - graceful degradation
+                    pass
+            return f"{icon} Recomendaciones: revisa el Dashboard para ver tendencias de venta."
 
         if tools:
             tlist = '\n'.join([f"  {t['icon']} {t['name']}: {t['desc'][:80]}" for t in tools[:4]])
@@ -507,7 +595,7 @@ class AgentMaster:
                 if role not in self._guide_managers:
                     self._guide_managers[role] = GuideManager(user_role=role)
                 return self._guide_managers[role].get_contextual_guide(screen_id)
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
         # Fallback basico
         if _HAS_ROLE_GUIDANCE:
@@ -515,7 +603,7 @@ class AgentMaster:
                 missions = ROLE_MISSIONS.get(role, ROLE_MISSIONS.get('cliente', {}))
                 suggestions = missions.get('operativo', ['Estoy aqui para ayudarle.'])
                 return f"🤖 {random.choice(suggestions)}"
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
         return "🤖 ¿En qué puedo ayudarle?"
 
@@ -571,12 +659,12 @@ class AgentMaster:
         if self.react_engine:
             try:
                 status['react_status'] = self.react_engine.get_status()
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
         if self.skill_registry:
             try:
                 status['skills_count'] = len(self.skill_registry.skills)
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
         return status
 
@@ -588,7 +676,7 @@ class AgentMaster:
         if self.adv_memory_ok:
             try:
                 return recall(session_id, category=category, limit=limit)
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
         # Fallback: memoria basica
         return self.sessions.get(session_id, {})
@@ -598,7 +686,7 @@ class AgentMaster:
         if self.adv_memory_ok:
             try:
                 return mem_forget(session_id, category=category)
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
         # Fallback: memoria basica
         if session_id in self.sessions:
@@ -611,7 +699,7 @@ class AgentMaster:
         if self.adv_memory_ok:
             try:
                 return mem_summary(session_id)
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
         return {'total': len(self.sessions), 'categories': {}}
 
@@ -637,4 +725,164 @@ class AgentMaster:
             return {'results': [], 'query': query, 'error': str(e)}
 
 
-agent = AgentMaster()
+# ══════════════════════════════════════════════════════════════
+#  AGENTE FALLBACK (antes ia/agent_pro.py — unificado aquí, #6)
+#  Se usa cuando AgentMaster no puede inicializarse.
+# ══════════════════════════════════════════════════════════════
+from ia.tool_system import suggest_tools  # noqa: E402
+
+# Helpers para obtener datos reales
+def _datos_reales():
+    """Obtiene métricas reales de la BD."""
+    try:
+        from ia.db_utils import q
+        d = q("SELECT COUNT(*) t, COALESCE(SUM(total),0) r, COALESCE(AVG(total),0) a "
+              "FROM historial_ventas WHERE DATE(fecha)=DATE('now','localtime')", one=True)
+        p = q("SELECT COUNT(*) n FROM productos WHERE activo=1", one=True)
+        sb = q("SELECT COUNT(*) n FROM inventario_general WHERE stock_actual<=5 AND stock_actual>=0", one=True)
+        return {
+            'ventas_hoy': d['t'] if d else 0,
+            'ingresos_hoy': d['r'] if d else 0,
+            'promedio': d['a'] if d else 0,
+            'productos': p['n'] if p else 0,
+            'stock_bajo': sb['n'] if sb else 0,
+        }
+    except Exception:
+        return {'ventas_hoy': 0, 'ingresos_hoy': 0, 'promedio': 0,
+                'productos': 0, 'stock_bajo': 0}
+
+def _fmt(n):
+    """Formatea número como moneda."""
+    try:
+        return f"${n:,.2f}"
+    except Exception:
+        return f"${n}"
+
+
+class AgentPro:
+    def __init__(self):
+        self.nlp = NLPEngine()
+        self.humanizer = Humanizer()
+        self.tools = TOOLS
+
+        self.personalities = {
+            'desarrollador': {'name': 'Neo', 'emoji': '🧠'},
+            'administrador': {'name': 'Athena', 'emoji': '🦉'},
+            'supervisor': {'name': 'Ares', 'emoji': '⚔️'},
+            'vendedor': {'name': 'Hermes', 'emoji': '💚'},
+            'cajero': {'name': 'Iris', 'emoji': '💵'},
+        }
+
+    def process(self, text, role='cliente', user_name=''):
+        session_id = f"sess_{random.randint(100000, 999999)}"
+        p = self.personalities.get(role, {'name': 'Asistente', 'emoji': '🤖'})
+        e = p['emoji']
+
+        # Detectar intención
+        intent, confidence = self.nlp.predict_intent(text) if text else (None, 0)
+        intent_str = str(intent) if intent else ''
+
+        # Buscar herramientas relevantes
+        tools = suggest_tools(text, role) if text else []
+
+        # Obtener datos reales
+        datos = _datos_reales()
+
+        # Generar respuesta con datos REALES
+        if 'GREETING' in intent_str:
+            saludo = self.humanizer.time_greeting()
+            nombre = user_name or role
+            resp = (f"{e} {saludo} {nombre}! Soy {p['name']}, tu asistente. "
+                    f"Tienes {datos['productos']} productos activos"
+                    f"{f' y {datos['stock_bajo']} con stock bajo' if datos['stock_bajo'] else ''}. "
+                    f"¿En qué te ayudo?")
+
+        elif 'FINANCE' in intent_str:
+            resp = (f"{e} Balance del día:\n"
+                    f"💰 Ingresos: {_fmt(datos['ingresos_hoy'])}\n"
+                    f"🛒 Ventas: {datos['ventas_hoy']} transacciones\n"
+                    f"📊 Ticket promedio: {_fmt(datos['promedio'])}\n"
+                    f"📦 Productos activos: {datos['productos']}\n"
+                    f"⚠️ Stock bajo: {datos['stock_bajo']}")
+
+        elif 'STOCK' in intent_str:
+            try:
+                from ia.db_utils import q
+                criticos = q("SELECT nombre, stock_actual FROM inventario_general "
+                             "WHERE stock_actual<=5 ORDER BY stock_actual LIMIT 8")
+                if criticos:
+                    lst = '\n'.join(f"  {'🔴' if r['stock_actual']<=2 else '🟡'} "
+                                    f"{r['nombre']}: {int(r['stock_actual'])} uds"
+                                    for r in criticos)
+                    resp = f"{e} Stock que necesita atención:\n{lst}"
+                else:
+                    resp = f"{e} ✅ Todo el inventario está en niveles saludables."
+            except Exception:
+                resp = f"{e} {datos['stock_bajo']} productos con stock bajo."
+
+        elif 'SALES' in intent_str:
+            resp = (f"{e} Ventas de hoy:\n"
+                    f"🛒 {datos['ventas_hoy']} transacciones\n"
+                    f"💰 Total: {_fmt(datos['ingresos_hoy'])}\n"
+                    f"📊 Promedio: {_fmt(datos['promedio'])}")
+
+        elif 'RECOMMEND' in intent_str or 'OFFERS' in intent_str:
+            try:
+                from ia.metrics import F
+                top = F.top(dias=7, lim=3)
+                if top:
+                    lst = '\n'.join(f"  ⭐ {t['nombre']}: {int(t['q'])} uds ({_fmt(t['t'])})"
+                                    for t in top)
+                    resp = f"{e} Recomendaciones basadas en ventas reales:\n{lst}"
+                else:
+                    resp = f"{e} Aún no hay suficientes ventas para recomendaciones. ¡A vender!"
+            except Exception:
+                resp = f"{e} Consulta el Dashboard para ver tendencias."
+
+        elif 'GOODBYE' in intent_str:
+            resp = f"{e} ¡Hasta luego{', ' + user_name if user_name else ''}! 👋"
+
+        elif 'HELP' in intent_str:
+            resp = (f"{e} Soy {p['name']}. Puedo ayudarte con:\n"
+                    f"💰 Finanzas y balances\n📦 Inventario y stock\n"
+                    f"🛒 Ventas y reportes\n⭐ Recomendaciones\n"
+                    f"📊 Métricas y KPIs\n\n¿Qué necesitas?")
+
+        elif tools:
+            tools_list = '\n'.join(f"  {t['icon']} {t['name']}: {t['desc'][:60]}" for t in tools[:4])
+            resp = f"{e} Herramientas relevantes:\n\n{tools_list}\n\n¿Profundizamos en alguna?"
+
+        else:
+            resp = self.humanizer.human_help(role)
+            resp = f"{e} {resp}"
+
+        # Humanizar
+        resp = self.humanizer.enhance(resp, role)
+
+        return {
+            'response': resp,
+            'intent': intent_str,
+            'confidence': confidence,
+            'role': role,
+            'tools': tools[:4],
+            'session_id': session_id,
+            'timestamp': datetime.now().isoformat(),
+        }
+
+
+# Alias de compatibilidad: el fallback se expone con el mismo nombre
+AgentFallback = AgentPro
+
+def _crear_agente():
+    """Instancia AgentMaster; si falla, usa el fallback AgentPro."""
+    try:
+        a = AgentMaster()
+        logger.info("[ia] Agente principal: AgentMaster")
+        return a
+    except Exception as e:  # noqa: broad-except - fallback controlado
+        logger.warning("[ia] AgentMaster fallo (%s); usando AgentPro fallback", e)
+        return AgentPro()
+
+agent = _crear_agente()
+fallback_agent = agent if isinstance(agent, AgentPro) else None
+

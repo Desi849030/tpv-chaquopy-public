@@ -23,14 +23,14 @@
     init: function() {
       this.fetch();
       var self = this;
-      this.intervalId = setInterval(function() { self.fetch(); }, 10000);
+      this.intervalId = setInterval(function() { self.fetch(); }, 30000);
     },
 
     fetch: function() {
       var self = this;
       var se = this.el("dm-status");
       if (se) se.textContent = "cargando...";
-      fetch(this.endpoint, {cache: "no-store"}).then(function(r) {
+      fetch(this.endpoint, {cache: "no-store", credentials: "same-origin"}).then(function(r) {
         if (!r.ok) throw new Error("HTTP " + r.status);
         return r.json();
       }).then(function(d) {
@@ -42,14 +42,40 @@
       });
     },
 
+    // Muestra MB o GB según magnitud.
+    mb: function(v) {
+      v = Number(v) || 0;
+      if (v >= 1024) return (v / 1024).toFixed(2) + " GB";
+      return v.toFixed(0) + " MB";
+    },
+
     render: function(d) {
       this.renderResumen(d);
       this.renderRam(d.ram);
       this.renderStorage(d.storage);
-      this.renderInventario(d.inventario);
-      this.renderCategorias(d.inventario);
-      this.renderTop5(d.inventario);
+      this.renderTablas(d.tablas);
       this.renderFooter(d);
+    },
+
+    renderTablas: function(t) {
+      var el = this.el("dm-tablas");
+      if (!el) return;
+      if (!t || !t.tablas || !t.tablas.length) {
+        el.innerHTML = '<div class="text-muted small">Sin tablas</div>';
+        return;
+      }
+      var resumen = this.el("dm-tablas-resumen");
+      if (resumen) resumen.textContent = t.total_tablas + " tablas · " + t.total_filas + " filas";
+      var html = '<div class="row g-1">';
+      for (var i = 0; i < t.tablas.length; i++) {
+        var row = t.tablas[i];
+        var color = row.filas > 0 ? "text-info fw-bold" : "text-muted";
+        html += '<div class="col-6 col-md-4 d-flex justify-content-between border-bottom py-1" style="font-size:12px">' +
+                '<span class="text-truncate me-1">' + row.nombre + '</span>' +
+                '<span class="' + color + '">' + (row.filas < 0 ? "?" : row.filas) + '</span></div>';
+      }
+      html += '</div>';
+      el.innerHTML = html;
     },
 
     renderResumen: function(d) {
@@ -70,9 +96,9 @@
         this._set("dm-ram-sys-pct", (r.sistema_pct || 0) + "%");
         var b = this.el("dm-ram-bar");
         if (b) b.style.width = (r.sistema_pct || 0) + "%";
-        this._set("dm-ram-total", r.sistema_total_mb + " MB");
-        this._set("dm-ram-usado", r.sistema_usado_mb + " MB");
-        this._set("dm-ram-libre", r.sistema_libre_mb + " MB");
+        this._set("dm-ram-total", this.mb(r.sistema_total_mb));
+        this._set("dm-ram-usado", this.mb(r.sistema_usado_mb));
+        this._set("dm-ram-libre", this.mb(r.sistema_libre_mb));
       }
     },
 
@@ -86,9 +112,9 @@
       var b = this.el("dm-disco-bar");
       if (b) b.style.width = p + "%";
       if (s.disco_total_mb > 0) {
-        this._set("dm-disco-total", s.disco_total_mb + " MB");
-        this._set("dm-disco-usado", s.disco_usado_mb + " MB");
-        this._set("dm-disco-libre", s.disco_libre_mb + " MB");
+        this._set("dm-disco-total", this.mb(s.disco_total_mb));
+        this._set("dm-disco-usado", this.mb(s.disco_usado_mb));
+        this._set("dm-disco-libre", this.mb(s.disco_libre_mb));
       }
     },
 
@@ -141,29 +167,26 @@
     }
   };
 
-  // Auto-init cuando el tab se hace visible o al cargar
+  // Solo inicializa cuando el tab está visible (evita 403 al pedir métricas
+  // sin estar logueado o sin abrir la pestaña).
   function initWhenReady() {
     var pane = document.getElementById("dev-metrics-tab-pane");
-    if (pane && pane.classList.contains("active")) {
+    if (!pane) return;
+    if (pane.classList.contains("active")) {
       DM.init();
       return;
     }
-    // Observar cuando el tab se active
-    var observer = new MutationObserver(function(mutations) {
-      for (var i = 0; i < mutations.length; i++) {
-        if (mutations[i].target.classList.contains("active") ||
-            mutations[i].target.classList.contains("show")) {
-          DM.init();
-          observer.disconnect();
-          return;
-        }
+    // Observar cuando el tab se active (no usar fallback por tiempo).
+    var observer = new MutationObserver(function() {
+      if (pane.classList.contains("active") || pane.classList.contains("show")) {
+        DM.init();
+      } else if (DM.intervalId) {
+        // Detener el polling cuando se sale de la pestaña.
+        clearInterval(DM.intervalId);
+        DM.intervalId = null;
       }
     });
-    if (pane) {
-      observer.observe(pane, {attributes: true, attributeFilter: ["class"]});
-    }
-    // Fallback: init después de 3 segundos
-    setTimeout(function() { DM.init(); }, 3000);
+    observer.observe(pane, {attributes: true, attributeFilter: ["class"]});
   }
 
   if (document.readyState === "loading") {
@@ -175,3 +198,11 @@
   // Exportar para uso externo
   window.DM = DM;
 })();
+
+
+// Alias global para el botón onclick="devmetrics_cargar()"
+window.devmetrics_cargar = function() {
+    if (typeof DM !== 'undefined' && DM.fetch) {
+        DM.fetch();
+    }
+};

@@ -1,5 +1,17 @@
+# SIMULADO - PROYECTO ACADÉMICO
+# ══════════════════════════════════════════════════════════════
+# ⚠️  Este módulo es un PLACEBO con fines demostrativos/académicos.
+#     NO realiza autenticación biométrica real:
+#     - check_biometric_availability() devuelve siempre available=True
+#       (el import de BiometricManager es pseudo-código y el fallback
+#       asume biometría disponible sin comprobar nada).
+#     - No se invoca BiometricPrompt de Android, por lo que nunca se
+#       valida huella ni rostro reales.
+#     En producción se integraría androidx.biometric.BiometricPrompt
+#     desde la capa Java/Kotlin y se notificaría el resultado a Python.
+# ══════════════════════════════════════════════════════════════
 """
-biometric_auth.py v1.0 - TPV Ultra Smart
+biometric_auth.py v1.0 - TPV Ultra Smart (SIMULADO)
 Autenticación biométrica para Android (huella/rostro)
 Se integra con el sistema de login existente
 """

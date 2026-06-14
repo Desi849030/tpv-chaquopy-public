@@ -23,37 +23,13 @@ except ImportError:
 # ══════════════════════════════════════════════════════════════
 _CONFIG_FILE = os.path.join(os.environ.get("TPV_FILES_DIR", os.getcwd()), ".supabase_config.json")
 
-"""
-╔══════════════════════════════════════════════════════════════╗
-║   supabase_sync.py  —  TPV ULTRA SMART  v6.1               ║
-║   Sincronización dinámica + Historial Diario                ║
-╚══════════════════════════════════════════════════════════════╝
-"""
-
-import json
-import os
-import urllib.request
-import urllib.error
-import urllib.parse
-from datetime import datetime
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
-
-# ══════════════════════════════════════════════════════════════
-#  PERSISTENCIA DE CONFIGURACION A DISCO
-# ══════════════════════════════════════════════════════════════
-_CONFIG_FILE = os.path.join(os.environ.get("TPV_FILES_DIR", os.getcwd()), ".supabase_config.json")
-
 def _cargar_config_desde_archivo():
     """Carga config persistida desde JSON. Retorna dict o None."""
     try:
         if os.path.exists(_CONFIG_FILE):
             with open(_CONFIG_FILE, 'r') as f:
                 return json.load(f)
-    except Exception:
+    except Exception:  # noqa: broad-except - graceful degradation
         pass
     return None
 
@@ -96,10 +72,14 @@ SUPABASE_CONFIG = {
     "tabla_tiendas":        "tpv_tiendas",
     "tabla_pedidos":        "tpv_pedidos_tienda",
     "tabla_items_pedido":   "tpv_items_pedido",
+    "tabla_cierres_caja":  "tpv_cierres_caja",
+    "tabla_inventarios":   "tpv_inventarios",
+    "tabla_ventas_hist":   "tpv_ventas",
+    "tabla_pedidos_all":   "tpv_pedidos",
     "registro_id":          1,
 }
 
-SUPABASE_OK = False
+# SUPABASE_OK movido a config_supabase.py
 
 # ══════════════════════════════════════════════════════════════
 #  SQL DINÁMICO PARA CADA TABLA

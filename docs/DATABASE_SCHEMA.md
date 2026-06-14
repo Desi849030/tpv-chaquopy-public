@@ -1,60 +1,56 @@
-# Esquema de Base de Datos - TPV Ultra Smart
+# Schema de Base de Datos — TPV UltraSmart v8.0
 
-## Tablas principales (15)
+## 18 Tablas
 
-### productos
-| Columna | Tipo | Descripción |
-|---------|------|-------------|
-| producto_id | TEXT PK | ID único del producto |
-| nombre | TEXT | Nombre del producto |
-| precio | REAL | Precio de venta |
-| costo | REAL | Costo de compra |
-| categoria | TEXT | Categoría |
-| stock_actual | REAL | Stock disponible |
-| activo | INTEGER | 1=activo, 0=inactivo |
+### Core
 
-### historial_ventas
-| Columna | Tipo | Descripción |
-|---------|------|-------------|
-| venta_id | TEXT PK | ID único de venta |
-| producto_id | TEXT | Producto vendido |
-| nombre | TEXT | Nombre al momento de venta |
-| cantidad | REAL | Unidades vendidas |
-| total | REAL | Monto total |
-| metodo_pago | TEXT | Efectivo, tarjeta, etc |
-| fecha | TEXT | Fecha de la transacción |
+| Tabla | Descripción | Clave |
+|-------|-------------|-------|
+| `usuarios` | Usuarios del sistema (5 roles) | `usuario_id` UNIQUE |
+| `productos` | Catálogo de productos | `producto_id` UNIQUE |
+| `inventario_general` | Stock actual de cada producto | `producto_id` UNIQUE |
+| `historial_ventas` | Cada ítem vendido (N items por venta) | `venta_id` (no unique) |
+| `clientes` | Clientes registrados | `cliente_id` UNIQUE |
 
-### inventario_general
-| Columna | Tipo | Descripción |
-|---------|------|-------------|
-| producto_id | TEXT PK | ID del producto |
-| stock_actual | REAL | Stock en almacén |
-| stock_minimo | REAL | Punto de reorden |
-| precio_compra | REAL | Último precio de compra |
-| precio_venta | REAL | Precio de venta actual |
+### Operaciones
 
-### usuarios
-| Columna | Tipo | Descripción |
-|---------|------|-------------|
-| usuario_id | TEXT PK | ID único |
-| username | TEXT UNIQUE | Nombre de usuario |
-| rol | TEXT | desarrollador/admin/supervisor/vendedor |
-| password_hash | TEXT | Hash SHA-256 |
-| activo | INTEGER | 1=activo |
+| Tabla | Descripción | Clave |
+|-------|-------------|-------|
+| `cierres_caja` | Cierres diarios con desglose | `fecha` UNIQUE |
+| `gastos` | Gastos operativos | `gasto_id` UNIQUE |
+| `entradas_productos` | Entradas al almacén | `entrada_id` UNIQUE |
+| `inventario_diario` | Asignación diaria por vendedor | `(fecha, vendedor_id, producto_id)` |
+| `cierres_diario` | Cierre individual por vendedor | `(vendedor_id, fecha)` |
+| `inventarios` | Snapshot de inventario por fecha | `(fecha, producto_id)` |
+| `descuentos_config` | Configuración de descuentos | `id` AUTO |
 
-### licencias
-| Columna | Tipo | Descripción |
-|---------|------|-------------|
-| licencia_id | TEXT PK | ID único |
-| admin_id | TEXT | Administrador asociado |
-| tipo | TEXT | diaria/mensual/anual/ilimitada |
-| fecha_expira | TEXT | Fecha de vencimiento |
+### Sistema
 
-### loyalty_clients
-| Columna | Tipo | Descripción |
-|---------|------|-------------|
-| id | INTEGER PK | ID autoincremental |
-| phone | TEXT UNIQUE | Teléfono del cliente |
-| name | TEXT | Nombre |
-| points | INTEGER | Puntos acumulados |
-| tier | TEXT | bronze/silver/gold/platinum |
+| Tabla | Descripción | Clave |
+|-------|-------------|-------|
+| `app_state` | Estado persistente de la app | `clave` UNIQUE |
+| `licencias` | Licencias de uso | `licencia_id` UNIQUE |
+| `logs_sistema` | Logs de operación | `id` AUTO |
+| `login_intentos` | Intentos de login (anti-brute force) | `id` AUTO |
+| `auditoria` | Cambios auditados | `id` AUTO |
+| `historial_diario` | Snapshot diario completo | `fecha` UNIQUE |
+
+## Roles válidos
+
+```sql
+CHECK(rol IN ('desarrollador','administrador','supervisor','vendedor','cajero'))
+```
+
+## Seguridad de contraseñas
+
+- Algoritmo: **scrypt** (N=16384, r=8, p=1)
+- Salt: 16 bytes aleatorios por usuario
+- Almacenamiento: `password_hash` + `password_salt`
+
+## Notas importantes
+
+- `historial_ventas.venta_id` NO es UNIQUE: una venta puede tener múltiples ítems
+  con el mismo `venta_id` (uno por producto)
+- `cierres_caja` incluye columnas `efectivo`, `tarjeta`, `transferencia`
+- Modo WAL activado para concurrencia
+- Foreign keys activadas por defecto

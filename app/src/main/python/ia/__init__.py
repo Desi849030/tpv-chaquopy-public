@@ -4,9 +4,8 @@ Módulo IA - Agente Proactivo v8.0
 Desarrollado para TPV Ultra Smart
 
 Modulos conectados:
-  - agent_master: Agente principal (integra todos los modulos)
-  - agent_pro: Agente proactivo con personalidades
-  - agent_core: Motor base del agente
+  - agent_master: Agente principal (integra todos los modulos; incluye AgentPro como fallback)
+  - (agent_pro fue unificado dentro de agent_master en #6)
   - nlp_engine: Clasificador de intenciones (TF-IDF + Softmax)
   - tool_system: Catalogo de herramientas con permisos por rol
   - humanizer: Lenguaje humano profesional + blindaje UTF-8
@@ -47,22 +46,16 @@ __author__ = 'TPV Team'
 
 # Agentes principales
 try:
-    from ia.agent_master import AgentMaster, agent as master_agent
+    # AgentMaster y AgentPro (fallback) viven unificados en agent_master (#6)
+    from ia.agent_master import AgentMaster, AgentPro, agent as master_agent
 except Exception:
     AgentMaster = None
+    AgentPro = None
     master_agent = None
 
-try:
-    from ia.agent_pro import AgentPro, agent as pro_agent
-except Exception:
-    AgentPro = None
-    pro_agent = None
-
-try:
-    from ia.agent_core import AgentCore, agent as core_agent
-except Exception:
-    AgentCore = None
-    core_agent = None
+# Compatibilidad: pro_agent ya no se instancia por separado;
+# agent_master.agent ya hace fallback a AgentPro si AgentMaster falla.
+pro_agent = master_agent if (AgentPro is not None and isinstance(master_agent, AgentPro)) else None
 
 # NLP y herramientas
 try:
@@ -204,13 +197,11 @@ except Exception:
 
 
 def get_agent():
-    """Devuelve el agente principal disponible (master > pro > core)."""
+    """Devuelve el agente principal disponible (master > pro)."""
     if master_agent is not None:
         return master_agent
     if pro_agent is not None:
         return pro_agent
-    if core_agent is not None:
-        return core_agent
     return None
 
 
@@ -220,7 +211,6 @@ def get_all_module_status():
     for name, obj in [
         ('agent_master', AgentMaster),
         ('agent_pro', AgentPro),
-        ('agent_core', AgentCore),
         ('nlp_engine', NLPEngine),
         ('tool_system', TOOLS if TOOLS else None),
         ('humanizer', Humanizer),

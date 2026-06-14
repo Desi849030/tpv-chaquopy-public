@@ -1,4 +1,4 @@
-from auth_decorator import login_required
+from decorators import login_required
 import os,json,time,threading,queue
 from datetime import datetime
 from collections import defaultdict

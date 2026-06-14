@@ -118,13 +118,17 @@ def registrar_entrada_producto(datos, admin_id):
 
 
 
-def obtener_inventario_general(admin_id):
+def obtener_inventario_general(usuario_id):
+    """Devuelve el inventario general. Accesible para admin, dev, supervisor y vendedor.
+    El vendedor ve el stock pero NO los precios de costo (seguridad comercial)."""
     conn   = obtener_conexion()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT rol FROM usuarios WHERE usuario_id = ?", (admin_id,))
+        cursor.execute("SELECT rol FROM usuarios WHERE usuario_id = ?", (usuario_id,))
         u = cursor.fetchone()
-        if not u or u["rol"] not in ("administrador", "desarrollador"):
+        rol = u["rol"] if u else "vendedor"
+        # Roles autorizados
+        if rol not in ("administrador", "desarrollador", "supervisor", "vendedor", "cajero"):
             return []
         cursor.execute("""
             SELECT ig.producto_id, ig.nombre, ig.stock_actual, ig.stock_minimo,
@@ -134,7 +138,13 @@ def obtener_inventario_general(admin_id):
             LEFT JOIN entradas_productos e ON ig.producto_id = e.producto_id
             GROUP BY ig.producto_id ORDER BY ig.nombre ASC
         """)
-        return [dict(f) for f in cursor.fetchall()]
+        items = [dict(f) for f in cursor.fetchall()]
+        # Vendedor/cajero: ocultar precio de costo (información sensible)
+        if rol in ("vendedor", "cajero"):
+            for item in items:
+                item.pop("precio_compra", None)
+                item.pop("total_entradas", None)
+        return items
     finally:
         conn.close()
 

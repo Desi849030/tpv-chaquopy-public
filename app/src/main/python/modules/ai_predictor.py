@@ -1,20 +1,16 @@
 from db_connection import obtener_conexion
-from auth_decorator import login_required
+from decorators import login_required
 from modules.ai_helpers import ai_bp, requiere_login, jsonify
 # ══════════════════════════════════════════════════════════════
 #  PREDICCIONES — /api/ai/predict/dashboard
 # ══════════════════════════════════════════════════════════════
 @requiere_login
-@login_required
-@login_required
 @ai_bp.route('/predictor', methods=['GET'])
 def predictor():
     """Alias para compatibilidad."""
     return _predict_dashboard()
 
 @requiere_login
-@login_required
-@login_required
 @ai_bp.route('/predict/dashboard', methods=['GET'])
 def predict_dashboard():
     return _predict_dashboard()
@@ -28,7 +24,7 @@ def _predict_dashboard():
             # Calcular desde los datos disponibles
             conn = None
             try:
-                from database import obtener_conexion
+                from db_connection import obtener_conexion
                 conn = obtener_conexion()
                 rows = conn.execute(
                     "SELECT nombre, stock, precio, costo FROM productos WHERE stock > 0 ORDER BY (precio - COALESCE(costo,0)) DESC LIMIT 5"

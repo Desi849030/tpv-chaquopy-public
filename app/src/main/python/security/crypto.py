@@ -65,7 +65,7 @@ def _get_key():
             try:
                 with open(_key_file, "r") as _kf:
                     _OBFUSC_KEY = _kf.read().strip()
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
         if not _OBFUSC_KEY:
             _OBFUSC_KEY = uuid.uuid4().hex[:32]
@@ -73,7 +73,7 @@ def _get_key():
                 with open(_key_file, "w") as _kf:
                     _kf.write(_OBFUSC_KEY)
                 os.chmod(_key_file, 0o600)
-            except Exception:
+            except Exception:  # noqa: broad-except - graceful degradation
                 pass
     return _OBFUSC_KEY
 

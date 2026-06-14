@@ -1,81 +1,110 @@
-from auth_decorator import login_required
+# -*- coding: utf-8 -*-
+"""modules/agent.py — Blueprint de agente IA (query + suggestions)
+Decoradores unificados desde decorators.py (ya no redefine los propios)."""
 from flask import Blueprint, request, jsonify, session
-from functools import wraps
 from datetime import datetime
-from database import obtener_conexion, agregar_log
+from decorators import login_required, usuario_actual
+
+try:
+    from db_connection import agregar_log, obtener_conexion
+    _HAS_DB = True
+except Exception:
+    _HAS_DB = False
 
 agent_bp = Blueprint('agent', __name__, url_prefix='/api')
 
-def requiere_login(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        if not session.get("usuario"): return jsonify({"error": "No autenticado"}), 401
-        return f(*args, **kwargs)
-    return wrapper
 
-def usuario_actual(): return session.get("usuario", {})
-
-@login_required
 @agent_bp.route('/agent/query', methods=['POST'])
-@requiere_login
+@login_required
 def agent_query():
     datos = request.get_json(force=True, silent=True) or {}
-    query = datos.get('query', '').lower()
+    query = datos.get('query', '').lower().strip()
     u = usuario_actual()
     rol = u.get('rol', 'vendedor')
     respuesta = "No entiendo tu pregunta. Prueba con: 'ventas', 'inventario', 'ayuda' o 'cerrar'."
     tipo = "text"
     data_extra = {}
+
+    if not _HAS_DB:
+        return jsonify({'ok': True, 'respuesta': respuesta, 'tipo': tipo, 'data': data_extra})
+
     try:
         if any(k in query for k in ['venta', 'dinero', 'caja']):
             conn = obtener_conexion()
             hoy = datetime.now().strftime('%Y-%m-%d')
-            vid = u['usuario_id'] if rol == 'vendedor' else None
-            filtro = "WHERE vendedor_id = ?" if vid else ""
-            params = (vid,) if vid else ()
-                        # === PARCHE SQL INJECTION ===
-            if vid:
-# === REVISAR SQL INJECTION ===
-                cursor = conn.execute("SELECT COUNT(*) as num, SUM(total) as total FROM historial_ventas WHERE vendedor_id = ? AND fecha LIKE ?", (vid, f"{hoy}%"))
-# === FIN REVISIÓN ===
+            uid = u.get('usuario_id')
+            if rol == 'vendedor' and uid:
+                cursor = conn.execute(
+                    "SELECT COUNT(*) as num, COALESCE(SUM(total),0) as total "
+                    "FROM historial_ventas WHERE vendedor_id = ? AND fecha LIKE ?",
+                    (uid, f"{hoy}%"))
             else:
-# === REVISAR SQL INJECTION ===
-                cursor = conn.execute("SELECT COUNT(*) as num, SUM(total) as total FROM historial_ventas WHERE fecha LIKE ?", (f"{hoy}%",))
-# === FIN REVISIÓN ===
-            # === FIN PARCHE ===
+                cursor = conn.execute(
+                    "SELECT COUNT(*) as num, COALESCE(SUM(total),0) as total "
+                    "FROM historial_ventas WHERE fecha LIKE ?",
+                    (f"{hoy}%",))
             res = cursor.fetchone()
             conn.close()
-            respuesta = f"📊 Ventas hoy: ${res['total'] or 0:.2f} ({res['num'] or 0} transacciones)"
+            total = res['total'] if res else 0
+            num = res['num'] if res else 0
+            respuesta = f"📊 Ventas hoy: ${total:.2f} ({num} transacciones)"
+
         elif any(k in query for k in ['stock', 'inventario', 'producto']):
             conn = obtener_conexion()
             cursor = conn.execute("SELECT COUNT(*) as total FROM productos WHERE activo=1")
             res = cursor.fetchone()
+            # Stock bajo
+            cursor2 = conn.execute(
+                "SELECT COUNT(*) as bajo FROM inventario_general WHERE stock_actual <= 5")
+            bajo = cursor2.fetchone()
             conn.close()
-            respuesta = f"📦 Inventario: {res['total'] or 0} productos activos"
+            total = res['total'] if res else 0
+            n_bajo = bajo['bajo'] if bajo else 0
+            respuesta = f"📦 Inventario: {total} productos activos"
+            if n_bajo > 0:
+                respuesta += f" | ⚠️ {n_bajo} con stock bajo"
+
         elif 'qr' in query:
             respuesta = "🔲 Ve a Gestión → Etiquetas QR para generar códigos"
-            tipo = "action"; data_extra = {"target": "cliente-qr-tab"}
+            tipo = "action"
+            data_extra = {"target": "cliente-qr-tab"}
+
         elif 'exportar' in query or 'backup' in query:
             respuesta = "📤 Ve a Herramientas → Exportar para descargar datos"
+
         elif 'cerrar' in query or 'turno' in query:
             respuesta = "🔒 Ve a Inventario → Cerrar Día para registrar el cierre"
+
         elif 'ayuda' in query:
-            respuesta = "🤖 Puedo ayudarte con: ventas, inventario, QR, exportar, cerrar día. ¿Qué necesitas?"
-        agregar_log(f"IA: {u.get('username')} preguntó: {query[:50]}...", 'info')
+            respuesta = ("🤖 Puedo ayudarte con: ventas, inventario, QR, exportar, "
+                         "cerrar día. ¿Qué necesitas?")
+
+        try:
+            agregar_log(f"IA: {u.get('username')} preguntó: {query[:50]}...", 'info')
+        except Exception:  # noqa: broad-except - graceful degradation
+            pass
         return jsonify({'ok': True, 'respuesta': respuesta, 'tipo': tipo, 'data': data_extra})
     except Exception as e:
         return jsonify({'ok': False, 'error': str(e)}), 500
 
-@login_required
+
 @agent_bp.route('/agent/suggestions', methods=['GET'])
-@requiere_login
+@login_required
 def agent_suggestions():
     u = usuario_actual()
     rol = u.get('rol', 'vendedor')
-    comunes = ["¿Cuánto vendí hoy?", "¿Qué productos tengo en stock bajo?", "¿Cómo genero QR?"]
+    comunes = [
+        "¿Cuánto vendí hoy?",
+        "¿Qué productos tengo en stock bajo?",
+        "¿Cómo genero QR?",
+    ]
     por_rol = {
-        'desarrollador': ["¿Cómo activo una licencia?", "¿Cómo sincronizo con Supabase?"],
-        'administrador': ["¿Cómo creo un nuevo usuario?", "¿Cómo asigno inventario?"],
-        'vendedor': ["¿Cuánto me falta para cerrar?", "¿Cómo registro una venta?"]
+        'desarrollador': ["¿Cómo activo una licencia?", "¿Cómo sincronizo con Supabase?",
+                          "Estado del sistema"],
+        'administrador': ["¿Cómo creo un nuevo usuario?", "¿Cómo asigno inventario?",
+                          "Reporte financiero"],
+        'supervisor': ["Rendimiento de vendedores", "Dashboard de KPIs"],
+        'vendedor': ["¿Cuánto me falta para cerrar?", "¿Cómo registro una venta?"],
+        'cajero': ["¿Cómo cobro?", "Cierre de caja"],
     }
     return jsonify({'ok': True, 'sugerencias': comunes + por_rol.get(rol, [])})

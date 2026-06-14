@@ -16,21 +16,6 @@ _DB_PATH = None
 _DB_LOCK = threading.Lock()
 
 
-# -*- coding: utf-8 -*-
-"""ia/memory.py - Memoria persistente para la IA del TPV
-Almacena en SQLite datos clave de conversaciones:
-- Preferencias de clientes
-- Consultas frecuentes
-- Patrones de venta
-- Contexto de negocio
-No afecta el rendimiento. Funciona 100% offline."""
-
-import sqlite3, os, re, time, threading, json
-from datetime import datetime, timedelta
-
-
-_DB_PATH = None
-_DB_LOCK = threading.Lock()
 
 
 
@@ -38,14 +23,10 @@ __all__ = ['_get_db', 'init', 'save', 'recall', 'search', 'forget', 'get_summary
 def _get_db():
     global _DB_PATH
     if not _DB_PATH:
-        for p in ['tpv_datos.db', os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            'tpv_datos.db')]:
-            if os.path.exists(p):
-                _DB_PATH = p
-                break
-    if not _DB_PATH:
-        return None
+        # Usar TPV_FILES_DIR (escribible en la APK). La carpeta del código es
+        # de SOLO LECTURA en Chaquopy, por eso no se usa abspath(__file__).
+        files_dir = os.environ.get("TPV_FILES_DIR", os.getcwd())
+        _DB_PATH = os.path.join(files_dir, 'tpv_datos.db')
     try:
         conn = sqlite3.connect(_DB_PATH, timeout=3, check_same_thread=False)
         conn.row_factory = sqlite3.Row

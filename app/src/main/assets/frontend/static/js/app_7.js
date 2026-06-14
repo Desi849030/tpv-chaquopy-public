@@ -1,5 +1,7 @@
-let _dashChartVentas = null;
-let _dashChartCat    = null;
+// Usar window.* de forma consistente para que el destroy encuentre la
+// instancia previa y no falle Chart.js con "Canvas is already in use".
+window._dashChartVentas = window._dashChartVentas || null;
+window._dashChartCat    = window._dashChartCat    || null;
 
 // Only render charts if the dashboard tab is active
 function isDashboardTabActive() {
@@ -9,6 +11,27 @@ function isDashboardTabActive() {
 
 async function dashboard_cargar() {
     const hoy   = new Date().toISOString().split('T')[0];
+
+    // Sincronizar ventas del SERVIDOR (BD) hacia tpvState para que el dashboard
+    // refleje los datos reales y no solo lo que haya en memoria del navegador.
+    try {
+        const rv = await fetch('/api/ventas/hoy', { credentials: 'same-origin' });
+        if (rv.ok) {
+            const dv = await rv.json();
+            if (dv && Array.isArray(dv.ventas)) {
+                tpvState.ventasDiarias = tpvState.ventasDiarias || {};
+                tpvState.ventasDiarias[hoy] = dv.ventas.map(v => ({
+                    productoId: v.producto_id || v.productoId || v.id,
+                    producto: v.producto || v.nombre,
+                    nombre: v.nombre || v.producto,
+                    cantidad: Number(v.cantidad) || 1,
+                    total: Number(v.total) || 0,
+                    fecha: v.fecha || hoy
+                }));
+            }
+        }
+    } catch (e) { /* offline: usar lo que haya en tpvState */ }
+
     const ventas = tpvState.ventasDiarias[hoy] || [];
     const hist   = tpvState.historialVentas   || [];
 
@@ -16,7 +39,8 @@ async function dashboard_cargar() {
     const ingHoy  = ventas.reduce((s,v) => s + (v.total||0), 0);
     const costoHoy= ventas.reduce((s,v) => {
         const p = tpvState.productos.find(p=>p.id===v.productoId);
-        return s + ((p?.costoUnitario||0)*(v.cantidad||1));
+        const costo = (p && (p.costoUnitario != null ? p.costoUnitario : p.costo)) || 0;
+        return s + (Number(costo) * (v.cantidad||1));
     }, 0);
     const gananHoy = ingHoy - costoHoy;
     const txHoy    = ventas.length;
@@ -46,12 +70,15 @@ async function dashboard_cargar() {
     });
     const top5 = Object.values(prodMap).sort((a,b)=>b.cant-a.cant).slice(0,5);
 
-    // ── Stock crítico ──────────────────────────────────────
+    // ── Stock crítico + total de productos (refleja la importación Excel) ──
     let stockCritico = [];
+    let totalProductos = 0;
     try {
         const r = await fetch('/api/inventario/general',{credentials:'same-origin'});
         const d = await r.json();
-        stockCritico = (d.inventario||[]).filter(p => parseFloat(p.stock_actual||0) <= parseFloat(p.stock_minimo||5));
+        const inv = d.inventario || [];
+        totalProductos = inv.length;
+        stockCritico = inv.filter(p => parseFloat(p.stock_actual||0) <= parseFloat(p.stock_minimo||5));
     } catch(e){}
 
     // ── Vendedores hoy ─────────────────────────────────────
@@ -90,6 +117,13 @@ async function dashboard_cargar() {
                 <div class="fw-bold fs-4 text-danger">${stockCritico.length}</div>
                 <div class="text-muted small">Stock crítico</div>
             </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="glass-card text-center py-3">
+                <div style="font-size:2rem">📦</div>
+                <div class="fw-bold fs-4 text-info">${totalProductos}</div>
+                <div class="text-muted small">Productos</div>
+            </div>
         </div>`;
 
     // ── Gráfico barras ventas 7 días ───────────────────────
@@ -100,7 +134,7 @@ async function dashboard_cargar() {
     if (isDashboardTabActive()) {
         const ctxV = document.getElementById('dash-chart-ventas');
         if (ctxV) {
-            _dashChartVentas = new Chart(ctxV, {
+            window._dashChartVentas = new Chart(ctxV, {
                 type: 'bar',
                 data: {
                     labels: lbl7,
@@ -116,7 +150,7 @@ async function dashboard_cargar() {
         const ctxC = document.getElementById('dash-chart-cat');
         if (ctxC && Object.keys(catMap).length) {
             const COLORS = ['#0d6efd','#198754','#ffc107','#dc3545','#6f42c1','#20c997','#fd7e14'];
-            _dashChartCat = new Chart(ctxC, {
+            window._dashChartCat = new Chart(ctxC, {
                 type: 'doughnut',
                 data: {
                     labels: Object.keys(catMap),
@@ -140,7 +174,7 @@ async function dashboard_cargar() {
                     <span class="fw-bold text-warning fs-5">#${i+1}</span>
                     <div class="flex-grow-1 overflow-hidden">
                         <div class="fw-semibold text-truncate">${p.nombre}</div>
-                        <div class="text-muted small">${p.cant} uds · $${p.total.toFixed(2)}</div>
+                        <div class="text-muted small">${p.cant} uds · $${(Number(p.total)||0).toFixed(2)}</div>
                     </div>
                 </div>
             </div>`).join('');
@@ -212,6 +246,75 @@ async function descuentos_eliminar(id) {
 // ══════════════════════════════════════════════════════════
 //  SUPABASE SYNC COMPLETO
 // ══════════════════════════════════════════════════════════
+// Cargar la configuración actual de Supabase en los campos del formulario
+async function supabase_cargarConfig() {
+    try {
+        const r = await fetch('/api/supabase/config', { credentials: 'same-origin' });
+        if (!r.ok) return;
+        const d = await r.json();
+        const u = document.getElementById('sb-cfg-url');
+        const k = document.getElementById('sb-cfg-key');
+        if (u && d.url) u.value = d.url;
+        if (k && d.anon_key) k.value = d.anon_key;
+    } catch (e) { /* sin conexión */ }
+}
+
+// Mostrar las tablas que deben existir en el proyecto Supabase
+async function supabase_verTablas() {
+    const el = document.getElementById('sb-tablas');
+    if (!el) return;
+    el.innerHTML = '<div class="spinner-border spinner-border-sm me-1"></div>Consultando...';
+    try {
+        const r = await fetch('/api/supabase/estado', { credentials: 'same-origin' });
+        const d = await r.json();
+        const tablas = d.tablas || [];
+        if (!tablas.length) { el.innerHTML = '<span class="text-muted">Sin tablas definidas.</span>'; return; }
+        el.innerHTML = '<div class="border rounded p-2 mt-1">' +
+            '<strong>Crea estas ' + tablas.length + ' tablas en tu Supabase:</strong><br>' +
+            tablas.map(function(t){ return '<code>' + t + '</code>'; }).join(' · ') +
+            '<br><span class="text-muted">Estado: ' + (d.configurado ? '✅ configurado' : '⚠️ sin configurar') + '</span></div>';
+    } catch (e) {
+        el.innerHTML = '<span class="text-danger">No se pudo consultar.</span>';
+    }
+}
+
+// Guardar URL + API key de Supabase
+async function supabase_guardarConfig() {
+    const u = document.getElementById('sb-cfg-url');
+    const k = document.getElementById('sb-cfg-key');
+    const st = document.getElementById('sb-cfg-status');
+    const url = (u && u.value || '').trim();
+    const key = (k && k.value || '').trim();
+    if (!url || !key) {
+        if (st) st.innerHTML = '<span class="text-warning">Completa URL y API Key.</span>';
+        return;
+    }
+    if (st) st.innerHTML = '<div class="spinner-border spinner-border-sm me-1"></div>Guardando...';
+    try {
+        const r = await fetch('/api/supabase/config', {
+            method: 'POST', credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: url, anon_key: key })
+        });
+        const d = await r.json();
+        if (r.ok && d.ok) {
+            if (st) st.innerHTML = d.configurado
+                ? '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Supabase configurado correctamente.</span>'
+                : '<span class="text-warning">Guardado, pero verifica la URL/clave.</span>';
+        } else {
+            if (st) st.innerHTML = '<span class="text-danger">Error: ' + (d.error || '') + '</span>';
+        }
+    } catch (e) {
+        if (st) st.innerHTML = '<span class="text-danger">Sin conexión con el servidor.</span>';
+    }
+}
+// Cargar config al abrir la pestaña de configuración
+document.addEventListener('shown.bs.tab', function (e) {
+    if (e.target && e.target.getAttribute('data-bs-target') === '#conf-config-tab-pane') {
+        supabase_cargarConfig();
+    }
+});
+
 async function supabase_syncFull() {
     const el = document.getElementById('sb-sync-status');
     if (el) el.innerHTML = '<div class="spinner-border spinner-border-sm me-1"></div>Sincronizando...';

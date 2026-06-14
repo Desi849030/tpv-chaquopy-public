@@ -55,10 +55,17 @@ android {
 
     buildTypes {
         release {
-            debuggable true
+            // Release de produccion: no debuggable.
+            debuggable false
+            // minifyEnabled se mantiene en false a proposito: ProGuard/R8
+            // rompe la reflexion intensa de Flask/Jinja/Chaquopy. Activarlo
+            // requiere reglas keep muy cuidadosas (ver proguard-rules.pro).
             minifyEnabled false
             shrinkResources false
-            signingConfig signingConfigs.release
+            // Firmar solo si el keystore existe (evita fallo de build sin el).
+            if (file('tpv-ultrasmart.keystore').exists()) {
+                signingConfig signingConfigs.release
+            }
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {

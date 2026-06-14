@@ -1,7 +1,18 @@
 from __future__ import annotations
 from db.indexes import crear_indices
 # -*- coding: utf-8 -*-
-"""db/schema.py - Tablas TPV Smart."""
+"""db/schema.py - Tablas TPV Smart.
+
+Integridad referencial (#18):
+- Se declaran FOREIGN KEYS en las tablas operativas (inventarios, entradas,
+  cierres, licencias) hacia productos(producto_id) y usuarios(usuario_id).
+- Las tablas de auditoría/historial (historial_ventas, auditoria, logs_sistema,
+  login_intentos) NO llevan FK dura: deben conservar el registro aunque el
+  producto/usuario origen se elimine (y aceptan vendedores externos).
+- db_connection.obtener_conexion() ya ejecuta PRAGMA foreign_keys = ON.
+- Nota: CREATE TABLE IF NOT EXISTS no altera tablas ya creadas; las FK
+  aplican a bases de datos nuevas (las existentes siguen funcionando igual).
+"""
 
 APP_STATE = """CREATE TABLE IF NOT EXISTS app_state (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -16,7 +27,7 @@ USUARIOS = """CREATE TABLE IF NOT EXISTS usuarios (
             username      TEXT    NOT NULL UNIQUE,
             nombre        TEXT    NOT NULL,
             rol           TEXT    NOT NULL CHECK(rol IN
-                          ('desarrollador','administrador','supervisor','vendedor')),
+                          ('desarrollador','administrador','supervisor','vendedor','cajero')),
             password_hash TEXT    NOT NULL,
             password_salt TEXT    NOT NULL,
             creado_por    TEXT    DEFAULT NULL,
@@ -28,7 +39,8 @@ USUARIOS = """CREATE TABLE IF NOT EXISTS usuarios (
 LICENCIAS = """CREATE TABLE IF NOT EXISTS licencias (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
             licencia_id   TEXT    NOT NULL UNIQUE,
-            admin_id      TEXT    NOT NULL,
+            admin_id      TEXT    NOT NULL
+                          REFERENCES usuarios(usuario_id) ON DELETE CASCADE,
             admin_nombre  TEXT    NOT NULL,
             tipo          TEXT    NOT NULL DEFAULT 'anual'
                           CHECK(tipo IN ('diaria','mensual','anual','personalizada','ilimitada')),
@@ -43,13 +55,15 @@ LICENCIAS = """CREATE TABLE IF NOT EXISTS licencias (
 
 HISTORIAL_VENTAS = """CREATE TABLE IF NOT EXISTS historial_ventas (
             id              INTEGER PRIMARY KEY AUTOINCREMENT,
-            venta_id        TEXT    NOT NULL UNIQUE,
+            venta_id        TEXT    NOT NULL,
             producto_id     TEXT    NOT NULL,
             nombre          TEXT    NOT NULL,
             cantidad        REAL    NOT NULL DEFAULT 1,
             precio_unit     REAL    NOT NULL DEFAULT 0,
             total           REAL    NOT NULL DEFAULT 0,
             metodo_pago     TEXT    DEFAULT 'efectivo',
+            -- Sin FK dura: el historial conserva ventas de vendedores
+            -- eliminados o externos ('desconocido'); ver docstring (#18)
             vendedor_id     TEXT    DEFAULT NULL,
             vendedor_nombre TEXT    DEFAULT NULL,
             fecha           TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
@@ -71,7 +85,8 @@ PRODUCTOS = """CREATE TABLE IF NOT EXISTS productos (
 
 INVENTARIO_GENERAL = """CREATE TABLE IF NOT EXISTS inventario_general (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
-            producto_id   TEXT    NOT NULL UNIQUE,
+            producto_id   TEXT    NOT NULL UNIQUE
+                          REFERENCES productos(producto_id) ON DELETE CASCADE,
             nombre        TEXT    NOT NULL,
             stock_actual  REAL    NOT NULL DEFAULT 0,
             stock_minimo  REAL    DEFAULT 5,
@@ -85,7 +100,8 @@ INVENTARIO_GENERAL = """CREATE TABLE IF NOT EXISTS inventario_general (
 ENTRADAS_PRODUCTOS = """CREATE TABLE IF NOT EXISTS entradas_productos (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
             entrada_id    TEXT    NOT NULL UNIQUE,
-            producto_id   TEXT    NOT NULL,
+            producto_id   TEXT    NOT NULL
+                          REFERENCES productos(producto_id) ON DELETE CASCADE,
             nombre        TEXT    NOT NULL,
             cantidad      REAL    NOT NULL DEFAULT 0,
             precio_compra REAL    DEFAULT 0,
@@ -98,8 +114,10 @@ ENTRADAS_PRODUCTOS = """CREATE TABLE IF NOT EXISTS entradas_productos (
 INVENTARIO_DIARIO = """CREATE TABLE IF NOT EXISTS inventario_diario (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
             fecha         TEXT    NOT NULL,
-            vendedor_id   TEXT    NOT NULL,
-            producto_id   TEXT    NOT NULL,
+            vendedor_id   TEXT    NOT NULL
+                          REFERENCES usuarios(usuario_id) ON DELETE CASCADE,
+            producto_id   TEXT    NOT NULL
+                          REFERENCES productos(producto_id) ON DELETE CASCADE,
             nombre        TEXT    NOT NULL,
             cant_asignada REAL    NOT NULL DEFAULT 0,
             cant_vendida  REAL    DEFAULT 0,
@@ -113,7 +131,8 @@ INVENTARIO_DIARIO = """CREATE TABLE IF NOT EXISTS inventario_diario (
 
 CIERRES_DIARIO = """CREATE TABLE IF NOT EXISTS cierres_diario (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
-            vendedor_id   TEXT    NOT NULL,
+            vendedor_id   TEXT    NOT NULL
+                          REFERENCES usuarios(usuario_id) ON DELETE CASCADE,
             fecha         TEXT    NOT NULL,
             total_ventas  REAL    DEFAULT 0,
             total_costo   REAL    DEFAULT 0,
@@ -143,6 +162,9 @@ CIERRES_CAJA = """CREATE TABLE IF NOT EXISTS cierres_caja (
             total_comisiones  REAL    DEFAULT 0,
             ganancia_total    REAL    DEFAULT 0,
             num_transacciones INTEGER DEFAULT 0,
+            efectivo          REAL    DEFAULT 0,
+            tarjeta           REAL    DEFAULT 0,
+            transferencia     REAL    DEFAULT 0,
             cerrado_por       TEXT    DEFAULT NULL,
             creado            TEXT    DEFAULT (datetime('now','localtime'))
         )"""
@@ -214,101 +236,33 @@ HISTORIAL_DIARIO = """CREATE TABLE IF NOT EXISTS historial_diario (
             ts_guardado       TEXT    DEFAULT (datetime('now','localtime'))
         )"""
 
-TBL_17 = """SELECT l.*, u.username
-                    FROM licencias l
-                    LEFT JOIN usuarios u ON l.admin_id = u.usuario_id
-                    WHERE l.admin_id = ? ORDER BY l.creado DESC"""
 
-TBL_18 = """SELECT l.*, u.username
-                    FROM licencias l
-                    LEFT JOIN usuarios u ON l.admin_id = u.usuario_id
-                    ORDER BY l.creado DESC"""
 
-TBL_19 = """SELECT l.*, u.username
-                FROM licencias l
-                LEFT JOIN usuarios u ON l.admin_id = u.usuario_id
-                WHERE l.admin_id = ? ORDER BY l.creado DESC"""
 
-TBL_20 = """SELECT licencia_id, tipo, fecha_expira, dias
-            FROM licencias
-            WHERE admin_id = ? AND activa = 1 AND fecha_expira >= ?
-            ORDER BY fecha_expira DESC LIMIT 1"""
 
-TBL_21 = """INSERT INTO inventario_general
-                    (producto_id, nombre, stock_actual, stock_minimo,
-                     precio_compra, precio_venta, categoria, unidad_medida, actualizado)
-                VALUES (?, ?, 0, 5, ?, ?, ?, ?, ?)
-                ON CONFLICT(producto_id) DO UPDATE SET
-                    nombre        = excluded.nombre,
-                    precio_venta  = excluded.precio_venta,
-                    precio_compra = CASE WHEN excluded.precio_compra > 0
-                                    THEN excluded.precio_compra
-                                    ELSE inventario_general.precio_compra END,
-                    categoria     = excluded.categoria,
-                    unidad_medida = excluded.unidad_medida,
-                    actualizado   = excluded.actualizado"""
 
-TBL_22 = """SELECT * FROM inventario_general
-            WHERE producto_id NOT IN (SELECT producto_id FROM productos)"""
 
-TBL_23 = """INSERT OR IGNORE INTO productos
-                    (producto_id, nombre, precio, costo, categoria,
-                     unidad_medida, en_oferta, imagen, activo)
-                VALUES (?, ?, ?, ?, ?, ?, 0, '', 1)"""
 
-TBL_24 = """INSERT OR REPLACE INTO productos
-                    (producto_id, nombre, precio, costo, categoria,
-                     unidad_medida, en_oferta, imagen, activo)
-                VALUES (?,?,?,?,?,?,?,?,1)"""
 
-TBL_25 = """INSERT OR REPLACE INTO inventario_general
-                        (producto_id, nombre, stock_actual, stock_minimo,
-                         precio_compra, precio_venta, categoria, unidad_medida, actualizado)
-                    VALUES (?,?,?,5,?,?,?,?,?)"""
 
-TBL_26 = """INSERT INTO inventario_general
-                        (producto_id, nombre, stock_actual, stock_minimo,
-                         precio_compra, precio_venta, categoria, unidad_medida, actualizado)
-                    VALUES (?,?,0,5,?,?,?,?,?)
-                    ON CONFLICT(producto_id) DO UPDATE SET
-                        nombre        = excluded.nombre,
-                        precio_venta  = excluded.precio_venta,
-                        precio_compra = CASE WHEN excluded.precio_compra > 0
-                                        THEN excluded.precio_compra
-                                        ELSE inventario_general.precio_compra END,
-                        categoria     = excluded.categoria,
-                        unidad_medida = excluded.unidad_medida,
-                        actualizado   = excluded.actualizado"""
 
-TBL_27 = """INSERT OR REPLACE INTO app_state (clave, valor, actualizado) VALUES (?, ?, ?)"""
 
-TBL_28 = """INSERT OR IGNORE INTO historial_ventas
-                    (venta_id, producto_id, nombre, cantidad, precio_unit,
-                     total, metodo_pago, vendedor_id, vendedor_nombre, fecha)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
 
-TBL_29 = """INSERT OR REPLACE INTO productos
-                    (producto_id, nombre, precio, costo, categoria,
-                     unidad_medida, en_oferta, imagen)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""
 
-TBL_30 = """INSERT INTO inventario_general
-                    (producto_id, nombre, stock_actual, stock_minimo,
-                     precio_compra, precio_venta, categoria, unidad_medida, actualizado)
-                VALUES (?, ?, 0, 5, ?, ?, ?, ?, ?)
-                ON CONFLICT(producto_id) DO UPDATE SET
-                    nombre        = excluded.nombre,
-                    precio_venta  = excluded.precio_venta,
-                    precio_compra = CASE WHEN excluded.precio_compra > 0
-                                    THEN excluded.precio_compra
-                                    ELSE inventario_general.precio_compra END,
-                    categoria     = excluded.categoria,
-                    unidad_medida = excluded.unidad_medida,
-                    actualizado   = excluded.actualizado"""
 
-TBL_31 = """INSERT OR IGNORE INTO cierres_caja
-                    (fecha, total_ventas, total_costos, total_comisiones, ganancia_total)
-                VALUES (?, ?, ?, ?, ?)"""
+
+CLIENTES = """CREATE TABLE IF NOT EXISTS clientes (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            cliente_id    TEXT    NOT NULL UNIQUE,
+            nombre        TEXT    NOT NULL,
+            telefono      TEXT    DEFAULT '',
+            email         TEXT    DEFAULT '',
+            puntos        INTEGER DEFAULT 0,
+            nivel         TEXT    DEFAULT 'bronce',
+            notas         TEXT    DEFAULT '',
+            activo        INTEGER DEFAULT 1,
+            creado        TEXT    DEFAULT (datetime('now','localtime'))
+        )"""
 
 ALL_TABLES = [
     APP_STATE,
@@ -328,6 +282,7 @@ ALL_TABLES = [
     AUDITORIA,
     DESCUENTOS_CONFIG,
     HISTORIAL_DIARIO,
+    CLIENTES,
 ]
 
 def crear_tablas_schema(conn):
@@ -336,7 +291,6 @@ def crear_tablas_schema(conn):
     for sql in ALL_TABLES:
         try:
             cur.execute(sql)
-        except Exception:
+        except Exception:  # noqa: broad-except - graceful degradation
             pass
-
     crear_indices(conn)

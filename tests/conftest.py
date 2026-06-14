@@ -15,7 +15,7 @@ def tmp_db_dir():
 @pytest.fixture(scope="session")
 def app(tmp_db_dir):
     os.environ["TPV_FRONTEND_DIR"] = os.path.join(os.path.abspath(APP_DIR), "..", "assets", "frontend")
-    from database import crear_tablas
+    from db_config import crear_tablas
     crear_tablas()
     from app import app as _app
     _app.config["TESTING"] = True

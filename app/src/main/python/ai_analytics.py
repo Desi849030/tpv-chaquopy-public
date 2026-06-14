@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta
 
 def _get_db():
-    from database import obtener_conexion
+    from db_connection import obtener_conexion
     return obtener_conexion()
 
 

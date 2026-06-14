@@ -18,7 +18,7 @@ def _load_or_create_secret():
     try:
         with open(_SECRET_FILE, "wb") as f:
             f.write(secret)
-    except Exception:
+    except Exception:  # noqa: broad-except - graceful degradation
         pass
     return secret
 _SECRET = _load_or_create_secret()

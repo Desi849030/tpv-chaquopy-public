@@ -1,93 +1,182 @@
-# TPV UltraSmart v2.5.5
+# TPV UltraSmart v8.0
 
-Sistema de Punto de Venta Profesional con IA integrada, biometria, roles multinivel y sincronizacion offline. Compilado 100% desde Android con Termux + Chaquopy.
+[![CI — Tests & APK](https://github.com/Desi849030/tpv-chaquopy/actions/workflows/ci.yml/badge.svg)](https://github.com/Desi849030/tpv-chaquopy/actions/workflows/ci.yml)
+![Python 3.10](https://img.shields.io/badge/python-3.10-blue)
+![Android minSdk 21](https://img.shields.io/badge/Android-minSdk%2021%2B-green)
+![Offline first](https://img.shields.io/badge/offline-100%25-success)
+![License MIT](https://img.shields.io/badge/license-MIT-lightgrey)
 
-## Caracteristicas Principales
+Sistema de Punto de Venta profesional con IA integrada, biometría, roles multinivel y sincronización offline-first. Compilado 100% desde Android con Termux + Chaquopy (WebView + Flask embebido).
 
-- Autenticacion multinivel: Desarrollador, Administrador, Supervisor, Vendedor + biometria nativa
-- Punto de venta: Catalogo, carrito, escaner QR, pagos, descuentos, tickets
-- Inventario: Stock diario, alertas bajo stock, cierres de caja, comisiones
-- Gestion de productos: CRUD completo, categorias, import/export Excel inteligente
-- IA Asistente: Motor NLP con 13 herramientas + 5 skills + 150 endpoints, intents, guardrails, memoria contextual
-- Diccionario comercial: Sinonimos, definiciones, correccion ortografica offline
-- Panel dev metrics: RAM, disco, formulas inventario, KPIs en tiempo real
-- Importacion Excel: Levenshtein fuzzy matching, 4 estrategias, validacion UTF-8
-- Tienda online: Clientes, pedidos, notificaciones, cola offline
-- Offline-first: WiFi local, IndexedDB + SQLite dual
-- Seguridad (9.5/10): SQLi, XSS, scrypt, JWT, RBAC, Rate Limiting, Headers, Auditoría
-- Licencias: Activacion con dias de prueba
-- Dashboard: KPIs animados, graficos Chart.js
-- Traduccion: Google Translate ES/EN
-- Supabase: Sincronizacion cloud opcional
+---
 
-## Estadisticas
+## ✨ Características
 
-- 142 tests unitarios + 38 simulación maestra + 7 stress test + 47 auditoría = 679+ pruebas totales
-- Backend modular: 195 archivos Python, 33,718 líneas totales, 347 archivos + Agente Proactivo con monitoreo background
-- Frontend: 62 modulos JavaScript
-- IA Agentiva + Proactiva: 13 herramientas, 5 skills, 17 categorías, alertas automáticas, briefing
+### Punto de Venta
+- Catálogo de productos con CRUD completo, categorías e imágenes
+- Carrito, escáner QR, múltiples métodos de pago
+- Cierres de caja con desglose efectivo/tarjeta/transferencia
+- Descuentos configurables (% y fijo)
+- Importación inteligente desde Excel con fuzzy matching
 
-## Jerarquia de Roles
+### Roles y Seguridad
+- **5 roles**: Desarrollador, Administrador, Supervisor, Vendedor, Cajero
+- Privilegios configurables por rol (25 módulos, incl. biometría)
+- Autenticación con scrypt KDF + bloqueo anti-brute force
+- Biometría nativa Android (BiometricPrompt) / WebAuthn en navegador
+- Guardrails: SQLi, XSS, PCI-DSS, rate limiting, auditoría
 
-| Rol | Permisos |
-|-----|----------|
-| Desarrollador | Todo sin limites + licencias + debug + dev metrics |
-| Administrador | Tienda completa (NO licencias) |
-| Supervisor | Solo lectura/reportes |
-| Vendedor | Solo vender + IA basica |
+### Agente IA (100% offline)
+- Motor NLP con **25 intenciones** (TF-IDF + Softmax)
+- 13 herramientas por rol (finanzas, ABC, EOQ, predicciones, etc.)
+- Memoria avanzada persistente en SQLite
+- Motor ReAct para razonamiento multi-paso
+- Handlers especializados por rol con datos REALES de BD
+- Chat flotante arrastrable con sugerencias contextuales
+- Agente proactivo: alerta stock crítico sin preguntar
 
-## Arquitectura Modular
+### Infraestructura
+- **Offline-first**: librerías y fuentes locales (sin CDN)
+- Sincronización opcional con Supabase (nube)
+- Design system propio con dark mode
+- Internacionalización ES/EN
 
-Backend organizado en packages con facades backward-compatible:
+---
 
-- models/ - TypedDicts por dominio (ventas, inventario, sistema)
-- routes/ - Blueprints Flask (ventas, admin, assistant, ai, diccionario)
-- security/ - crypto, validation, audit
-- license/ - helpers, core
-- dictionary/ - helpers, routes
-- response_validators/ - models, checks
-- ia/ - agent.py, state.py
-- db/ - users, config_inventario
-- sync/ - supabase_sync
-- metrics/ - routes
+## 📊 Estadísticas
 
-## Inicio Rapido (Termux)
+| Métrica | Valor |
+|---------|-------|
+| Backend Python | ~160 archivos, 18 tablas SQLite |
+| Blueprints Flask | 20+ (modulares) |
+| Frontend | 14 JS activos + 6 CSS |
+| NLP intenciones | 25 |
+| Herramientas IA | 13 por rol |
+| Tests pytest | 54+ verdes |
+| Arranque backend | ~0.3s |
+| Peso frontend | ~4.9 MB (2.9 MB libs offline) |
 
-bash install.sh
+---
+
+## 🏗️ Arquitectura
+
+```
+┌──────────────────────────────────────────────────────────┐
+│                    Dispositivo Android                    │
+│                                                          │
+│  ┌──────────────┐  callAttr("iniciar")  ┌────────────┐  │
+│  │ MainActivity  │─────────────────────▶│  Chaquopy   │  │
+│  │   (Java)      │                      │ Python 3.10 │  │
+│  │               │                      └──────┬──────┘  │
+│  │ ┌──────────┐  │                             │         │
+│  │ │ WebView  │  │  HTTP 127.0.0.1:5050  ┌─────▼──────┐  │
+│  │ │(frontend)│◀─┼──────────────────────│ Flask      │  │
+│  │ └──────────┘  │                      │ app.py     │  │
+│  │ TPVNative     │  biometría nativa    │ +blueprints│  │
+│  │(BiometricPrompt)                     └─────┬──────┘  │
+│  └──────────────┘                             │         │
+│                                        ┌──────▼───────┐  │
+│  Frontend: index.html + 14 JS + CSS   │SQLite 18 tbl │  │
+│  IndexedDB + service-worker            │ia/ agente NLP│  │
+│                                        └──────────────┘  │
+└──────────────────────────────────────────────────────────┘
+```
+
+### Backend modular (app/src/main/python/)
+
+```
+app.py                 ← 274 líneas: setup + auth + registro de blueprints
+├── modules/           ← 20+ blueprints (catalogo, ventas, reportes, tools, etc.)
+├── ia/                ← Agente IA (36 archivos: NLP, ReAct, handlers, memoria)
+├── db/                ← Schema + DAOs (users, products, inventario)
+├── security/          ← Crypto, validation, audit
+├── sync/              ← Supabase sync
+├── tools/             ← 13 herramientas IA
+├── models/            ← TypedDicts (ventas, inventario, sistema)
+├── metrics/           ← Métricas del sistema
+└── decorators.py      ← Auth unificado (login_required, role_required)
+```
+
+---
+
+## 🔐 Jerarquía de Roles
+
+| Rol | Nivel | Permisos |
+|-----|-------|----------|
+| Desarrollador | 0 | Todo sin límites + debug + privilegios + licencias |
+| Administrador | 1 | Tienda completa (no debug/privilegios) |
+| Supervisor | 2 | Ventas, reportes, inventario, catálogo |
+| Vendedor | 3 | Vender + catálogo + IA básica |
+| Cajero | 3 | Cobros + catálogo + biometría |
+
+---
+
+## 🚀 Inicio Rápido
+
+### Termux (Android)
+```bash
 cd app/src/main/python
+pip install flask
 python app.py
+# Abrir http://127.0.0.1:5000
+# Login: desarrollador / 123456
+```
 
-## Compilar APK
+### Compilar APK
+Push a `main` dispara el workflow CI:
+1. **test** — pytest + smoke test
+2. **build** — APK debug + release firmado → artefactos descargables
 
-Push a main dispara build automatico en GitHub Actions (tests + APK).
+---
 
-## Estructura
+## 📁 Estructura del proyecto
 
-- app/src/main/python/ - Backend Flask (modular)
-- app/src/main/assets/ - Frontend (JS, CSS, templates)
-- app/src/main/java/ - Android (Chaquopy + WebView + Biometria)
-- tests/ - Tests pytest (142 tests)
-- .github/workflows/ - CI/CD GitHub Actions
+```
+.github/workflows/ci.yml        ← CI/CD unificado (test → build APK)
+app/src/main/python/             ← Backend Flask modular
+app/src/main/assets/frontend/    ← Frontend (JS, CSS, templates, libs offline)
+app/src/main/java/               ← Android (Chaquopy + WebView + Biometría)
+tests/                           ← Tests pytest (54+)
+scripts/smoke_test.py            ← Smoke test (arranque + rutas + agente)
+docs/                            ← Documentación técnica
+```
 
-## Tech Stack
+## 🛠️ Tech Stack
 
-- Frontend: Bootstrap 5, Chart.js, html5-qrcode
-- Backend: Flask + Blueprints, SQLite
-- Android: Chaquopy, WebView, Biometria nativa
-- IA: NLP engine, intents, fuzzy matching, 150 tools
-- Cache: IndexedDB + SQLite dual sync
-- Cloud: Supabase (opcional)
-- Testing: pytest (679+ pruebas)
+- **Frontend**: Bootstrap 5, Chart.js, html5-qrcode, SheetJS (Excel)
+- **Backend**: Flask + Blueprints, SQLite (WAL mode)
+- **Android**: Chaquopy, WebView, BiometricPrompt
+- **IA**: NLP TF-IDF, ReAct engine, fuzzy matching, 13 tools
+- **Cache**: IndexedDB + SQLite dual sync
+- **Cloud**: Supabase (opcional)
+- **CI/CD**: GitHub Actions (test → build APK)
 
-## Documentacion
+## 📄 Licencia
 
-- docs/API_REFERENCE.md
-- docs/DATABASE_SCHEMA.md
-- docs/ARCHITECTURE.md
-- docs/CONTRIBUTING.md
-- CHANGELOG.md
+MIT License — Proyecto Académico Universidad
 
-## Licencia
+---
 
-MIT License - Proyecto Academico Universidad
+## Estado actual del sprint
+Mejoras recientes implementadas:
 
+- Protección de endpoints de ventas con autenticación
+- Validación atómica de stock en registro de ventas
+- Healthcheck en `/health` y `/api/health`
+- Headers de seguridad básicos
+- Tests críticos automatizados
+- CI básica en GitHub Actions
+
+## Ejecución en desarrollo
+Backend Flask local:
+- URL: `http://127.0.0.1:5000`
+
+Healthcheck:
+- `GET /health`
+- `GET /api/health`
+
+## Documentación técnica
+- `docs/DEFENSA.md`
+- `docs/openapi.yaml`
+- `docs/ARCHITECTURE.md`
+- `docs/DATABASE_SCHEMA.md`

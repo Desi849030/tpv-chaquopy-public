@@ -79,20 +79,44 @@ public class MainActivity extends FragmentActivity {
         initBiometricPrompt();
         requestCameraPermission();
         new Thread(() -> {
+            try {
+                // ORDEN CORRECTO: primero Python.start() con AndroidPlatform,
+                // LUEGO getInstance(). Al revés lanza:
+                // "Cannot use GenericPlatform on Android".
+                if (!Python.isStarted()) {
+                    Python.start(new AndroidPlatform(MainActivity.this));
+                }
                 Python py = Python.getInstance();
-                if (!Python.isStarted()) Python.start(new AndroidPlatform(MainActivity.this));
-                py.getModule("start_server");
-            for (int i = 0; i < 40; i++) {
+                // Pasar las rutas a Python LLAMANDO una función (System.setProperty
+                // de Java NO llega a os.environ de Python). iniciar() las pone en
+                // os.environ y arranca el servidor.
+                String _filesDir = getFilesDir().getAbsolutePath();
+                String _frontendDir = _filesDir + "/frontend";
+                py.getModule("start_server").callAttr("iniciar", _filesDir, _frontendDir);
+            } catch (Throwable t) {
+                // En vez de crashear, mostrar el error de Python en pantalla.
+                final String err = android.util.Log.getStackTraceString(t);
+                android.util.Log.e("TPV", "Error arrancando Python", t);
+                runOnUiThread(() -> mostrarErrorArranque(err));
+                return;
+            }
+            boolean ok = false;
+            for (int i = 0; i < 60; i++) {
                 try {
                     java.net.HttpURLConnection conn = (java.net.HttpURLConnection)
                         new java.net.URL("http://127.0.0.1:5050/api/health").openConnection();
                     conn.setConnectTimeout(300); conn.setReadTimeout(300);
                     int code = conn.getResponseCode(); conn.disconnect();
-                    if (code == 200 || code == 401 || code == 404) break;
+                    if (code == 200 || code == 401 || code == 404) { ok = true; break; }
                 } catch (Exception e) {}
                 try { Thread.sleep(250); } catch (Exception ex) {}
             }
-            runOnUiThread(() -> setupWebView());
+            final boolean serverOk = ok;
+            runOnUiThread(() -> {
+                if (serverOk) setupWebView();
+                else mostrarErrorArranque("El servidor no respondió en 15 segundos.\n"
+                    + "Revisa el logcat (etiqueta TPV) para más detalles.");
+            });
         }).start();
     }
 
@@ -143,6 +167,32 @@ public class MainActivity extends FragmentActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == CAMERA_PERMISSION_REQUEST) {
             cameraPermissionGranted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+        }
+    }
+
+    // Muestra el error de arranque en pantalla (en vez de cerrar la app).
+    private void mostrarErrorArranque(String detalle) {
+        try {
+            android.widget.ScrollView sv = new android.widget.ScrollView(this);
+            LinearLayout box = new LinearLayout(this);
+            box.setOrientation(LinearLayout.VERTICAL);
+            box.setPadding(40, 80, 40, 40);
+            box.setBackgroundColor(Color.parseColor("#0a0e1a"));
+            TextView t = new TextView(this);
+            t.setText("⚠️ TPV no pudo iniciar el servidor");
+            t.setTextColor(Color.parseColor("#f87171"));
+            t.setTextSize(18f);
+            t.setPadding(0, 0, 0, 20);
+            TextView d = new TextView(this);
+            d.setText(detalle == null ? "Error desconocido" : detalle);
+            d.setTextColor(Color.parseColor("#cbd5e1"));
+            d.setTextSize(11f);
+            d.setTypeface(android.graphics.Typeface.MONOSPACE);
+            box.addView(t); box.addView(d);
+            sv.addView(box);
+            setContentView(sv);
+        } catch (Exception e) {
+            android.util.Log.e("TPV", "No se pudo mostrar el error", e);
         }
     }
 
@@ -208,21 +258,47 @@ public class MainActivity extends FragmentActivity {
         @android.webkit.JavascriptInterface
         public boolean canAuthenticate() {
             if (Build.VERSION.SDK_INT < 23) return false;
-            return BiometricManager.from(MainActivity.this).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS;
+            BiometricManager bm = BiometricManager.from(MainActivity.this);
+            // En Android 11+ aceptamos también la credencial de pantalla (PIN /
+            // patrón / contraseña) como método válido: así el usuario puede
+            // entrar aunque el rostro/huella no se reconozca o no esté enrolado.
+            if (Build.VERSION.SDK_INT >= 30) {
+                int combo = bm.canAuthenticate(
+                    BiometricManager.Authenticators.BIOMETRIC_STRONG
+                    | BiometricManager.Authenticators.DEVICE_CREDENTIAL);
+                if (combo == BiometricManager.BIOMETRIC_SUCCESS) return true;
+            }
+            return bm.canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS;
         }
         @android.webkit.JavascriptInterface
         public void authenticate(String title, String subtitle, String desc) {
             runOnUiThread(() -> {
-                BiometricPrompt.PromptInfo.Builder b = new BiometricPrompt.PromptInfo.Builder()
-                    .setTitle(title != null ? title : "TPV Ultra Smart")
-                    .setSubtitle(subtitle != null ? subtitle : "Verificacion de identidad")
-                    .setDescription(desc != null ? desc : "Usa tu huella o rostro")
-                    .setNegativeButtonText("Cancelar");
-                if (Build.VERSION.SDK_INT >= 30) {
-                    try { b.setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG | BiometricManager.Authenticators.DEVICE_CREDENTIAL); }
-                    catch (Exception ignored) {}
+                try {
+                    BiometricPrompt.PromptInfo.Builder b = new BiometricPrompt.PromptInfo.Builder()
+                        .setTitle(title != null ? title : "TPV Ultra Smart")
+                        .setSubtitle(subtitle != null ? subtitle : "Verificacion de identidad")
+                        .setDescription(desc != null ? desc : "Usa tu huella, rostro o el PIN de pantalla");
+                    // En Android 11+ (API 30) DEVICE_CREDENTIAL convive bien con
+                    // BIOMETRIC_STRONG: si el rostro/huella no se reconoce, el
+                    // propio diálogo ofrece el PIN/patrón/contraseña de pantalla
+                    // como respaldo. En esa combinación NO se debe llamar a
+                    // setNegativeButtonText() (lanzaría IllegalArgumentException),
+                    // porque el botón pasa a ser "Usar PIN".
+                    // En versiones anteriores usamos solo biometría fuerte +
+                    // botón Cancelar (evita el crash conocido).
+                    if (Build.VERSION.SDK_INT >= 30) {
+                        b.setAllowedAuthenticators(
+                            BiometricManager.Authenticators.BIOMETRIC_STRONG
+                            | BiometricManager.Authenticators.DEVICE_CREDENTIAL);
+                    } else {
+                        b.setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG);
+                        b.setNegativeButtonText("Cancelar");
+                    }
+                    biometricPrompt.authenticate(b.build());
+                } catch (Throwable t) {
+                    android.util.Log.e("TPV", "Error biometría", t);
+                    notifyWebView(false, "Biometría no disponible: " + t.getMessage());
                 }
-                biometricPrompt.authenticate(b.build());
             });
         }
         @android.webkit.JavascriptInterface

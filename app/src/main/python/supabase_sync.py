@@ -41,19 +41,34 @@ def _headers():
         "Prefer": "return=representation"
     }
 
-def _peticion(url, metodo="GET", datos=None, timeout=10):
-    """HTTP genérico con manejo de errores."""
-    import urllib.request, urllib.error
-    try:
-        body = json.dumps(datos, ensure_ascii=False).encode("utf-8") if datos else None
-        req = urllib.request.Request(url, data=body, method=metodo)
-        for k, v in _headers().items():
-            req.add_header(k, v)
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            contenido = resp.read().decode("utf-8")
-            return json.loads(contenido) if contenido else {}
-    except Exception:
-        return None
+def _peticion(url, metodo="GET", datos=None, timeout=10, reintentos=3,
+              backoff_base=0.5, backoff_max=8.0):
+    """HTTP genérico con reintentos, backoff exponencial + jitter (#15).
+
+    - reintentos: nº de reintentos tras el primer fallo.
+    - Espera entre intentos: min(backoff_base * 2**intento, backoff_max) + jitter.
+    - Errores 4xx (cliente) NO se reintentan; 5xx y de red SÍ.
+    """
+    import urllib.request, urllib.error, time, random
+    for intento in range(reintentos + 1):
+        try:
+            body = json.dumps(datos, ensure_ascii=False).encode("utf-8") if datos else None
+            req = urllib.request.Request(url, data=body, method=metodo)
+            for k, v in _headers().items():
+                req.add_header(k, v)
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                contenido = resp.read().decode("utf-8")
+                return json.loads(contenido) if contenido else {}
+        except urllib.error.HTTPError as e:
+            if e.code < 500:  # 4xx → error de cliente, no reintentar
+                return None
+        except Exception:
+            pass
+        if intento < reintentos:
+            espera = min(backoff_base * (2 ** intento), backoff_max)
+            espera += random.uniform(0, espera * 0.25)  # jitter ±25%
+            time.sleep(espera)
+    return None
 
 # === Funciones stub (modo offline) ===
 def cargar_desde_supabase(): return None
@@ -103,7 +118,8 @@ def obtener_estado_tablas():
         resultado = {}
         for t in tablas:
             try:
-                c.execute(f'SELECT COUNT(*) FROM "{t}"')
+                # t validated against TABLAS_SYNC whitelist
+                c.execute('SELECT COUNT(*) FROM "' + t.replace('"','') + '"')
                 resultado[t] = {"registros": c.fetchone()[0], "existe": True}
             except:
                 resultado[t] = {"registros": 0, "existe": False}
@@ -142,7 +158,8 @@ def exportar_datos_offline(tabla):
         from db_connection import obtener_conexion
         conn = obtener_conexion()
         c = conn.cursor()
-        c.execute(f'SELECT * FROM {tabla} LIMIT 1000')
+        # tabla from SUPABASE_CONFIG (not user input)
+        c.execute('SELECT * FROM "' + tabla.replace('"','') + '" LIMIT 1000')
         cols = [desc[0] for desc in c.description] if c.description else []
         rows = [dict(zip(cols, row)) for row in c.fetchall()]
         conn.close()

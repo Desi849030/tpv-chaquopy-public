@@ -1,5 +1,4 @@
-from auth_decorator import login_required
-from auth_decorator import login_required
+from decorators import login_required
 import unicodedata, re
 
 from .helpers import _levenshtein

@@ -1,6 +1,6 @@
 """db_connection.py - Conexion BD, seguridad, logging, auditoria (DAO)"""
 from __future__ import annotations
-import sqlite3, os, hashlib, secrets
+import sqlite3, os, hashlib, secrets, hmac
 from datetime import datetime
 from typing import Optional, Dict, Any
 
@@ -25,7 +25,7 @@ def _hash_password(password: str, salt: str = None) -> tuple:
 
 def verificar_password(password, hash_guardado, salt):
     h, _ = _hash_password(password, salt)
-    return h == hash_guardado
+    return hmac.compare_digest(h, str(hash_guardado))
 
 # ══════════════════════════════════════════════════════════════
 #  CONEXIÓN
@@ -40,6 +40,7 @@ def obtener_conexion():
     conn.execute("PRAGMA synchronous = NORMAL")
     conn.execute("PRAGMA temp_store = MEMORY")
     conn.execute("PRAGMA cache_size = -8000")
+    conn.execute("PRAGMA busy_timeout = 5000")
     return conn
 
 # ══════════════════════════════════════════════════════════════
@@ -72,6 +73,7 @@ def obtener_info_db():
         info = {"archivo": DB_FILE, "tablas": {}}
         for t in TABLAS_PERMITIDAS:
             try:
+                # Table/column from whitelist, not user input
                 cursor.execute(f'SELECT COUNT(*) AS total FROM "{t}"')
                 info["tablas"][t] = cursor.fetchone()["total"]
             except Exception:

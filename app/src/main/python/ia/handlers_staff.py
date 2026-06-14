@@ -21,11 +21,27 @@ except Exception:
 from ia.handlers_base import _fm, _follow, _get_sug
 
 # ================================================================
-def handle_vendedor(agent, t, m):
-    if _fm(agent, t, ["ventas","caja","recaudó","cuánto vendí","cómo voy"]):
+def handle_vendedor(agent, t, m=None):
+    name = m if isinstance(m, str) else ''
+
+    # Saludo personalizado
+    if _fm(agent, t, ['hola', 'buenos dias', 'buenas tardes', 'buenas noches', 'buenas', 'que tal', 'saludos', 'hey']):
+        from datetime import datetime as _dt
+        h = _dt.now().hour
+        s = 'Buenos días' if h < 12 else ('Buenas tardes' if h < 19 else 'Buenas noches')
+        nm = f", {name}" if name else ""
+        return (f"{s}{nm} 🛒. Soy tu asistente de ventas. "
+                f"Puedo ayudarte con: tus ventas de hoy, stock bajo, productos "
+                f"más vendidos o el precio de cualquier producto. ¿Qué necesitas?")
+
+    # Agradecimiento
+    if _fm(agent, t, ['gracias', 'genial', 'perfecto', 'adios', 'hasta luego', 'chao']):
+        return "¡Con gusto! Aquí estoy para lo que necesites. 👍"
+
+    if _fm(agent, t, ["ventas","caja","recaudó","cuánto vendí","cuanto vendi","cómo voy","como voy"]):
         d = F.diario()
         if d['t'] == 0:
-            return "Todavía no hay ventas hoy."
+            return "Todavía no hay ventas hoy. ¡A vender! 💪"
         h = datetime.now().hour
         proy = d['r'] / h * 24 if h > 0 else d['r']
         return (f"Al momento: {d['t']} ventas, {fmt_money(d['r'])} facturados. "
@@ -53,9 +69,12 @@ def handle_vendedor(agent, t, m):
                     str(int(r["q"])) + " uds (" + fmt_money(r["t"]) + ")\n")
         return msg
 
-    prods = P.search(t, 10)
+    # Búsqueda de producto (limpia palabras de relleno: 'precio del cafe' -> 'cafe')
+    import re as _re
+    _term = _re.sub(r'\b(precio|costo|valor|cuanto|cuánto|cuesta|vale|de|del|la|el|los|las|hay|tienes|tiene|stock)\b',
+                    ' ', t.lower()).strip()
+    prods = P.search(_term or t, 10)
     if prods:
-        m["p"] = prods[0]["n"]
         msg = "Productos:\n"
         for p in prods[:10]:
             mrg = ((p['p'] - p['c']) / p['p'] * 100) if p['p'] > 0 and p['c'] > 0 else 0
@@ -64,17 +83,29 @@ def handle_vendedor(agent, t, m):
                     + (" | Margen: " + pct(mrg) if mrg > 0 else "") + "\n")
         return msg
 
-    return ("Dime qué necesitas: ventas, stock bajo, top, o nombre de un "
-            "producto.\n\n" + _follow("vendedor"))
+    return ("Dime qué necesitas: tus ventas, stock bajo, productos más vendidos, "
+            "o el nombre de un producto.\n\n" + _follow("vendedor"))
 
 
 # ================================================================
 # SUPERVISOR
 # ================================================================
 def handle_supervisor(agent, t, m=None):
+    name = m if isinstance(m, str) else ''
     d = F.diario()
     w = F.semanal()
     low = sum(1 for p in P.cache if 0 < p['s'] <= 5)
+
+    # Saludo personalizado
+    if _fm(agent, t, ['hola', 'buenos dias', 'buenas tardes', 'buenas noches', 'buenas', 'que tal', 'saludos', 'hey']):
+        from datetime import datetime as _dt
+        h = _dt.now().hour
+        s = 'Buenos días' if h < 12 else ('Buenas tardes' if h < 19 else 'Buenas noches')
+        nm = f", {name}" if name else ""
+        return (f"{s}{nm} 👁️. Soy tu asistente de supervisión. Puedo darte el "
+                f"dashboard, ventas del día, stock bajo y tendencias. ¿Qué reviso?")
+    if _fm(agent, t, ['gracias', 'genial', 'perfecto', 'adios', 'hasta luego', 'chao']):
+        return "¡Con gusto! Aquí estoy para lo que necesites. 👍"
 
     if _fm(agent, t, ["ayuda","qué puedes","menu","opciones"]):
         return ("Como supervisor tienes acceso completo:\n\n"
@@ -214,9 +245,11 @@ def handle_supervisor(agent, t, m=None):
                     " -> " + fmt_money(o["d"]) + " (" + pct(o["m"]) + ")\n")
         return msg
 
-    prods = P.search(t, 10)
+    import re as _re
+    _term = _re.sub(r'\b(precio|costo|valor|cuanto|cuánto|cuesta|vale|de|del|la|el|los|las|hay|tienes|tiene|stock)\b',
+                    ' ', t.lower()).strip()
+    prods = P.search(_term or t, 10)
     if prods:
-        m["p"] = prods[0]["n"]
         msg = "Productos:\n\n"
         for p in prods[:10]:
             mrg = ((p['p'] - p['c']) / p['p'] * 100) if p['p'] > 0 and p['c'] > 0 else 0
@@ -360,7 +393,57 @@ def handle_admin(agent, t, name):
         msg += f"\nTotal gastos: {fmt_money(total)}"
         return msg
 
-    prods = P.search(t, 10)
+    # Saludo
+    if _fm(agent, t, ['hola', 'buenos dias', 'buenas tardes', 'buenas noches', 'buenas', 'que tal', 'saludos', 'hey']):
+        from datetime import datetime as _dt
+        h = _dt.now().hour
+        s = 'Buenos días' if h < 12 else ('Buenas tardes' if h < 19 else 'Buenas noches')
+        nm = f", {name}" if name else ""
+        return (f"{s}{nm}. Soy tu asistente del TPV. Puedo ayudarte con: "
+                f"finanzas, ventas, stock, productos, ofertas y reportes. "
+                f"¿Qué necesitas consultar?")
+
+    # Agradecimiento / despedida
+    if _fm(agent, t, ['gracias', 'genial', 'perfecto', 'adios', 'hasta luego', 'chao']):
+        return "¡Con gusto! Estoy aquí para lo que necesites. 👍"
+
+    # Productos más vendidos (antes que "ventas" para que 'vendidos' no caiga ahí)
+    if _fm(agent, t, ['mas vendido', 'más vendido', 'top productos', 'mejores productos', 'ranking', 'mas vendidos', 'top vendidos', 'productos mas']):
+        top = F.top(7, 5)
+        if not top:
+            return "Aún no hay ventas suficientes esta semana para un ranking."
+        msg = "Top productos (últimos 7 días):\n"
+        for i, x in enumerate(top):
+            msg += f"{i+1}. {x['nombre']} — {x['q']:.0f} uds ({fmt_money(x['t'])})\n"
+        return msg
+
+    # Listado de catálogo / categorías
+    if _fm(agent, t, ['que productos', 'qué productos', 'catalogo', 'catálogo', 'lista de productos', 'que tienes', 'categoria', 'categoría', 'categorias', 'categorías', 'productos tienes']):
+        cats = F.categorias()
+        total = sum(c['n'] for c in cats) if cats else 0
+        if not cats:
+            return "Aún no hay productos en el catálogo. Importa un Excel para empezar."
+        msg = f"Catálogo: {total} productos en {len(cats)} categorías:\n"
+        for c in cats[:8]:
+            msg += f"• {c['cat']}: {c['n']} productos\n"
+        msg += "\nPregúntame por un producto concreto (ej: 'precio del café')."
+        return msg
+
+    # Ventas del día
+    if _fm(agent, t, ['cuanto vendi', 'cuánto vendí', 'ventas de hoy', 'ventas hoy', 'caja', 'recaude', 'facturacion', 'cobrado', 'ingreso del dia', 'como voy', 'cuanto llevo']):
+        d = F.diario()
+        if d['t'] == 0:
+            return "Aún no hay ventas registradas hoy. ¡A vender! 💪"
+        return (f"Ventas de hoy:\n"
+                f"🛒 {d['t']} transacciones\n"
+                f"💰 Total: {fmt_money(d['r'])}\n"
+                f"📊 Ticket promedio: {fmt_money(d['a'])}")
+
+    # Búsqueda de productos (limpia palabras de relleno como 'precio de', 'cuanto')
+    import re as _re
+    _term = _re.sub(r'\b(precio|costo|valor|cuanto|cuánto|cuesta|vale|de|del|la|el|los|las|hay|tienes|tiene|stock)\b',
+                    ' ', t.lower()).strip()
+    prods = P.search(_term or t, 10)
     if prods:
         if len(prods) == 1:
             p = prods[0]
@@ -387,10 +470,22 @@ def handle_admin(agent, t, name):
             msg += f"- {p['n']}: {fmt_money(p['p'])} | Stock: {p['s']:.0f}\n"
         return msg
 
-    return ("Gestor completo a su disposición. Puede consultar:\n"
-            "Finanzas | ABC | Punto equilibrio\n"
-            "Stock | Predicciones | Ofertas\n"
-            "Rotación | Gastos | EOQ")
+    # Respuesta contextual con datos reales en vez de menú genérico
+    try:
+        resumen = F.diario()
+        low_count = sum(1 for p in P.cache if 0 < p.get('s', 0) <= 5)
+        resp = f"Resumen rápido:\n"
+        resp += f"💰 Ventas hoy: ${resumen['r']:,.2f} ({resumen['t']} transacciones)\n"
+        resp += f"📊 Ticket promedio: ${resumen['a']:,.2f}\n"
+        if low_count > 0:
+            resp += f"⚠️ {low_count} productos con stock bajo\n"
+        resp += f"\n¿Qué necesita? (finanzas, ABC, stock, predicciones, gastos, EOQ)"
+        return resp
+    except Exception:  # noqa: broad-except
+        return ("¿Qué necesita consultar? Opciones:\n"
+                "💰 Finanzas · 📊 ABC · ⚖️ Punto equilibrio\n"
+                "📦 Stock · 🔮 Predicciones · 🏷️ Ofertas\n"
+                "🔄 Rotación · 🧾 Gastos · 📐 EOQ")
 
 
 # ================================================================
@@ -404,7 +499,7 @@ def handle_dev(agent, t, name):
             import dev_metrics
             base += "\n\nMétricas del sistema (solo desarrollador):\n"
             base += "Usa el panel de métricas en /dev/metrics para detalles en tiempo real."
-        except Exception:
+        except Exception:  # noqa: broad-except - graceful degradation
             pass
     if any(w in tl for w in ["licencía","license","activacion"]):
         base += "\n\nLicencias: Usa /admin/licencías para gestiónar."

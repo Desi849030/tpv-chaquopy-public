@@ -15,7 +15,7 @@ TIERS = {
 
 def _db():
     try:
-        from database import obtener_conexion
+        from db_connection import obtener_conexion
         return obtener_conexion()
     except:
         return None

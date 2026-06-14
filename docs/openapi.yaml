@@ -1,0 +1,154 @@
+openapi: 3.0.3
+info:
+  title: TPV Ultra Smart API
+  version: "8.0"
+  description: API principal del TPV Ultra Smart orientada a operación local/offline-first.
+
+servers:
+  - url: http://127.0.0.1:5000
+
+paths:
+  /health:
+    get:
+      summary: Healthcheck general
+      responses:
+        "200":
+          description: Aplicación y BD operativas
+        "503":
+          description: Estado degradado
+
+  /api/health:
+    get:
+      summary: Healthcheck API
+      responses:
+        "200":
+          description: API operativa
+        "503":
+          description: Estado degradado
+
+  /api/auth/login:
+    post:
+      summary: Iniciar sesión
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Login correcto
+        "400":
+          description: Datos incompletos
+        "401":
+          description: Credenciales inválidas
+        "429":
+          description: Usuario bloqueado o exceso de intentos
+
+  /api/auth/logout:
+    post:
+      summary: Cerrar sesión
+      responses:
+        "200":
+          description: Sesión cerrada
+
+  /api/auth/me:
+    get:
+      summary: Obtener usuario autenticado
+      responses:
+        "200":
+          description: Usuario autenticado
+        "401":
+          description: No autenticado
+
+  /api/ventas/registrar:
+    post:
+      summary: Registrar venta
+      description: Registra una venta de forma atómica validando stock.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [items]
+              properties:
+                metodo_pago:
+                  type: string
+                  example: efectivo
+                items:
+                  type: array
+                  items:
+                    type: object
+                    required: [id, nombre, cantidad, precio]
+                    properties:
+                      id:
+                        type: string
+                        example: p1
+                      nombre:
+                        type: string
+                        example: Café
+                      cantidad:
+                        type: number
+                        example: 2
+                      precio:
+                        type: number
+                        example: 1.5
+      responses:
+        "200":
+          description: Venta registrada
+        "400":
+          description: Datos inválidos
+        "401":
+          description: Requiere autenticación
+        "404":
+          description: Producto no encontrado
+        "409":
+          description: Stock insuficiente
+        "500":
+          description: Error interno
+
+  /api/ventas/hoy:
+    get:
+      summary: Listar ventas del día
+      responses:
+        "200":
+          description: Consulta correcta
+        "401":
+          description: Requiere autenticación
+
+  /api/ventas/totales:
+    get:
+      summary: Totales de ventas del día y del mes
+      responses:
+        "200":
+          description: Consulta correcta
+        "401":
+          description: Requiere autenticación
+
+  /api/ventas/cierre:
+    post:
+      summary: Cierre de caja
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fecha:
+                  type: string
+                  example: "2026-06-14"
+      responses:
+        "200":
+          description: Cierre realizado
+        "401":
+          description: Requiere autenticación
+        "500":
+          description: Error interno

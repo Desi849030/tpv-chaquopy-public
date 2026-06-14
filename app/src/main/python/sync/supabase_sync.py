@@ -1,4 +1,13 @@
+"""sync/supabase_sync.py — Sincronización con Supabase (#15).
+
+Resiliencia de red: todas las peticiones usan _peticion() de
+sync.config_supabase, que implementa reintentos con backoff
+exponencial + jitter (base 0.5s, máx 8s, 4xx no se reintenta).
+"""
 from sync.config import *
+import sync.config_supabase as _cfg
+# Re-export explícito: _peticion incluye backoff exponencial + jitter
+from sync.config_supabase import _peticion  # noqa: F401  (backoff/jitter)
 
 def guardar_en_supabase(estado: dict) -> bool:
     if not SUPABASE_OK:
@@ -27,12 +36,22 @@ def sincronizar_subida(estado: dict):
 # ══════════════════════════════════════════════════════════════
 #  USUARIOS Y CLIENTES
 # ══════════════════════════════════════════════════════════════
+# ==============================================================
+#  SEGURIDAD: nunca enviar credenciales a la nube
+# ==============================================================
+SYNC_BLOCKLIST = {"password_hash", "password_salt", "totp_secret", "pin_hash"}
+
+def _sin_secretos(d: dict) -> dict:
+    """Elimina campos sensibles antes de enviar a Supabase."""
+    return {k: v for k, v in d.items() if k not in SYNC_BLOCKLIST}
+
+
 def sincronizar_usuario_nuevo(usuario_id: str):
     if not SUPABASE_OK:
         return
     try:
         import sqlite3
-        from database import DB_FILE
+        from db_connection import DB_FILE
         conn = sqlite3.connect(DB_FILE)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
@@ -44,7 +63,7 @@ def sincronizar_usuario_nuevo(usuario_id: str):
         u = cursor.fetchone()
         conn.close()
         if not u: return
-        datos = dict(u)
+        datos = _sin_secretos(dict(u))
         datos["activo"] = bool(datos["activo"])
         tabla = SUPABASE_CONFIG["tabla_usuarios"]
         url   = f"{SUPABASE_CONFIG['url']}/rest/v1/{tabla}"
@@ -61,7 +80,7 @@ def sincronizar_usuarios_a_supabase() -> dict:
         return {"ok": False, "mensaje": "Supabase no configurado"}
     try:
         import sqlite3
-        from database import DB_FILE
+        from db_connection import DB_FILE
         conn = sqlite3.connect(DB_FILE)
         conn.row_factory = sqlite3.Row
         usuarios = [dict(u) for u in conn.execute(
@@ -75,6 +94,7 @@ def sincronizar_usuarios_a_supabase() -> dict:
     url   = f"{SUPABASE_CONFIG['url']}/rest/v1/{tabla}"
     ok_count = 0
     for u in usuarios:
+        u = _sin_secretos(u)
         u["activo"] = bool(u["activo"])
         res = _peticion(f"{url}?usuario_id=eq.{u['usuario_id']}", metodo="PATCH", datos=u)
         if res == [] or res is None:
@@ -89,7 +109,7 @@ def sincronizar_cliente_nuevo(cliente_id: str):
         return
     try:
         import sqlite3
-        from database import DB_FILE
+        from db_connection import DB_FILE
         conn = sqlite3.connect(DB_FILE)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
@@ -97,7 +117,7 @@ def sincronizar_cliente_nuevo(cliente_id: str):
         c = cursor.fetchone()
         conn.close()
         if not c: return
-        datos = dict(c)
+        datos = _sin_secretos(dict(c))
         datos["activo"] = bool(datos.get("activo", True))
         datos.pop("creado", None)
         tabla = SUPABASE_CONFIG["tabla_clientes"]
@@ -115,7 +135,7 @@ def sincronizar_todos_clientes() -> dict:
         return {"ok": False, "mensaje": "Supabase no configurado"}
     try:
         import sqlite3
-        from database import DB_FILE
+        from db_connection import DB_FILE
         conn = sqlite3.connect(DB_FILE)
         conn.row_factory = sqlite3.Row
         clientes = [dict(c) for c in conn.execute(
@@ -129,6 +149,7 @@ def sincronizar_todos_clientes() -> dict:
     url   = f"{SUPABASE_CONFIG['url']}/rest/v1/{tabla}"
     ok_count = 0
     for c in clientes:
+        c = _sin_secretos(c)
         c["activo"] = bool(c["activo"])
         res = _peticion(f"{url}?cliente_id=eq.{c['cliente_id']}", metodo="PATCH", datos=c)
         if res == [] or res is None:
@@ -141,7 +162,7 @@ def sincronizar_todos_clientes() -> dict:
 def sincronizar_todo() -> dict:
     if not SUPABASE_OK:
         return {"ok": False, "mensaje": "Supabase no configurado"}
-    from database import cargar_estado
+    from db_config import cargar_estado
     resultados = {}
     estado = cargar_estado()
     if estado:
@@ -151,7 +172,7 @@ def sincronizar_todo() -> dict:
 
     # Sync ventas
     try:
-        from database import obtener_conexion
+        from db_connection import obtener_conexion
         conn = obtener_conexion()
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM historial_ventas ORDER BY fecha DESC LIMIT 100")
@@ -166,7 +187,7 @@ def sincronizar_todo() -> dict:
 
     # Sync inventario/stock
     try:
-        from database import obtener_conexion
+        from db_connection import obtener_conexion
         conn = obtener_conexion()
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM inventario_general ORDER BY producto_id")
@@ -179,6 +200,36 @@ def sincronizar_todo() -> dict:
     except Exception as e:
         print(f"  Error sync inventario: {e}")
 
+    # Sync productos
+    try:
+        conn = obtener_conexion()
+        rows = conn.execute("SELECT * FROM productos WHERE activo=1 ORDER BY nombre").fetchall()
+        conn.close()
+        if rows:
+            resultados["productos"] = guardar_en_supabase({"productos": [dict(r) for r in rows]})
+    except Exception as e:
+        print(f"  Error sync productos: {e}")
+
+    # Sync gastos
+    try:
+        conn = obtener_conexion()
+        rows = conn.execute("SELECT * FROM gastos ORDER BY fecha DESC LIMIT 200").fetchall()
+        conn.close()
+        if rows:
+            resultados["gastos"] = guardar_en_supabase({"gastos": [dict(r) for r in rows]})
+    except Exception as e:
+        print(f"  Error sync gastos: {e}")
+
+    # Sync cierres de caja
+    try:
+        conn = obtener_conexion()
+        rows = conn.execute("SELECT * FROM cierres_caja ORDER BY fecha DESC LIMIT 90").fetchall()
+        conn.close()
+        if rows:
+            resultados["cierres"] = guardar_en_supabase({"cierres": [dict(r) for r in rows]})
+    except Exception as e:
+        print(f"  Error sync cierres: {e}")
+
     return {
         "ok":         True,
         "estado":     resultados.get("estado", False),
@@ -186,6 +237,9 @@ def sincronizar_todo() -> dict:
         "clientes":   resultados.get("clientes", {}),
         "ventas":     resultados.get("ventas", False),
         "inventario": resultados.get("inventario", False),
+        "productos":  resultados.get("productos", False),
+        "gastos":     resultados.get("gastos", False),
+        "cierres":    resultados.get("cierres", False),
     }
 
 # ══════════════════════════════════════════════════════════════
@@ -236,3 +290,25 @@ def obtener_config_completa() -> dict:
 
 # Inicializar al importar
 verificar_supabase()
+
+
+# ══════════════════════════════════════════════════════════════
+#  Re-exports de config_supabase (para compatibilidad con settings_helpers)
+# ══════════════════════════════════════════════════════════════
+try:
+    from sync.config_supabase import (
+        verificar_tablas_supabase, setup_supabase, obtener_sql_completo,
+        guardar_historial_diario, obtener_historial_diario,
+        obtener_historial_detalle, cargar_desde_supabase,
+    )
+    from sync.config_persist import TABLAS_SQL
+except ImportError:
+    # Fallbacks si config_supabase no está disponible
+    def verificar_tablas_supabase(): return {}
+    def setup_supabase(): return {"ok": False, "mensaje": "config_supabase no disponible"}
+    def obtener_sql_completo(): return ""
+    def guardar_historial_diario(s): return {"ok": False}
+    def obtener_historial_diario(l=30): return {"ok": True, "dias": []}
+    def obtener_historial_detalle(f): return {}
+    def cargar_desde_supabase(): return None
+    TABLAS_SQL = {}

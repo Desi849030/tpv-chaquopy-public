@@ -1,0 +1,523 @@
+/* ============================================================================
+   TPV UltraSmart — Design System v1.0  (tpv_theme.css)
+   Capa de modernización profesional. Se carga DESPUÉS de los CSS existentes
+   y refina la apariencia sin alterar el HTML estructural.
+   100% offline (sin CDN). Compatible con dark mode (.dark-mode en body).
+   ========================================================================= */
+
+/* ---------------------------------------------------------------------------
+   1) TOKENS DE DISEÑO (variables)
+--------------------------------------------------------------------------- */
+:root {
+  /* Paleta de marca — índigo/violeta premium */
+  --tpv-primary: #4f46e5;
+  --tpv-primary-rgb: 79, 70, 229;
+  --tpv-primary-hover: #4338ca;
+  --tpv-primary-soft: rgba(79, 70, 229, 0.10);
+  --tpv-accent: #06b6d4;
+  --tpv-accent-rgb: 6, 182, 212;
+
+  /* Semánticos */
+  --tpv-success: #10b981;
+  --tpv-danger: #ef4444;
+  --tpv-warning: #f59e0b;
+  --tpv-info: #0ea5e9;
+
+  /* Superficies (claro) */
+  --tpv-bg: #eef2f7;
+  --tpv-bg-2: #e6ebf2;
+  --tpv-surface: #ffffff;
+  --tpv-surface-2: #f8fafc;
+  --tpv-text: #1e293b;
+  --tpv-text-muted: #64748b;
+  --tpv-border: #e2e8f0;
+
+  /* Radios */
+  --tpv-radius-sm: 0.5rem;
+  --tpv-radius: 0.85rem;
+  --tpv-radius-lg: 1.25rem;
+  --tpv-radius-pill: 999px;
+
+  /* Sombras en capas (elevación) */
+  --tpv-shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --tpv-shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.08);
+  --tpv-shadow: 0 8px 24px rgba(15, 23, 42, 0.10);
+  --tpv-shadow-lg: 0 18px 40px rgba(15, 23, 42, 0.16);
+  --tpv-ring: 0 0 0 0.2rem rgba(var(--tpv-primary-rgb), 0.28);
+
+  /* Movimiento */
+  --tpv-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --tpv-dur: 0.2s;
+
+  /* Mapear Bootstrap a nuestra marca */
+  --bs-primary: var(--tpv-primary);
+  --bs-primary-rgb: var(--tpv-primary-rgb);
+  --bs-link-color: var(--tpv-primary);
+  --bs-link-hover-color: var(--tpv-primary-hover);
+  --bs-body-font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+}
+
+body.dark-mode {
+  --tpv-bg: #0f141b;
+  --tpv-bg-2: #0b0f15;
+  --tpv-surface: #1a212b;
+  --tpv-surface-2: #222b37;
+  --tpv-text: #e8edf4;
+  --tpv-text-muted: #94a3b8;
+  --tpv-border: #2b3542;
+  --tpv-primary: #818cf8;
+  --tpv-primary-rgb: 129, 140, 248;
+  --tpv-primary-hover: #a5b4fc;
+  --tpv-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --tpv-shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.45);
+  --tpv-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  --tpv-shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.6);
+}
+
+/* ---------------------------------------------------------------------------
+   2) BASE
+--------------------------------------------------------------------------- */
+body {
+  font-family: var(--bs-body-font-family);
+  background: radial-gradient(1200px 600px at 100% -10%, rgba(var(--tpv-accent-rgb), 0.08), transparent 60%),
+              radial-gradient(1000px 500px at -10% 110%, rgba(var(--tpv-primary-rgb), 0.10), transparent 55%),
+              linear-gradient(160deg, var(--tpv-bg), var(--tpv-bg-2)) !important;
+  color: var(--tpv-text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection { background: rgba(var(--tpv-primary-rgb), 0.25); }
+
+/* Scrollbar moderna */
+* { scrollbar-width: thin; scrollbar-color: var(--tpv-border) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb {
+  background: var(--tpv-border);
+  border-radius: var(--tpv-radius-pill);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--tpv-text-muted); background-clip: padding-box; }
+
+/* Foco accesible y consistente */
+.btn:focus-visible,
+.form-control:focus,
+.form-select:focus,
+.nav-link:focus-visible,
+.dropdown-item:focus-visible {
+  outline: none !important;
+  box-shadow: var(--tpv-ring) !important;
+  border-color: var(--tpv-primary) !important;
+}
+
+/* ---------------------------------------------------------------------------
+   3) HEADER
+--------------------------------------------------------------------------- */
+.app-header {
+  background: linear-gradient(135deg, var(--tpv-primary), #6366f1 45%, var(--tpv-accent)) !important;
+  border-radius: var(--tpv-radius-lg) !important;
+  box-shadow: var(--tpv-shadow) !important;
+  padding: 1.6rem 1.75rem !important;
+  position: relative;
+  overflow: hidden;
+}
+.app-header::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(420px 160px at 12% -40%, rgba(255,255,255,0.30), transparent 70%);
+  pointer-events: none;
+}
+.app-header h1 {
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.25);
+}
+
+/* ---------------------------------------------------------------------------
+   4) TARJETAS (glass + sólidas)
+--------------------------------------------------------------------------- */
+.glass-card,
+.card {
+  background: var(--tpv-surface) !important;
+  border: 1px solid var(--tpv-border) !important;
+  border-radius: var(--tpv-radius-lg) !important;
+  box-shadow: var(--tpv-shadow-sm) !important;
+  transition: box-shadow var(--tpv-dur) var(--tpv-ease),
+              transform var(--tpv-dur) var(--tpv-ease);
+}
+.glass-card {
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  background: color-mix(in srgb, var(--tpv-surface) 88%, transparent) !important;
+}
+.card:hover { box-shadow: var(--tpv-shadow) !important; }
+.card-header {
+  background: transparent !important;
+  border-bottom: 1px solid var(--tpv-border) !important;
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------------
+   5) BOTONES
+--------------------------------------------------------------------------- */
+.btn {
+  --bs-btn-border-radius: var(--tpv-radius-sm);
+  border-radius: var(--tpv-radius-sm);
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  padding: 0.55rem 1.1rem;
+  transition: transform var(--tpv-dur) var(--tpv-ease),
+              box-shadow var(--tpv-dur) var(--tpv-ease),
+              filter var(--tpv-dur) var(--tpv-ease);
+}
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+.btn-lg { border-radius: var(--tpv-radius); padding: 0.8rem 1.4rem; }
+.btn-sm { border-radius: 0.45rem; }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--tpv-primary), #6366f1) !important;
+  border: none !important;
+  box-shadow: 0 6px 16px rgba(var(--tpv-primary-rgb), 0.35) !important;
+}
+.btn-primary:hover { filter: brightness(1.05); box-shadow: 0 10px 22px rgba(var(--tpv-primary-rgb), 0.45) !important; }
+
+.btn-success { background: linear-gradient(135deg, #10b981, #059669) !important; border: none !important; box-shadow: 0 6px 16px rgba(16,185,129,0.32) !important; }
+.btn-danger  { background: linear-gradient(135deg, #ef4444, #dc2626) !important; border: none !important; box-shadow: 0 6px 16px rgba(239,68,68,0.32) !important; }
+.btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706) !important; border: none !important; color: #1f1300 !important; box-shadow: 0 6px 16px rgba(245,158,11,0.30) !important; }
+.btn-info    { background: linear-gradient(135deg, #0ea5e9, #0284c7) !important; border: none !important; color: #fff !important; box-shadow: 0 6px 16px rgba(14,165,233,0.30) !important; }
+.btn-secondary { background: linear-gradient(135deg, #64748b, #475569) !important; border: none !important; }
+
+.btn-outline-primary { color: var(--tpv-primary) !important; border: 1.5px solid var(--tpv-primary) !important; }
+.btn-outline-primary:hover { background: var(--tpv-primary) !important; color: #fff !important; }
+
+/* ---------------------------------------------------------------------------
+   6) NAV TABS (segmentado moderno)
+--------------------------------------------------------------------------- */
+.nav-tabs {
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--tpv-border) !important;
+  padding-bottom: 0.25rem;
+}
+.nav-tabs .nav-link {
+  border: none !important;
+  border-radius: var(--tpv-radius-sm) !important;
+  color: var(--tpv-text-muted) !important;
+  font-weight: 600;
+  padding: 0.6rem 1rem !important;
+  transition: background var(--tpv-dur) var(--tpv-ease), color var(--tpv-dur) var(--tpv-ease);
+}
+.nav-tabs .nav-link:hover { background: var(--tpv-primary-soft) !important; color: var(--tpv-primary) !important; }
+.nav-tabs .nav-link.active,
+.nav-tabs .nav-link.dropdown-toggle.active {
+  color: var(--tpv-primary) !important;
+  background: var(--tpv-primary-soft) !important;
+  box-shadow: inset 0 -3px 0 var(--tpv-primary);
+}
+
+/* ---------------------------------------------------------------------------
+   7) FORMULARIOS
+--------------------------------------------------------------------------- */
+.form-control, .form-select {
+  border-radius: var(--tpv-radius-sm) !important;
+  border: 1.5px solid var(--tpv-border);
+  background: var(--tpv-surface-2);
+  color: var(--tpv-text);
+  padding: 0.6rem 0.9rem;
+  transition: border-color var(--tpv-dur) var(--tpv-ease), box-shadow var(--tpv-dur) var(--tpv-ease);
+}
+
+/* Inputs pequeños (tablas de inventario, filtros): respetar su tamaño compacto
+   para que el número no quede oculto/cortado. */
+.form-control-sm, .form-select-sm {
+  padding: 0.25rem 0.5rem !important;
+  font-size: 0.85rem !important;
+  border-radius: 0.4rem !important;
+}
+.inventory-input {
+  max-width: 90px;
+  min-width: 56px;
+  text-align: center;
+  padding: 0.25rem 0.4rem !important;
+}
+/* La celda de la tabla no debe recortar el contenido */
+.table td, .table th { overflow: visible; white-space: nowrap; }
+
+/* Respetar utilidades de color de Bootstrap (evita texto ilegible).
+   Si un elemento trae bg-dark/bg-* o text-white, NO lo pisamos. */
+.form-control.bg-dark, .form-select.bg-dark,
+.form-control.bg-secondary, .form-select.bg-secondary,
+.form-control.bg-primary, .form-select.bg-primary {
+  background: var(--bs-dark, #212529);
+  color: #fff;
+}
+.form-control.text-white, .form-select.text-white { color: #fff; }
+.bg-dark, .bg-dark * { color-scheme: dark; }
+.text-white { color: #fff !important; }
+.text-white-50 { color: rgba(255, 255, 255, 0.6) !important; }
+.form-control::placeholder { color: var(--tpv-text-muted); opacity: 0.8; }
+.form-label { font-weight: 600; color: var(--tpv-text); margin-bottom: 0.35rem; }
+.input-group-text {
+  border-radius: var(--tpv-radius-sm);
+  background: var(--tpv-surface-2);
+  border: 1.5px solid var(--tpv-border);
+  color: var(--tpv-text-muted);
+}
+
+/* ---------------------------------------------------------------------------
+   8) TABLAS
+--------------------------------------------------------------------------- */
+.table {
+  --bs-table-bg: transparent;
+  color: var(--tpv-text);
+}
+.table > thead th {
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.6px;
+  color: var(--tpv-text-muted);
+  border-bottom: 2px solid var(--tpv-border) !important;
+  font-weight: 700;
+}
+.table > tbody tr { transition: background var(--tpv-dur) var(--tpv-ease); }
+.table-hover > tbody > tr:hover > * { background: var(--tpv-primary-soft) !important; }
+.table td, .table th { border-color: var(--tpv-border) !important; vertical-align: middle; }
+
+/* ---------------------------------------------------------------------------
+   9) BADGES, DROPDOWN, MODALES
+--------------------------------------------------------------------------- */
+.badge { border-radius: var(--tpv-radius-pill); font-weight: 600; padding: 0.4em 0.7em; }
+
+.dropdown-menu {
+  border: 1px solid var(--tpv-border);
+  border-radius: var(--tpv-radius);
+  box-shadow: var(--tpv-shadow);
+  background: var(--tpv-surface);
+  padding: 0.4rem;
+}
+.dropdown-item { border-radius: var(--tpv-radius-sm); color: var(--tpv-text); padding: 0.5rem 0.8rem; }
+.dropdown-item:hover { background: var(--tpv-primary-soft); color: var(--tpv-primary); }
+.dropdown-item.active { background: var(--tpv-primary) !important; color: #fff !important; }
+.dropdown-header { color: var(--tpv-text-muted); font-weight: 700; font-size: 0.7rem; letter-spacing: 0.6px; }
+
+.modal-content {
+  border: 1px solid var(--tpv-border);
+  border-radius: var(--tpv-radius-lg);
+  box-shadow: var(--tpv-shadow-lg);
+  background: var(--tpv-surface);
+  color: var(--tpv-text);
+}
+.modal-header, .modal-footer { border-color: var(--tpv-border); }
+
+/* ---------------------------------------------------------------------------
+   10) PRODUCT CARDS (POS)
+--------------------------------------------------------------------------- */
+.product-card {
+  border-radius: var(--tpv-radius) !important;
+  border: 1px solid var(--tpv-border) !important;
+  box-shadow: var(--tpv-shadow-xs);
+  transition: transform var(--tpv-dur) var(--tpv-ease), box-shadow var(--tpv-dur) var(--tpv-ease);
+}
+.product-card:hover { transform: translateY(-3px); box-shadow: var(--tpv-shadow) !important; }
+
+/* ---------------------------------------------------------------------------
+   11) UTILIDADES Y ESTADOS
+--------------------------------------------------------------------------- */
+.text-muted { color: var(--tpv-text-muted) !important; }
+hr { border-color: var(--tpv-border); opacity: 1; }
+.list-group-item { background: var(--tpv-surface); color: var(--tpv-text); border-color: var(--tpv-border); }
+
+#status-badge { border-radius: var(--tpv-radius-pill); font-weight: 600; }
+
+/* Animación de entrada suave para paneles */
+.tab-pane.active.show, .glass-card {
+  animation: tpv-fade-in 0.32s var(--tpv-ease) both;
+}
+@keyframes tpv-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------------------------------------------------------------------------
+   12) VISIBILIDAD DE TABS POR ROL (administración)
+   Mismo patrón que #licencias-tab. JS añade body.rol-<rol> al iniciar sesión.
+--------------------------------------------------------------------------- */
+/* Privilegios: administrador y desarrollador */
+#privilegios-tab { display: none; }
+body.rol-administrador #privilegios-tab,
+body.rol-desarrollador #privilegios-tab { display: list-item !important; }
+
+/* Seguridad/Biometría y Métricas: solo desarrollador */
+#seguridad-tab, #dev-metrics-tab { display: none; }
+body.rol-desarrollador #seguridad-tab,
+body.rol-desarrollador #dev-metrics-tab { display: list-item !important; }
+
+/* ---------------------------------------------------------------------------
+   13) NAVEGACIÓN MEJORADA (menús, submenús, dropdowns)
+--------------------------------------------------------------------------- */
+/* IMPORTANTE: NO usar overflow en .nav-tabs porque recorta los dropdowns
+   que se despliegan hacia abajo. En su lugar permitir wrap en móvil. */
+.nav-tabs {
+  flex-wrap: wrap;
+  overflow: visible;
+  row-gap: 0.25rem;
+}
+.nav-tabs .nav-item { position: static; }
+
+/* El dropdown debe poder salir por encima de todo */
+.nav-item.dropdown { position: relative; }
+.nav-tabs .dropdown-menu { z-index: 1080; }
+
+/* Caret visible en dropdowns del nav */
+.nav-tabs .dropdown-toggle::after {
+  vertical-align: middle;
+  margin-left: 0.35rem;
+  transition: transform var(--tpv-dur) var(--tpv-ease);
+}
+.nav-tabs .dropdown-toggle.show::after { transform: rotate(180deg); }
+
+/* Dropdown del menú: animación de entrada y ancho cómodo */
+.dropdown-menu {
+  min-width: 14rem;
+  animation: tpv-menu-in 0.18s var(--tpv-ease) both;
+}
+@keyframes tpv-menu-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Cabeceras de sección dentro del menú: más legibles */
+.dropdown-header {
+  text-transform: uppercase;
+  font-size: 0.68rem !important;
+  letter-spacing: 0.8px;
+  color: var(--tpv-primary) !important;
+  opacity: 0.85;
+  padding-top: 0.5rem;
+}
+.dropdown-divider { border-color: var(--tpv-border); opacity: 0.7; }
+
+/* Ítems del menú: icono alineado y feedback claro */
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.dropdown-item i { width: 1.25rem; text-align: center; }
+.dropdown-item:active { background: var(--tpv-primary); color: #fff; }
+
+/* Badge de notificaciones en pestaña Tienda (campanita de pedidos) */
+.nav-link .badge,
+.nav-link .tienda-notif-dot {
+  font-size: 0.6rem;
+  padding: 0.2em 0.45em;
+}
+
+/* Header: nombre de tienda con mejor tipografía y badge de estado pulido */
+.app-header h1 { font-size: clamp(1.25rem, 4vw, 1.9rem); }
+#status-badge {
+  backdrop-filter: blur(4px);
+  background: rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+#status-badge.bg-danger,
+#status-badge.offline {
+  background: rgba(239, 68, 68, 0.9) !important;
+  border-color: transparent;
+}
+
+/* Tarjetas con borde de color (seguridad, métricas): refinar */
+.card.border-start { border-left-width: 4px !important; }
+
+/* Switches de privilegios: más grandes y táctiles */
+.form-switch .form-check-input {
+  cursor: pointer;
+  height: 1.4em;
+  width: 2.6em;
+}
+.form-switch .form-check-input:checked {
+  background-color: var(--tpv-success);
+  border-color: var(--tpv-success);
+}
+
+/* Tablas dentro de paneles: encabezado fijo al hacer scroll */
+.table-responsive { border-radius: var(--tpv-radius); }
+
+/* Respeto a usuarios con preferencia de menos movimiento */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* ---------------------------------------------------------------------------
+   14) ANTI-DESBORDE (tarjetas que se salían de la pantalla en móvil)
+--------------------------------------------------------------------------- */
+html, body { max-width: 100%; overflow-x: hidden; }
+.container, .container-fluid { max-width: 100%; overflow-x: hidden; }
+.glass-card, .card { max-width: 100%; overflow-wrap: anywhere; word-break: break-word; }
+/* Tablas anchas: scroll horizontal dentro de su tarjeta, no desbordan */
+.table-responsive { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+/* Códigos/URLs largos (Supabase, rutas) no rompen el layout */
+code, pre, .text-break { overflow-wrap: anywhere; word-break: break-word; white-space: normal; }
+/* Inputs y selects nunca más anchos que su contenedor */
+.form-control, .form-select, input, select, textarea { max-width: 100%; }
+/* Filas de KPI / grid: sin margen negativo que cause scroll horizontal */
+.row { margin-left: 0; margin-right: 0; }
+.row > [class^="col"], .row > [class*=" col"] { padding-left: .5rem; padding-right: .5rem; }
+/* Canvas de gráficos: responsive */
+canvas { max-width: 100% !important; height: auto !important; }
+
+/* ── Switches de privilegios: más visibles y 3D ── */
+.form-switch .form-check-input {
+  cursor: pointer;
+  height: 1.6em;
+  width: 3em;
+  border: 2px solid var(--tpv-border);
+  background-color: #cbd5e1;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.15);
+  transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+.form-switch .form-check-input:checked {
+  background-color: #10b981;
+  border-color: #059669;
+  box-shadow: 0 0 8px rgba(16,185,129,0.4), inset 0 2px 4px rgba(0,0,0,0.1);
+}
+.form-switch .form-check-input:not(:checked) {
+  background-color: #94a3b8;
+  border-color: #64748b;
+}
+.form-switch .form-check-input:focus {
+  box-shadow: 0 0 0 3px rgba(16,185,129,0.25);
+}
+.form-switch .form-check-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Debug panel: no desbordar pantalla ── */
+#debug-panel,
+.debug-panel,
+[id*="debug"] {
+  max-height: 50vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+#debug-panel .log-container,
+.debug-log-list {
+  max-height: 40vh;
+  overflow-y: auto;
+  font-size: 0.72rem;
+  word-break: break-all;
+}
+/* Barra debug inferior: no tapar contenido */
+.debug-bar-bottom {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9990;
+  max-height: 32px;
+  overflow: hidden;
+}

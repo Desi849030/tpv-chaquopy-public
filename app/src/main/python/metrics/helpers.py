@@ -40,7 +40,7 @@ def _get_db_path():
     if _db_path and os.path.exists(_db_path):
         return _db_path
     try:
-        from database import DB_FILE
+        from db_connection import DB_FILE
         if DB_FILE and os.path.exists(DB_FILE):
             _db_path = DB_FILE
             return _db_path
@@ -117,22 +117,38 @@ def _ram_info():
 
 def _storage_info(db_path=None):
     result = {"db_path": db_path or "desconocido", "db_size_kb": 0.0, "db_size_mb": 0.0,
+              "num_indexes": 0,
               "disco_total_mb": 0.0, "disco_usado_mb": 0.0, "disco_libre_mb": 0.0, "disco_pct": 0.0}
     if db_path and os.path.exists(db_path):
         try:
             sz = os.path.getsize(db_path)
             result["db_size_kb"] = round(sz / 1024, 2); result["db_size_mb"] = round(sz / 1024 / 1024, 3)
         except Exception: pass
+        # Nº de índices reales de la BD
+        try:
+            import sqlite3
+            con = sqlite3.connect(db_path)
+            result["num_indexes"] = con.execute(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='index'").fetchone()[0]
+            con.close()
+        except Exception: pass
+
+    # Medir el almacenamiento del directorio donde vive la BD (NO '/', que en
+    # Termux/Android es una partición de sistema que aparece llena al 100%).
+    medir_dir = os.path.dirname(db_path) if db_path else os.getcwd()
+    if not medir_dir or not os.path.exists(medir_dir):
+        medir_dir = os.path.expanduser("~") or "."
+
     if HAS_PSUTIL:
         try:
-            disk = psutil.disk_usage("/")
+            disk = psutil.disk_usage(medir_dir)
             result["disco_total_mb"] = round(disk.total / 1024 / 1024, 2)
             result["disco_usado_mb"] = round(disk.used / 1024 / 1024, 2)
             result["disco_libre_mb"] = round(disk.free / 1024 / 1024, 2); result["disco_pct"] = disk.percent
         except Exception: pass
     else:
         try:
-            stat = os.statvfs("/"); total = stat.f_blocks * stat.f_frsize; free = stat.f_bavail * stat.f_frsize
+            stat = os.statvfs(medir_dir); total = stat.f_blocks * stat.f_frsize; free = stat.f_bavail * stat.f_frsize
             used = total - free
             result["disco_total_mb"] = round(total / 1024 / 1024, 2)
             result["disco_usado_mb"] = round(used / 1024 / 1024, 2)
@@ -211,6 +227,41 @@ def _dev_only(func):
     return decorated
 
 
+def _tablas_info(db_path):
+    """Lista las tablas reales de la BD con su número de filas."""
+    result = {"tablas": [], "total_tablas": 0, "total_filas": 0, "error": None}
+    if not db_path or not os.path.exists(db_path):
+        result["error"] = "BD no encontrada"
+        return result
+    try:
+        import sqlite3
+        con = sqlite3.connect(db_path)
+        nombres = [r[0] for r in con.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' "
+            "AND name NOT LIKE 'sqlite_%' ORDER BY name")]
+        for t in nombres:
+            try:
+                n = con.execute('SELECT COUNT(*) FROM "%s"' % t).fetchone()[0]
+            except Exception:
+                n = -1
+            result["tablas"].append({"nombre": t, "filas": n})
+            if n > 0:
+                result["total_filas"] += n
+        result["total_tablas"] = len(nombres)
+        con.close()
+    except Exception as e:
+        result["error"] = str(e)
+    return result
+
+
 def get_system_metrics():
+    # Métricas de SISTEMA: RAM, almacenamiento y tablas de la BD.
+    # (Se quitó "inventario": esas son métricas de negocio, no de sistema, y
+    #  ya se ven en el panel de Inventario/Dashboard.)
     db_path = _get_db_path()
-    return {"ram":_ram_info(),"storage":_storage_info(db_path),"inventario":_inventario_formulas(db_path),"db_path":db_path}
+    return {
+        "ram": _ram_info(),
+        "storage": _storage_info(db_path),
+        "tablas": _tablas_info(db_path),
+        "db_path": db_path,
+    }

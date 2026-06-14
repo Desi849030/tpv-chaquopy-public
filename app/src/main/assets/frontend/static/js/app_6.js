@@ -34,7 +34,7 @@ window.AUTH = { usuario: null, pollingNotif: null };
 
 const ROL_INFO = {
     desarrollador: { color:'#7c3aed', icono:'bi-code-slash',    label:'Desarrollador' },
-    administrador: { color:'#0d6efd', icono:'bi-shield-fill',   label:'Administrador' },
+    administrador: { color:'#4f46e5', icono:'bi-shield-fill',   label:'Administrador' },
     supervisor:    { color:'#0891b2', icono:'bi-eye-fill',       label:'Supervisor'    },
     vendedor:      { color:'#059669', icono:'bi-bag-check-fill', label:'Vendedor'      }
 };
@@ -74,7 +74,7 @@ const _css = document.createElement('style');
 _css.textContent = `
 #login-screen {
     position:fixed;inset:0;z-index:9999;
-    background:linear-gradient(135deg,#0d1b2a 0%,#1a3a5c 55%,#0d6efd 100%);
+    background:linear-gradient(135deg,#1e1b4b 0%,#4338ca 55%,#6366f1 100%);
     display:flex;align-items:center;justify-content:center;
     padding:1rem;overflow-y:auto;
 }
@@ -87,10 +87,10 @@ _css.textContent = `
 @keyframes loginIn{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
 .login-logo{
     width:72px;height:72px;border-radius:50%;
-    background:linear-gradient(135deg,#0d6efd,#0a58ca);
+    background:linear-gradient(135deg,#4f46e5,#6366f1);
     color:white;font-size:2rem;
     display:flex;align-items:center;justify-content:center;
-    margin:0 auto 1rem;box-shadow:0 8px 20px rgba(13,110,253,.35);
+    margin:0 auto 1rem;box-shadow:0 8px 20px rgba(79,70,229,.38);
 }
 .login-title{text-align:center;font-weight:800;color:#1e293b;margin:0;font-size:1.6rem}
 .login-sub{text-align:center;color:#64748b;font-size:.88rem;margin-bottom:1.5rem}
@@ -113,21 +113,21 @@ _css.textContent = `
     border:2px solid #e2e8f0;font-size:1rem;outline:none;
     transition:border-color .2s;box-sizing:border-box;background:white;
 }
-.login-input:focus{border-color:#0d6efd;box-shadow:0 0 0 3px rgba(13,110,253,.12)}
+.login-input:focus{border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,229,.18)}
 .pw-eye{
     position:absolute;right:.75rem;top:50%;transform:translateY(-50%);
     background:none;border:none;cursor:pointer;color:#94a3b8;
     padding:.3rem;font-size:1rem;line-height:1;transition:color .15s;
 }
-.pw-eye:hover{color:#0d6efd}
+.pw-eye:hover{color:#4f46e5}
 .login-btn{
     width:100%;padding:.85rem;border:none;border-radius:.75rem;
-    background:linear-gradient(135deg,#0d6efd,#0a58ca);color:white;
+    background:linear-gradient(135deg,#4f46e5,#6366f1);color:white;
     font-size:1rem;font-weight:700;cursor:pointer;margin-top:.25rem;
     transition:transform .15s,box-shadow .15s;
-    box-shadow:0 4px 14px rgba(13,110,253,.35);
+    box-shadow:0 4px 14px rgba(79,70,229,.38);
 }
-.login-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 20px rgba(13,110,253,.45)}
+.login-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 20px rgba(79,70,229,.48)}
 .login-btn:disabled{opacity:.65;cursor:not-allowed}
 .login-footer{text-align:center;color:#94a3b8;font-size:.78rem;margin-top:1.25rem}
 /* Barra usuario */
@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <h2 class="login-title">TPV Ultra Smart</h2>
         <div style="display:flex;background:#f1f5f9;border-radius:.75rem;padding:4px;margin-bottom:1.2rem">
             <button id="modo-staff-btn" onclick="auth_setModo('staff')"
-                style="flex:1;padding:.5rem;border:none;border-radius:.6rem;font-weight:600;font-size:.88rem;cursor:pointer;background:#0d6efd;color:white">
+                style="flex:1;padding:.5rem;border:none;border-radius:.6rem;font-weight:600;font-size:.88rem;cursor:pointer;background:#4f46e5;color:white">
                 <i class="bi bi-person-badge me-1"></i>Personal
             </button>
             <button id="modo-cliente-btn" onclick="auth_setModo('cliente')"
@@ -212,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <p class="login-sub" style="margin-bottom:1rem">Acceso para empleados</p>
             <div class="login-field">
                 <label><i class="bi bi-person me-1"></i>Usuario</label>
-                <input id="login-username" class="login-input" type="text" placeholder="ej: desarrollador" autocomplete="username">
+                <input id="login-username" class="login-input" type="text" placeholder="Usuario" autocomplete="username">
             </div>
             <div class="login-field">
                 <label><i class="bi bi-lock me-1"></i>Contrasena</label>
@@ -228,12 +228,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span id="lbtn-txt"><i class="bi bi-box-arrow-in-right me-2"></i>Entrar</span>
                 <span id="lbtn-spin" style="display:none"><span class="spinner-border spinner-border-sm me-2"></span>Verificando...</span>
             </button>
+            <button id="login-bio-btn" class="login-btn" style="display:none;margin-top:.6rem;background:linear-gradient(135deg,#0ea5e9,#06b6d4)" onclick="auth_loginBiometrico()">
+                <i class="bi bi-fingerprint me-2"></i>Entrar con huella / rostro
+            </button>
             <div class="login-footer"><i class="bi bi-shield-lock me-1"></i>Acceso restringido al personal</div>
         </div>
         <div id="panel-cliente" style="display:none">
             <div style="display:flex;border-bottom:2px solid #e2e8f0;margin-bottom:1rem">
                 <button id="cli-tab-login" onclick="auth_cliTab('login')"
-                    style="flex:1;padding:.55rem;border:none;background:none;font-weight:700;font-size:.88rem;cursor:pointer;color:#0d6efd;border-bottom:2px solid #0d6efd;margin-bottom:-2px">
+                    style="flex:1;padding:.55rem;border:none;background:none;font-weight:700;font-size:.88rem;cursor:pointer;color:#4f46e5;border-bottom:2px solid #4f46e5;margin-bottom:-2px">
                     <i class="bi bi-box-arrow-in-right me-1"></i>Iniciar sesion
                 </button>
                 <button id="cli-tab-reg" onclick="auth_cliTab('registro')"
@@ -260,7 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span id="cli-lbtn-spin" style="display:none"><span class="spinner-border spinner-border-sm me-2"></span>Verificando...</span>
                 </button>
                 <div class="login-footer" style="margin-top:.8rem">
-                    Sin cuenta: <a href="#" onclick="auth_cliTab('registro');return false" style="color:#0d6efd;font-weight:600">Registrate gratis</a>
+                    Sin cuenta: <a href="#" onclick="auth_cliTab('registro');return false" style="color:#4f46e5;font-weight:600">Registrate gratis</a>
                 </div>
             </div>
             <div id="cli-panel-reg" style="display:none">
@@ -291,7 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span id="reg-btn-spin" style="display:none"><span class="spinner-border spinner-border-sm me-2"></span>Creando cuenta...</span>
                 </button>
                 <div class="login-footer" style="margin-top:.8rem">
-                    Ya tienes cuenta: <a href="#" onclick="auth_cliTab('login');return false" style="color:#0d6efd;font-weight:600">Inicia sesion</a>
+                    Ya tienes cuenta: <a href="#" onclick="auth_cliTab('login');return false" style="color:#4f46e5;font-weight:600">Inicia sesion</a>
                 </div>
             </div>
         </div>
@@ -355,7 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
           <div class="modal-header text-white fw-bold"
-               style="background:linear-gradient(135deg,#0d6efd,#0a58ca)">
+               style="background:linear-gradient(135deg,#4f46e5,#6366f1)">
             <span><i class="bi bi-people-fill me-2"></i>Gestión de Usuarios</span>
             <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
           </div>
@@ -603,16 +606,10 @@ async function _auth_init(intentos = 0) {
         if (intentos < 30) setTimeout(() => _auth_init(intentos + 1), 150);
         return;
     }
+    // Siempre pedir login al abrir (no entrar automático aunque haya sesión).
+    // Cerrar cualquier sesión previa del servidor para forzar autenticación.
     try {
-        const ctrl = new AbortController();
-        setTimeout(() => ctrl.abort(), 4000);
-        const res  = await fetch('/api/auth/me', { signal: ctrl.signal, credentials: 'same-origin' });
-        const data = await res.json();
-        if (res.ok && data.autenticado && data.usuario) {
-            AUTH.usuario = data.usuario;
-            _auth_mostrarApp();
-            return;
-        }
+        await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
     } catch(e) {}
     auth_setModo('staff');
 }
@@ -629,15 +626,16 @@ function auth_setModo(modo) {
     if (modo === 'staff') {
         panelStaff.style.display   = '';
         panelCliente.style.display = 'none';
-        btnStaff.style.background  = '#0d6efd';
+        btnStaff.style.background  = '#4f46e5';
         btnStaff.style.color       = 'white';
         btnCliente.style.background= 'transparent';
         btnCliente.style.color     = '#64748b';
         setTimeout(() => document.getElementById('login-username')?.focus(), 50);
+        try { auth_bioActualizarBoton(); } catch(e) {}
     } else {
         panelStaff.style.display   = 'none';
         panelCliente.style.display = '';
-        btnCliente.style.background= '#0d6efd';
+        btnCliente.style.background= '#4f46e5';
         btnCliente.style.color     = 'white';
         btnStaff.style.background  = 'transparent';
         btnStaff.style.color       = '#64748b';
@@ -653,12 +651,12 @@ function auth_cliTab(tab) {
     document.getElementById('login-error').style.display = 'none';
     if (tab === 'login') {
         panelLogin.style.display = ''; panelReg.style.display = 'none';
-        btnLogin.style.color = '#0d6efd'; btnLogin.style.borderBottom = '2px solid #0d6efd'; btnLogin.style.fontWeight = '700';
+        btnLogin.style.color = '#4f46e5'; btnLogin.style.borderBottom = '2px solid #4f46e5'; btnLogin.style.fontWeight = '700';
         btnReg.style.color   = '#94a3b8'; btnReg.style.borderBottom   = '2px solid transparent'; btnReg.style.fontWeight = '600';
         setTimeout(() => document.getElementById('cli-email')?.focus(), 50);
     } else {
         panelLogin.style.display = 'none'; panelReg.style.display = '';
-        btnReg.style.color   = '#0d6efd'; btnReg.style.borderBottom   = '2px solid #0d6efd'; btnReg.style.fontWeight = '700';
+        btnReg.style.color   = '#4f46e5'; btnReg.style.borderBottom   = '2px solid #4f46e5'; btnReg.style.fontWeight = '700';
         btnLogin.style.color = '#94a3b8'; btnLogin.style.borderBottom = '2px solid transparent'; btnLogin.style.fontWeight = '600';
         setTimeout(() => document.getElementById('reg-nombre')?.focus(), 50);
     }
@@ -805,7 +803,21 @@ async function auth_login() {
         const data = await res.json();
         if (res.ok && data.ok) {
             AUTH.usuario = data.usuario;
+            // Entrar de inmediato (no bloquear el login con la oferta de huella).
             _auth_mostrarApp();
+            // Ofrecer registrar huella DESPUÉS, sin bloquear la entrada.
+            setTimeout(function () {
+                (async function () {
+                    try {
+                        if (await auth_bioDisponible() && !localStorage.getItem(_BIO_KEY)) {
+                            var quiere = (typeof tpvConfirm === 'function')
+                                ? await tpvConfirm({ title: 'Acceso con huella', message: '¿Activar inicio de sesión con huella/rostro en este dispositivo?', okText: 'Activar', cancelText: 'Ahora no' })
+                                : false;
+                            if (quiere) await auth_bioRegistrar(usr);
+                        }
+                    } catch (e) {}
+                })();
+            }, 1200);
         } else {
             _loginErr(data.error || 'Usuario o contraseña incorrectos.');
             document.getElementById('login-password').value = '';
@@ -820,6 +832,120 @@ async function auth_login() {
         document.getElementById('lbtn-spin').style.display = 'none';
     }
 }
+
+// ══════════════════════════════════════════════════════════════
+//  BIOMETRÍA EN EL LOGIN (WebAuthn + puente Android nativo)
+//  Funciona si el móvil/navegador lo permite. En el APK, MainActivity
+//  puede exponer window.AndroidBiometric para usar la huella nativa.
+// ══════════════════════════════════════════════════════════════
+var _BIO_KEY = 'tpv_bio_cred';
+
+// Biometría nativa de Android via puente TPVNative (BiometricPrompt).
+async function auth_bioDisponible() {
+    try {
+        if (window.TPVNative && typeof window.TPVNative.canAuthenticate === 'function') {
+            return !!window.TPVNative.canAuthenticate();
+        }
+    } catch (e) {}
+    return false;
+}
+
+// Mostrar el botón de huella si el dispositivo lo permite Y hay usuario recordado.
+async function auth_bioActualizarBoton() {
+    var btn = document.getElementById('login-bio-btn');
+    if (!btn) return;
+    var disponible = await auth_bioDisponible();
+    var hayCred = false;
+    try { hayCred = !!localStorage.getItem(_BIO_KEY); } catch (e) {}
+    btn.style.display = (disponible && hayCred) ? '' : 'none';
+}
+
+// Identificador estable del dispositivo (para emitir/revocar tokens por device).
+function _bioDeviceId() {
+    try {
+        var id = localStorage.getItem('tpv_bio_device');
+        if (!id) {
+            id = 'dev-' + Math.random().toString(36).slice(2, 10) + '-' + Date.now().toString(36);
+            localStorage.setItem('tpv_bio_device', id);
+        }
+        return id;
+    } catch (e) { return 'dev-unknown'; }
+}
+
+// Tras un login con contraseña, pedir al servidor un TOKEN de dispositivo.
+// El token (no la contraseña) es lo que la huella desbloquea después.
+// Requiere sesión activa: el endpoint /api/auth/bio/registrar exige login.
+async function auth_bioRegistrar(username) {
+    try {
+        if (!(await auth_bioDisponible())) return false;
+        var res = await fetch('/api/auth/bio/registrar', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ device: _bioDeviceId() })
+        });
+        var data = await res.json();
+        if (res.ok && data.ok && data.token) {
+            localStorage.setItem(_BIO_KEY, JSON.stringify({ u: username, t: data.token }));
+            return true;
+        }
+    } catch (e) {}
+    return false;
+}
+
+// Iniciar sesión con huella: lanza el BiometricPrompt nativo y, si tiene éxito,
+// canjea el token de dispositivo (sin contraseñas hardcodeadas).
+async function auth_loginBiometrico() {
+    var raw;
+    try { raw = JSON.parse(localStorage.getItem(_BIO_KEY) || 'null'); } catch (e) {}
+    if (!raw || !raw.t) {
+        // Credencial del formato antiguo (solo usuario, sin token): migrar.
+        try { localStorage.removeItem(_BIO_KEY); } catch (e) {}
+        _loginErr('Entra con tu contraseña una vez para reactivar la huella.');
+        return;
+    }
+    if (!(window.TPVNative && typeof window.TPVNative.authenticate === 'function')) {
+        _loginErr('Biometría no disponible en este dispositivo.'); return;
+    }
+    // El resultado llega por el callback window.onBiometricCallback (lo pone Java).
+    window.onBiometricCallback = async function (r) {
+        try {
+            if (r && r.success) {
+                var res = await fetch('/api/auth/bio/login', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ token: raw.t })
+                });
+                var data = await res.json();
+                if (res.ok && data.ok) { AUTH.usuario = data.usuario; _auth_mostrarApp(); }
+                else {
+                    // Token revocado/expirado: limpiar y pedir contraseña.
+                    try { localStorage.removeItem(_BIO_KEY); } catch (e) {}
+                    _loginErr((data && data.error) || 'Huella desactivada. Entra con contraseña.');
+                }
+            } else {
+                _loginErr((r && r.message) || 'Autenticación biométrica cancelada.');
+            }
+        } catch (e) { _loginErr('Error en login biométrico.'); }
+    };
+    try {
+        window.TPVNative.authenticate('Iniciar sesión', 'Usa tu huella o rostro', 'TPV UltraSmart');
+    } catch (e) { _loginErr('No se pudo abrir el lector biométrico.'); }
+}
+
+// Desactivar la huella en este dispositivo (revoca el token en el servidor).
+async function auth_bioDesactivar() {
+    try {
+        await fetch('/api/auth/bio/revocar', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ device: _bioDeviceId() })
+        });
+    } catch (e) {}
+    try { localStorage.removeItem(_BIO_KEY); } catch (e) {}
+    if (typeof showToast === 'function') showToast('Huella desactivada en este dispositivo', 'info');
+}
+window.auth_bioDesactivar = auth_bioDesactivar;
+
 
 function _loginErr(msg) {
     const d = document.getElementById('login-error');
@@ -879,6 +1005,13 @@ function _auth_mostrarApp() {
                 if (typeof initializeUI === 'function') initializeUI();
                 dbg('✅ initializeUI OK');
             } catch(e) { dbg('❌ initializeUI CRASH: '+e.message); }
+            try {
+                // El AGENTE es quien da la bienvenida (no un cartel). Se abre solo
+                // y saluda por nombre y rol. Más dinámico y proactivo.
+                if (window.tpvChat && typeof window.tpvChat.bienvenida === 'function') {
+                    setTimeout(function () { window.tpvChat.bienvenida(); }, 900);
+                }
+            } catch(e) {}
             try {
                 conf_setLanguage(tpvState?.config?.lang || 'es').catch(function(){});
                 dbg('✅ updateUITranslations OK');
@@ -1212,7 +1345,7 @@ async function _vend_cerrarDia() {
     const hoy  = fInp?.value || new Date().toISOString().split('T')[0];
 
     if (!_vend_items.length) { _toast('No hay inventario para cerrar.', 'warning'); return; }
-    if (!confirm(`\u00bfCerrar el d\u00eda ${hoy}?\n\nEsto registrar\u00e1 el resumen de ventas.\nAseg\u00farate de haber anotado todos los conteos finales.`)) return;
+    if (!(await tpvConfirm(`\u00bfCerrar el d\u00eda ${hoy}?\n\nEsto registrar\u00e1 el resumen de ventas.\nAseg\u00farate de haber anotado todos los conteos finales.`))) return;
 
     // Guardar conteos primero
     await _vend_guardarConteos();
@@ -1572,16 +1705,16 @@ async function _admin_renderVendedores(hoy) {
                     <td colspan="2" class="text-end">TOTALES</td>
                     <td class="text-center">${general.reduce((s,p)=>s+(parseFloat(p.stock_actual)||0),0).toFixed(0)}</td>
                     <td class="text-center text-warning">
-                      $${(general.reduce((s,p)=>s+(parseFloat(p.precio_compra)||0)*(parseFloat(p.stock_actual)||0),0)).toFixed(2)}
+                      $${(general.reduce((s,p)=>s+(parseFloat(p.precio_compra)||0),0)).toFixed(2)}
                     </td>
                     <td class="text-center">
-                      $${(general.reduce((s,p)=>s+(parseFloat(p.precio_venta)||0)*(parseFloat(p.stock_actual)||0),0)).toFixed(2)}
+                      $${(general.reduce((s,p)=>s+(parseFloat(p.precio_venta)||0),0)).toFixed(2)}
                     </td>
                     <td colspan="3"></td>
                   </tr>
                   <tr class="table-primary">
                     <td colspan="8" class="text-end small">
-                      <span class="me-3">💰 <strong>Inversión total en almacén:</strong>
+                      <span class="me-3">💰 <strong>Inversión total (costo×stock):</strong>
                         $${(general.reduce((s,p)=>s+(parseFloat(p.precio_compra)||0)*(parseFloat(p.stock_actual)||0),0)).toFixed(2)}
                       </span>
                       <span>📈 <strong>Valor total a precio venta:</strong>
@@ -1668,7 +1801,7 @@ async function _admin_renderVendedores(hoy) {
         }
 
         // ── RESUMEN GLOBAL ──
-        html += `<div class="glass-card" style="border:2px solid #0d6efd44;background:linear-gradient(135deg,#0d6efd0d,#19875411)">
+        html += `<div class="glass-card" style="border:2px solid #4f46e544;background:linear-gradient(135deg,#4f46e50d,#19875411)">
           <h6 class="fw-bold text-center mb-3"><i class="bi bi-graph-up-arrow me-1 text-primary"></i>Resumen Global del Día</h6>
           <div class="row text-center g-2 mb-2">
             <div class="col-6 col-sm-2"><div class="text-muted small">Ingresos</div><div class="fw-bold text-primary fs-6">$${gVentas.toFixed(2)}</div></div>
@@ -1718,9 +1851,9 @@ async function _admin_asignarUno(pid) {
     const nombre      = cantEl.dataset.nombre||pid;
     const pv          = parseFloat(cantEl.dataset.pv)||0;
     const pc          = parseFloat(cantEl.dataset.pc)||0;
-    if (!vendedor_id) { alert('Selecciona un vendedor'); return; }
-    if (cantidad<=0)  { alert('Ingresa una cantidad mayor a 0'); cantEl.focus(); return; }
-    if (cantidad>stock){ alert(`Stock insuficiente. Disponible: ${stock}`); return; }
+    if (!vendedor_id) { tpvAlert('Selecciona un vendedor'); return; }
+    if (cantidad<=0)  { tpvAlert('Ingresa una cantidad mayor a 0'); cantEl.focus(); return; }
+    if (cantidad>stock){ tpvAlert(`Stock insuficiente. Disponible: ${stock}`); return; }
     const btn = document.querySelector(`#agn-row-${pid} button`);
     if (btn) { btn.disabled=true; btn.innerHTML='<span class="spinner-border spinner-border-sm"></span>'; }
     try {
@@ -1757,11 +1890,11 @@ async function _admin_asignarUno(pid) {
         } else {
             const errMsg = data.errores?.[0] || data.mensaje || 'No se pudo asignar';
             if (typeof showToast==='function') showToast(`❌ ${errMsg}`, 'danger');
-            else alert('Error: ' + errMsg);
+            else tpvAlert('Error: ' + errMsg);
         }
     } catch(e) {
         if (typeof showToast==='function') showToast(`❌ Error de red: ${e.message}`, 'danger');
-        else alert('Error de red: '+e.message);
+        else tpvAlert('Error de red: '+e.message);
     }
     finally { if(btn){btn.disabled=false;btn.innerHTML='<i class="bi bi-send-fill"></i>';} }
 }
@@ -1814,7 +1947,7 @@ async function _admin_actualizarTarjetaVendedor(vendedor_id, fecha) {
 
 /** Limpiar inventario de un vendedor */
 async function _admin_limpiarVendedor(vendedor_id, nombre) {
-    if (!confirm(`⚠️ ¿Eliminar todo el inventario diario de ${nombre}?\n\nEl almacén general NO se modifica.`)) return;
+    if (!(await tpvConfirm(`⚠️ ¿Eliminar todo el inventario diario de ${nombre}?\n\nEl almacén general NO se modifica.`))) return;
     try {
         const res  = await fetch('/api/inventario/diario/limpiar', {
             method:'POST', credentials:'same-origin',
@@ -1826,8 +1959,8 @@ async function _admin_limpiarVendedor(vendedor_id, nombre) {
             if (typeof showToast==='function') showToast(`🗑️ Inventario de ${nombre} limpiado`,'warning');
             const hoy = document.getElementById('inv-admin-fecha-vend')?.value||new Date().toISOString().split('T')[0];
             _admin_renderVendedores(hoy);
-        } else { alert('Error: '+data.mensaje); }
-    } catch(e) { alert('Error: '+e.message); }
+        } else { tpvAlert('Error: '+data.mensaje); }
+    } catch(e) { tpvAlert('Error: '+e.message); }
 }
 
 /** Carga stock masivo desde XLSX al almacén general */
@@ -1908,16 +2041,16 @@ async function _admin_cargarStockXLSX(event) {
 }
 
 /** Diálogo para limpiar inventarios globalmente */
-function _admin_limpiarInventariosUI() {
+async function _admin_limpiarInventariosUI() {
     const hoy = new Date().toISOString().split('T')[0];
     const opc = prompt(`🗑️ LIMPIAR INVENTARIOS DIARIOS\n\n1 — Solo inventarios de HOY (${hoy})\n2 — TODOS los inventarios\n\nEl almacén general NO se modifica.\nEscribe 1 o 2:`);
     if (!opc) return;
     let payload = {};
     if (opc.trim()==='1') payload={fecha:hoy};
     else if (opc.trim()==='2') payload={};
-    else { alert('Opción inválida'); return; }
+    else { tpvAlert('Opción inválida'); return; }
     const desc = opc.trim()==='1' ? `inventarios de HOY (${hoy})` : 'TODOS los inventarios';
-    if (!confirm(`⛔ ¿Confirmar eliminación de ${desc}?\n\nLos vendedores quedarán sin stock asignado.`)) return;
+    if (!(await tpvConfirm(`⛔ ¿Confirmar eliminación de ${desc}?\n\nLos vendedores quedarán sin stock asignado.`))) return;
     fetch('/api/inventario/diario/limpiar',{
         method:'POST', credentials:'same-origin',
         headers:{'Content-Type':'application/json'},
@@ -1927,8 +2060,8 @@ function _admin_limpiarInventariosUI() {
             if (typeof showToast==='function') showToast(`✅ ${data.mensaje}`,'success');
             const fechaEl=document.getElementById('inv-admin-fecha-vend');
             _admin_renderVendedores(fechaEl?.value||hoy);
-        } else { alert('Error: '+data.mensaje); }
-    }).catch(e=>alert('Error: '+e.message));
+        } else { tpvAlert('Error: '+data.mensaje); }
+    }).catch(e=>tpvAlert('Error: '+e.message));
 }
 
 // ══════════════════════════════════════════════
@@ -2147,7 +2280,7 @@ async function _admin_guardarGasto() {
 }
 
 async function _admin_eliminarGasto(gasto_id) {
-    if (!confirm('¿Eliminar este gasto?')) return;
+    if (!(await tpvConfirm('¿Eliminar este gasto?'))) return;
     try {
         const res = await fetch(`/api/gastos/${gasto_id}`, { method:'DELETE', credentials:'same-origin' });
         if (res.ok) { _toast('Gasto eliminado', 'success'); await _admin_cargarGastos(); }
@@ -2255,22 +2388,34 @@ function g_quitarImg() {
 }
 
 async function auth_logout() {
-    if (!confirm('¿Cerrar sesión?')) return;
+    var _ok = (typeof tpvConfirm === 'function')
+        ? await tpvConfirm({ title: 'Cerrar sesión', message: '¿Seguro que deseas cerrar la sesión actual?', okText: 'Cerrar sesión', cancelText: 'Quedarme', danger: true })
+        : confirm('¿Cerrar sesión?');
+    if (!_ok) return;
 
-    // Auto-backup antes de salir
+    // Auto-backup y logout en segundo plano (no bloquear la salida).
+    // Antes eran 'await' secuenciales y si el backup tardaba, el logout se
+    // quedaba "validando". Ahora se disparan sin esperar, con timeout corto.
     try {
-        showToast('💾 Guardando respaldo automático...', 'info');
-        await fetch('/api/auth/auto-backup', { method:'POST', credentials:'same-origin' });
+        var _ctl = new AbortController();
+        setTimeout(function(){ try{_ctl.abort();}catch(e){} }, 2500);
+        fetch('/api/auth/auto-backup', { method:'POST', credentials:'same-origin', signal:_ctl.signal }).catch(function(){});
     } catch(e) {}
-
-    try { await fetch('/api/auth/logout', { method:'POST' }); } catch(e) {}
+    try {
+        fetch('/api/auth/logout', { method:'POST', credentials:'same-origin' }).catch(function(){});
+    } catch(e) {}
 
     // Cerrar SSE
     if (_sseConn) { try { _sseConn.close(); } catch(e){} _sseConn = null; }
     if (AUTH.pollingNotif) { clearInterval(AUTH.pollingNotif); AUTH.pollingNotif = null; }
 
-    // Limpiar panel debug al cerrar sesión
+    // Limpiar y OCULTAR el panel debug al cerrar sesión (no debe verse en login)
     if (typeof window._dbg_limpiar === 'function') window._dbg_limpiar();
+    try {
+        var _dbgPanel = document.getElementById('dbg-v2');
+        if (_dbgPanel) _dbgPanel.remove();   // quitar del DOM
+        if (window._DBG) { window._DBG.expanded = false; window._DBG.activo = false; }
+    } catch(e) {}
     AUTH.usuario = null;
     _prevN = -1;
 
@@ -2334,7 +2479,7 @@ function _iniciarPolling() {
             // Si SSE falla, fallback a polling cada 15 s
             if (_sseConn) { _sseConn.close(); _sseConn = null; }
             if (!AUTH.pollingNotif) {
-                AUTH.pollingNotif = setInterval(_pollPedidos, 15000);
+                AUTH.pollingNotif = setInterval(_pollPedidos, 20000);
                 _pollPedidos();
             }
         };
@@ -2343,7 +2488,7 @@ function _iniciarPolling() {
         _pollPedidos();
     } else {
         // Navegador sin SSE: polling clásico 8 s
-        AUTH.pollingNotif = setInterval(_pollPedidos, 8000);
+        AUTH.pollingNotif = setInterval(_pollPedidos, 20000);
         _pollPedidos();
     }
 }
@@ -2513,7 +2658,7 @@ async function auth_crearUsuario() {
 }
 
 async function auth_desactivar(id, nombre) {
-    if (!confirm(`¿Desactivar a "${nombre}"?\nNo podrá iniciar sesión.`)) return;
+    if (!(await tpvConfirm(`¿Desactivar a "${nombre}"?\nNo podrá iniciar sesión.`))) return;
     try {
         const res  = await fetch(`/api/usuarios/${id}`, { method:'DELETE', credentials:'same-origin' });
         const data = await res.json();
@@ -2719,7 +2864,7 @@ function lic_copiarClave() {
 }
 
 async function lic_revocar(licencia_id, nombre) {
-    if (!confirm(`¿Revocar licencia de "${nombre}"?`)) return;
+    if (!(await tpvConfirm(`¿Revocar licencia de "${nombre}"?`))) return;
     try {
         const res = await fetch(`/api/licencias/${licencia_id}`, { method:'DELETE', credentials:'same-origin' });
         if (res.ok) { _toast('Licencia revocada','success'); _lic_cargarLista(); }

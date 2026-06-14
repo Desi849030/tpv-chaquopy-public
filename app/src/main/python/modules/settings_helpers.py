@@ -4,10 +4,8 @@ import urllib.request
 from datetime import datetime
 from flask import Blueprint, request, jsonify, session, Response, stream_with_context
 from decorators import requiere_login, requiere_rol, usuario_actual
-from database import (
-    cargar_estado, guardar_estado, agregar_log, crear_tablas,
-    obtener_info_db, DB_FILE,
-)
+from db_config import cargar_estado, crear_tablas, guardar_estado
+from db_connection import DB_FILE, agregar_log, obtener_info_db
 from sync.supabase_sync import (
     obtener_config_actual, actualizar_config,
     cargar_desde_supabase, guardar_en_supabase,

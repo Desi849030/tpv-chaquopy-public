@@ -9,7 +9,18 @@ Arquitectura:
 """
 import threading
 from datetime import datetime
-from reasoning_engine import ReActEngine
+
+# Motor de razonamiento ReAct opcional. El gateway agentic lo usa si existe
+# y degrada con elegancia si no. El modulo 'reasoning_engine' nunca se
+# implemento; el motor real vive en ia.react_core con otra API, por lo que
+# se carga de forma defensiva.
+try:
+    from reasoning_engine import ReActEngine  # noqa: F401
+except Exception:  # pragma: no cover - ruta de degradacion
+    try:
+        from ia.react_core import ReActEngine  # noqa: F401
+    except Exception:
+        ReActEngine = None
 
 from ia.nlp_engine import NLPEngine
 from ia.guardrails import Guardrails
@@ -238,7 +249,7 @@ def process_question(sid, question, role='cliente', user_name='', user_session=N
         try:
             from flask import current_app
             _app = current_app._get_current_object()
-        except Exception:
+        except Exception:  # noqa: broad-except - graceful degradation
             pass
         agentic = _agentic_gateway(question, user_id=sid, flask_app=_app)
         if agentic and agentic.get('response'):
@@ -255,9 +266,8 @@ def process_question(sid, question, role='cliente', user_name='', user_session=N
                 'tools_used': agentic.get('tools_used', []),
                 'reasoning_log': agentic.get('reasoning_log', []),
             }
-    except Exception:
+    except Exception:  # noqa: broad-except - graceful degradation
         pass
-
     # --- CLASSIC FALLBACK: role-based handlers ---
     r = _get().process(question, sid, role, user_name)
     return {
@@ -317,12 +327,22 @@ def get_session_info(sid):
 # ====================================================================
 def _agentic_gateway(message, user_id="default", flask_app=None):
     """Gateway: decide si usar razonamiento agentic o respuesta clasica."""
+    if ReActEngine is None:
+        return None
     try:
-        kwargs = {"user_id": user_id}
-        if flask_app:
-            kwargs["flask_app"] = flask_app
-        engine = ReActEngine(**kwargs)
-        result = engine.reason(message)
+        # Soporta tanto la API antigua (user_id/flask_app) como la de
+        # ia.react_core (app/session_id), probando la disponible.
+        try:
+            kwargs = {"user_id": user_id}
+            if flask_app:
+                kwargs["flask_app"] = flask_app
+            engine = ReActEngine(**kwargs)
+        except TypeError:
+            engine = ReActEngine(app=flask_app, session_id=user_id)
+        reason = getattr(engine, "reason", None)
+        if not callable(reason):
+            return None
+        result = reason(message)
         if result.get("tools_used") or result.get("tool_used"):
             return {
                 "response": result.get("response", ""),
@@ -331,7 +351,7 @@ def _agentic_gateway(message, user_id="default", flask_app=None):
                 "tools_used": result.get("tools_used", []),
                 "session_id": result.get("session_id"),
             }
-    except Exception:
+    except Exception:  # noqa: broad-except - graceful degradation
         pass
     return None
 

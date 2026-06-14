@@ -1,5 +1,5 @@
 from flask import request
-from auth_decorator import login_required, admin_required
+from decorators import login_required, admin_required
 from modules.admin_helpers import admin_bp, request, jsonify, requiere_login, requiere_rol, usuario_actual, crear_licencia, listar_licencias, verificar_licencia_activa, desactivar_licencia, _sb
 # ── Licencias (sistema DB original) ──────────────────────────
 @login_required

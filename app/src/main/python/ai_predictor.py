@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import math
 
 def _get_db():
-    from database import obtener_conexion
+    from db_connection import obtener_conexion
     return obtener_conexion()
 
 def _safe_avg(series):

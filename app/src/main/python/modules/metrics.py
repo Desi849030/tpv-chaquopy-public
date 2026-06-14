@@ -1,21 +1,13 @@
-from auth_decorator import login_required
+from decorators import login_required
 from flask import Blueprint, request, jsonify, session
 from functools import wraps
 from datetime import datetime, timedelta
-from database import obtener_conexion, agregar_log
+from db_connection import agregar_log, obtener_conexion
 
 metrics_bp = Blueprint('metrics', __name__, url_prefix='/api')
-def requiere_login(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        if not session.get("usuario"): return jsonify({"error": "No autenticado"}), 401
-        return f(*args, **kwargs)
-    return wrapper
-def usuario_actual(): return session.get("usuario", {})
 
-@login_required
 @metrics_bp.route('/dashboard/kpis', methods=['GET'])
-@requiere_login
+@login_required
 def api_kpis_dashboard():
     u = usuario_actual()
     rol = u.get('rol', 'vendedor')

@@ -1,13 +1,12 @@
 from flask import request
-from auth_decorator import login_required
+from decorators import login_required
 from modules.ventas_helpers import ventas_bp, datetime, request, jsonify, requiere_login, usuario_actual, guardar_historial_diario_local, obtener_historial_diario_local, obtener_historial_detalle_local, guardar_historial_diario, obtener_historial_diario, obtener_historial_detalle, obtener_config_actual, verificar_tablas_supabase, obtener_sql_completo, setup_supabase, _sb
 # ══════════════════════════════════════════════════════════════
 #  HISTORIAL DIARIO
 # ══════════════════════════════════════════════════════════════
 
-@login_required
 @ventas_bp.route("/api/historial/diario", methods=["GET"])
-@requiere_login
+@login_required
 def api_historial_get():
     limite = int(request.args.get("limite", 30))
     try:
@@ -19,9 +18,8 @@ def api_historial_get():
     except Exception as e:
         return jsonify({"ok": False, "historial": [], "mensaje": str(e)}), 500
 
-@login_required
 @ventas_bp.route("/api/historial/diario", methods=["POST"])
-@requiere_login
+@login_required
 def api_historial_post():
     u = usuario_actual()
     if u.get("rol") not in ("desarrollador", "administrador"):
@@ -39,9 +37,8 @@ def api_historial_post():
     except Exception as e:
         return jsonify({"ok": False, "mensaje": str(e)}), 500
 
-@login_required
 @ventas_bp.route("/api/historial/diario/<fecha>", methods=["GET"])
-@requiere_login
+@login_required
 def api_historial_detalle(fecha):
     try:
         res_sb = obtener_historial_detalle(fecha)

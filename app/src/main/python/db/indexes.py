@@ -20,7 +20,7 @@ _INDEXES = [
     "CREATE INDEX IF NOT EXISTS idx_hv_vendedor_nombre ON historial_ventas(vendedor_id, nombre)",
 
     # ── productos (5) ─────────────────────────────────────
-    "CREATE INDEX IF NOT EXISTS idx_prod_codigo       ON productos(codigo_barras)",
+    "CREATE INDEX IF NOT EXISTS idx_prod_codigo       ON productos(producto_id)",
     "CREATE INDEX IF NOT EXISTS idx_prod_nombre       ON productos(nombre)",
     "CREATE INDEX IF NOT EXISTS idx_prod_categoria    ON productos(categoria)",
     "CREATE INDEX IF NOT EXISTS idx_prod_activo       ON productos(activo)",
@@ -48,7 +48,7 @@ _INDEXES = [
     # ── auditoria (4) ─────────────────────────────────────
     "CREATE INDEX IF NOT EXISTS idx_audit_tabla       ON auditoria(tabla)",
     "CREATE INDEX IF NOT EXISTS idx_audit_timestamp   ON auditoria(timestamp)",
-    "CREATE INDEX IF NOT EXISTS idx_audit_usuario     ON auditoria(usuario)",
+    "CREATE INDEX IF NOT EXISTS idx_audit_usuario     ON auditoria(usuario_id)",
     "CREATE INDEX IF NOT EXISTS idx_audit_tabla_ts    ON auditoria(tabla, timestamp)",
 
     # ── entradas_productos (2) ────────────────────────────
@@ -60,8 +60,8 @@ _INDEXES = [
     "CREATE INDEX IF NOT EXISTS idx_id_producto       ON inventario_diario(producto_id)",
 
     # ── login_intentos (3) ────────────────────────────────
-    "CREATE INDEX IF NOT EXISTS idx_li_usuario        ON login_intentos(usuario)",
-    "CREATE INDEX IF NOT EXISTS idx_li_fecha          ON login_intentos(fecha)",
+    "CREATE INDEX IF NOT EXISTS idx_li_usuario        ON login_intentos(username)",
+    "CREATE INDEX IF NOT EXISTS idx_li_fecha          ON login_intentos(timestamp)",
     "CREATE INDEX IF NOT EXISTS idx_li_exito          ON login_intentos(exito)",
 ]
 

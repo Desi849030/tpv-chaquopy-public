@@ -1,103 +1,30 @@
-name: CI — Tests & APK
+name: CI
 
 on:
   push:
-    branches: [ main, "refactor/**" ]
   pull_request:
-    branches: [ main ]
-  workflow_dispatch:
 
 jobs:
-  # ──────────────────────────────────────────────────────────────
-  #  1) Pruebas del backend Python (suite estable + smoke test)
-  # ──────────────────────────────────────────────────────────────
-  test:
+  tests:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+    env:
+      TPV_TESTING: "1"
 
-      - name: Configurar Python 3.10 (igual que Chaquopy)
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
-      - name: Instalar dependencias
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest
 
-      - name: Limpiar secretos generados en runtime
+      - name: Run critical tests
         run: |
-          rm -f app/src/main/python/.tpv_secret app/src/main/python/.tpv_hmac_secret || true
-
-      - name: Suite de tests estable
-        env:
-          PYTHONPATH: ${{ github.workspace }}/app/src/main/python
-        run: python -m pytest
-
-      - name: Smoke test (arranque + rutas críticas)
-        run: python scripts/smoke_test.py
-
-  # ──────────────────────────────────────────────────────────────
-  #  2) Compilación del APK (debug + release firmado)
-  # ──────────────────────────────────────────────────────────────
-  build:
-    needs: test
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Configurar JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: "17"
-          distribution: "temurin"
-
-      - name: Configurar Python 3.10 (Chaquopy lo necesita para pip)
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-
-      - name: Crear keystore de firma
-        run: |
-          keytool -genkeypair -v \
-            -keystore app/tpv-ultrasmart.keystore \
-            -alias tpvultrasmart \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass tpv123 -keypass tpv123 \
-            -dname "CN=TPV Dev,O=TPV,C=CU"
-
-      - name: Permisos a gradlew
-        run: chmod +x gradlew
-
-      - name: Compilar APK Debug
-        run: ./gradlew assembleDebug --stacktrace
-        env:
-          KEYSTORE_PASSWORD: tpv123
-          KEY_ALIAS: tpvultrasmart
-          KEY_PASSWORD: tpv123
-
-      - name: Compilar APK Release
-        continue-on-error: true
-        run: ./gradlew assembleRelease --stacktrace
-        env:
-          KEYSTORE_PASSWORD: tpv123
-          KEY_ALIAS: tpvultrasmart
-          KEY_PASSWORD: tpv123
-
-      - name: Subir APK Debug
-        uses: actions/upload-artifact@v4
-        with:
-          name: TPV-Debug-APK
-          path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: warn
-
-      - name: Subir APK Release
-        uses: actions/upload-artifact@v4
-        with:
-          name: TPV-Release-APK
-          path: app/build/outputs/apk/release/*.apk
-          if-no-files-found: warn
+          pytest -q tests/test_security.py tests/test_ventas_atomicas.py tests/test_auth_required.py

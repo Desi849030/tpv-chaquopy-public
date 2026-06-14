@@ -8,7 +8,7 @@ import os
 import sys
 import logging
 
-from flask import Flask, send_from_directory, request
+from flask import Flask, send_from_directory, request, jsonify
 
 # ══════════════════════════════════════════════════════════════
 # Paths
@@ -69,24 +69,37 @@ try:
 except Exception:
     pass  # gzip not available
 
-# ── CORS headers (Capa 7 - Aplicación) ──
+# ── Security + CORS headers (Capa 7 - Aplicación) ──
 @app.after_request
 def add_security_headers(response):
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
-    response.headers['X-XSS-Protection'] = '1; mode=block'
-    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
-    # CORS for same-origin (loopback)
+    response.headers.setdefault('X-Content-Type-Options', 'nosniff')
+    response.headers.setdefault('X-Frame-Options', 'SAMEORIGIN')
+    response.headers.setdefault('X-XSS-Protection', '1; mode=block')
+    response.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
+    response.headers.setdefault('Permissions-Policy', 'geolocation=(), microphone=(), camera=()')
+
+    if request.path.startswith('/api/'):
+        response.headers.setdefault('Cache-Control', 'no-store')
+
+    # CORS para loopback/local
     origin = request.headers.get('Origin', '')
     if origin and ('127.0.0.1' in origin or 'localhost' in origin):
         response.headers['Access-Control-Allow-Origin'] = origin
         response.headers['Access-Control-Allow-Credentials'] = 'true'
         response.headers['Access-Control-Allow-Headers'] = 'Content-Type, X-CSRF-Token'
         response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+        vary = response.headers.get('Vary')
+        if vary:
+            if 'Origin' not in vary:
+                response.headers['Vary'] = f'{vary}, Origin'
+        else:
+            response.headers['Vary'] = 'Origin'
     return response
 app.config['PERMANENT_SESSION_LIFETIME'] = 86400 * 30  # 30 días (no 365)
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('TPV_HTTPS', '0') == '1'
+app.config['SESSION_COOKIE_NAME'] = 'tpv_session'
 app.secret_key = os.environ.get(
     'TPV_SECRET_KEY',
     'tpv-ultra-smart-v8-CAMBIAR-EN-PRODUCCION'
@@ -111,6 +124,35 @@ def index():
 @app.route('/static/<path:f>')
 def static_serve(f):
     return send_from_directory(_STAT, f)
+
+
+@app.route('/health')
+@app.route('/api/health')
+def health():
+    db_error = None
+    try:
+        from db_connection import obtener_conexion
+        conn = obtener_conexion()
+        conn.execute("SELECT 1").fetchone()
+        quick = conn.execute("PRAGMA quick_check").fetchone()
+        conn.close()
+        db_ok = bool(quick and str(quick[0]).lower() == 'ok')
+    except Exception as e:
+        db_ok = False
+        db_error = str(e)
+
+    payload = {
+        "ok": db_ok,
+        "status": "ok" if db_ok else "degraded",
+        "db": "ok" if db_ok else "error",
+        "frontend": os.path.isdir(_TPL),
+        "version": "v8.0",
+    }
+
+    if db_error and os.environ.get("TPV_TESTING") == "1":
+        payload["error"] = db_error
+
+    return jsonify(payload), (200 if db_ok else 503)
 
 
 # ══════════════════════════════════════════════════════════════

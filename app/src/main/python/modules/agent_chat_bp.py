@@ -68,6 +68,7 @@ def agent_chat():
                 "intencion": result.get('intent', ''),
                 "confianza": result.get('confidence', 0.9),
                 "herramientas": tools,
+                "ui_action": result.get("ui_action"),
             })
         except Exception as e:
             print(f"Agent error: {e}")

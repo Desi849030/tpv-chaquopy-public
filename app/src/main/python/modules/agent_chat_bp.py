@@ -54,6 +54,15 @@ def agent_chat():
             "intencion": "GREETING"
         })
 
+    
+    # ⚡ Sincronización Atómica: Refrescar caché de la IA desde SQLite
+    try:
+        from ia.catalog import P, O
+        if hasattr(P, 'load'): P.load()
+        if hasattr(O, 'load'): O.load()
+    except Exception as e:
+        print("Aviso sync IA:", e)
+
     if _agent_loaded and _agent:
         try:
             # FIX CRÍTICO: Llamamos al AgentMaster exactamente como lo espera (sin sid)

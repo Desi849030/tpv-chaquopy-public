@@ -1,0 +1,44 @@
+name: Android Debug APK
+
+on:
+  push:
+    branches:
+      - main
+      - refactor/backend-pro
+  pull_request:
+
+jobs:
+  build-debug:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Show versions
+        run: |
+          java -version
+          ./gradlew --version
+
+      - name: Build debug APK
+        run: ./gradlew :app:assembleDebug --stacktrace
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tpv-ultrasmart-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error

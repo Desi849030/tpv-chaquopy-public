@@ -76,7 +76,7 @@ def add_security_headers(response):
     response.headers.setdefault('X-Frame-Options', 'SAMEORIGIN')
     response.headers.setdefault('X-XSS-Protection', '1; mode=block')
     response.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
-    response.headers.setdefault('Permissions-Policy', 'geolocation=(), microphone=(), camera=()')
+    response.headers.setdefault('Permissions-Policy', 'geolocation=(), microphone=()')
 
     if request.path.startswith('/api/'):
         response.headers.setdefault('Cache-Control', 'no-store')

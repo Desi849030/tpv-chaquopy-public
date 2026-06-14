@@ -1,3 +1,42 @@
+
+// === ROLE SYNC: Preguntar al backend quién soy cada vez que se abre el chat ===
+async function _syncChatIdentity() {
+    try {
+        const r = await fetch('/api/agent/identity', {credentials: 'same-origin'});
+        const d = await r.json();
+        if (d.ok) {
+            window.TPV_ROL = d.rol;
+            window.TPV_USER = d.nombre;
+            window.TPV_USER_ID = d.usuario_id;
+            window.TPV_AUTH = d.autenticado;
+            console.log('[Chat] Rol sincronizado:', d.rol, '| Nombre:', d.nombre);
+        }
+    } catch(e) { console.warn('[Chat] Identity sync error:', e); }
+}
+
+// Sincronizar al abrir el chat
+if (typeof toggleChat === 'function') {
+    const _origToggle = toggleChat;
+    window.toggleChat = function() {
+        _syncChatIdentity();
+        _origToggle();
+    };
+}
+
+// Sincronizar al enviar mensaje
+if (typeof enviarMensaje === 'function') {
+    const _origEnviar = enviarMensaje;
+    window.enviarMensaje = async function() {
+        await _syncChatIdentity();
+        return _origEnviar();
+    };
+}
+
+// Sincronizar al cargar la página
+document.addEventListener('DOMContentLoaded', _syncChatIdentity);
+window.addEventListener('tpv_role_changed', _syncChatIdentity);
+
+
 /* ============================================================================
    tpv_chat.js — Agente IA TPV (profesional)
    - Detecta rol y nombre reales del usuario (AUTH.usuario).

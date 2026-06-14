@@ -19,6 +19,7 @@ def importar_excel():
         from db_connection import obtener_conexion
         conn = obtener_conexion()
         cursor = conn.cursor()
+        conn.execute('BEGIN IMMEDIATE')  # 🛡️ Atomicidad ACID garantizada
         importados = 0
         actualizados = 0
 

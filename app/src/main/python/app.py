@@ -268,6 +268,7 @@ _BLUEPRINTS = [
     ("security_routes", "sec_bp"),
     ("ia.proactive_routes", "proactive_bp"),
     ("ai_routes", "ai_routes_bp", "analytics_bp"),
+    ("modules.debug_sync_bp", "debug_sync_bp"),
 ]
 
 for entry in _BLUEPRINTS:

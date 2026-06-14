@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Blueprint: Agente IA chat + status
-El agente es PÚBLICO (no requiere login): antes del login trata a todos
-como 'cliente'. Después del login usa el rol real de la sesión."""
+"""Blueprint: Agente IA chat + status"""
 
 from flask import Blueprint, request, jsonify, session
 from datetime import datetime
 
 agent_chat_bp = Blueprint('agent_chat', __name__)
 
-# Cargar agente IA (si está disponible)
 _agent = None
 _agent_loaded = False
 try:
@@ -17,20 +14,20 @@ try:
 except Exception as e:
     print(f"⚠️ Agente IA no disponible: {e}")
 
-
 def _saludo_inteligente(rol, name):
     hora = datetime.now().hour
     tiempo = "Buenos días" if 5 <= hora < 12 else "Buenas tardes" if 12 <= hora < 20 else "Buenas noches"
     
     if rol == 'cliente':
-        return f"¡{tiempo}{', ' + name if name else ''}! Soy tu Asistente Inteligente. ¿Buscas algún producto o precio?"
+        return f"¡{tiempo}{', ' + name if name else ''}! 👋 Soy el Asistente Virtual de la tienda. Puedo ayudarte a buscar productos, ver precios, consultar ofertas disponibles y decirte dónde encontrarnos. ¿Qué estás buscando hoy?"
     elif rol == 'vendedor':
-        return f"¡{tiempo}, {name or 'equipo'}! Listo para vender. Puedo consultar stock, precios o registrar atajos."
+        return f"¡{tiempo}, {name or 'equipo'}! 🛒 Listo para vender. Pregúntame por tus ventas de hoy, busca productos rápido o verifica stock crítico."
     elif rol == 'administrador':
-        return f"¡{tiempo} Admin {name}! Sistemas operativos. Pídeme resúmenes de ganancias o inventario crítico."
+        return f"¡{tiempo} Admin {name}! 📈 Sistemas operativos. Pídeme resúmenes de ganancias, gastos o rendimiento del personal."
+    elif rol == 'desarrollador':
+        return f"¡{tiempo} {name}! 💻 Root Access concedido. Pídeme el estado del sistema, integridad de la base de datos o logs."
     else:
         return f"¡{tiempo} {name or rol}! ¿En qué te ayudo hoy?"
-
 
 @agent_chat_bp.route('/api/agent/chat', methods=['POST'])
 def agent_chat():
@@ -40,18 +37,16 @@ def agent_chat():
 
     usuario = session.get('usuario')
     
-    # Resolver identidad
+    # Si hay sesión, usa el rol real. Si no, es un cliente visitante.
     if usuario and isinstance(usuario, dict):
         rol = usuario.get('rol', 'cliente')
         name = usuario.get('nombre') or usuario.get('username') or name_from_req
-        sid = usuario.get('usuario_id', 'anon')
     else:
         rol = 'cliente'
         name = name_from_req
-        sid = request.remote_addr or 'anon_client'
 
-    # Inyección de personalidad inicial (si manda mensaje vacío o dice "hola")
-    if not msg or msg.lower() in ['hola', 'buenas', 'hi']:
+    # Inyección de personalidad inicial si el usuario solo entra o saluda
+    if not msg or msg.lower() in ['hola', 'buenas', 'hi', 'ayuda', 'menu']:
         return jsonify({
             "ok": True, 
             "respuesta": _saludo_inteligente(rol, name), 
@@ -61,8 +56,8 @@ def agent_chat():
 
     if _agent_loaded and _agent:
         try:
-            # FIX CRÍTICO: Pasamos los argumentos por nombre para no cruzar SID con ROLE
-            result = _agent.process(text=msg, sid=sid, role=rol, name=name)
+            # FIX CRÍTICO: Llamamos al AgentMaster exactamente como lo espera (sin sid)
+            result = _agent.process(msg, rol, name)
             
             tools = [f"{t.get('icon', '')} {t.get('name', '')}" for t in result.get('tools', [])]
             
@@ -78,14 +73,14 @@ def agent_chat():
             print(f"Agent error: {e}")
             return jsonify({
                 "ok": False,
-                "respuesta": f"❌ Error procesando tu solicitud: {str(e)}",
+                "respuesta": f"❌ Hubo un error procesando tu solicitud, pero sigo aquí para ayudarte.",
                 "rol": rol
             }), 500
 
-    # Fallback si el motor IA está apagado
+    # Fallback si falla el motor IA
     return jsonify({
         "ok": True, 
-        "respuesta": _saludo_inteligente(rol, name) + " (Modo simplificado)", 
+        "respuesta": _saludo_inteligente(rol, name) + " (Modo catálogo básico)", 
         "rol": rol
     })
 

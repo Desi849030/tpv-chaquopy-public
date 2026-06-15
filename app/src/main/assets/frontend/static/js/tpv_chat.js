@@ -55,7 +55,7 @@ window.addEventListener('tpv_role_changed', _syncChatIdentity);
     if (!u && window.tpvState && tpvState.usuarioActual) u = tpvState.usuarioActual;
     return u || {};
   }
-  function _rol() { return (_usuario().rol || 'vendedor'); }
+  function _rol() { return (_usuario().rol || 'cliente'); }
   function _nombre() {
     var u = _usuario();
     return (u.nombre || u.username || '').split(' ')[0] || 'usuario';
@@ -73,12 +73,17 @@ window.addEventListener('tpv_role_changed', _syncChatIdentity);
   // Sugerencias contextuales por rol
   function _sugerencias() {
     var r = _rol();
+    if (r === 'cliente')
+      return [['¿Qué productos tienen?', 'Productos'], ['¿Hay ofertas?', 'Ofertas'], ['¿Cuánto cuesta...?', 'Precios']];
     if (r === 'vendedor' || r === 'cajero')
-      return [['¿Cuánto vendí hoy?', 'Mis ventas'], ['¿Qué productos hay?', 'Catálogo'], ['Recomiéndame algo', 'Recomendar']];
+      return [['¿Cuánto vendí hoy?', 'Mis ventas'], ['Stock bajo', 'Stock'], ['Buscar producto', 'Buscar']];
     if (r === 'supervisor')
-      return [['Resumen de ventas de hoy', 'Resumen'], ['¿Stock bajo?', 'Stock'], ['Rendimiento de vendedores', 'Vendedores']];
-    // admin / dev
-    return [['Resumen del negocio hoy', 'Resumen'], ['¿Stock crítico?', 'Stock'], ['Productos más vendidos', 'Top'], ['Estado del sistema', 'Sistema']];
+      return [['Dashboard de hoy', 'Dashboard'], ['Stock crítico', 'Stock'], ['Análisis ABC', 'ABC']];
+    if (r === 'administrador')
+      return [['Balance del día', 'Balance'], ['Rendimiento vendedores', 'Vendedores'], ['Gastos de hoy', 'Gastos']];
+    if (r === 'desarrollador')
+      return [['Estado del sistema', 'Sistema'], ['Métricas de red', 'Red'], ['Usuarios activos', 'Usuarios'], ['Debug tablas', 'Tablas']];
+    return [['Ayuda', 'Ayuda']];
   }
 
   // ---- Estilos ----
@@ -171,7 +176,7 @@ window.addEventListener('tpv_role_changed', _syncChatIdentity);
             'Como ' + _rolLabel(r) + ', puedo ayudarte con ' +
             (r === 'vendedor' || r === 'cajero' ? 'tus ventas, el catálogo y recomendaciones.' :
              r === 'supervisor' ? 'reportes, stock y rendimiento del equipo.' :
-             'ventas, inventario, reportes y el estado del sistema.') +
+             'todo lo que necesites sobre el negocio.') +
             ' ¿En qué te ayudo?', 'a');
     pintarSugerencias();
   }
@@ -279,7 +284,7 @@ window.addEventListener('tpv_role_changed', _syncChatIdentity);
         var res = await fetch('/api/agent/chat', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           credentials: 'same-origin',
-          body: JSON.stringify({ mensaje: msg, rol: _rol(), nombre: _nombre(), usuario: _usuario() })
+          body: JSON.stringify({ mensaje: msg, nombre: _nombre() })
         });
         var data = await res.json();
         typing.remove();

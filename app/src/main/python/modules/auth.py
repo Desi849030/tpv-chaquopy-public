@@ -161,35 +161,43 @@ def api_bio_revocar():
 
 @auth_bp.route("/auth/login", methods=["POST"])
 def api_login():
-    """Login con protección contra fuerza bruta (#20: movido desde app.py)."""
+    """Login atomico con session_token unico."""
+    import secrets
     datos = request.get_json(silent=True) or {}
     username = datos.get("username", "").strip()
     password = datos.get("password", "").strip()
     if not username or not password:
-        return jsonify({"ok": False, "error": "Usuario y contraseña requeridos"}), 400
+        return jsonify({"ok": False, "error": "Usuario y contrasena requeridos"}), 400
     try:
         resultado = login_usuario(username, password)
     except Exception as e:
         resultado = None
-        print("⚠️ login_usuario error:", e)
+        print("login_usuario error:", e)
     if isinstance(resultado, dict) and resultado.get("error") == "bloqueado":
         return jsonify({"ok": False, "error": resultado.get("mensaje", "Cuenta bloqueada")}), 429
     if resultado and resultado.get("usuario_id"):
+        session.clear()
+        session_token = secrets.token_urlsafe(32)
         user = {
             "id": resultado["usuario_id"], "usuario_id": resultado["usuario_id"],
             "username": resultado["username"],
             "nombre": resultado.get("nombre", resultado["username"]),
             "rol": resultado.get("rol", "vendedor"),
+            "session_token": session_token,
         }
         session.permanent = True
         session["usuario"] = user
-        return jsonify({"ok": True, "usuario": user})
-    return jsonify({"ok": False, "error": "Usuario o contraseña incorrectos"}), 401
+        session["session_token"] = session_token
+        session.pop("_active_check_ts", None)
+        return jsonify({"ok": True, "usuario": user, "session_token": session_token})
+    return jsonify({"ok": False, "error": "Usuario o contrasena incorrectos"}), 401
 
 @auth_bp.route("/auth/logout", methods=["POST"])
 def api_logout():
-    session.pop("usuario", None)
-    return jsonify({"ok": True})
+    session.clear()
+    response = jsonify({"ok": True})
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+    return response
 
 @auth_bp.route("/auth/me", methods=["GET"])
 def api_me():

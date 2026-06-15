@@ -32,6 +32,69 @@
 
 window.AUTH = { usuario: null, pollingNotif: null };
 
+
+// ══════════════════════════════════════════════════════════════
+//  v8.0 — LIMPIEZA ATOMICA DE ESTADO DE USUARIO
+// ══════════════════════════════════════════════════════════════
+function _tpv_limpiarEstadoUsuarioAnterior() {
+    try {
+        // 1. Variables globales de identidad
+        window.TPV_ROL = null;
+        window.TPV_USER = null;
+        window.TPV_USER_ID = null;
+        window.TPV_AUTH = false;
+
+        // 2. Chat: limpiar UI completa
+        window._tpvChatSaludado = false;
+        window._tpvChatInteract = false;
+        var chatBox = document.getElementById('chat-box');
+        if (chatBox) chatBox.style.display = 'none';
+        var chatMsgs = document.getElementById('chat-msgs');
+        if (chatMsgs) chatMsgs.innerHTML = '';
+        var chatSug = document.getElementById('chat-sug');
+        if (chatSug) chatSug.innerHTML = '';
+        var chatSub = document.getElementById('chat-head-sub');
+        if (chatSub) chatSub.textContent = '';
+
+        // 3. sessionStorage completo
+        try { sessionStorage.clear(); } catch(e) {}
+
+        // 4. localStorage especifico del usuario
+        try {
+            var claves = [];
+            for (var i = 0; i < localStorage.length; i++) {
+                var k = localStorage.key(i);
+                if (k && (k.indexOf('chat_history_') === 0 ||
+                          k.indexOf('carrito_') === 0 ||
+                          k.indexOf('user_pref_') === 0 ||
+                          k === 'ultimo_usuario' ||
+                          k === 'tpv_auth_token')) {
+                    claves.push(k);
+                }
+            }
+            claves.forEach(function(k) { localStorage.removeItem(k); });
+        } catch(e) {}
+
+        // 5. tpvState
+        if (window.tpvState) {
+            try {
+                tpvState.usuarioActual = null;
+                if (Array.isArray(tpvState.carrito)) tpvState.carrito = [];
+            } catch(e) {}
+        }
+
+        // 6. Notificar a modulos reactivos
+        try {
+            window.dispatchEvent(new CustomEvent('tpv_role_changed', {detail: {usuario: null}}));
+        } catch(e) {}
+
+        console.log('[TPV v8] Estado usuario anterior limpiado');
+    } catch (e) {
+        console.warn('[TPV v8] Error al limpiar estado:', e);
+    }
+}
+window._tpv_limpiarEstadoUsuarioAnterior = _tpv_limpiarEstadoUsuarioAnterior;
+
 const ROL_INFO = {
     desarrollador: { color:'#7c3aed', icono:'bi-code-slash',    label:'Desarrollador' },
     administrador: { color:'#4f46e5', icono:'bi-shield-fill',   label:'Administrador' },
@@ -802,6 +865,8 @@ async function auth_login() {
         });
         const data = await res.json();
         if (res.ok && data.ok) {
+            // v8.0: limpieza atomica ANTES de asignar nuevo usuario
+            try { _tpv_limpiarEstadoUsuarioAnterior(); } catch(e){}
             AUTH.usuario = data.usuario;
             // Entrar de inmediato (no bloquear el login con la oferta de huella).
             _auth_mostrarApp();
@@ -2416,6 +2481,7 @@ async function auth_logout() {
         if (_dbgPanel) _dbgPanel.remove();   // quitar del DOM
         if (window._DBG) { window._DBG.expanded = false; window._DBG.activo = false; }
     } catch(e) {}
+    try { _tpv_limpiarEstadoUsuarioAnterior(); } catch(e){}
     AUTH.usuario = null;
     _prevN = -1;
 

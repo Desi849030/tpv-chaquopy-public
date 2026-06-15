@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TPV_TESTING: "1"
+      PYTHONPATH: app/src/main/python
 
     steps:
       - name: Checkout

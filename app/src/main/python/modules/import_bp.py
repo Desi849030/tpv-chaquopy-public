@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
-"""Blueprint: Importación inteligente de productos (Excel/JSON)"""
+"""Blueprint: Importación inteligente de productos (Excel/JSON)."""
 from flask import Blueprint, request, jsonify
 from datetime import datetime
 import uuid
+
+from decorators import requiere_rol
 
 import_bp = Blueprint('importar', __name__)
 
 
 @import_bp.route('/api/importar/excel', methods=['POST'])
+@requiere_rol("administrador", "desarrollador")
 def importar_excel():
     """Importa productos desde JSON (simula carga de Excel)."""
     d = request.get_json(silent=True) or {}
@@ -19,7 +22,7 @@ def importar_excel():
         from db_connection import obtener_conexion
         conn = obtener_conexion()
         cursor = conn.cursor()
-        conn.execute('BEGIN IMMEDIATE')  # 🛡️ Atomicidad ACID garantizada
+        conn.execute('BEGIN IMMEDIATE')
         importados = 0
         actualizados = 0
 
@@ -33,7 +36,6 @@ def importar_excel():
             um = p.get('um', 'Un')
             costo = float(p.get('costo', p.get('costoUnitario', p.get('precioCosto', precio * 0.7))))
 
-            # Verificar si existe
             cursor.execute("SELECT producto_id FROM productos WHERE nombre = ?", (nombre,))
             existente = cursor.fetchone()
 
@@ -68,6 +70,7 @@ def importar_excel():
 
 
 @import_bp.route('/api/importar/previsualizar', methods=['POST'])
+@requiere_rol("administrador", "desarrollador")
 def previsualizar():
     """Previsualiza datos antes de importar."""
     d = request.get_json(silent=True) or {}

@@ -1,6 +1,7 @@
 """Tests de idempotencia y rollback de ventas atómicas."""
 import os
 import sys
+import uuid
 
 os.environ["TPV_TESTING"] = "1"
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'app', 'src', 'main', 'python'))
@@ -17,7 +18,7 @@ class TestVentasIdempotentes:
         conn.close()
 
         payload = {
-            "client_txn_id": "idem-test-001",
+            "client_txn_id": "idem-test-" + uuid.uuid4().hex[:12],
             "metodo_pago": "efectivo",
             "items": [
                 {"id": "p1", "nombre": "Arroz Premium 1kg", "cantidad": 2, "precio": 25.50}
@@ -64,7 +65,7 @@ class TestVentasIdempotentes:
         conn.close()
 
         payload = {
-            "client_txn_id": "idem-test-rollback-001",
+            "client_txn_id": "idem-test-rollback-" + uuid.uuid4().hex[:12],
             "metodo_pago": "efectivo",
             "items": [
                 {"id": "p2", "nombre": "Frijoles Negros 500g", "cantidad": 1, "precio": 18.75},

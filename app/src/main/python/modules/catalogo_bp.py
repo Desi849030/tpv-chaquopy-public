@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
-"""Blueprint: Catálogo de productos (CRUD + sincronización)"""
+"""Blueprint: Catálogo de productos (CRUD + sincronización)."""
 from flask import Blueprint, request, jsonify
 from datetime import datetime
 import uuid
+
+from decorators import requiere_rol
 
 catalogo_bp = Blueprint('catalogo', __name__)
 
@@ -40,6 +42,7 @@ def catalogo():
 
 
 @catalogo_bp.route('/api/catalogo/crear', methods=['POST'])
+@requiere_rol("administrador", "desarrollador")
 def catalogo_crear():
     """Crear un producto desde el catálogo."""
     d = request.get_json(silent=True) or {}
@@ -80,6 +83,7 @@ def catalogo_crear():
 
 
 @catalogo_bp.route('/api/catalogo/actualizar/<producto_id>', methods=['PUT'])
+@requiere_rol("administrador", "desarrollador")
 def catalogo_actualizar(producto_id):
     """Actualizar nombre/precio/foto de un producto."""
     d = request.get_json(silent=True) or {}
@@ -98,7 +102,6 @@ def catalogo_actualizar(producto_id):
             return jsonify({"ok": False, "error": "Nada que actualizar"}), 400
         vals.append(producto_id)
         c.execute(f"UPDATE productos SET {','.join(campos)} WHERE producto_id=?", vals)
-        # Sincronizar precio en inventario_general
         if 'precio' in d:
             c.execute("UPDATE inventario_general SET precio_venta=? WHERE producto_id=?",
                       (float(d['precio']), producto_id))
@@ -110,6 +113,7 @@ def catalogo_actualizar(producto_id):
 
 
 @catalogo_bp.route('/api/catalogo/eliminar/<producto_id>', methods=['DELETE'])
+@requiere_rol("administrador", "desarrollador")
 def catalogo_eliminar(producto_id):
     """Soft-delete de un producto."""
     try:
@@ -125,6 +129,7 @@ def catalogo_eliminar(producto_id):
 
 
 @catalogo_bp.route('/api/catalogo/sync', methods=['POST'])
+@requiere_rol("administrador", "desarrollador")
 def catalogo_sync():
     """Sincroniza catálogo completo (guardar fotos sin resetear stock)."""
     d = request.get_json(silent=True) or {}
@@ -160,6 +165,7 @@ def catalogo_sync():
 
 
 @catalogo_bp.route('/api/productos/precio', methods=['POST'])
+@requiere_rol("administrador", "desarrollador")
 def actualizar_precio_producto():
     """Actualiza precio de venta y/o costo de un producto."""
     d = request.get_json(silent=True) or {}
@@ -176,9 +182,11 @@ def actualizar_precio_producto():
         c = conn.cursor()
         sets, params = [], []
         if precio is not None:
-            sets.append("precio=?"); params.append(float(precio))
+            sets.append("precio=?")
+            params.append(float(precio))
         if costo is not None:
-            sets.append("costo=?"); params.append(float(costo))
+            sets.append("costo=?")
+            params.append(float(costo))
         params.append(pid)
         c.execute("UPDATE productos SET " + ", ".join(sets) + " WHERE producto_id=?", params)
         if precio is not None:
@@ -192,6 +200,7 @@ def actualizar_precio_producto():
 
 
 @catalogo_bp.route('/api/productos', methods=['POST'])
+@requiere_rol("administrador", "desarrollador")
 def crear_producto():
     """Crear un nuevo producto (vía CRUD genérico)."""
     d = request.get_json(silent=True) or {}
@@ -224,6 +233,7 @@ def crear_producto():
 
 
 @catalogo_bp.route('/api/productos/<producto_id>', methods=['PUT'])
+@requiere_rol("administrador", "desarrollador")
 def actualizar_producto(producto_id):
     """Actualizar un producto existente."""
     d = request.get_json(silent=True) or {}
@@ -238,10 +248,16 @@ def actualizar_producto(producto_id):
             if key in d:
                 campos.append(f"{col}=?")
                 vals.append(float(d[key]) if key in ('precio', 'costo') else d[key])
-        if not campos:
+        if 'stock' in d:
+            try:
+                int(d['stock'])
+            except (TypeError, ValueError):
+                return jsonify({"ok": False, "error": "Stock inválido"}), 400
+        if not campos and 'stock' not in d:
             return jsonify({"ok": False, "error": "No hay campos para actualizar"}), 400
-        vals.append(producto_id)
-        cursor.execute(f"UPDATE productos SET {','.join(campos)} WHERE producto_id=?", vals)
+        if campos:
+            vals.append(producto_id)
+            cursor.execute(f"UPDATE productos SET {','.join(campos)} WHERE producto_id=?", vals)
         if 'precio' in d:
             cursor.execute("UPDATE inventario_general SET precio_venta=? WHERE producto_id=?",
                           (float(d['precio']), producto_id))
@@ -256,6 +272,7 @@ def actualizar_producto(producto_id):
 
 
 @catalogo_bp.route('/api/productos/<producto_id>', methods=['DELETE'])
+@requiere_rol("administrador", "desarrollador")
 def eliminar_producto(producto_id):
     """Soft-delete de producto."""
     try:
@@ -271,6 +288,7 @@ def eliminar_producto(producto_id):
 
 
 @catalogo_bp.route('/api/reconstruir-desde-productos', methods=['POST'])
+@requiere_rol("administrador", "desarrollador")
 def reconstruir_desde_productos():
     """Reconstruye inventario desde lista de productos del frontend."""
     d = request.get_json(silent=True) or {}

@@ -69,7 +69,7 @@ window.addEventListener('tpv_role_changed', _syncChatIdentity);
     '#chat-tpv{position:fixed;z-index:9999;font-family:Poppins,sans-serif}' +
     '#chat-btn{width:56px;height:56px;border-radius:50%;border:none;color:#fff;cursor:grab;background:linear-gradient(135deg,#4f46e5,#06b6d4);box-shadow:0 8px 24px rgba(79,70,229,.5);font-size:1.4rem;display:flex;align-items:center;justify-content:center;touch-action:none}' +
     '#chat-btn:active{cursor:grabbing;transform:scale(.94)}' +
-    '#chat-box{position:absolute;bottom:66px;right:0;width:320px;max-width:88vw;border-radius:16px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.45);border:1px solid #2b3542;display:none}' +
+    '#chat-box{position:absolute;bottom:66px;right:0;width:340px;max-width:calc(100vw - 20px);border-radius:16px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.45);border:1px solid #2b3542;display:none;box-sizing:border-box}' +
     '#chat-head{background:linear-gradient(135deg,#4f46e5,#6366f1);padding:10px 14px;color:#fff;display:flex;align-items:center;gap:8px}' +
     '#chat-msgs{height:280px;overflow-y:auto;padding:10px;background:#0f141b;font-size:.8rem;display:flex;flex-direction:column;gap:8px}' +
     '.chat-b{padding:8px 11px;border-radius:12px;max-width:85%;line-height:1.4;word-wrap:break-word}' +
@@ -79,10 +79,10 @@ window.addEventListener('tpv_role_changed', _syncChatIdentity);
     '#chat-sug{display:flex;gap:5px;flex-wrap:wrap;padding:8px;background:#141b24;border-top:1px solid #2b3542}' +
     '#chat-sug button{background:#222b37;border:1px solid #2b3542;color:#cbd5e1;padding:4px 10px;border-radius:14px;cursor:pointer;font-size:.68rem}' +
     '#chat-sug button:hover{background:#4f46e5;color:#fff}' +
-    '#chat-foot{padding:8px;display:flex;gap:6px;background:#141b24;border-top:1px solid #2b3542}' +
-    '#chat-inp{flex:1;padding:8px 12px;background:#0f141b;border:1px solid #2b3542;border-radius:18px;color:#fff;font-size:.78rem;outline:none}' +
+    '#chat-foot{padding:8px;display:flex;gap:6px;background:#141b24;border-top:1px solid #2b3542;align-items:center;box-sizing:border-box}' +
+    '#chat-inp{flex:1 1 auto;min-width:0;padding:8px 12px;background:#0f141b;border:1px solid #2b3542;border-radius:18px;color:#fff;font-size:.78rem;outline:none;box-sizing:border-box}' +
     '#chat-inp:focus{border-color:#4f46e5}' +
-    '#chat-send{background:linear-gradient(135deg,#4f46e5,#6366f1);border:none;color:#fff;padding:0 14px;border-radius:18px;cursor:pointer;font-weight:600;font-size:.75rem}';
+    '#chat-send{background:linear-gradient(135deg,#4f46e5,#6366f1);border:none;color:#fff;padding:8px 16px;border-radius:18px;cursor:pointer;font-weight:600;font-size:.78rem;min-height:36px;white-space:nowrap;flex-shrink:0}';
   document.head.appendChild(css);
 
   var box =

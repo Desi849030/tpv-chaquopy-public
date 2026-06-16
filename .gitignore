@@ -73,3 +73,8 @@ apply_refactor.sh
 # ---- Secretos Supabase (NUNCA versionar) ----
 app/src/main/python/supabase_config.json
 app/src/main/python/.supabase_config.json
+
+# Temporales locales
+.fix_*/
+.cierre_*/
+.gestor_*/

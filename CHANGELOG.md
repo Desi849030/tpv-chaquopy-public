@@ -1,66 +1,81 @@
-# Changelog — TPV UltraSmart
+# CHANGELOG — TPV Ultra Smart
 
-## v8.0.0 (9 Jun 2026) — Refactorización Profesional
+## [v8.9] — 2026-06-15
 
-### 🏗️ Arquitectura
-- **app.py**: 1752 → 274 líneas (reducción 84%)
-- 72 rutas embebidas extraídas a **9 blueprints** modulares
-- Decoradores unificados en `decorators.py` (eliminados 80+ duplicados en 19 módulos)
-- Eliminados paquetes vacíos (`services/`, `utils/`)
-- `database.py` marcado como facade deprecado (38 archivos aún lo importan)
+### 🎨 UI/UX
+- **Submenús reorganizados por categorías** con headers visuales claros:
+  - **Operación**: 🛒 Punto de Venta + 🏬 Tienda Online
+  - **Catálogo**: 📋 Gestión de Productos + 📊 Stock e Inventario
+  - **Ventas**: 💵 Operativa del Día + 📈 Histórico y Reportes
+  - **Herramientas**: 💾 Datos + 🎨 Preferencias + 👔 Administración + 💻 Desarrollador
+- Iconos consistentes en todos los items
+- Hover con gradiente azul-índigo y transformación sutil
+- Headers con borde lateral de color
+- Bordes redondeados y sombras refinadas
 
-### 🗄️ Base de Datos
-- Tabla `clientes` añadida al schema (faltaba, causaba error)
-- Rol `cajero` en CHECK constraint de `usuarios`
-- `venta_id` ya no es UNIQUE en `historial_ventas` (permite múltiples items)
-- Columnas `efectivo`/`tarjeta`/`transferencia` en `cierres_caja`
-- 15 queries sueltas (TBL_17..31) eliminadas del schema
+### 🤖 Chat Gestor Universal
+- El chat funciona **SIN login** (cliente anónimo) como gestor de tienda
+- Responde con **DATOS REALES de la BD**:
+  - Buscar productos por nombre (insensible a tildes: `cafe` = `café`)
+  - Consultar precios
+  - Ver ofertas activas
+  - Listar categorías y productos por categoría
+  - Consultar stock disponible
+  - Información de horarios y tienda
+- **Cambio de rol atómico** al hacer login/logout
+- Burbuja arrastrable mejorada con **snap a bordes**
+- Saludo neutro y contextual por rol
 
-### 🧠 Agente IA
-- NLP: 7 → **25 intenciones** reconocidas
-- `humanizer.enhance()` implementado (antes no existía, crash silencioso)
-- `agent_pro.py`: 13 datos falsos hardcoded reemplazados por consultas BD real
-- `agent_master.py`: 3 fallbacks hardcoded eliminados
-- Keyword fallback ampliado de 7 → 24 intenciones con prioridad
-- Soporte completo para rol `cajero` (personalidad Iris)
+### 📡 Diagnóstico Telecom REAL (rol desarrollador)
+- Módulo `modules/telecom_diag.py` con herramientas REALES de red:
+  - Latencia HTTP a Supabase con jitter
+  - Throughput de descarga real
+  - DNS lookup con tiempo
+  - TLS handshake (versión, cipher, certificado)
+  - IP local, hostname, plataforma
+  - Velocidad SQLite (IOPS)
+- API REST `/api/dev/telecom/*` (solo desarrollador)
+- Acceso directo desde menú **Herramientas → Desarrollador → Diagnóstico Telecom**
+- Soporta tanto JWT clásicas como publishable keys de Supabase
 
-### 🔐 Seguridad
-- Eliminado auto-login bypass de desarrollador en `/api/auth/me`
-- Eliminado catch-all `/api/<path:p>` que silenciaba errores 404
-- Secret key lee de variable de entorno `TPV_SECRET_KEY`
-- SQL injection corregido en `modules/agent.py`
-- Decoradores en orden correcto (`@route` antes de `@login_required`)
+### 🔐 Sesión Atómica por Usuario
+- `decorators.py`: verificación atómica en cada request (sin caché 5min)
+- `modules/auth.py`: `session.clear()` + `session_token` único al login
+- `app_6.js`: limpieza completa de estado previo en login/logout
+- `tpv_chat.js`: reset atómico al cambiar usuario, historial namespaced por user_id
 
-### 🎨 Frontend
-- Panel de privilegios: botones → tarjetas táctiles grandes con iconos
-- Rol Cajero añadido a selector de privilegios
-- Módulo Biometría añadido a privilegios (bi-fingerprint)
-- Tabla de módulos responsive (columna oculta en móvil)
-- `chart.umd.min.js`: eliminada carga duplicada
-- `tpv_modals.css`: añadido (existía pero no se cargaba)
-- `devmetrics_cargar()` movido de inline a `tpv_dev_metrics.js`
-- Iconos con colores individuales por módulo
+### 🌐 Endpoints Públicos (Gestor Anónimo)
+- `GET /api/publico/catalogo` — Catálogo público
+- `GET /api/publico/buscar?q=cafe` — Búsqueda flexible
+- `GET /api/publico/ofertas` — Productos en oferta
+- `GET /api/publico/producto/<id>` — Detalle + stock
+- `GET /api/publico/categorias` — Lista de categorías
+- `GET /api/publico/categoria/<nombre>` — Productos de una categoría
+- `GET /api/publico/tiendas-info` — Info pública
 
-### 📋 CI/CD
-- Workflow unificado en `ci.yml` (test → build APK)
-- Workflows obsoletos eliminados (`android-build.yml`, `build-apk.yml`, `main.yml`)
+### 🐛 Bug Fixes
+- `settings_other.py`: `import json` faltante
+- `tpv_chat.js`: saludo neutro (sin "Root Access concedido")
+- Adaptación queries a esquema real (columnas `producto_id`, `unidad_medida`, `en_oferta`)
+- Búsqueda flexible insensible a tildes y mayúsculas
 
----
+### 📚 Documentación
+- `docs/telecom_diagnostico.md`: documentación completa del módulo telecom
+- `README.md`: sección Telecom + sección Chat Universal
+- `CHANGELOG.md`: este archivo
 
-## v2.5.5 (16 May 2026)
+### 🧪 Tests
+- `tests/test_telecom_diag.py`: 7 tests del módulo telecom (todos pasan)
+- `tests/test_publico_bp.py`: tests de endpoints públicos
+- `tests/test_handlers_cliente.py`: tests del gestor universal
 
-### Added
-- Agente IA Proactivo v1.0 (alertas automáticas, briefing, monitoreo background)
-- Test de seguridad avanzada (31/31): SQLi, XSS, Rate Limiting, Headers
-- Simulación maestra de negocio (38 pruebas)
-- Stress test concurrente multi-usuario (7 pruebas)
-- Auditoría completa del proyecto (52 pruebas)
-- sanitize_input mejorado con HTML/SQL escaping
-- Headers de seguridad HTTP (X-Content-Type, X-Frame, X-XSS, HSTS)
-- BD optimizada: WAL + busy_timeout + isolation_level
 
-### Fixed
-- Login bloqueado (hash de contraseña regenerado)
-- Error "no such column: costoUnitario" en catálogo IA
-- Métricas del sistema (RAM, disco, inventario)
-- Database is locked en operaciones concurrentes
+## [v8.0] — 2026-06-14
+
+- Refactorización general a arquitectura modular con Blueprints
+- 209 rutas registradas
+- Sistema de roles: cliente, vendedor, cajero, supervisor, administrador, desarrollador
+- Agente IA con handlers por rol
+- Sincronización bidireccional con Supabase
+- PWA con Service Worker
+- Soporte multiidioma (i18n)

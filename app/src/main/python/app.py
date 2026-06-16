@@ -256,6 +256,8 @@ _BLUEPRINTS = [
     ("modules.inventory", "inv_bp"),
     ("modules.system", "system_bp"),
     ("modules.auth", "auth_bp"),
+    ("modules.telecom_bp", "telecom_bp"),
+    ("modules.publico_bp", "publico_bp"),
     ("modules.agent", "agent_bp"),
     ("modules.metrics", "metrics_bp"),
     ("modules.tienda_bp", "tienda_bp"),

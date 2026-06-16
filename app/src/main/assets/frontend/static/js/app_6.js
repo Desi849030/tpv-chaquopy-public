@@ -1073,9 +1073,7 @@ function _auth_mostrarApp() {
             try {
                 // El AGENTE es quien da la bienvenida (no un cartel). Se abre solo
                 // y saluda por nombre y rol. Más dinámico y proactivo.
-                if (window.tpvChat && typeof window.tpvChat.bienvenida === 'function') {
-                    setTimeout(function () { window.tpvChat.bienvenida(); }, 900);
-                }
+        // v8.2: El chat NO se auto-abre. Usuario debe pulsar el boton.
             } catch(e) {}
             try {
                 conf_setLanguage(tpvState?.config?.lang || 'es').catch(function(){});

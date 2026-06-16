@@ -1,39 +1,44 @@
-"""tests/conftest.py — Fixtures compartidas para pytest."""
-import os, sys, tempfile, shutil
-APP_DIR = os.path.join(os.path.dirname(__file__), "..", "app", "src", "main", "python")
-if os.path.abspath(APP_DIR) not in sys.path:
-    sys.path.insert(0, os.path.abspath(APP_DIR))
+# -*- coding: utf-8 -*-
+"""conftest.py - Fixtures compartidos v8.9.
+
+Incluye fixtures para tests con sesion atomica (client, client_anon)
+y compat con tests antiguos (tmp_db_dir module-scoped)."""
+import os
+import sys
 import pytest
 
-@pytest.fixture(scope="session")
-def tmp_db_dir():
-    d = tempfile.mkdtemp(prefix="tpv_test_")
-    os.environ["TPV_FILES_DIR"] = d
-    yield d
-    shutil.rmtree(d, ignore_errors=True)
+sys.path.insert(0, os.path.join(
+    os.path.dirname(__file__), '..', 'app', 'src', 'main', 'python'
+))
 
-@pytest.fixture(scope="session")
-def app(tmp_db_dir):
-    os.environ["TPV_FRONTEND_DIR"] = os.path.join(os.path.abspath(APP_DIR), "..", "assets", "frontend")
-    from db_config import crear_tablas
-    crear_tablas()
-    from app import app as _app
-    _app.config["TESTING"] = True
-    _app.config["DEBUG"] = False
-    return _app
+
+@pytest.fixture
+def app():
+    os.environ['TPV_TESTING'] = '1'
+    from app import app as flask_app
+    flask_app.config['TESTING'] = True
+    return flask_app
+
 
 @pytest.fixture
 def client(app):
-    return app.test_client()
+    """Cliente HTTP CON sesion de desarrollador (v8.9)."""
+    with app.test_client() as c:
+        c.post("/api/auth/login", json={
+            "username": "desarrollador",
+            "password": "123456"
+        })
+        yield c
+
 
 @pytest.fixture
-def session(app, client):
-    with client.session_transaction() as sess:
-        sess["usuario"] = {"usuario_id": "test-dev-001", "username": "desarrollador", "rol": "desarrollador", "nombre": "Test Dev"}
-    return sess
+def client_anon(app):
+    """Cliente HTTP SIN sesion."""
+    with app.test_client() as c:
+        yield c
 
-@pytest.fixture
-def session_admin(app, client):
-    with client.session_transaction() as sess:
-        sess["usuario"] = {"usuario_id": "test-admin-001", "username": "admin", "rol": "administrador", "nombre": "Test Admin"}
-    return sess
+
+@pytest.fixture(scope="module")
+def tmp_db_dir(tmp_path_factory):
+    """Directorio temporal MODULE-scoped (compat tests antiguos)."""
+    return tmp_path_factory.mktemp("tpv_test_db")

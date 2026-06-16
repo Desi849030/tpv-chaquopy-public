@@ -114,6 +114,114 @@ def handle_supervisor(agent, t, m=None):
 def handle_dev(agent, t, m=None):
     name = m if isinstance(m, str) else ''
     
+
+    # ═══════════════════════════════════════════════════════════════
+    #  v8.2 — TELECOM REAL: herramientas de diagnostico de red de la APK
+    # ═══════════════════════════════════════════════════════════════
+    tl = (t or '').lower()
+
+    # Diagnostico completo
+    if any(k in tl for k in ['diagnostico completo', 'diagnóstico completo', 'full diag',
+                              'analisis de red completo', 'todo el diagnostico']):
+        try:
+            from modules.telecom_diag import formato_humano_diagnostico
+            return formato_humano_diagnostico()
+        except Exception as e:
+            return f"❌ Error: {e}"
+
+    # Latencia
+    if any(k in tl for k in ['latencia', 'ping supabase', 'mide ping', 'mide latencia',
+                              'rtt al servidor']):
+        try:
+            from modules.telecom_diag import medir_latencia_supabase
+            r = medir_latencia_supabase(intentos=5)
+            if not r.get('ok'):
+                return f"❌ {r.get('error', 'Error')}"
+            return (f"⚡ **Latencia Supabase** (5 pings):\n"
+                    f"• Media: {r['latencia_media_ms']} ms\n"
+                    f"• Min/Max: {r['latencia_min_ms']} / {r['latencia_max_ms']} ms\n"
+                    f"• Jitter: {r['jitter_ms']} ms\n"
+                    f"• Exitosos: {r['exitosos']}/{r['intentos']}")
+        except Exception as e:
+            return f"❌ Error latencia: {e}"
+
+    # Throughput / velocidad
+    if any(k in tl for k in ['throughput', 'velocidad de descarga', 'ancho de banda',
+                              'bandwidth', 'velocidad red']):
+        try:
+            from modules.telecom_diag import medir_throughput_supabase
+            r = medir_throughput_supabase()
+            if not r.get('ok'):
+                return f"❌ {r.get('error', 'Error')}"
+            return (f"📥 **Throughput Supabase**:\n"
+                    f"• {r['throughput_kbps']} KB/s\n"
+                    f"• {r['throughput_mbps']} Mbps\n"
+                    f"• Descargados: {r['bytes_recibidos']} bytes en {r['tiempo_s']}s")
+        except Exception as e:
+            return f"❌ Error throughput: {e}"
+
+    # DNS
+    if any(k in tl for k in ['dns', 'resolucion dns', 'resolución dns', 'lookup']):
+        try:
+            from modules.telecom_diag import medir_dns
+            r = medir_dns()
+            if not r.get('ok'):
+                return f"❌ {r.get('error', 'Error')}"
+            return (f"🌐 **DNS Lookup**:\n"
+                    f"• Host: {r['host']}\n"
+                    f"• IP principal: {r['ip_principal']}\n"
+                    f"• Tiempo: {r['tiempo_ms']} ms\n"
+                    f"• IPs resueltas: {len(r['ips_resueltas'])}")
+        except Exception as e:
+            return f"❌ Error DNS: {e}"
+
+    # TLS
+    if any(k in tl for k in ['tls', 'ssl', 'handshake', 'certificado', 'cifrado']):
+        try:
+            from modules.telecom_diag import medir_tls_handshake
+            r = medir_tls_handshake()
+            if not r.get('ok'):
+                return f"❌ {r.get('error', 'Error')}"
+            return (f"🔒 **TLS Handshake**:\n"
+                    f"• Version: {r['tls_version']}\n"
+                    f"• Cipher: {r['cipher']} ({r['cipher_bits']} bits)\n"
+                    f"• TCP: {r['tiempo_tcp_ms']} ms | TLS: {r['tiempo_tls_ms']} ms\n"
+                    f"• Certificado: {r['cert_subject']}\n"
+                    f"• Emisor (CA): {r['cert_issuer']}")
+        except Exception as e:
+            return f"❌ Error TLS: {e}"
+
+    # IP local / red dispositivo
+    if any(k in tl for k in ['ip local', 'mi ip', 'red dispositivo', 'hostname',
+                              'info de red', 'interfaz de red']):
+        try:
+            from modules.telecom_diag import info_red_local
+            r = info_red_local()
+            if not r.get('ok'):
+                return f"❌ {r.get('error', 'Error')}"
+            return (f"🖥️ **Red Dispositivo**:\n"
+                    f"• Hostname: {r['hostname']}\n"
+                    f"• IP local: {r['ip_local']}\n"
+                    f"• Python: {r['python']}\n"
+                    f"• Plataforma: {r['plataforma']}")
+        except Exception as e:
+            return f"❌ Error red: {e}"
+
+    # SQLite performance
+    if any(k in tl for k in ['sqlite', 'velocidad bd', 'iops', 'rendimiento db',
+                              'rendimiento bd']):
+        try:
+            from modules.telecom_diag import velocidad_sqlite
+            r = velocidad_sqlite()
+            if not r.get('ok'):
+                return f"❌ {r.get('error', 'Error')}"
+            return (f"💾 **SQLite Local**:\n"
+                    f"• Integridad: {r['quick_check'].upper()}\n"
+                    f"• Lectura: {r['ops_por_segundo']} ops/s\n"
+                    f"• 100 ops en: {r['lectura_100_ops_ms']} ms\n"
+                    f"• Tamaño: {r['tamano_kb']} KB")
+        except Exception as e:
+            return f"❌ Error SQLite: {e}"
     if _fm(agent, t, ['hola', 'hey', 'buenas']):
         return f"💻 Root Access concedido, {name}. Consola IA lista. Puedes pedirme: estado del sistema, integridad db, logs de errores o auditoría."
 

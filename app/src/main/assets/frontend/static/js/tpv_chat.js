@@ -1,4 +1,4 @@
-/* tpv_chat.js v8.0 - Reset atomico por usuario */
+/* tpv_chat.js v8.7-universal - Reset atomico por usuario */
 
 async function _syncChatIdentity() {
     try {
@@ -56,7 +56,7 @@ window.addEventListener('tpv_role_changed', _syncChatIdentity);
   }
   function _sugerencias() {
     var r = _rol();
-    if (r === 'cliente') return [['¿Qué productos tienen?','Productos'],['¿Hay ofertas?','Ofertas']];
+    if (r === 'cliente') return [['¿Qué productos tienen?','Catálogo'],['¿Hay ofertas?','Ofertas'],['¿En qué tienda hay café?','Tiendas'],['Categorías','Categorías']];
     if (r === 'vendedor' || r === 'cajero') return [['¿Cuánto vendí hoy?','Mis ventas'],['Stock bajo','Stock']];
     if (r === 'supervisor') return [['Dashboard de hoy','Dashboard'],['Stock crítico','Stock']];
     if (r === 'administrador') return [['Balance del día','Balance'],['Gastos','Gastos']];
@@ -170,7 +170,12 @@ window.addEventListener('tpv_role_changed', _syncChatIdentity);
     document.getElementById('chat-head-sub').textContent = _nombre() + ' · ' + _rolLabel(r);
     var hora = new Date().getHours();
     var saludo = hora < 12 ? 'Buenos días' : (hora < 19 ? 'Buenas tardes' : 'Buenas noches');
-    burbuja(saludo + ', ' + _nombre() + ' ' + _rolIcon(r) + '. ¿En qué te ayudo?', 'a');
+    if (r === 'cliente' && !window.AUTH?.usuario) {
+        burbuja(saludo + ' 🛍️. Soy tu asistente. Puedo ayudarte a buscar productos, ver precios, ofertas y en qué tienda hay lo que necesitas. ¿Qué te ayudo a encontrar?', 'a');
+    } else {
+        burbuja(saludo + ' ' + _nombre() + ' ' + _rolIcon(r) + '. ¿En qué puedo ayudarte?', 'a');
+    }
+    console.log('[Chat] Saludo emitido para rol:', r, 'usuario:', _nombre());
     pintarSugerencias();
   }
 
@@ -257,9 +262,11 @@ window.addEventListener('tpv_role_changed', _syncChatIdentity);
     function move(x, y) {
       if (!dragging) return;
       var dx = x - sx, dy = y - sy;
-      if (Math.abs(dx) > 6 || Math.abs(dy) > 6) moved = true;
-      var nl = Math.min(Math.max(0, ox + dx), window.innerWidth - 60);
-      var nt = Math.min(Math.max(0, oy + dy), window.innerHeight - 60);
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moved = true;
+      // Permitir mover por toda la pantalla con margen minimo
+      var btnSize = 56;
+      var nl = Math.min(Math.max(4, ox + dx), window.innerWidth - btnSize - 4);
+      var nt = Math.min(Math.max(4, oy + dy), window.innerHeight - btnSize - 4);
       wrap.style.left = nl + 'px'; wrap.style.top = nt + 'px';
       wrap.style.right = 'auto'; wrap.style.bottom = 'auto';
     }
@@ -268,7 +275,16 @@ window.addEventListener('tpv_role_changed', _syncChatIdentity);
       dragging = false;
       if (moved) {
         var rect = wrap.getBoundingClientRect();
-        try { localStorage.setItem('tpv_chat_pos', JSON.stringify({left: rect.left, top: rect.top})); } catch (e) {}
+        // Snap al borde mas cercano (izq o der) para no tapar contenido
+        var midX = window.innerWidth / 2;
+        var snapLeft = rect.left < midX ? 8 : (window.innerWidth - 60);
+        wrap.style.left = snapLeft + 'px';
+        wrap.style.right = 'auto';
+        wrap.style.transition = 'left 0.2s ease';
+        setTimeout(function() { wrap.style.transition = ''; }, 250);
+        try {
+            localStorage.setItem('tpv_chat_pos', JSON.stringify({left: snapLeft, top: rect.top}));
+        } catch (e) {}
       }
     }
     btn.addEventListener('mousedown', function (e) { start(e.clientX, e.clientY); });

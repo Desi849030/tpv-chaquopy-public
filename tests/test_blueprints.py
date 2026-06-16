@@ -6,15 +6,8 @@ os.environ["TPV_TESTING"] = "1"
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'app', 'src', 'main', 'python'))
 
 
-@pytest.fixture(scope="module")
-def client():
-    from app import app
-    app.config["TESTING"] = True
-    with app.test_client() as c:
-        with c.session_transaction() as sess:
-            sess["usuario"] = {"id": "dev-001", "usuario_id": "dev-001",
-                               "username": "test", "nombre": "Test", "rol": "desarrollador"}
-        yield c
+# Fixture 'client' viene de conftest.py (v8.9: incluye login auto)
+
 
 
 class TestHealth:

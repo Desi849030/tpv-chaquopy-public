@@ -1,12 +1,63 @@
 <style id="FIX_GT_NAV_PROTECTION">
 #main-nav-tabs, #main-nav-tabs * { font-family: inherit !important; }
-#main-nav-tabs .nav-link, #main-nav-tabs .dropdown-item, #main-nav-tabs .dropdown-header, #main-nav-tabs .dropdown-toggle { display: inline-flex !important; align-items: center !important; }
+#main-nav-tabs .nav-link, #main-nav-tabs .dropdown-item,
+#main-nav-tabs .dropdown-header, #main-nav-tabs .dropdown-toggle {
+    display: inline-flex !important; align-items: center !important;
+}
 #main-nav-tabs font { display: contents !important; font: inherit !important; }
-#main-nav-tabs .dropdown-menu { min-width: 240px; padding: 6px 0; }
-#main-nav-tabs .dropdown-header { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 16px 4px; color: #6c757d !important; }
-#main-nav-tabs .dropdown-item { padding: 8px 16px; font-size: 0.88rem; }
-#main-nav-tabs .dropdown-item i { width: 20px; text-align: center; margin-right: 8px; }
-.user-badge { background: linear-gradient(135deg,#4f46e5,#06b6d4); color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+
+/* === UI/UX v8.9: Submenús bien categorizados === */
+#main-nav-tabs .dropdown-menu {
+    min-width: 280px;
+    padding: 8px 0;
+    border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(0,0,0,.18);
+    border: 1px solid rgba(99,102,241,.15);
+}
+#main-nav-tabs .dropdown-header {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.9px;
+    padding: 10px 18px 6px;
+    color: #6366f1 !important;
+    background: linear-gradient(90deg, rgba(99,102,241,.08), transparent);
+    border-left: 3px solid #6366f1;
+    margin: 6px 0 2px;
+}
+#main-nav-tabs .dropdown-item {
+    padding: 10px 18px;
+    font-size: 0.88rem;
+    border-radius: 8px;
+    margin: 1px 8px;
+    transition: all 0.18s ease;
+}
+#main-nav-tabs .dropdown-item:hover {
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    color: #fff !important;
+    transform: translateX(2px);
+}
+#main-nav-tabs .dropdown-item:hover i { color: #fff !important; }
+#main-nav-tabs .dropdown-item i {
+    width: 24px; text-align: center;
+    margin-right: 10px; font-size: 1rem;
+}
+#main-nav-tabs .dropdown-divider {
+    margin: 6px 14px; opacity: 0.3;
+    border-color: #6366f1;
+}
+#main-nav-tabs .nav-link {
+    font-weight: 500;
+    border-radius: 10px 10px 0 0;
+}
+.user-badge {
+    background: linear-gradient(135deg,#4f46e5,#06b6d4);
+    color: #fff; padding: 6px 14px;
+    border-radius: 16px; font-size: 0.78rem;
+    font-weight: 600;
+    box-shadow: 0 3px 10px rgba(79,70,229,.35);
+}
+.user-badge i { margin-right: 4px; }
 </style>
 
     <div class="container py-3" id="tpv-app" style="display:none">
@@ -25,7 +76,9 @@
                         <span class="opacity-75">·</span>
                         <span id="user-info-rol">—</span>
                     </span>
-                    <div id="offline-indicator" style="display:none" class="badge bg-danger"><i class="bi bi-wifi-off"></i> Offline</div>
+                    <div id="offline-indicator" style="display:none" class="badge bg-danger">
+                        <i class="bi bi-wifi-off"></i> Offline
+                    </div>
                     <div id="network-status">
                         <span id="status-badge" class="badge bg-success">
                             <i class="bi bi-wifi"></i> <span id="status-text" translate="no">Online</span>
@@ -37,122 +90,137 @@
 
         <ul class="nav nav-tabs mb-3" id="main-nav-tabs" role="tablist">
 
+            <!-- ═══════════ 🛒 OPERACIÓN DIARIA ═══════════ -->
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle active" data-bs-toggle="dropdown" data-bs-auto-close="true" href="javascript:void(0)" role="button" translate="no">
-                    <i class="bi bi-grid-3x3-gap-fill me-1"></i><span>Catálogo</span>
+                    <i class="bi bi-shop me-1"></i><span>Operación</span>
                 </a>
                 <ul class="dropdown-menu">
-                    <li><h6 class="dropdown-header" translate="no">VENTA</h6></li>
+                    <li><h6 class="dropdown-header">🛒 Punto de Venta</h6></li>
                     <li><a class="dropdown-item active" id="tpv-caja-tab" data-bs-toggle="tab" data-bs-target="#tpv-caja-tab-pane" href="javascript:void(0)" role="tab">
-                        <i class="bi bi-grid-3x3-gap-fill text-primary" translate="no"></i>Vista de Venta</a></li>
-                    <li><a class="dropdown-item" id="cliente-qr-tab" data-bs-toggle="tab" data-bs-target="#cliente-qr-tab-pane" href="javascript:void(0)" role="tab">
-                        <i class="bi bi-qr-code text-info" translate="no"></i>Etiquetas QR</a></li>
+                        <i class="bi bi-grid-3x3-gap-fill text-primary"></i>Vista de Venta</a></li>
+                    <li><a class="dropdown-item" id="orden-actual-tab" data-bs-toggle="tab" data-bs-target="#orden-actual-tab-pane" href="javascript:void(0)" role="tab">
+                        <i class="bi bi-receipt text-warning"></i>Orden Actual
+                        <span id="order-badge" class="badge rounded-pill bg-danger d-none ms-2">0</span></a></li>
+
                     <li><hr class="dropdown-divider"></li>
-                    <li><h6 class="dropdown-header" translate="no">GESTIÓN</h6></li>
-                    <li><a class="dropdown-item" id="gestion-productos-tab" data-bs-toggle="tab" data-bs-target="#gestion-productos-tab-pane" href="javascript:void(0)" role="tab">
-                        <i class="bi bi-journal-album text-secondary" translate="no"></i>Productos</a></li>
-                    <li><a class="dropdown-item" id="gestion-categorias-tab" data-bs-toggle="tab" data-bs-target="#gestion-categorias-tab-pane" href="javascript:void(0)" role="tab">
-                        <i class="bi bi-tags-fill text-secondary" translate="no"></i>Categorías</a></li>
+                    <li><h6 class="dropdown-header">🏬 Tienda Online</h6></li>
+                    <li><a class="dropdown-item" id="tienda-tab" data-bs-toggle="tab" data-bs-target="#tienda-tab-pane" href="javascript:void(0)" role="tab" onclick="tienda_init()">
+                        <i class="bi bi-shop-window text-info"></i>Pedidos Online
+                        <span id="tienda-pedidos-badge" class="badge rounded-pill bg-warning text-dark d-none ms-2">0</span></a></li>
+                    <li><a class="dropdown-item" id="cliente-qr-tab" data-bs-toggle="tab" data-bs-target="#cliente-qr-tab-pane" href="javascript:void(0)" role="tab">
+                        <i class="bi bi-qr-code text-success"></i>Etiquetas QR Cliente</a></li>
                 </ul>
             </li>
 
+            <!-- ═══════════ 📊 DASHBOARD ═══════════ -->
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard-tab-pane" type="button" role="tab" onclick="dashboard_cargar()">
-                    <i class="bi bi-speedometer2 me-1" translate="no"></i>Dashboard
+                    <i class="bi bi-speedometer2 me-1"></i>Dashboard
                 </button>
             </li>
 
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="orden-actual-tab" data-bs-toggle="tab" data-bs-target="#orden-actual-tab-pane" type="button" role="tab">
-                    <i class="bi bi-receipt me-1" translate="no"></i>Orden
-                    <span id="order-badge" class="badge rounded-pill bg-danger d-none">0</span>
-                </button>
-            </li>
-
+            <!-- ═══════════ 📦 CATÁLOGO ═══════════ -->
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="true" href="javascript:void(0)" role="button" translate="no">
-                    <i class="bi bi-currency-dollar me-1" translate="no"></i>Ventas
+                    <i class="bi bi-box-seam me-1"></i>Catálogo
                 </a>
                 <ul class="dropdown-menu">
-                    <li><h6 class="dropdown-header" translate="no">HOY</h6></li>
-                    <li><a class="dropdown-item" id="ventas-hoy-tab" data-bs-toggle="tab" data-bs-target="#ventas-hoy-tab-pane" href="javascript:void(0)" role="tab">
-                        <i class="bi bi-calendar-day text-success" translate="no"></i>Ventas del Día</a></li>
-                    <li><a class="dropdown-item" id="nom-nomenclador-tab" data-bs-toggle="tab" data-bs-target="#nom-nomenclador-tab-pane" href="javascript:void(0)" role="tab">
-                        <i class="bi bi-cash-coin text-warning" translate="no"></i>Nomenclador de Caja</a></li>
+                    <li><h6 class="dropdown-header">📋 Gestión de Productos</h6></li>
+                    <li><a class="dropdown-item" id="gestion-productos-tab" data-bs-toggle="tab" data-bs-target="#gestion-productos-tab-pane" href="javascript:void(0)" role="tab">
+                        <i class="bi bi-journal-album text-primary"></i>Productos</a></li>
+                    <li><a class="dropdown-item" id="gestion-categorias-tab" data-bs-toggle="tab" data-bs-target="#gestion-categorias-tab-pane" href="javascript:void(0)" role="tab">
+                        <i class="bi bi-tags-fill text-secondary"></i>Categorías</a></li>
+
                     <li><hr class="dropdown-divider"></li>
-                    <li><h6 class="dropdown-header" translate="no">HISTÓRICO</h6></li>
-                    <li><a class="dropdown-item" id="registros-tab" data-bs-toggle="tab" data-bs-target="#registros-tab-pane" href="javascript:void(0)" role="tab">
-                        <i class="bi bi-clock-history text-secondary" translate="no"></i>Historial y Cierres</a></li>
-                    <li><a class="dropdown-item" id="exportar-ventas-tab" data-bs-toggle="tab" data-bs-target="#exportar-ventas-tab-pane" href="javascript:void(0)" role="tab">
-                        <i class="bi bi-file-earmark-excel text-success" translate="no"></i>Exportar a Excel</a></li>
+                    <li><h6 class="dropdown-header">📊 Stock e Inventario</h6></li>
+                    <li><a class="dropdown-item" id="inv-inventario-tab" data-bs-toggle="tab" data-bs-target="#inv-inventario-tab-pane" href="javascript:void(0)" role="tab">
+                        <i class="bi bi-boxes text-success"></i>Inventario General</a></li>
                 </ul>
             </li>
 
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="inv-inventario-tab" data-bs-toggle="tab" data-bs-target="#inv-inventario-tab-pane" type="button" role="tab">
-                    <i class="bi bi-box-seam me-1" translate="no"></i>Inventario
-                </button>
-            </li>
-
-            <li class="nav-item" role="presentation">
-                <button class="nav-link position-relative" id="tienda-tab" data-bs-toggle="tab" data-bs-target="#tienda-tab-pane" type="button" role="tab" onclick="tienda_init()">
-                    <i class="bi bi-shop me-1" translate="no"></i>Tienda
-                    <span id="tienda-pedidos-badge" class="badge rounded-pill bg-warning text-dark d-none position-absolute top-0 end-0" style="font-size:0.6rem;">0</span>
-                </button>
-            </li>
-
+            <!-- ═══════════ 💰 VENTAS ═══════════ -->
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="true" href="javascript:void(0)" role="button" translate="no">
-                    <i class="bi bi-tools me-1" translate="no"></i>Herramientas
+                    <i class="bi bi-currency-dollar me-1"></i>Ventas
                 </a>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li><h6 class="dropdown-header" translate="no">DATOS</h6></li>
-                    <li><a class="dropdown-item" id="importar-exportar-tab" data-bs-toggle="tab" data-bs-target="#herramientas-tab-pane" href="javascript:void(0)" role="tab">
-                        <i class="bi bi-file-earmark-excel text-success" translate="no"></i>Importar / Exportar Excel</a></li>
-                    <li><a class="dropdown-item" id="copias-seguridad-tab" data-bs-toggle="tab" data-bs-target="#herramientas-tab-pane" href="javascript:void(0)" role="tab">
-                        <i class="bi bi-cloud-arrow-up text-info" translate="no"></i>Copias de Seguridad</a></li>
-                    <li><a class="dropdown-item" id="mantenimiento-tab" data-bs-toggle="tab" data-bs-target="#herramientas-tab-pane" href="javascript:void(0)" role="tab">
-                        <i class="bi bi-wrench-adjustable text-warning" translate="no"></i>Mantenimiento</a></li>
+                <ul class="dropdown-menu">
+                    <li><h6 class="dropdown-header">💵 Operativa del Día</h6></li>
+                    <li><a class="dropdown-item" id="ventas-hoy-tab" data-bs-toggle="tab" data-bs-target="#ventas-hoy-tab-pane" href="javascript:void(0)" role="tab">
+                        <i class="bi bi-calendar-day text-success"></i>Ventas del Día</a></li>
+                    <li><a class="dropdown-item" id="nom-nomenclador-tab" data-bs-toggle="tab" data-bs-target="#nom-nomenclador-tab-pane" href="javascript:void(0)" role="tab">
+                        <i class="bi bi-cash-coin text-warning"></i>Nomenclador de Caja</a></li>
 
                     <li><hr class="dropdown-divider"></li>
-                    <li><h6 class="dropdown-header" translate="no">PREFERENCIAS</h6></li>
-                    <li><a class="dropdown-item" id="conf-config-tab" data-bs-toggle="tab" data-bs-target="#conf-config-tab-pane" href="javascript:void(0)" role="tab">
-                        <i class="bi bi-palette text-secondary" translate="no"></i>Apariencia e Idioma</a></li>
+                    <li><h6 class="dropdown-header">📈 Histórico y Reportes</h6></li>
+                    <li><a class="dropdown-item" id="registros-tab" data-bs-toggle="tab" data-bs-target="#registros-tab-pane" href="javascript:void(0)" role="tab">
+                        <i class="bi bi-clock-history text-secondary"></i>Historial y Cierres</a></li>
+                    <li><a class="dropdown-item" id="exportar-ventas-tab" data-bs-toggle="tab" data-bs-target="#exportar-ventas-tab-pane" href="javascript:void(0)" role="tab">
+                        <i class="bi bi-file-earmark-excel text-success"></i>Exportar a Excel</a></li>
+                </ul>
+            </li>
 
+            <!-- ═══════════ ⚙️ HERRAMIENTAS ═══════════ -->
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="true" href="javascript:void(0)" role="button" translate="no">
+                    <i class="bi bi-gear-fill me-1"></i>Herramientas
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+
+                    <li><h6 class="dropdown-header">💾 Datos y Respaldos</h6></li>
+                    <li><a class="dropdown-item" id="importar-exportar-tab" data-bs-toggle="tab" data-bs-target="#herramientas-tab-pane" href="javascript:void(0)" role="tab">
+                        <i class="bi bi-file-earmark-excel text-success"></i>Importar / Exportar Excel</a></li>
+                    <li><a class="dropdown-item" id="copias-seguridad-tab" data-bs-toggle="tab" data-bs-target="#herramientas-tab-pane" href="javascript:void(0)" role="tab">
+                        <i class="bi bi-cloud-arrow-up text-info"></i>Copias de Seguridad</a></li>
+                    <li><a class="dropdown-item" id="mantenimiento-tab" data-bs-toggle="tab" data-bs-target="#herramientas-tab-pane" href="javascript:void(0)" role="tab">
+                        <i class="bi bi-wrench-adjustable text-warning"></i>Mantenimiento</a></li>
+
+                    <li><hr class="dropdown-divider"></li>
+                    <li><h6 class="dropdown-header">🎨 Preferencias</h6></li>
+                    <li><a class="dropdown-item" id="conf-config-tab" data-bs-toggle="tab" data-bs-target="#conf-config-tab-pane" href="javascript:void(0)" role="tab">
+                        <i class="bi bi-palette text-secondary"></i>Apariencia e Idioma</a></li>
+
+                    <!-- ═══ ADMIN (solo administrador/desarrollador) ═══ -->
                     <li class="rol-admin" style="display:none"><hr class="dropdown-divider"></li>
-                    <li class="rol-admin" style="display:none"><h6 class="dropdown-header" translate="no">ADMINISTRACIÓN</h6></li>
+                    <li class="rol-admin" style="display:none"><h6 class="dropdown-header">👔 Administración</h6></li>
                     <li class="rol-admin" style="display:none">
                         <a class="dropdown-item" id="licencias-tab" data-bs-toggle="tab" data-bs-target="#licencias-tab-pane" href="javascript:void(0)" role="tab">
-                            <i class="bi bi-shield-check text-danger" translate="no"></i>Licencias</a>
+                            <i class="bi bi-shield-check text-danger"></i>Licencias</a>
                     </li>
                     <li class="rol-admin" style="display:none">
                         <a class="dropdown-item" id="privilegios-tab" data-bs-toggle="tab" data-bs-target="#privilegios-tab-pane" href="javascript:void(0)" role="tab">
-                            <i class="bi bi-shield-lock-fill text-primary" translate="no"></i>Privilegios y Usuarios</a>
+                            <i class="bi bi-shield-lock-fill text-primary"></i>Privilegios y Usuarios</a>
                     </li>
                     <li class="rol-admin" style="display:none">
                         <a class="dropdown-item" id="seguridad-tab" data-bs-toggle="tab" data-bs-target="#seguridad-tab-pane" href="javascript:void(0)" role="tab">
-                            <i class="bi bi-shield-shaded text-success" translate="no"></i>Seguridad / Blindajes</a>
+                            <i class="bi bi-shield-shaded text-success"></i>Seguridad / Blindajes</a>
                     </li>
 
+                    <!-- ═══ DESARROLLADOR (solo desarrollador) ═══ -->
                     <li class="rol-desarrollador" style="display:none"><hr class="dropdown-divider"></li>
-                    <li class="rol-desarrollador" style="display:none"><h6 class="dropdown-header" translate="no">DESARROLLADOR</h6></li>
+                    <li class="rol-desarrollador" style="display:none"><h6 class="dropdown-header">💻 Desarrollador</h6></li>
                     <li class="rol-desarrollador" style="display:none">
                         <a class="dropdown-item" id="dev-metrics-tab" data-bs-toggle="tab" data-bs-target="#dev-metrics-tab-pane" href="javascript:void(0)" role="tab">
-                            <i class="bi bi-activity" style="color:#00cec9" translate="no"></i>Métricas del Sistema</a>
+                            <i class="bi bi-activity" style="color:#00cec9"></i>Métricas del Sistema</a>
                     </li>
                     <li class="rol-desarrollador" style="display:none">
                         <a class="dropdown-item" id="dev-logs-tab" data-bs-toggle="tab" data-bs-target="#dev-logs-tab-pane" href="javascript:void(0)" role="tab">
-                            <i class="bi bi-terminal text-warning" translate="no"></i>Logs del Sistema</a>
+                            <i class="bi bi-terminal text-warning"></i>Logs del Sistema</a>
                     </li>
                     <li class="rol-desarrollador" style="display:none">
                         <a class="dropdown-item" id="dev-api-tab" data-bs-toggle="tab" data-bs-target="#dev-api-tab-pane" href="javascript:void(0)" role="tab">
-                            <i class="bi bi-braces text-info" translate="no"></i>API Endpoints</a>
+                            <i class="bi bi-braces text-info"></i>API Endpoints</a>
+                    </li>
+                    <li class="rol-desarrollador" style="display:none">
+                        <a class="dropdown-item" href="javascript:void(0)" onclick="dev_telecomDiag()">
+                            <i class="bi bi-broadcast-pin" style="color:#06b6d4"></i>Diagnóstico Telecom</a>
                     </li>
 
+                    <!-- ═══ Cerrar Sesión (todos) ═══ -->
                     <li><hr class="dropdown-divider"></li>
                     <li>
                         <a class="dropdown-item text-danger" href="javascript:void(0)" onclick="if(typeof auth_logout==='function')auth_logout();else location.reload()">
-                            <i class="bi bi-box-arrow-right text-danger" translate="no"></i>Cerrar Sesión
+                            <i class="bi bi-box-arrow-right text-danger"></i>Cerrar Sesión
                         </a>
                     </li>
                 </ul>
@@ -186,4 +254,22 @@
             setTimeout(actualizarUIPorRol, 800);
             setTimeout(actualizarUIPorRol, 2000);
         })();
+
+        // Diagnóstico Telecom desde el menú (solo dev)
+        window.dev_telecomDiag = async function() {
+            try {
+                if (window.tpvChat && window.tpvChat.toggle) {
+                    window.tpvChat.toggle();
+                    setTimeout(function() {
+                        var inp = document.getElementById('chat-inp');
+                        if (inp) {
+                            inp.value = 'diagnostico completo';
+                            window.tpvChat.send();
+                        }
+                    }, 400);
+                } else {
+                    alert('Chat no disponible');
+                }
+            } catch(e) { console.error(e); }
+        };
         </script>

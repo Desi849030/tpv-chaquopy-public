@@ -11,6 +11,16 @@ _log = logging.getLogger("db.indexes")
 
 # Definicion de los 35 indices
 _INDEXES = [
+    # ── ventas_cabecera (4) ────────────────────────────────
+    "CREATE INDEX IF NOT EXISTS idx_vc_fecha         ON ventas_cabecera(fecha)",
+    "CREATE INDEX IF NOT EXISTS idx_vc_vendedor      ON ventas_cabecera(vendedor_id)",
+    "CREATE INDEX IF NOT EXISTS idx_vc_metodo        ON ventas_cabecera(metodo_pago)",
+    "CREATE INDEX IF NOT EXISTS idx_vc_client_txn    ON ventas_cabecera(client_txn_id)",
+
+    # ── ventas_detalle (2) ─────────────────────────────────
+    "CREATE INDEX IF NOT EXISTS idx_vd_venta         ON ventas_detalle(venta_id)",
+    "CREATE INDEX IF NOT EXISTS idx_vd_producto      ON ventas_detalle(producto_id)",
+
     # ── historial_ventas (6) ──────────────────────────────
     "CREATE INDEX IF NOT EXISTS idx_hv_fecha          ON historial_ventas(fecha)",
     "CREATE INDEX IF NOT EXISTS idx_hv_producto       ON historial_ventas(nombre)",

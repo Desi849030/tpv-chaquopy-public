@@ -6,9 +6,12 @@ from db.indexes import crear_indices
 Integridad referencial (#18):
 - Se declaran FOREIGN KEYS en las tablas operativas (inventarios, entradas,
   cierres, licencias) hacia productos(producto_id) y usuarios(usuario_id).
-- Las tablas de auditoría/historial (historial_ventas, auditoria, logs_sistema,
-  login_intentos) NO llevan FK dura: deben conservar el registro aunque el
-  producto/usuario origen se elimine (y aceptan vendedores externos).
+- Las tablas de auditoría/historial (historial_ventas, ventas_cabecera,
+  ventas_detalle, auditoria, logs_sistema, login_intentos) NO llevan FK dura
+  hacia productos/usuarios: deben conservar el registro aunque el producto o
+  usuario origen se elimine (y aceptan vendedores externos).
+- ventas_detalle sí referencia a ventas_cabecera(venta_id) para asegurar que
+  no existan detalles huérfanos.
 - db_connection.obtener_conexion() ya ejecuta PRAGMA foreign_keys = ON.
 - Nota: CREATE TABLE IF NOT EXISTS no altera tablas ya creadas; las FK
   aplican a bases de datos nuevas (las existentes siguen funcionando igual).
@@ -51,6 +54,31 @@ LICENCIAS = """CREATE TABLE IF NOT EXISTS licencias (
             notas         TEXT    DEFAULT '',
             creado_por    TEXT    NOT NULL,
             creado        TEXT    DEFAULT (datetime('now','localtime'))
+        )"""
+
+
+VENTAS_CABECERA = """CREATE TABLE IF NOT EXISTS ventas_cabecera (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            venta_id        TEXT    NOT NULL UNIQUE,
+            client_txn_id   TEXT    NOT NULL UNIQUE,
+            vendedor_id     TEXT    DEFAULT NULL,
+            vendedor_nombre TEXT    DEFAULT NULL,
+            metodo_pago     TEXT    NOT NULL DEFAULT 'efectivo',
+            total           REAL    NOT NULL DEFAULT 0,
+            estado          TEXT    NOT NULL DEFAULT 'confirmada'
+                          CHECK(estado IN ('procesando','confirmada','cancelada')),
+            fecha           TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
+        )"""
+
+VENTAS_DETALLE = """CREATE TABLE IF NOT EXISTS ventas_detalle (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            venta_id      TEXT    NOT NULL
+                          REFERENCES ventas_cabecera(venta_id) ON DELETE CASCADE,
+            producto_id   TEXT    NOT NULL,
+            nombre        TEXT    NOT NULL,
+            cantidad      REAL    NOT NULL DEFAULT 1,
+            precio_unit   REAL    NOT NULL DEFAULT 0,
+            subtotal      REAL    NOT NULL DEFAULT 0
         )"""
 
 HISTORIAL_VENTAS = """CREATE TABLE IF NOT EXISTS historial_ventas (
@@ -268,6 +296,8 @@ ALL_TABLES = [
     APP_STATE,
     USUARIOS,
     LICENCIAS,
+    VENTAS_CABECERA,
+    VENTAS_DETALLE,
     HISTORIAL_VENTAS,
     PRODUCTOS,
     INVENTARIO_GENERAL,

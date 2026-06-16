@@ -10,9 +10,6 @@ import logging
 
 from flask import Flask, send_from_directory, request, jsonify
 
-# ══════════════════════════════════════════════════════════════
-# Paths
-# ══════════════════════════════════════════════════════════════
 _CD = os.path.dirname(os.path.abspath(__file__))
 _MAIN = os.path.dirname(_CD)
 
@@ -34,15 +31,10 @@ _TPL = os.path.join(_ASSETS, 'templates')
 _STAT = os.path.join(_ASSETS, 'static')
 print("📁 Frontend en uso:", _ASSETS)
 
-# ══════════════════════════════════════════════════════════════
-# Flask app
-# ══════════════════════════════════════════════════════════════
 app = Flask(__name__, static_folder=_STAT, static_url_path='/static')
 
-# ── Compresión gzip (Capa 6 - Presentación) ──
 try:
     import gzip
-    from io import BytesIO
     @app.after_request
     def compress_response(response):
         if (response.status_code < 200 or response.status_code >= 300
@@ -67,9 +59,9 @@ try:
         response.headers['Vary'] = 'Accept-Encoding'
         return response
 except Exception:
-    pass  # gzip not available
+    pass
 
-# ── Security + CORS headers (Capa 7 - Aplicación) ──
+
 @app.after_request
 def add_security_headers(response):
     response.headers.setdefault('X-Content-Type-Options', 'nosniff')
@@ -81,7 +73,6 @@ def add_security_headers(response):
     if request.path.startswith('/api/'):
         response.headers.setdefault('Cache-Control', 'no-store')
 
-    # CORS para loopback/local
     origin = request.headers.get('Origin', '')
     if origin and ('127.0.0.1' in origin or 'localhost' in origin):
         response.headers['Access-Control-Allow-Origin'] = origin
@@ -95,19 +86,14 @@ def add_security_headers(response):
         else:
             response.headers['Vary'] = 'Origin'
     return response
-app.config['PERMANENT_SESSION_LIFETIME'] = 86400 * 30  # 30 días (no 365)
+
+app.config['PERMANENT_SESSION_LIFETIME'] = 86400 * 30
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_SECURE'] = os.environ.get('TPV_HTTPS', '0') == '1'
 app.config['SESSION_COOKIE_NAME'] = 'tpv_session'
-app.secret_key = os.environ.get(
-    'TPV_SECRET_KEY',
-    'tpv-ultra-smart-v8-CAMBIAR-EN-PRODUCCION'
-)
+app.secret_key = os.environ.get('TPV_SECRET_KEY', 'tpv-ultra-smart-v8-CAMBIAR-EN-PRODUCCION')
 
-# ══════════════════════════════════════════════════════════════
-# Frontend (solo 2 rutas: index + static)
-# ══════════════════════════════════════════════════════════════
 
 @app.route('/')
 def index():
@@ -148,20 +134,10 @@ def health():
         "frontend": os.path.isdir(_TPL),
         "version": "v8.0",
     }
-
     if db_error and os.environ.get("TPV_TESTING") == "1":
         payload["error"] = db_error
-
     return jsonify(payload), (200 if db_ok else 503)
 
-
-# ══════════════════════════════════════════════════════════════
-# Auth: movido a modules/auth.py (auth_bp) — #20
-# Las rutas /api/auth/login, /api/auth/logout y /api/auth/me
-# se registran via blueprint en la sección "Registro de Blueprints".
-# ══════════════════════════════════════════════════════════════
-# Inicializar BD con datos de ejemplo (si está vacía)
-# ══════════════════════════════════════════════════════════════
 
 def _init_db_if_empty():
     try:
@@ -173,7 +149,7 @@ def _init_db_if_empty():
         try:
             from db.schema import crear_tablas_schema
             crear_tablas_schema(conn)
-        except Exception:  # noqa: broad-except - graceful degradation
+        except Exception:
             pass
         c.execute("SELECT COUNT(*) FROM productos")
         if c.fetchone()[0] > 0:
@@ -196,7 +172,6 @@ def _init_db_if_empty():
         ]
         stocks = [45, 32, 28, 60, 25, 50, 40, 55, 35, 20, 30, 45]
         emojis = ["🍚", "🫘", "🫒", "🥤", "🧴", "🍬", "☕", "🥛", "🥚", "🍞", "🧼", "🪥"]
-        # Usuarios demo
         _demo_users = [
             ("dev-001", "desarrollador", "Desarrollador Principal", "desarrollador"),
             ("usr-001", "admin", "Administrador", "administrador"),
@@ -207,40 +182,35 @@ def _init_db_if_empty():
         for _uid, _un, _nom, _rol in _demo_users:
             try:
                 _salt = secrets.token_hex(16)
-                _h = hashlib.scrypt("123456".encode(), salt=bytes.fromhex(_salt),
-                                    n=16384, r=8, p=1).hex()
+                _h = hashlib.scrypt("123456".encode(), salt=bytes.fromhex(_salt), n=16384, r=8, p=1).hex()
                 c.execute(
                     "INSERT OR IGNORE INTO usuarios "
-                    "(usuario_id,username,nombre,rol,password_hash,password_salt) "
-                    "VALUES (?,?,?,?,?,?)",
-                    (_uid, _un, _nom, _rol, _h, _salt))
+                    "(usuario_id,username,nombre,rol,password_hash,password_salt) VALUES (?,?,?,?,?,?)",
+                    (_uid, _un, _nom, _rol, _h, _salt),
+                )
             except Exception as _e:
                 print(f"⚠️ Error creando usuario demo {_un}: {_e}")
         for i, (pid, nom, pv, pc, cat, um) in enumerate(prods):
             c.execute(
                 "INSERT OR IGNORE INTO productos "
-                "(producto_id,nombre,precio,costo,categoria,unidad_medida,en_oferta,imagen,activo) "
-                "VALUES (?,?,?,?,?,?,0,?,1)",
-                (pid, nom, pv, pc, cat, um, emojis[i]))
+                "(producto_id,nombre,precio,costo,categoria,unidad_medida,en_oferta,imagen,activo) VALUES (?,?,?,?,?,?,0,?,1)",
+                (pid, nom, pv, pc, cat, um, emojis[i]),
+            )
             c.execute(
                 "INSERT OR IGNORE INTO inventario_general "
-                "(producto_id,nombre,stock_actual,stock_minimo,precio_compra,precio_venta,"
-                "categoria,unidad_medida,actualizado) VALUES (?,?,?,5,?,?,?,?,?)",
-                (pid, nom, stocks[i], pc, pv, cat, um, ahora))
+                "(producto_id,nombre,stock_actual,stock_minimo,precio_compra,precio_venta,categoria,unidad_medida,actualizado) VALUES (?,?,?,5,?,?,?,?,?)",
+                (pid, nom, stocks[i], pc, pv, cat, um, ahora),
+            )
         conn.commit()
         conn.close()
         print(f"✅ BD inicializada con {len(prods)} productos de ejemplo")
     except Exception as e:
         print(f"⚠️ Error init BD: {e}")
 
+
 _init_db_if_empty()
 
-# ══════════════════════════════════════════════════════════════
-# Registro de Blueprints
-# ══════════════════════════════════════════════════════════════
-
 _BLUEPRINTS = [
-    # ── Nuevos (extraídos de app.py) ──
     ("modules.catalogo_bp", "catalogo_bp"),
     ("modules.ventas_core_bp", "ventas_core_bp"),
     ("modules.reportes_bp", "reportes_bp"),
@@ -251,8 +221,7 @@ _BLUEPRINTS = [
     ("modules.usuarios_bp", "usuarios_bp"),
     ("modules.agent_chat_bp", "agent_chat_bp"),
     ("modules.i18n_bp", "i18n_bp"),
-    # ── Existentes ──
-    ("modules.sales", "sales_bp"),
+    # sales_bp legacy retirado: duplicaba /api/gastos y /api/reportes/*
     ("modules.inventory", "inv_bp"),
     ("modules.system", "system_bp"),
     ("modules.auth", "auth_bp"),
@@ -277,7 +246,6 @@ for entry in _BLUEPRINTS:
     try:
         mod_name = entry[0]
         bp_attr = entry[1]
-        # Handle entries with alternative attr names
         mod = __import__(mod_name, fromlist=[bp_attr])
         bp = getattr(mod, bp_attr, None)
         if bp_attr == "ai_routes_bp" and bp is None:
@@ -289,9 +257,6 @@ for entry in _BLUEPRINTS:
         print(f"  ⚠️ {entry[0]}: {e}")
 
 
-# ══════════════════════════════════════════════════════════════
-# Módulos de seguridad (carga lazy, no son blueprints)
-# ══════════════════════════════════════════════════════════════
 _SECURITY_MODULES = [
     ("security_het", "check_rate_limit", "check_login"),
     ("security_pci", "tokenize_pan", "mask_pan"),
@@ -307,11 +272,8 @@ for entry in _SECURITY_MODULES:
     try:
         __import__(entry[0])
     except Exception:
-        pass  # Optional modules
+        pass
 
-# ══════════════════════════════════════════════════════════════
-# Main
-# ══════════════════════════════════════════════════════════════
 if __name__ == '__main__':
     print(f"\n{'=' * 50}")
     print("  TPV Ultra Smart v8.0 — REFACTORIZADO")

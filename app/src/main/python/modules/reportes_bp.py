@@ -2,6 +2,7 @@
 """Blueprint: Reportes y exportación."""
 from flask import Blueprint, request, jsonify
 from datetime import date, timedelta
+from decorators import requiere_rol
 
 reportes_bp = Blueprint('reportes', __name__)
 
@@ -164,6 +165,17 @@ def reporte_resumen():
         }})
     except Exception:
         return jsonify({"ok": True, "resumen": {"ventas_hoy": 0}})
+
+
+@reportes_bp.route('/api/reportes/ganancias')
+@requiere_rol("administrador", "desarrollador", "supervisor")
+def reporte_ganancias():
+    """Ganancias/ingresos por día para roles staff."""
+    try:
+        from db_ventas import consultar_ganancias_por_dia
+        return jsonify({"ok": True, "ganancias": consultar_ganancias_por_dia()})
+    except Exception as e:
+        return jsonify({"ok": False, "ganancias": [], "error": str(e)}), 500
 
 
 @reportes_bp.route('/api/metrics')

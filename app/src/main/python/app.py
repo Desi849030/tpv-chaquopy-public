@@ -284,3 +284,11 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.WARNING)
     port = int(os.environ.get('TPV_PORT', 5000))
     app.run(host='127.0.0.1', port=port, debug=False, threaded=True)
+
+@app.route('/api/__debug_js', methods=['POST'])
+def __debug_js():
+    import json, datetime
+    data = request.get_json() or {}
+    with open('/tmp/js_errors.log', 'a') as f:
+        f.write(f"[{datetime.datetime.now()}] {data.get('msg','')}\n{data.get('stack','')}\n\n")
+    return {'ok': True}

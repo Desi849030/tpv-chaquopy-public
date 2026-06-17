@@ -1437,6 +1437,7 @@
     <script src="/static/js/tpv_anon.js"></script>
     <script src="/static/js/tpv_api.js"></script>
     <!-- app_3.js dividido en módulos por dominio (#4) — orden de carga importa -->
+    <script src="/static/js/app_6.js"></script>
     <script src="/static/js/app3/01_estado.js"></script>
     <script src="/static/js/app3/02_ui_core.js"></script>
     <script src="/static/js/app3/03_tpv.js"></script>
@@ -1717,5 +1718,5 @@ observer.observe(document.body, {childList: true, subtree: true});
   });
 </script>
 
-</body>
+<script>window.onerror=function(m,u,l,c,e){fetch("/api/__debug_js",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({msg:m,url:u,line:l,col:c,stack:e&&e.stack||""})}).catch(function(){})}</script></body>
 </html>

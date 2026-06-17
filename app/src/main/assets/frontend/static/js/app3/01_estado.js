@@ -415,7 +415,7 @@
         /** Carga el catálogo del servidor y actualiza tpvState.productos para todos los roles */
         async function catalogo_cargarDesdeServidor() {
             try {
-                const res = await fetch('/api/catalogo', { credentials: 'same-origin' });
+                const res = await fetch('/api/publico/catalogo', { credentials: 'same-origin' });
                 if (!res.ok) return;
                 const data = await res.json();
                 if (data.ok && Array.isArray(data.productos) && data.productos.length > 0) {
@@ -471,4 +471,4 @@
             } catch(e) { /* offline */ }
         }
 
-        async function _syncStockFromAPI(){try{const r=await fetch("/api/catalogo");const d=await r.json();if(d&&d.productos){d.productos.forEach(ap=>{const p=tpvState.productos.find(p=>p.nombre===ap.nombre);if(p){p.stock=ap.stock||10;p.precio=ap.precio||p.precio;}});}}catch(e){}}
+        async function _syncStockFromAPI(){try{const r=await fetch("/api/publico/catalogo");const d=await r.json();if(d&&d.productos){d.productos.forEach(ap=>{const p=tpvState.productos.find(p=>p.nombre===ap.nombre);if(p){p.stock=ap.stock||10;p.precio=ap.precio||p.precio;}});}}catch(e){}}

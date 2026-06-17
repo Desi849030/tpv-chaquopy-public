@@ -6,7 +6,7 @@
 // ═══ HOTFIX v8.0.1 - Refresh en tiempo real ═══
 async function tpv_refreshFromServer() {
     try {
-        const r = await fetch('/api/catalogo', {credentials:'same-origin'});
+        const r = await fetch('/api/publico/catalogo', {credentials:'same-origin'});
         const d = await r.json();
         if (d.ok && d.productos && d.productos.length) {
             const hoy = new Date().toISOString().split('T')[0];

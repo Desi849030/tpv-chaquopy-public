@@ -1,3 +1,14 @@
+#!/data/data/com.termux/files/usr/bin/bash
+set -euo pipefail
+
+cd ~/tpv-trabajo
+
+ts=$(date +%Y%m%d_%H%M%S)
+mkdir -p .bak_uiux_menu_fix_$ts/templates
+cp app/src/main/assets/frontend/templates/index.html .bak_uiux_menu_fix_$ts/templates/index.html
+
+echo "[1/2] Corrigiendo solape de submenús..."
+cat > app/src/main/assets/frontend/templates/index.html <<'EOF_INDEX'
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -321,11 +332,13 @@
 
             <!-- ═══════════ 🛒 OPERACIÓN ═══════════ -->
             <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="true" href="javascript:void(0)" role="button" aria-expanded="false">
+                <a class="nav-link dropdown-toggle active" data-bs-toggle="dropdown" data-bs-auto-close="true" href="javascript:void(0)" role="button" aria-expanded="false">
                     <i class="bi bi-shop"></i><span>Operación</span>
                 </a>
                 <ul class="dropdown-menu">
-                    <li><h6 class="dropdown-header">Flujo de Caja</h6></li>
+                    <li><h6 class="dropdown-header">Punto de Venta</h6></li>
+                    <li><a class="dropdown-item active" id="tpv-caja-tab" data-bs-toggle="tab" data-bs-target="#tpv-caja-tab-pane" href="javascript:void(0)" role="tab">
+                        <i class="bi bi-grid-3x3-gap-fill text-primary"></i>Vista de Venta</a></li>
                     <li><a class="dropdown-item" id="orden-actual-tab" data-bs-toggle="tab" data-bs-target="#orden-actual-tab-pane" href="javascript:void(0)" role="tab">
                         <i class="bi bi-receipt text-warning"></i>Orden Actual
                         <span id="order-badge" class="badge rounded-pill bg-danger d-none ms-1">0</span></a></li>
@@ -334,6 +347,8 @@
                     <li><a class="dropdown-item" id="tienda-tab" data-bs-toggle="tab" data-bs-target="#tienda-tab-pane" href="javascript:void(0)" role="tab" onclick="tienda_init()">
                         <i class="bi bi-shop-window text-info"></i>Pedidos Online
                         <span id="tienda-pedidos-badge" class="badge rounded-pill bg-warning text-dark d-none ms-1">0</span></a></li>
+                    <li><a class="dropdown-item" id="cliente-qr-tab" data-bs-toggle="tab" data-bs-target="#cliente-qr-tab-pane" href="javascript:void(0)" role="tab">
+                        <i class="bi bi-qr-code text-success"></i>Etiquetas QR Cliente</a></li>
                 </ul>
             </li>
 
@@ -346,16 +361,10 @@
 
             <!-- ═══════════ 📦 CATÁLOGO ═══════════ -->
             <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle active" data-bs-toggle="dropdown" data-bs-auto-close="true" href="javascript:void(0)" role="button" aria-expanded="false">
+                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="true" href="javascript:void(0)" role="button" aria-expanded="false">
                     <i class="bi bi-box-seam"></i>Catálogo
                 </a>
                 <ul class="dropdown-menu">
-                    <li><h6 class="dropdown-header">Vista Comercial</h6></li>
-                    <li><a class="dropdown-item active" id="tpv-caja-tab" data-bs-toggle="tab" data-bs-target="#tpv-caja-tab-pane" href="javascript:void(0)" role="tab">
-                        <i class="bi bi-grid-3x3-gap-fill text-primary"></i>Catálogo de Venta</a></li>
-                    <li><a class="dropdown-item" id="cliente-qr-tab" data-bs-toggle="tab" data-bs-target="#cliente-qr-tab-pane" href="javascript:void(0)" role="tab">
-                        <i class="bi bi-qr-code text-success"></i>Etiquetas QR Cliente</a></li>
-                    <li><hr class="dropdown-divider"></li>
                     <li><h6 class="dropdown-header">Gestión de Productos</h6></li>
                     <li><a class="dropdown-item" id="gestion-productos-tab" data-bs-toggle="tab" data-bs-target="#gestion-productos-tab-pane" href="javascript:void(0)" role="tab">
                         <i class="bi bi-journal-album text-primary"></i>Productos</a></li>
@@ -1434,7 +1443,6 @@
     
     <!-- JavaScript Corregido -->
     <script src="/static/js/tpv_ui_dialogs.js"></script>
-    <script src="/static/js/tpv_anon.js"></script>
     <script src="/static/js/tpv_api.js"></script>
     <!-- app_3.js dividido en módulos por dominio (#4) — orden de carga importa -->
     <script src="/static/js/app3/01_estado.js"></script>
@@ -1450,6 +1458,7 @@
 
 <!-- ================= EXPORTACIÓN UNIFICADA SEGURA ================= -->
 
+<script src="/static/js/app_4.js"></script>
 <!-- =============================================================== -->
 
 
@@ -1459,7 +1468,9 @@
 ══════════════════════════════════════════════════════════════════ -->
 <link rel="stylesheet" href="/static/css/modulo_2.css">
 
+<script src="/static/js/app_5.js"></script>
 
+<script src="/static/js/app_6.js"></script>
 
     <!-- CSS movido al final para no bloquear render -->
 <link rel="stylesheet" href="/static/css/modulo_3.css">
@@ -1468,6 +1479,7 @@
 <!-- ══════════════════════════════════════════════════════════
      DASHBOARD — Gráficos y KPIs
 ══════════════════════════════════════════════════════════ -->
+<script src="/static/js/app_7.js"></script>
 
 <!-- Google Translate + integración bidireccional ES/EN con persistencia offline -->
 <script type="text/javascript">
@@ -1639,6 +1651,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
     <!-- TPV Debugger v6.0 — solo visible para rol desarrollador -->
+    <script src="/static/js/app_8.js"></script>
 
 <script src="/static/js/tpv_chat.js"></script>
 
@@ -1719,3 +1732,10 @@ observer.observe(document.body, {childList: true, subtree: true});
 
 </body>
 </html>
+EOF_INDEX
+
+echo "[2/2] Validando..."
+grep -q 'position: fixed !important' app/src/main/assets/frontend/templates/index.html
+grep -q 'bootstrap.Dropdown.getOrCreateInstance' app/src/main/assets/frontend/templates/index.html
+echo "OK: fix de submenús aplicado."
+echo "Backups en .bak_uiux_menu_fix_$ts"

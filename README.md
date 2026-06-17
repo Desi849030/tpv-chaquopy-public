@@ -78,4 +78,4 @@ nano .env  # añadir SUPABASE_URL y SUPABASE_ANON_KEY
 bash tpv_termux_run.sh
 
 # Abrir en navegador
-# http://127.0.0.1:5000
+# http://127.0.0.1:5050

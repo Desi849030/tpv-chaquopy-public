@@ -46,7 +46,7 @@ else
 fi
 
 # 5) Arrancar el servidor Flask
-PORT="${TPV_PORT:-5050}"
+PORT="${TPV_PORT:-5000}"
 echo ""
 say "Arrancando servidor en ${GREEN}http://127.0.0.1:${PORT}${NC}"
 say "Abre esa dirección en el navegador del móvil (Chrome/Firefox)."

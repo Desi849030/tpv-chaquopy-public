@@ -1,3 +1,13 @@
+#!/data/data/com.termux/files/usr/bin/bash
+set -euo pipefail
+cd ~/tpv-trabajo
+
+ts=$(date +%Y%m%d_%H%M%S)
+mkdir -p .bak_catalogo_menu_fix_$ts/templates
+cp app/src/main/assets/frontend/templates/index.html .bak_catalogo_menu_fix_$ts/templates/index.html
+
+echo "[1/2] Reubicando catálogo visual al menú Catálogo..."
+cat > app/src/main/assets/frontend/templates/index.html <<'EOF_INDEX'
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1450,6 +1460,7 @@
 
 <!-- ================= EXPORTACIÓN UNIFICADA SEGURA ================= -->
 
+<script src="/static/js/app_4.js"></script>
 <!-- =============================================================== -->
 
 
@@ -1459,7 +1470,9 @@
 ══════════════════════════════════════════════════════════════════ -->
 <link rel="stylesheet" href="/static/css/modulo_2.css">
 
+<script src="/static/js/app_5.js"></script>
 
+<script src="/static/js/app_6.js"></script>
 
     <!-- CSS movido al final para no bloquear render -->
 <link rel="stylesheet" href="/static/css/modulo_3.css">
@@ -1468,6 +1481,7 @@
 <!-- ══════════════════════════════════════════════════════════
      DASHBOARD — Gráficos y KPIs
 ══════════════════════════════════════════════════════════ -->
+<script src="/static/js/app_7.js"></script>
 
 <!-- Google Translate + integración bidireccional ES/EN con persistencia offline -->
 <script type="text/javascript">
@@ -1639,6 +1653,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
     <!-- TPV Debugger v6.0 — solo visible para rol desarrollador -->
+    <script src="/static/js/app_8.js"></script>
 
 <script src="/static/js/tpv_chat.js"></script>
 
@@ -1719,3 +1734,10 @@ observer.observe(document.body, {childList: true, subtree: true});
 
 </body>
 </html>
+EOF_INDEX
+
+echo "[2/2] Validando..."
+grep -q 'Catálogo de Venta' app/src/main/assets/frontend/templates/index.html
+grep -q 'Flujo de Caja' app/src/main/assets/frontend/templates/index.html
+echo "OK: catálogo visible desde el menú Catálogo." 
+echo "Backups en .bak_catalogo_menu_fix_$ts"

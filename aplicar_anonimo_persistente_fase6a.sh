@@ -1,3 +1,901 @@
+#!/data/data/com.termux/files/usr/bin/bash
+set -euo pipefail
+
+cd ~/tpv-trabajo
+
+ts=$(date +%Y%m%d_%H%M%S)
+mkdir -p .bak_anonimo_$ts
+
+backup() {
+  [ -f "$1" ] || return 0
+  mkdir -p ".bak_anonimo_$ts/$(dirname "$1")"
+  cp "$1" ".bak_anonimo_$ts/$1"
+}
+
+echo "[1/3] Backups..."
+backup "app/src/main/python/anon_identity.py"
+backup "app/src/main/python/modules/agent_chat_bp.py"
+backup "app/src/main/python/modules/publico_bp.py"
+backup "app/src/main/assets/frontend/static/js/tpv_anon.js"
+backup "app/src/main/assets/frontend/static/js/tpv_chat.js"
+backup "app/src/main/assets/frontend/templates/index.html"
+backup "tests/test_anonimo_persistente.py"
+
+mkdir -p app/src/main/python/modules app/src/main/assets/frontend/static/js tests
+
+echo "[2/3] Aplicando identidad anónima persistente..."
+cat > app/src/main/python/anon_identity.py <<'EOF_app_src_main_python_anon_identity_py'
+# -*- coding: utf-8 -*-
+"""Identidad persistente para cliente anónimo + trazabilidad ligera.
+
+Objetivo:
+- Reconocer al mismo cliente anónimo entre sesiones.
+- No romper clientes ya existentes.
+- Añadir request_id útil para logs/soporte.
+"""
+from __future__ import annotations
+
+import re
+import uuid
+from flask import request, session
+
+ANON_SESSION_KEY = "anon_client_id"
+ANON_HEADER = "X-TPV-ANON-ID"
+REQUEST_ID_HEADER = "X-TPV-REQUEST-ID"
+_SAFE_RE = re.compile(r"^[A-Za-z0-9._:-]{6,80}$")
+
+
+def _sanitize(value: str | None, prefix: str) -> str:
+    raw = str(value or "").strip()
+    if raw and _SAFE_RE.fullmatch(raw):
+        return raw
+    cleaned = re.sub(r"[^A-Za-z0-9._:-]+", "-", raw)[:80].strip("-._:")
+    if len(cleaned) >= 6:
+        return cleaned
+    return f"{prefix}-{uuid.uuid4().hex[:12]}"
+
+
+def ensure_request_id(req=None) -> str:
+    req = req or request
+    rid = req.headers.get(REQUEST_ID_HEADER) or req.args.get("request_id")
+    if not rid and getattr(req, "is_json", False):
+        data = req.get_json(silent=True) or {}
+        rid = data.get("request_id")
+    if rid:
+        return _sanitize(rid, "req")
+    return f"req-{uuid.uuid4().hex[:12]}"
+
+
+def ensure_anon_client_id(req=None, sess=None) -> str:
+    req = req or request
+    sess = sess if sess is not None else session
+
+    incoming = req.headers.get(ANON_HEADER) or req.args.get("anon_client_id")
+    if not incoming and getattr(req, "is_json", False):
+        data = req.get_json(silent=True) or {}
+        incoming = data.get("anon_client_id")
+
+    if incoming:
+        anon_id = _sanitize(incoming, "anon")
+        sess[ANON_SESSION_KEY] = anon_id
+        return anon_id
+
+    current = sess.get(ANON_SESSION_KEY)
+    if current:
+        anon_id = _sanitize(current, "anon")
+        sess[ANON_SESSION_KEY] = anon_id
+        return anon_id
+
+    anon_id = f"anon-{uuid.uuid4().hex[:12]}"
+    sess[ANON_SESSION_KEY] = anon_id
+    return anon_id
+
+
+def identity_payload(req=None, sess=None) -> dict:
+    req = req or request
+    sess = sess if sess is not None else session
+    rid = ensure_request_id(req)
+    usuario = sess.get("usuario")
+
+    if usuario and isinstance(usuario, dict):
+        return {
+            "ok": True,
+            "autenticado": True,
+            "rol": usuario.get("rol", "cliente"),
+            "nombre": usuario.get("nombre") or usuario.get("username", ""),
+            "usuario_id": usuario.get("usuario_id", ""),
+            "anon_client_id": sess.get(ANON_SESSION_KEY, ""),
+            "cliente_tipo": "logueado",
+            "request_id": rid,
+        }
+
+    anon_id = ensure_anon_client_id(req, sess)
+    return {
+        "ok": True,
+        "autenticado": False,
+        "rol": "cliente",
+        "nombre": "Cliente anónimo",
+        "usuario_id": anon_id,
+        "anon_client_id": anon_id,
+        "cliente_tipo": "anonimo",
+        "request_id": rid,
+    }
+
+
+def meta_payload(req=None, sess=None) -> dict:
+    req = req or request
+    sess = sess if sess is not None else session
+    return {
+        "request_id": ensure_request_id(req),
+        "anon_client_id": ensure_anon_client_id(req, sess),
+    }
+EOF_app_src_main_python_anon_identity_py
+
+cat > app/src/main/python/modules/agent_chat_bp.py <<'EOF_app_src_main_python_modules_agent_chat_bp_py'
+# -*- coding: utf-8 -*-
+"""Blueprint: Agente IA chat + status (v8.0 definitivo)."""
+
+from flask import Blueprint, request, jsonify, session
+from datetime import datetime
+
+from anon_identity import ensure_anon_client_id, ensure_request_id, identity_payload
+
+agent_chat_bp = Blueprint('agent_chat', __name__)
+
+_agent = None
+_agent_loaded = False
+try:
+    from ia.agent_master import agent as _agent
+    _agent_loaded = True
+except Exception as e:
+    print(f"⚠️ Agente IA no disponible: {e}")
+
+
+def _saludo_inteligente(rol, name):
+    h = datetime.now().hour
+    t = "Buenos días" if h < 12 else "Buenas tardes" if h < 19 else "Buenas noches"
+    icons = {
+        'vendedor': '🛒',
+        'administrador': '📊',
+        'desarrollador': '💻',
+        'supervisor': '👁️',
+        'cajero': '💵',
+        'cliente': '🛍️',
+    }
+    icon = icons.get(rol, '👋')
+    n = name or rol
+
+    if rol == 'cliente':
+        return f"{t} {icon} ¡Bienvenido a la tienda! Soy tu asistente virtual. Puedo ayudarte a buscar productos, ver precios, ofertas y disponibilidad. ¿Qué necesitas?"
+    elif rol == 'vendedor':
+        return f"{t} {icon} Hola {n}, soy tu copiloto de ventas. Pregúntame por tus ventas de hoy, stock, precios o productos más vendidos."
+    elif rol == 'administrador':
+        return f"{t} {icon} Hola Admin {n}, tengo el negocio bajo control. Pídeme balance, gastos, rendimiento del personal o inventario."
+    elif rol == 'desarrollador':
+        return f"{t} {icon} Root Access concedido {n}. Telemetría del sistema, integridad de BD, logs y métricas de telecomunicaciones listas."
+    elif rol == 'supervisor':
+        return f"{t} {icon} Hola {n}, panel de supervisión activo. Dashboard, análisis ABC, rotación y predicciones."
+    else:
+        return f"{t} {icon} ¡Hola! ¿En qué te ayudo?"
+
+
+@agent_chat_bp.route('/api/agent/chat', methods=['POST'])
+def agent_chat():
+    d = request.get_json(silent=True) or {}
+    msg = str(d.get('mensaje', '')).strip()
+    name_from_req = str(d.get('nombre', '')).strip()
+    request_id = ensure_request_id(request)
+
+    usuario = session.get('usuario')
+    if usuario and isinstance(usuario, dict):
+        rol = usuario.get('rol', 'cliente')
+        name = usuario.get('nombre') or usuario.get('username') or name_from_req
+        usuario_id = usuario.get('usuario_id', '')
+        anon_client_id = session.get('anon_client_id', '')
+        autenticado = True
+    else:
+        rol = 'cliente'
+        anon_client_id = ensure_anon_client_id(request, session)
+        name = name_from_req or 'Cliente anónimo'
+        usuario_id = anon_client_id
+        autenticado = False
+
+    saludos = ['hola', 'buenas', 'hi', 'hey', 'buenos dias', 'buenas tardes', 'buenas noches']
+    if not msg or msg.lower().strip() in saludos:
+        return jsonify({
+            "ok": True,
+            "respuesta": _saludo_inteligente(rol, name),
+            "rol": rol,
+            "intencion": "GREETING",
+            "ui_action": None,
+            "request_id": request_id,
+            "anon_client_id": anon_client_id,
+            "usuario_id": usuario_id,
+            "autenticado": autenticado,
+        })
+
+    try:
+        from ia.catalog import P, O
+        if hasattr(P, 'load'):
+            P.load()
+        if hasattr(O, 'load'):
+            O.load()
+    except Exception:
+        pass
+
+    if _agent_loaded and _agent:
+        try:
+            result = _agent.process(text=msg, role=rol, name=name)
+            tools = [f"{t.get('icon', '')} {t.get('name', '')}" for t in result.get('tools', [])]
+            return jsonify({
+                "ok": True,
+                "respuesta": result.get('response', ''),
+                "rol": rol,
+                "intencion": result.get('intent', ''),
+                "confianza": result.get('confidence', 0.85),
+                "herramientas": tools,
+                "ui_action": result.get('ui_action'),
+                "request_id": request_id,
+                "anon_client_id": anon_client_id,
+                "usuario_id": usuario_id,
+                "autenticado": autenticado,
+            })
+        except Exception as e:
+            print(f"Agent error: {e}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({
+                "ok": True,
+                "respuesta": _saludo_inteligente(rol, name),
+                "rol": rol,
+                "ui_action": None,
+                "request_id": request_id,
+                "anon_client_id": anon_client_id,
+                "usuario_id": usuario_id,
+                "autenticado": autenticado,
+            })
+
+    return jsonify({
+        "ok": True,
+        "respuesta": _saludo_inteligente(rol, name) + " (Motor IA no disponible, modo catálogo)",
+        "rol": rol,
+        "ui_action": None,
+        "request_id": request_id,
+        "anon_client_id": anon_client_id,
+        "usuario_id": usuario_id,
+        "autenticado": autenticado,
+    })
+
+
+@agent_chat_bp.route('/api/agent/status')
+def agent_status():
+    status = {"ok": True, "agent": "fallback", "version": "8.0", "request_id": ensure_request_id(request)}
+    if _agent_loaded and _agent:
+        try:
+            status["agent"] = "active"
+            status["details"] = _agent.get_status()
+        except Exception:
+            status["agent"] = "active"
+    return jsonify(status)
+
+
+@agent_chat_bp.route('/api/agent/identity')
+def agent_identity():
+    """El frontend llama esto al cargar la página para saber quién es el usuario."""
+    return jsonify(identity_payload(request, session))
+
+
+def is_agent_loaded():
+    return _agent_loaded
+EOF_app_src_main_python_modules_agent_chat_bp_py
+
+cat > app/src/main/python/modules/publico_bp.py <<'EOF_app_src_main_python_modules_publico_bp_py'
+# -*- coding: utf-8 -*-
+"""publico_bp.py v8.9 - Endpoints públicos + identidad anónima persistente."""
+
+from flask import Blueprint, jsonify, request, session
+
+from anon_identity import identity_payload, meta_payload
+
+publico_bp = Blueprint('publico', __name__)
+
+
+def _get_db():
+    from db_connection import obtener_conexion
+    return obtener_conexion()
+
+
+def _ok(payload: dict, status: int = 200):
+    payload = dict(payload or {})
+    payload.setdefault("ok", True)
+    payload.setdefault("meta", meta_payload(request, session))
+    return jsonify(payload), status
+
+
+def _err(error: str, extra=None, status: int = 200):
+    payload = {"ok": False, "error": error, "meta": meta_payload(request, session)}
+    if extra:
+        payload.update(extra)
+    return jsonify(payload), status
+
+
+@publico_bp.route('/api/publico/identity', methods=['GET'])
+def api_publico_identity():
+    """Devuelve identidad persistente del visitante anónimo o usuario actual."""
+    return jsonify(identity_payload(request, session))
+
+
+@publico_bp.route('/api/publico/catalogo', methods=['GET'])
+def api_publico_catalogo():
+    """Catálogo público de productos activos."""
+    try:
+        conn = _get_db()
+        rows = conn.execute(
+            """
+            SELECT p.producto_id as id, p.nombre, p.precio, p.categoria,
+                   p.unidad_medida as unidad,
+                   COALESCE(p.imagen, '') as imagen,
+                   COALESCE(p.en_oferta, 0) as oferta,
+                   COALESCE(i.stock_actual, 0) as stock_total
+            FROM productos p
+            LEFT JOIN inventario_general i ON i.producto_id = p.producto_id
+            WHERE COALESCE(p.activo, 1) = 1
+            ORDER BY p.nombre
+            LIMIT 200
+            """
+        ).fetchall()
+        conn.close()
+        return _ok({"total": len(rows), "productos": [dict(r) for r in rows]})
+    except Exception as e:
+        return _err(str(e), {"productos": []})
+
+
+@publico_bp.route('/api/publico/buscar', methods=['GET'])
+def api_publico_buscar():
+    """Busca productos por nombre/categoría. Ej: ?q=cafe."""
+    q = (request.args.get('q', '') or '').strip()
+    if not q or len(q) < 2:
+        return _err("Consulta muy corta", {"productos": []})
+    try:
+        conn = _get_db()
+        like = "%" + q + "%"
+        rows = conn.execute(
+            """
+            SELECT p.producto_id as id, p.nombre, p.precio, p.categoria,
+                   p.unidad_medida as unidad,
+                   COALESCE(p.en_oferta, 0) as oferta,
+                   COALESCE(i.stock_actual, 0) as stock_total
+            FROM productos p
+            LEFT JOIN inventario_general i ON i.producto_id = p.producto_id
+            WHERE COALESCE(p.activo, 1) = 1
+              AND (LOWER(p.nombre) LIKE LOWER(?) OR LOWER(p.categoria) LIKE LOWER(?))
+            ORDER BY
+              CASE WHEN LOWER(p.nombre) = LOWER(?) THEN 0
+                   WHEN LOWER(p.nombre) LIKE LOWER(?) THEN 1
+                   ELSE 2 END,
+              p.nombre
+            LIMIT 20
+            """,
+            (like, like, q, q + "%"),
+        ).fetchall()
+        conn.close()
+        return _ok({"consulta": q, "total": len(rows), "productos": [dict(r) for r in rows]})
+    except Exception as e:
+        return _err(str(e), {"productos": []})
+
+
+@publico_bp.route('/api/publico/ofertas', methods=['GET'])
+def api_publico_ofertas():
+    """Productos en oferta."""
+    try:
+        conn = _get_db()
+        rows = conn.execute(
+            """
+            SELECT p.producto_id as id, p.nombre, p.precio, p.categoria,
+                   p.unidad_medida as unidad,
+                   COALESCE(i.stock_actual, 0) as stock_total
+            FROM productos p
+            LEFT JOIN inventario_general i ON i.producto_id = p.producto_id
+            WHERE COALESCE(p.activo, 1) = 1 AND COALESCE(p.en_oferta, 0) = 1
+            ORDER BY p.precio
+            LIMIT 30
+            """
+        ).fetchall()
+        conn.close()
+        return _ok({"total": len(rows), "ofertas": [dict(r) for r in rows]})
+    except Exception as e:
+        return _err(str(e), {"ofertas": []})
+
+
+@publico_bp.route('/api/publico/producto/<producto_id>', methods=['GET'])
+def api_publico_producto_detalle(producto_id):
+    """Detalle de un producto + stock disponible."""
+    try:
+        conn = _get_db()
+        producto = conn.execute(
+            "SELECT producto_id as id, nombre, precio, categoria, "
+            "unidad_medida as unidad, COALESCE(imagen,'') as imagen, "
+            "COALESCE(en_oferta, 0) as oferta "
+            "FROM productos WHERE producto_id = ? AND COALESCE(activo,1)=1",
+            (producto_id,),
+        ).fetchone()
+        if not producto:
+            conn.close()
+            return _err("Producto no encontrado", status=404)
+
+        inv = conn.execute(
+            "SELECT stock_actual, stock_minimo FROM inventario_general WHERE producto_id = ?",
+            (producto_id,),
+        ).fetchone()
+        stock = int(inv['stock_actual']) if inv else 0
+        conn.close()
+
+        return _ok({
+            "producto": dict(producto),
+            "stock_disponible": stock,
+            "disponible": stock > 0,
+        })
+    except Exception as e:
+        return _err(str(e))
+
+
+@publico_bp.route('/api/publico/categorias', methods=['GET'])
+def api_publico_categorias():
+    """Lista de categorías con conteo."""
+    try:
+        conn = _get_db()
+        rows = conn.execute(
+            """
+            SELECT categoria, COUNT(*) as total
+            FROM productos
+            WHERE COALESCE(activo, 1) = 1 AND categoria IS NOT NULL
+              AND categoria != ''
+            GROUP BY categoria
+            ORDER BY total DESC
+            """
+        ).fetchall()
+        conn.close()
+        return _ok({"total": len(rows), "categorias": [dict(r) for r in rows]})
+    except Exception as e:
+        return _err(str(e), {"categorias": []})
+
+
+@publico_bp.route('/api/publico/categoria/<nombre>', methods=['GET'])
+def api_publico_categoria(nombre):
+    """Productos de una categoría específica."""
+    try:
+        conn = _get_db()
+        rows = conn.execute(
+            """
+            SELECT p.producto_id as id, p.nombre, p.precio,
+                   p.unidad_medida as unidad,
+                   COALESCE(p.en_oferta, 0) as oferta,
+                   COALESCE(i.stock_actual, 0) as stock_total
+            FROM productos p
+            LEFT JOIN inventario_general i ON i.producto_id = p.producto_id
+            WHERE COALESCE(p.activo, 1) = 1
+              AND LOWER(p.categoria) = LOWER(?)
+            ORDER BY p.nombre
+            """,
+            (nombre,),
+        ).fetchall()
+        conn.close()
+        return _ok({"categoria": nombre, "total": len(rows), "productos": [dict(r) for r in rows]})
+    except Exception as e:
+        return _err(str(e), {"productos": []})
+
+
+@publico_bp.route('/api/publico/tiendas-info', methods=['GET'])
+def api_publico_tiendas_info():
+    """Info pública (al no haber tabla tiendas, devuelve info estática)."""
+    return _ok({
+        "total": 1,
+        "tiendas": [{
+            "nombre": "Tienda Principal",
+            "direccion": "Consulta horarios y dirección con el personal",
+            "horario": "08:00 - 20:00",
+            "telefono": "",
+        }],
+    })
+EOF_app_src_main_python_modules_publico_bp_py
+
+cat > app/src/main/assets/frontend/static/js/tpv_anon.js <<'EOF_app_src_main_assets_frontend_static_js_tpv_anon_js'
+/* tpv_anon.js v6a - identidad persistente para cliente anónimo */
+(function () {
+  'use strict';
+  if (window.TPVAnon) return;
+
+  var KEY = 'tpv_anon_client_id';
+  var COOKIE = 'tpv_anon_client_id';
+
+  function _sanitize(v) {
+    var raw = String(v || '').trim();
+    raw = raw.replace(/[^A-Za-z0-9._:-]+/g, '-').slice(0, 80).replace(/^[-._:]+|[-._:]+$/g, '');
+    return raw && raw.length >= 6 ? raw : '';
+  }
+
+  function _generate() {
+    return 'anon-web-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+  }
+
+  function _persist(id) {
+    try { localStorage.setItem(KEY, id); } catch (e) {}
+    try { document.cookie = COOKIE + '=' + encodeURIComponent(id) + '; path=/; SameSite=Lax'; } catch (e) {}
+    return id;
+  }
+
+  function getId() {
+    try {
+      var saved = _sanitize(localStorage.getItem(KEY));
+      if (saved) return _persist(saved);
+    } catch (e) {}
+    var created = _generate();
+    return _persist(created);
+  }
+
+  function requestId(scope) {
+    return 'req-' + (scope || 'web') + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+  }
+
+  function isSameOriginUrl(input) {
+    try {
+      var url = (typeof input === 'string') ? input : (input && input.url ? input.url : String(input || ''));
+      var u = new URL(url, window.location.origin);
+      return u.origin === window.location.origin;
+    } catch (e) {
+      return true;
+    }
+  }
+
+  function patchFetch() {
+    if (window.__tpvAnonFetchPatched || typeof window.fetch !== 'function') return;
+    var originalFetch = window.fetch.bind(window);
+    window.fetch = function (input, init) {
+      if (!isSameOriginUrl(input)) {
+        return originalFetch(input, init);
+      }
+      var options = init ? Object.assign({}, init) : {};
+      var baseHeaders = (input instanceof Request) ? input.headers : undefined;
+      var headers = new Headers(options.headers || baseHeaders || {});
+      if (!headers.get('X-TPV-ANON-ID')) headers.set('X-TPV-ANON-ID', getId());
+      if (!headers.get('X-TPV-REQUEST-ID')) headers.set('X-TPV-REQUEST-ID', requestId('web'));
+      options.headers = headers;
+      if (options.credentials === undefined) options.credentials = 'same-origin';
+      if (input instanceof Request) {
+        return originalFetch(new Request(input, options));
+      }
+      return originalFetch(input, options);
+    };
+    window.__tpvAnonFetchPatched = true;
+  }
+
+  window.TPVAnon = {
+    getId: getId,
+    ensure: getId,
+    requestId: requestId,
+  };
+
+  _persist(getId());
+  patchFetch();
+})();
+EOF_app_src_main_assets_frontend_static_js_tpv_anon_js
+
+cat > app/src/main/assets/frontend/static/js/tpv_chat.js <<'EOF_app_src_main_assets_frontend_static_js_tpv_chat_js'
+/* tpv_chat.js v8.7-universal - Reset atomico por usuario */
+
+async function _syncChatIdentity() {
+    try {
+        const r = await fetch('/api/agent/identity', {credentials: 'same-origin', cache: 'no-store'});
+        const d = await r.json();
+        if (d.ok) {
+            const prevUserId = window.TPV_USER_ID;
+            window.TPV_ROL = d.rol;
+            window.TPV_USER = d.nombre;
+            window.TPV_USER_ID = d.usuario_id;
+            window.TPV_ANON_ID = d.anon_client_id || null;
+            window.TPV_AUTH = d.autenticado;
+            if (prevUserId && prevUserId !== d.usuario_id) {
+                console.log('[Chat] Cambio de usuario:', prevUserId, '->', d.usuario_id);
+                if (window.tpvChat && typeof window.tpvChat.resetParaNuevoUsuario === 'function') {
+                    window.tpvChat.resetParaNuevoUsuario();
+                }
+            }
+        } else {
+            window.TPV_ROL = null; window.TPV_USER = null;
+            window.TPV_USER_ID = null; window.TPV_ANON_ID = null; window.TPV_AUTH = false;
+            if (window.tpvChat && typeof window.tpvChat.resetParaNuevoUsuario === 'function') {
+                window.tpvChat.resetParaNuevoUsuario();
+            }
+        }
+    } catch(e) { console.warn('[Chat] Sync error:', e); }
+}
+
+document.addEventListener('DOMContentLoaded', _syncChatIdentity);
+window.addEventListener('tpv_role_changed', _syncChatIdentity);
+
+(function () {
+  'use strict';
+  if (document.getElementById('chat-tpv')) return;
+
+  function _usuario() {
+    var u = (window.AUTH && AUTH.usuario) ? AUTH.usuario : null;
+    if (!u && window.tpvState && tpvState.usuarioActual) u = tpvState.usuarioActual;
+    if (!u && window.TPV_USER_ID) {
+        u = {usuario_id: window.TPV_USER_ID, nombre: window.TPV_USER, rol: window.TPV_ROL};
+    }
+    return u || {};
+  }
+  function _rol() { return (_usuario().rol || 'cliente'); }
+  function _nombre() {
+    var u = _usuario();
+    return (u.nombre || u.username || '').split(' ')[0] || 'usuario';
+  }
+  function _userId() {
+    return _usuario().usuario_id || _usuario().id || (window.TPVAnon && typeof window.TPVAnon.getId === 'function' ? window.TPVAnon.getId() : 'anon');
+  }
+  function _chatKey() { return 'chat_history_' + _userId(); }
+  function _rolLabel(r) {
+    return ({desarrollador:'Desarrollador',administrador:'Administrador',supervisor:'Supervisor',vendedor:'Vendedor',cajero:'Cajero',cliente:'Cliente'})[r] || r;
+  }
+  function _rolIcon(r) {
+    return ({desarrollador:'💻',administrador:'👔',supervisor:'👁️',vendedor:'🛒',cajero:'💵',cliente:'🛒'})[r] || '👤';
+  }
+  function _sugerencias() {
+    var r = _rol();
+    if (r === 'cliente') return [['¿Qué productos tienen?','Catálogo'],['¿Hay ofertas?','Ofertas'],['¿En qué tienda hay café?','Tiendas'],['Categorías','Categorías']];
+    if (r === 'vendedor' || r === 'cajero') return [['¿Cuánto vendí hoy?','Mis ventas'],['Stock bajo','Stock']];
+    if (r === 'supervisor') return [['Dashboard de hoy','Dashboard'],['Stock crítico','Stock']];
+    if (r === 'administrador') return [['Balance del día','Balance'],['Gastos','Gastos']];
+    if (r === 'desarrollador') return [['Estado del sistema','Sistema'],['Logs','Logs']];
+    return [['Ayuda','Ayuda']];
+  }
+
+  var css = document.createElement('style');
+  css.textContent =
+    '#chat-tpv{position:fixed;z-index:9999;font-family:Poppins,sans-serif}' +
+    '#chat-btn{width:56px;height:56px;border-radius:50%;border:none;color:#fff;cursor:grab;background:linear-gradient(135deg,#4f46e5,#06b6d4);box-shadow:0 8px 24px rgba(79,70,229,.5);font-size:1.4rem;display:flex;align-items:center;justify-content:center;touch-action:none}' +
+    '#chat-btn:active{cursor:grabbing;transform:scale(.94)}' +
+    '#chat-box{position:absolute;bottom:66px;right:0;width:320px;max-width:88vw;border-radius:16px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.45);border:1px solid #2b3542;display:none}' +
+    '#chat-head{background:linear-gradient(135deg,#4f46e5,#6366f1);padding:10px 14px;color:#fff;display:flex;align-items:center;gap:8px}' +
+    '#chat-msgs{height:280px;overflow-y:auto;padding:10px;background:#0f141b;font-size:.8rem;display:flex;flex-direction:column;gap:8px}' +
+    '.chat-b{padding:8px 11px;border-radius:12px;max-width:85%;line-height:1.4;word-wrap:break-word}' +
+    '.chat-u{align-self:flex-end;background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;border-bottom-right-radius:4px}' +
+    '.chat-a{align-self:flex-start;background:#1a212b;color:#e8edf4;border-bottom-left-radius:4px;border:1px solid #2b3542}' +
+    '.chat-typing{align-self:flex-start;color:#94a3b8;font-style:italic;font-size:.75rem}' +
+    '#chat-sug{display:flex;gap:5px;flex-wrap:wrap;padding:8px;background:#141b24;border-top:1px solid #2b3542}' +
+    '#chat-sug button{background:#222b37;border:1px solid #2b3542;color:#cbd5e1;padding:4px 10px;border-radius:14px;cursor:pointer;font-size:.68rem}' +
+    '#chat-sug button:hover{background:#4f46e5;color:#fff}' +
+    '#chat-foot{padding:8px;display:flex;gap:6px;background:#141b24;border-top:1px solid #2b3542}' +
+    '#chat-inp{flex:1;padding:8px 12px;background:#0f141b;border:1px solid #2b3542;border-radius:18px;color:#fff;font-size:.78rem;outline:none}' +
+    '#chat-inp:focus{border-color:#4f46e5}' +
+    '#chat-send{background:linear-gradient(135deg,#4f46e5,#6366f1);border:none;color:#fff;padding:0 14px;border-radius:18px;cursor:pointer;font-weight:600;font-size:.75rem}';
+  document.head.appendChild(css);
+
+  var box =
+    '<div id="chat-box">' +
+      '<div id="chat-head"><span id="chat-head-ic">💬</span>' +
+        '<div style="flex:1;line-height:1.1"><div style="font-weight:700;font-size:.85rem">Asistente TPV</div>' +
+        '<div id="chat-head-sub" style="font-size:.66rem;opacity:.85"></div></div>' +
+        '<button onclick="window.tpvChat.toggle()" style="background:none;border:none;color:#fff;cursor:pointer;font-size:1.1rem">✕</button>' +
+      '</div>' +
+      '<div id="chat-msgs"></div>' +
+      '<div id="chat-sug"></div>' +
+      '<div id="chat-foot">' +
+        '<input id="chat-inp" placeholder="Escribe tu pregunta..." onkeypress="if(event.key===\'Enter\')window.tpvChat.send()">' +
+        '<button id="chat-send" onclick="window.tpvChat.send()">Enviar</button>' +
+      '</div>' +
+    '</div>' +
+    '<button id="chat-btn" title="Asistente IA">💬</button>';
+
+  var wrap = document.createElement('div');
+  wrap.id = 'chat-tpv';
+  wrap.innerHTML = box;
+  document.body.appendChild(wrap);
+
+  try {
+    var pos = JSON.parse(localStorage.getItem('tpv_chat_pos') || 'null');
+    if (pos && pos.left != null) { wrap.style.left = pos.left + 'px'; wrap.style.top = pos.top + 'px'; wrap.style.right = 'auto'; wrap.style.bottom = 'auto'; }
+    else { wrap.style.right = '16px'; wrap.style.bottom = '16px'; }
+  } catch (e) { wrap.style.right = '16px'; wrap.style.bottom = '16px'; }
+
+  var msgsEl = document.getElementById('chat-msgs');
+
+  function burbuja(texto, quien) {
+    var d = document.createElement('div');
+    d.className = 'chat-b ' + (quien === 'u' ? 'chat-u' : 'chat-a');
+    d.textContent = texto;
+    msgsEl.appendChild(d);
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+    _guardarHistorial();
+    return d;
+  }
+
+  function _guardarHistorial() {
+    try {
+      var key = _chatKey();
+      if (!key) return;
+      var historial = [];
+      msgsEl.querySelectorAll('.chat-b').forEach(function(b) {
+        historial.push({texto: b.textContent, quien: b.classList.contains('chat-u') ? 'u' : 'a'});
+      });
+      localStorage.setItem(key, JSON.stringify(historial.slice(-50)));
+    } catch(e) {}
+  }
+
+  function _cargarHistorial() {
+    try {
+      var key = _chatKey();
+      if (!key) return;
+      var historial = JSON.parse(localStorage.getItem(key) || '[]');
+      historial.forEach(function(m) {
+        var d = document.createElement('div');
+        d.className = 'chat-b ' + (m.quien === 'u' ? 'chat-u' : 'chat-a');
+        d.textContent = m.texto;
+        msgsEl.appendChild(d);
+      });
+      msgsEl.scrollTop = msgsEl.scrollHeight;
+    } catch(e) {}
+  }
+
+  function pintarSugerencias() {
+    var cont = document.getElementById('chat-sug');
+    cont.innerHTML = '';
+    _sugerencias().forEach(function (s) {
+      var b = document.createElement('button');
+      b.textContent = s[1];
+      b.onclick = function () { document.getElementById('chat-inp').value = s[0]; api.send(); };
+      cont.appendChild(b);
+    });
+  }
+
+  function saludar() {
+    if (window._tpvChatSaludado) return;
+    window._tpvChatSaludado = true;
+    var r = _rol();
+    document.getElementById('chat-head-ic').textContent = _rolIcon(r);
+    document.getElementById('chat-head-sub').textContent = _nombre() + ' · ' + _rolLabel(r);
+    var hora = new Date().getHours();
+    var saludo = hora < 12 ? 'Buenos días' : (hora < 19 ? 'Buenas tardes' : 'Buenas noches');
+    if (r === 'cliente' && !window.AUTH?.usuario) {
+        burbuja(saludo + ' 🛍️. Soy tu asistente. Puedo ayudarte a buscar productos, ver precios, ofertas y en qué tienda hay lo que necesitas. ¿Qué te ayudo a encontrar?', 'a');
+    } else {
+        burbuja(saludo + ' ' + _nombre() + ' ' + _rolIcon(r) + '. ¿En qué puedo ayudarte?', 'a');
+    }
+    console.log('[Chat] Saludo emitido para rol:', r, 'usuario:', _nombre());
+    pintarSugerencias();
+  }
+
+  var api = {
+    resetParaNuevoUsuario: function() {
+      console.log('[Chat] Reset atomico');
+      window._tpvChatSaludado = false;
+      window._tpvChatInteract = false;
+      msgsEl.innerHTML = '';
+      var sug = document.getElementById('chat-sug');
+      if (sug) sug.innerHTML = '';
+      var sub = document.getElementById('chat-head-sub');
+      if (sub) sub.textContent = '';
+      var b = document.getElementById('chat-box');
+      if (b) b.style.display = 'none';
+      _cargarHistorial();
+    },
+    toggle: function () {
+      var b = document.getElementById('chat-box');
+      var abrir = b.style.display === 'none' || !b.style.display;
+      b.style.display = abrir ? 'block' : 'none';
+      if (abrir) {
+        _syncChatIdentity().then(function() {
+          saludar();
+          document.getElementById('chat-inp').focus();
+        });
+      }
+    },
+    send: async function () {
+      var inp = document.getElementById('chat-inp');
+      var msg = (inp.value || '').trim();
+      if (!msg) return;
+      window._tpvChatInteract = true;
+      await _syncChatIdentity();
+      burbuja(msg, 'u');
+      inp.value = '';
+      var typing = document.createElement('div');
+      typing.className = 'chat-typing';
+      typing.textContent = 'Asistente escribiendo…';
+      msgsEl.appendChild(typing);
+      msgsEl.scrollTop = msgsEl.scrollHeight;
+      try {
+        var res = await fetch('/api/agent/chat', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            mensaje: msg,
+            nombre: _nombre(),
+            anon_client_id: window.TPVAnon && typeof window.TPVAnon.getId === 'function' ? window.TPVAnon.getId() : undefined,
+            request_id: window.TPVAnon && typeof window.TPVAnon.requestId === 'function' ? window.TPVAnon.requestId('chat') : undefined
+          })
+        });
+        var data = await res.json();
+        typing.remove();
+        var r = data.respuesta;
+        if (r && typeof r === 'object') r = r.response || r.answer || JSON.stringify(r);
+        r = r || data.answer || data.response || 'No tengo respuesta.';
+        burbuja(r, 'a');
+      } catch (e) {
+        typing.remove();
+        burbuja('⚠️ Error de conexion.', 'a');
+      }
+    }
+  };
+  window.tpvChat = api;
+  window.toggleChat = api.toggle;
+  window.sendMsg = api.send;
+
+  (function () {
+    var btn = document.getElementById('chat-btn');
+    var dragging = false, moved = false, sx, sy, ox, oy;
+    var _lastToggle = 0;
+    function _toggleSafe() {
+      var now = Date.now();
+      if (now - _lastToggle < 350) return;
+      _lastToggle = now;
+      api.toggle();
+    }
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (!moved) _toggleSafe();
+      moved = false;
+    });
+    function start(x, y) {
+      dragging = true; moved = false;
+      var rect = wrap.getBoundingClientRect();
+      ox = rect.left; oy = rect.top; sx = x; sy = y;
+    }
+    function move(x, y) {
+      if (!dragging) return;
+      var dx = x - sx, dy = y - sy;
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moved = true;
+      // Permitir mover por toda la pantalla con margen minimo
+      var btnSize = 56;
+      var nl = Math.min(Math.max(4, ox + dx), window.innerWidth - btnSize - 4);
+      var nt = Math.min(Math.max(4, oy + dy), window.innerHeight - btnSize - 4);
+      wrap.style.left = nl + 'px'; wrap.style.top = nt + 'px';
+      wrap.style.right = 'auto'; wrap.style.bottom = 'auto';
+    }
+    function end() {
+      if (!dragging) return;
+      dragging = false;
+      if (moved) {
+        var rect = wrap.getBoundingClientRect();
+        // Snap al borde mas cercano (izq o der) para no tapar contenido
+        var midX = window.innerWidth / 2;
+        var snapLeft = rect.left < midX ? 8 : (window.innerWidth - 60);
+        wrap.style.left = snapLeft + 'px';
+        wrap.style.right = 'auto';
+        wrap.style.transition = 'left 0.2s ease';
+        setTimeout(function() { wrap.style.transition = ''; }, 250);
+        try {
+            localStorage.setItem('tpv_chat_pos', JSON.stringify({left: snapLeft, top: rect.top}));
+        } catch (e) {}
+      }
+    }
+    btn.addEventListener('mousedown', function (e) { start(e.clientX, e.clientY); });
+    window.addEventListener('mousemove', function (e) { move(e.clientX, e.clientY); });
+    window.addEventListener('mouseup', end);
+    btn.addEventListener('touchstart', function (e) { var t = e.touches[0]; start(t.clientX, t.clientY); }, {passive: true});
+    window.addEventListener('touchmove', function (e) { if (dragging && moved) { var t = e.touches[0]; move(t.clientX, t.clientY); e.preventDefault(); } }, {passive: false});
+    window.addEventListener('touchend', function () {
+      var wasDragging = dragging;
+      end();
+      if (wasDragging && !moved) _toggleSafe();
+      moved = false;
+    });
+  })();
+
+  setTimeout(_cargarHistorial, 500);
+})();
+EOF_app_src_main_assets_frontend_static_js_tpv_chat_js
+
+cat > app/src/main/assets/frontend/templates/index.html <<'EOF_app_src_main_assets_frontend_templates_index_html'
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -321,11 +1219,13 @@
 
             <!-- ═══════════ 🛒 OPERACIÓN ═══════════ -->
             <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="true" href="javascript:void(0)" role="button" aria-expanded="false">
+                <a class="nav-link dropdown-toggle active" data-bs-toggle="dropdown" data-bs-auto-close="true" href="javascript:void(0)" role="button" aria-expanded="false">
                     <i class="bi bi-shop"></i><span>Operación</span>
                 </a>
                 <ul class="dropdown-menu">
-                    <li><h6 class="dropdown-header">Flujo de Caja</h6></li>
+                    <li><h6 class="dropdown-header">Punto de Venta</h6></li>
+                    <li><a class="dropdown-item active" id="tpv-caja-tab" data-bs-toggle="tab" data-bs-target="#tpv-caja-tab-pane" href="javascript:void(0)" role="tab">
+                        <i class="bi bi-grid-3x3-gap-fill text-primary"></i>Vista de Venta</a></li>
                     <li><a class="dropdown-item" id="orden-actual-tab" data-bs-toggle="tab" data-bs-target="#orden-actual-tab-pane" href="javascript:void(0)" role="tab">
                         <i class="bi bi-receipt text-warning"></i>Orden Actual
                         <span id="order-badge" class="badge rounded-pill bg-danger d-none ms-1">0</span></a></li>
@@ -334,6 +1234,8 @@
                     <li><a class="dropdown-item" id="tienda-tab" data-bs-toggle="tab" data-bs-target="#tienda-tab-pane" href="javascript:void(0)" role="tab" onclick="tienda_init()">
                         <i class="bi bi-shop-window text-info"></i>Pedidos Online
                         <span id="tienda-pedidos-badge" class="badge rounded-pill bg-warning text-dark d-none ms-1">0</span></a></li>
+                    <li><a class="dropdown-item" id="cliente-qr-tab" data-bs-toggle="tab" data-bs-target="#cliente-qr-tab-pane" href="javascript:void(0)" role="tab">
+                        <i class="bi bi-qr-code text-success"></i>Etiquetas QR Cliente</a></li>
                 </ul>
             </li>
 
@@ -346,16 +1248,10 @@
 
             <!-- ═══════════ 📦 CATÁLOGO ═══════════ -->
             <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle active" data-bs-toggle="dropdown" data-bs-auto-close="true" href="javascript:void(0)" role="button" aria-expanded="false">
+                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="true" href="javascript:void(0)" role="button" aria-expanded="false">
                     <i class="bi bi-box-seam"></i>Catálogo
                 </a>
                 <ul class="dropdown-menu">
-                    <li><h6 class="dropdown-header">Vista Comercial</h6></li>
-                    <li><a class="dropdown-item active" id="tpv-caja-tab" data-bs-toggle="tab" data-bs-target="#tpv-caja-tab-pane" href="javascript:void(0)" role="tab">
-                        <i class="bi bi-grid-3x3-gap-fill text-primary"></i>Catálogo de Venta</a></li>
-                    <li><a class="dropdown-item" id="cliente-qr-tab" data-bs-toggle="tab" data-bs-target="#cliente-qr-tab-pane" href="javascript:void(0)" role="tab">
-                        <i class="bi bi-qr-code text-success"></i>Etiquetas QR Cliente</a></li>
-                    <li><hr class="dropdown-divider"></li>
                     <li><h6 class="dropdown-header">Gestión de Productos</h6></li>
                     <li><a class="dropdown-item" id="gestion-productos-tab" data-bs-toggle="tab" data-bs-target="#gestion-productos-tab-pane" href="javascript:void(0)" role="tab">
                         <i class="bi bi-journal-album text-primary"></i>Productos</a></li>
@@ -1450,6 +2346,7 @@
 
 <!-- ================= EXPORTACIÓN UNIFICADA SEGURA ================= -->
 
+<script src="/static/js/app_4.js"></script>
 <!-- =============================================================== -->
 
 
@@ -1459,7 +2356,9 @@
 ══════════════════════════════════════════════════════════════════ -->
 <link rel="stylesheet" href="/static/css/modulo_2.css">
 
+<script src="/static/js/app_5.js"></script>
 
+<script src="/static/js/app_6.js"></script>
 
     <!-- CSS movido al final para no bloquear render -->
 <link rel="stylesheet" href="/static/css/modulo_3.css">
@@ -1468,6 +2367,7 @@
 <!-- ══════════════════════════════════════════════════════════
      DASHBOARD — Gráficos y KPIs
 ══════════════════════════════════════════════════════════ -->
+<script src="/static/js/app_7.js"></script>
 
 <!-- Google Translate + integración bidireccional ES/EN con persistencia offline -->
 <script type="text/javascript">
@@ -1639,6 +2539,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
     <!-- TPV Debugger v6.0 — solo visible para rol desarrollador -->
+    <script src="/static/js/app_8.js"></script>
 
 <script src="/static/js/tpv_chat.js"></script>
 
@@ -1719,3 +2620,80 @@ observer.observe(document.body, {childList: true, subtree: true});
 
 </body>
 </html>
+EOF_app_src_main_assets_frontend_templates_index_html
+
+cat > tests/test_anonimo_persistente.py <<'EOF_tests_test_anonimo_persistente_py'
+"""Tests: identidad persistente para cliente anónimo."""
+import os
+import sys
+
+os.environ["TPV_TESTING"] = "1"
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'app', 'src', 'main', 'python'))
+
+
+class TestAnonimoPersistente:
+    def test_agent_identity_persiste_en_mismo_cliente_anon(self, client_anon):
+        r1 = client_anon.get('/api/agent/identity')
+        assert r1.status_code == 200
+        d1 = r1.get_json()
+        assert d1['ok'] is True
+        assert d1['autenticado'] is False
+        assert d1['cliente_tipo'] == 'anonimo'
+        assert d1['anon_client_id'].startswith('anon-')
+        assert d1['usuario_id'] == d1['anon_client_id']
+        assert d1['request_id'].startswith('req-')
+
+        r2 = client_anon.get('/api/agent/identity')
+        assert r2.status_code == 200
+        d2 = r2.get_json()
+        assert d2['anon_client_id'] == d1['anon_client_id']
+        assert d2['usuario_id'] == d1['usuario_id']
+        assert d2['request_id'] != d1['request_id']
+
+    def test_publico_identity_reutiliza_mismo_anon_id(self, client_anon):
+        r1 = client_anon.get('/api/agent/identity')
+        anon_id = r1.get_json()['anon_client_id']
+
+        r2 = client_anon.get('/api/publico/identity')
+        assert r2.status_code == 200
+        d2 = r2.get_json()
+        assert d2['ok'] is True
+        assert d2['anon_client_id'] == anon_id
+        assert d2['cliente_tipo'] == 'anonimo'
+
+    def test_chat_anonimo_acepta_id_y_request_id(self, client_anon):
+        payload = {
+            'mensaje': 'hola',
+            'nombre': 'Visitante',
+            'anon_client_id': 'anon-front-001xyz',
+            'request_id': 'req-front-001xyz',
+        }
+        r = client_anon.post('/api/agent/chat', json=payload)
+        assert r.status_code == 200
+        d = r.get_json()
+        assert d['ok'] is True
+        assert d['anon_client_id'] == 'anon-front-001xyz'
+        assert d['request_id'] == 'req-front-001xyz'
+        assert d['autenticado'] is False
+
+    def test_publico_catalogo_incluye_meta_anonima(self, client_anon):
+        r = client_anon.get('/api/publico/catalogo')
+        assert r.status_code == 200
+        d = r.get_json()
+        assert d['ok'] is True
+        assert 'meta' in d
+        assert d['meta']['anon_client_id'].startswith('anon-')
+        assert d['meta']['request_id'].startswith('req-')
+EOF_tests_test_anonimo_persistente_py
+
+echo "[3/3] Validando..."
+python -m py_compile \
+  app/src/main/python/anon_identity.py \
+  app/src/main/python/modules/agent_chat_bp.py \
+  app/src/main/python/modules/publico_bp.py \
+  tests/test_anonimo_persistente.py
+
+grep -q "tpv_anon.js" app/src/main/assets/frontend/templates/index.html
+grep -q "anon_client_id" app/src/main/assets/frontend/static/js/tpv_chat.js
+echo "OK: cliente anónimo persistente fase 6A aplicada."
+echo "Backups en .bak_anonimo_$ts"

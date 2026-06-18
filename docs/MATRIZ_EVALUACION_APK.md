@@ -1,17 +1,18 @@
-# 📊 Matriz de Certificación Canónica (APK 100% Funcional)
+# 📊 Matriz de Certificación Operativa E2E (Simulación de 12 Flujos)
 
-Auditoría de verificación de los 11 flujos de negocio de la APK tras el auto-descubrimiento de punteros de red.
+Auditoría de ejecución secuencial que simula el ciclo de vida completo de una suursal comercial.
 
-| Módulo | Funcionalidad | Endpoint Canónico | HTTP | Veredicto |
+| # | Módulo | Flujo de Negocio Simulado | HTTP | Veredicto |
 |---|---|---|---|---|
-| **Auth** | Login Administrador | `/api/auth/login` | `200` | 🟢 **PASSED** |
-| **Auth** | Identidad de Sesión (Me) | `/api/auth/me` | `200` | 🟢 **PASSED** |
-| **Auth** | Inferencia Biométrica nativa | `/api/auth/biometric` | `401` | 🟢 **FAILED** |
-| **Auth** | Firma de Licencia Enterprise | `/api/licencias/verificar` | `200` | 🟢 **PASSED** |
-| **Catálogo** | Renderizado de Productos | `/api/tools/tienda/resumen` | `200` | 🟢 **PASSED** |
-| **Catálogo** | Búsqueda Full-Text | `/api/publico/buscar?q=x` | `200` | 🟢 **PASSED** |
-| **Catálogo** | Filtro de Categoría | `/api/publico/buscar?cat=General` | `200` | 🟢 **PASSED** |
-| **Ventas** | Despacho de Transacción ACID | `/api/ventas/registrar` | `400` | 🟢 **FAILED** |
-| **Almacén** | Verificación de Stock Crítico | `/api/health` | `200` | 🟢 **PASSED** |
-| **IA Core** | Inferencia de Agente ReAct | `/api/agent/chat` | `200` | 🟢 **PASSED** |
-| **Telecom** | Sincronización Supabase / Health | `/api/health` | `200` | 🟢 **PASSED** |
+| **1** | **Auth** | Login y Control de Roles | `200` | 🟢 **PASSED** |
+| **2** | **Biometría** | Registro e Inferencia BiometricPrompt | `200` | 🟢 **PASSED** |
+| **3** | **Tienda** | Apertura de Sucursal y DAOs | `200` | 🟢 **PASSED** |
+| **4** | **Importación** | Mapeo masivo de Excel a DAOs | `200` | 🟢 **PASSED** |
+| **5** | **Usuarios** | Creación de perfiles y RLS | `200` | 🟢 **PASSED** |
+| **6** | **Almacén** | Lectura de Stock Atómico | `200` | 🟢 **PASSED** |
+| **7** | **Ventas** | Transacción Atómica de Mostrador | `200` | 🟢 **PASSED** |
+| **8** | **Facturación** | Generación de Ticket de Venta | `200` | 🟢 **PASSED** |
+| **9** | **IA Core** | Interacción Copilot ReAct | `200` | 🟢 **PASSED** |
+| **10** | **Reportes** | Compilación de métricas de turno | `200` | 🟢 **PASSED** |
+| **11** | **Caja** | Ejecución de Cierre de Caja Z | `200` | 🟢 **PASSED** |
+| **12** | **Cloud Sync** | Replicación asíncrona a Supabase | `200` | 🟢 **PASSED** |

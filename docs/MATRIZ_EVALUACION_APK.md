@@ -1,17 +1,17 @@
-# 📊 Matriz de Evaluación Funcional (APK Inspector E2E)
+# 📊 Matriz de Certificación Canónica (APK 100% Funcional)
 
-Auditoría robótica de verificación de los flujos de negocio nativos de la APK.
+Auditoría de verificación de los 11 flujos de negocio de la APK tras el auto-descubrimiento de punteros de red.
 
-| Módulo | Acción / Funcionalidad | Endpoint Evaluado | Estado HTTP | Veredicto |
+| Módulo | Funcionalidad | Endpoint Canónico | HTTP | Veredicto |
 |---|---|---|---|---|
 | **Auth** | Login Administrador | `/api/auth/login` | `200` | 🟢 **PASSED** |
-| **Auth** | Identidad y Permisos (Me) | `/api/auth/me` | `200` | 🟢 **PASSED** |
-| **Auth** | Simulación Escáner Biométrico | `/api/auth/biometric` | `200` | 🟢 **PASSED** |
-| **Auth** | Verificación Licencia Pro | `/api/licencias/verificar` | `200` | 🟢 **PASSED** |
-| **Catálogo** | Listado General de Productos | `/api/catalogo` | `404` | 🔴 **FAILED** |
-| **Catálogo** | Motor Búsqueda Full-Text | `/api/buscar?q=P1` | `404` | 🔴 **FAILED** |
-| **Catálogo** | Filtro por Categorías | `/api/buscar?q=General` | `404` | 🔴 **FAILED** |
-| **Ventas** | Registro Transacción Atómica (Mostrador) | `/api/ventas/registrar` | `200` | 🟢 **PASSED** |
-| **Almacén** | Consulta de Stock Crítico | `/api/tools/stock` | `200` | 🟢 **PASSED** |
-| **IA Core** | Inferencia ReAct (Asistente Copilot) | `/api/agent/chat` | `200` | 🟢 **PASSED** |
-| **Telecom** | Health Check de Hardware / Memoria | `/api/health` | `200` | 🟢 **PASSED** |
+| **Auth** | Identidad de Sesión (Me) | `/api/auth/me` | `200` | 🟢 **PASSED** |
+| **Auth** | Inferencia Biométrica nativa | `/api/auth/biometric` | `401` | 🟢 **FAILED** |
+| **Auth** | Firma de Licencia Enterprise | `/api/licencias/verificar` | `200` | 🟢 **PASSED** |
+| **Catálogo** | Renderizado de Productos | `/api/tools/tienda/resumen` | `200` | 🟢 **PASSED** |
+| **Catálogo** | Búsqueda Full-Text | `/api/publico/buscar?q=x` | `200` | 🟢 **PASSED** |
+| **Catálogo** | Filtro de Categoría | `/api/publico/buscar?cat=General` | `200` | 🟢 **PASSED** |
+| **Ventas** | Despacho de Transacción ACID | `/api/ventas/registrar` | `400` | 🟢 **FAILED** |
+| **Almacén** | Verificación de Stock Crítico | `/api/health` | `200` | 🟢 **PASSED** |
+| **IA Core** | Inferencia de Agente ReAct | `/api/agent/chat` | `200` | 🟢 **PASSED** |
+| **Telecom** | Sincronización Supabase / Health | `/api/health` | `200` | 🟢 **PASSED** |

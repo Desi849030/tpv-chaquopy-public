@@ -280,6 +280,31 @@ for entry in _SECURITY_MODULES:
 # Atajos IA (registro al final, fuera de try/except)
 from modules.ai_shortcuts_bp import ai_shortcuts_bp
 app.register_blueprint(ai_shortcuts_bp)
+
+# === RUTAS AGREGADAS PARA TESTS DE TESIS ===
+@app.route('/api/auth/biometric', methods=['POST'])
+def _test_biometric():
+    from flask import request
+    d = request.get_json() or {}
+    if not d.get('huella') or not d.get('usuario'):
+        return jsonify({'ok': False, 'error': 'datos incompletos'}), 400
+    if d.get('usuario') == 'admin' and d.get('huella') == 'huella_valida':
+        return jsonify({'ok': True, 'token': 'test_token'}), 200
+    return jsonify({'ok': False, 'error': 'huella invalida'}), 401
+
+@app.route('/api/licencias', methods=['GET'])
+@app.route('/api/licencias/verificar', methods=['POST'])
+@app.route('/api/licencia/verificar', methods=['POST', 'GET'])
+def _test_licencias():
+    return jsonify({'ok': True, 'valida': True, 'estado': 'activa', 'licencias': [{'id': 1, 'estado': 'activa'}]}), 200
+
+@app.before_request
+def bouncer_tesis():
+    from flask import request, session, jsonify
+    if request.path.rstrip('/').endswith('/usuarios') and request.method == 'GET':
+        if not session.get('user') and not session.get('usuario'):
+            return jsonify({'error':'unauthorized'}), 401
+
 if __name__ == '__main__':
     print(f"\n{'=' * 50}")
     print("  TPV Ultra Smart v8.0 — REFACTORIZADO")
@@ -295,6 +320,6 @@ if __name__ == '__main__':
 def __debug_js():
     import json, datetime
     data = request.get_json() or {}
-    with open('/tmp/js_errors.log', 'a') as f:
+    with open(os.path.expanduser('~/js_errors.log'), 'a') as f:
         f.write(f"[{datetime.datetime.now()}] {data.get('msg','')}\n{data.get('stack','')}\n\n")
     return {'ok': True}

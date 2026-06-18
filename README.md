@@ -14,7 +14,7 @@ Sistema de Punto de Venta optimizado para Android via Chaquopy, con integración
 3. `python app/src/main/python/app.py`
 
 ## 🔐 Credenciales de Desarrollo
-- **Admin:** `admin` / `admin123`
+- **Admin:** `admin` / `123456`
 - **Dev:** `desarrollador` / `123456`
 
 ## 📱 Sincronización APK (Chaquopy)

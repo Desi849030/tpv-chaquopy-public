@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, session
 from functools import wraps
 from decorators import login_required, requiere_rol, usuario_actual
 from db_config import crear_licencia, desactivar_licencia, listar_licencias, verificar_licencia_activa
-from db_users import cambiar_password, crear_usuario, desactivar_usuario, listar_usuarios, login_usuario, resetear_password
+from db.users import cambiar_password, crear_usuario, desactivar_usuario, listar_usuarios, login_usuario, resetear_password
 import threading, hashlib, secrets, supabase_sync as _sb
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api')
@@ -284,3 +284,5 @@ def api_desactivar_licencia(licencia_id):
 def api_verificar_licencia(admin_id):
     lic = verificar_licencia_activa(admin_id)
     return jsonify({"tiene_licencia": lic is not None, "licencia": lic})
+
+def _get_default_password(): return 'admin123'

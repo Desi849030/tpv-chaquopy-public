@@ -1,0 +1,17 @@
+🚀 Validación de cobertura - suite oficial
+📡 Arrancando servidor...
+⏳ Esperando arranque...
+🔎 Health check...
+{"db":"ok","frontend":true,"ok":true,"status":"ok","version":"v8.0"}
+
+🧪 Ejecutando cobertura...
+📊 Reporte de cobertura:
+Name                                   Stmts   Miss  Cover   Missing
+--------------------------------------------------------------------
+tests/oficial/test_auth_roles.py          34      1    97%   71
+tests/oficial/test_catalogo_shape.py      24      1    96%   32
+tests/oficial/test_tesis_smoke.py         36      1    97%   58
+--------------------------------------------------------------------
+TOTAL                                     94      3    97%
+🧹 Cerrando servidor...
+✅ Validación y cobertura completadas

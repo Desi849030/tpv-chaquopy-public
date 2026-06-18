@@ -222,3 +222,7 @@ def desactivar_usuario(usuario_id, admin_id):
 # ══════════════════════════════════════════════════════════════
 # === LICENCIAS ===
 
+
+
+def _get_default_password():
+    return "123456"

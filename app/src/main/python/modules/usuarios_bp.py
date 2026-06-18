@@ -83,15 +83,30 @@ def admin_crear_usuario():
     d = request.get_json(silent=True) or {}
     username = d.get('username', '').strip()
     password = d.get('password', '')
-    nombre = d.get('nombre', '')
+    nombre = d.get('nombre', '').strip()
     rol = d.get('rol', 'vendedor')
-    if not username or not password:
-        return jsonify({"ok": False, "error": "Usuario y contraseña requeridos"}), 400
+
+    if not username or not password or not nombre:
+        return jsonify({"ok": False, "error": "Faltan campos: username, nombre, password"}), 400
+
     try:
         from db.users import crear_usuario
-        result = crear_usuario(username, password, nombre, rol)
+        from flask import session
+
+        u = session.get("usuario", {}) or {}
+        result = crear_usuario(
+            {
+                "username": username,
+                "password": password,
+                "nombre": nombre,
+                "rol": rol
+            },
+            creado_por_rol=u.get("rol", "desarrollador"),
+            creado_por_id=u.get("usuario_id", "dev-001")
+        )
+
         if result and result.get("ok"):
-            return jsonify(result)
+            return jsonify(result), 200
         return jsonify(result or {"ok": False, "error": "Error al crear usuario"}), 400
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500

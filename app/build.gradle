@@ -43,7 +43,6 @@ android {
     }
 
     androidResources {
-        ignoreAssetsPattern "!.svn:!.git:!.hg:!CVS:!icon_1024.png:!thumbs.db"
     }
 
     signingConfigs {

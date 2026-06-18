@@ -11,8 +11,12 @@ android {
         applicationId "com.universidad.tpv.tpvultrasmart"
         minSdk 21
         targetSdk 34
-        versionCode 8009000
-        versionName "8.9.0"
+        
+        // Versionado dinámico para CI/CD (cae a los valores por defecto en local)
+        def envVersionCode = System.getenv("VERSION_CODE")
+        def envVersionName = System.getenv("VERSION_NAME")
+        versionCode envVersionCode ? envVersionCode.toInteger() : 8009000
+        versionName envVersionName ?: "8.9.0"
 
         ndk {
             abiFilters "arm64-v8a", "armeabi-v7a"

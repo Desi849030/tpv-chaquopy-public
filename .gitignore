@@ -1,82 +1,40 @@
-# ---- Python ----
+# Python
 __pycache__/
-*.pyc
-*.pyo
-*.egg-info/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-
-# ---- Entornos ----
-.env
-.venv/
+*.py[cod]
+*$py.class
 venv/
+env/
 
-# ---- Bases de datos / runtime ----
+# Bases de datos locales
+app/src/main/python/*.db
+app/src/main/python/*.db.backup
+app/src/main/python/tpv_datos.db
+
+# Configuración sensible
+app/src/main/python/supabase_config.json
+app/src/main/python/cookies_*.txt
+.env
+
+# Logs y temporales
+*.log
+/tmp/
+.*_backup_*
+.*.bak
+.bak_*
+
+# === SEGURIDAD: NUNCA SUBIR ===
+*.tpv_hmac_secret
+.tpv_hmac_secret
+**/.tpv_hmac_secret
+.supabase_config.json
+**/.supabase_config.json
 *.db
 *.sqlite
 *.sqlite3
-data/tpv.db
 tpv_datos.db
-tpv_datos.db-*
-*.db-journal
-*.db-wal
-*.db-shm
 
-# ---- Secretos generados en runtime ----
-.tpv_secret
-.tpv_hmac_secret
-
-# ---- Logs ----
-*.log
-tpv_server.log
-
-# ---- Backups / restos (no versionar) ----
-*.bak
-*.bak_*
-*.backup
-*.danado
-*.swp
-*.tar.gz
-*_old/
-database_old/
-
-# ---- Android / Gradle ----
-.gradle/
-build/
-app/build/
-local.properties
-*.keystore
-*.jks
-captures/
-.externalNativeBuild/
-.cxx/
-
-# ---- Carpetas anidadas por error (no deben volver) ----
-app/src/main/python/app/
-app/src/main/python/config/config/
-app/src/main/python/static/static/
-app/src/main/python/templates/templates/
-
-# ---- SO / IDE ----
-.DS_Store
-Thumbs.db
-.idea/
-.vscode/
-*.iml
-
-# Preview de desarrollo del design system (no va en el APK)
-app/src/main/assets/frontend/static/_preview_theme.html
-apply_refactor.sh
-*.patch
-
-# ---- Secretos Supabase (NUNCA versionar) ----
-app/src/main/python/supabase_config.json
-app/src/main/python/.supabase_config.json
-
-# Temporales locales
-.fix_*/
-.cierre_*/
-.gestor_*/
+# === BACKUPS LOCALES ===
 .backup-tpv-*/
+backups-tpv/
 *.bak
+

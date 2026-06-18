@@ -8,7 +8,7 @@ import os
 import sys
 import logging
 
-from flask import Flask, send_from_directory, request, jsonify
+from flask import Flask, jsonify, send_from_directory, request, jsonify
 
 _CD = os.path.dirname(os.path.abspath(__file__))
 _MAIN = os.path.dirname(_CD)
@@ -253,6 +253,8 @@ for entry in _BLUEPRINTS:
         if bp:
             app.register_blueprint(bp)
             print(f"  ✅ {bp_attr}")
+
+
     except Exception as e:
         print(f"  ⚠️ {entry[0]}: {e}")
 
@@ -274,6 +276,10 @@ for entry in _SECURITY_MODULES:
     except Exception:
         pass
 
+
+# Atajos IA (registro al final, fuera de try/except)
+from modules.ai_shortcuts_bp import ai_shortcuts_bp
+app.register_blueprint(ai_shortcuts_bp)
 if __name__ == '__main__':
     print(f"\n{'=' * 50}")
     print("  TPV Ultra Smart v8.0 — REFACTORIZADO")
@@ -283,7 +289,7 @@ if __name__ == '__main__':
     print(f" ✅ URL: http://localhost:5000\n")
     logging.basicConfig(level=logging.WARNING)
     port = int(os.environ.get('TPV_PORT', 5000))
-    app.run(host='127.0.0.1', port=port, debug=False, threaded=True)
+    app.run(host="0.0.0.0", port=port, debug=False, threaded=True)
 
 @app.route('/api/__debug_js', methods=['POST'])
 def __debug_js():

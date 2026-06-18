@@ -32,7 +32,7 @@ check("4. Auth me", 'usuario' in api('GET','/api/auth/me').json())
 
 # Catálogo (3)
 print("\n📦 CATÁLOGO")
-r = api('GET','/api/catalogo')
+r = api('GET','/api/publico/catalogo')
 check("5. Tiene productos", r and len(r.json().get('productos',[])) >= 14)
 check("6. Producto con precio", r and r.json()['productos'][0]['precio'] > 0)
 check("7. Tiene categorías", r and 'categorias' in r.json())
@@ -92,7 +92,7 @@ check("29. Backup BD", api('POST','/api/db/backup').json().get('ok'))
 
 # Importar (1)
 print("\n📥 IMPORTAR")
-check("30. Importar Excel", api('POST','/api/importar/excel', json={'productos':[{'nombre':'Test30','precio':30}]}).json().get('ok'))
+check("30. Importar Excel", api('POST','/api/inventario/importar', json={'productos':[{'nombre':'Test30','precio':30}]}).json().get('ok'))
 
 print("\n" + "=" * 60)
 pct = round(passed/total*100) if total > 0 else 0

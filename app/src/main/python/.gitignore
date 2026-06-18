@@ -1,0 +1,3 @@
+app/src/main/python/tpv_datos.db
+app/src/main/python/*.db.backup
+app/src/main/python/supabase_config.json

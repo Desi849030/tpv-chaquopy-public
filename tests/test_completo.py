@@ -45,15 +45,15 @@ check("Auth me", r is not None and 'usuario' in r.json())
 
 # Catálogo
 print("\n📦 CATÁLOGO")
-r = api('GET', '/api/catalogo')
+r = api('GET', '/api/publico/catalogo')
 check("Lista productos", r is not None and len(r.json().get('productos',[])) >= 13)
 
-r = api('GET', '/api/catalogo')
+r = api('GET', '/api/publico/catalogo')
 check("Producto con precio", r is not None and r.json()['productos'][0]['precio'] > 0)
 
 # Ventas
 print("\n💰 VENTAS")
-r = api('POST', '/api/ventas/registrar', json={'items':[{'id':'test','nombre':'Test','cantidad':1,'precio':10}]})
+r = api('POST', '/api/ventas/atomic', json={'items':[{'id':'test','nombre':'Test','cantidad':1,'precio':10}]})
 check("Registrar venta", r is not None and r.json().get('ok'))
 
 r = api('GET', '/api/ventas/totales')

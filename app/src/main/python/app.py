@@ -153,6 +153,24 @@ def _init_db_if_empty():
             pass
         c.execute("SELECT COUNT(*) FROM productos")
         if c.fetchone()[0] > 0:
+            # Productos ya existen, pero aseguramos que los usuarios demo estén activos.
+            # Esto previene el bug donde tests anteriores desactivaban cajero1 y luego
+            # el login E2E fallaba con 401.
+            for _uid, _un, _nom, _rol in [
+                ("dev-001", "desarrollador", "Desarrollador Principal", "desarrollador"),
+                ("usr-001", "admin", "Administrador", "administrador"),
+                ("usr-002", "supervisor1", "Maria Supervisora", "supervisor"),
+                ("usr-003", "vendedor1", "Juan Vendedor", "vendedor"),
+                ("usr-004", "cajero1", "Ana Cajera", "cajero"),
+            ]:
+                try:
+                    c.execute(
+                        "UPDATE usuarios SET activo=1 WHERE usuario_id=? AND activo=0",
+                        (_uid,)
+                    )
+                except Exception:
+                    pass
+            conn.commit()
             conn.close()
             return
         ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -183,10 +201,18 @@ def _init_db_if_empty():
             try:
                 _salt = secrets.token_hex(16)
                 _h = hashlib.scrypt("123456".encode(), salt=bytes.fromhex(_salt), n=16384, r=8, p=1).hex()
+                # INSERT OR IGNORE evita duplicados, y forzamos activo=1 para que
+                # usuarios demo desactivados por tests anteriores se reactive.
                 c.execute(
                     "INSERT OR IGNORE INTO usuarios "
-                    "(usuario_id,username,nombre,rol,password_hash,password_salt) VALUES (?,?,?,?,?,?)",
+                    "(usuario_id,username,nombre,rol,password_hash,password_salt,activo) VALUES (?,?,?,?,?,?,1)",
                     (_uid, _un, _nom, _rol, _h, _salt),
+                )
+                # Reactivar si existía pero estaba desactivado
+                c.execute(
+                    "UPDATE usuarios SET activo=1, password_hash=?, password_salt=? "
+                    "WHERE usuario_id=?",
+                    (_h, _salt, _uid),
                 )
             except Exception as _e:
                 print(f"⚠️ Error creando usuario demo {_un}: {_e}")

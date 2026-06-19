@@ -103,8 +103,8 @@ def login_usuario(username, password):
 def crear_usuario(datos, creado_por_rol=None, creado_por_id=None):
     # Desarrollador sin límites, puede crear cualquier rol excepto otro desarrollador
     roles_permitidos = {
-        "desarrollador": ["administrador", "supervisor", "vendedor"],
-        "administrador": ["supervisor", "vendedor"],
+        "desarrollador": ["administrador", "supervisor", "vendedor", "cajero"],
+        "administrador": ["supervisor", "vendedor", "cajero"],
         "supervisor":    [],
         "vendedor":      []
     }

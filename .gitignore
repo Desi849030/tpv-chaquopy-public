@@ -51,3 +51,4 @@ nohup.out
 
 # Logs temporales, salvo evidencias seleccionadas
 *.log
+.coverage

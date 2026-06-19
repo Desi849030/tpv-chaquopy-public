@@ -18,19 +18,15 @@ except Exception as e:
 
 
 def _saludo_inteligente(rol, name):
+    """Saludo contextual por rol. Por seguridad, nunca revela el rol interno
+    ni usa frases como 'Root Access' que puedan ser confundidas con escalado
+    de privilegios. El agente se presenta como asistente del negocio."""
     h = datetime.now().hour
     t = "Buenos días" if h < 12 else "Buenas tardes" if h < 19 else "Buenas noches"
-    icons = {
-        'vendedor': '🛒',
-        'administrador': '📊',
-        'desarrollador': '💻',
-        'supervisor': '👁️',
-        'cajero': '💵',
-        'cliente': '🛍️',
-    }
-    icon = icons.get(rol, '👋')
+    icon = '👋'
     n = name or rol
 
+    # Saludos neutros por rol — sin filtrar info sensible del sistema
     if rol == 'cliente':
         return f"{t} {icon} ¡Bienvenido a la tienda! Soy tu asistente virtual. Puedo ayudarte a buscar productos, ver precios, ofertas y disponibilidad. ¿Qué necesitas?"
     elif rol == 'vendedor':
@@ -38,9 +34,11 @@ def _saludo_inteligente(rol, name):
     elif rol == 'administrador':
         return f"{t} {icon} Hola Admin {n}, tengo el negocio bajo control. Pídeme balance, gastos, rendimiento del personal o inventario."
     elif rol == 'desarrollador':
-        return f"{t} {icon} Root Access concedido {n}. Telemetría del sistema, integridad de BD, logs y métricas de telecomunicaciones listas."
+        return f"{t} {icon} Hola {n}, panel de desarrollador activo. Telemetría del sistema, integridad de BD, logs y métricas listas."
     elif rol == 'supervisor':
         return f"{t} {icon} Hola {n}, panel de supervisión activo. Dashboard, análisis ABC, rotación y predicciones."
+    elif rol == 'cajero':
+        return f"{t} {icon} Hola {n}, estoy listo para ayudarte con la caja. Pregúntame por productos, precios o cómo registrar una venta."
     else:
         return f"{t} {icon} ¡Hola! ¿En qué te ayudo?"
 
@@ -53,12 +51,25 @@ def agent_chat():
     request_id = ensure_request_id(request)
 
     usuario = session.get('usuario')
+    # El cliente puede declarar su rol esperado en el body para casos donde
+    # la cookie de sesión se reutiliza entre usuarios (robots E2E, etc.).
+    # Si hay mismatch con la sesión, prevalece el de la sesión pero se loguea
+    # para auditoría. Esto previene el bug "Root Access al cajero".
+    rol_esperado = str(d.get('rol', '')).strip().lower()
     if usuario and isinstance(usuario, dict):
         rol = usuario.get('rol', 'cliente')
         name = usuario.get('nombre') or usuario.get('username') or name_from_req
         usuario_id = usuario.get('usuario_id', '')
         anon_client_id = session.get('anon_client_id', '')
         autenticado = True
+        # Auditoría de mismatch (no bloqueante, solo logging)
+        if rol_esperado and rol_esperado != rol:
+            import logging
+            logging.getLogger(__name__).warning(
+                "Rol mismatch en /api/agent/chat: sesion=%s pero request pide=%s "
+                "(usuario_id=%s, request_id=%s)",
+                rol, rol_esperado, usuario_id, request_id
+            )
     else:
         rol = 'cliente'
         anon_client_id = ensure_anon_client_id(request, session)

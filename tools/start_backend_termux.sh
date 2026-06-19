@@ -3,7 +3,7 @@ set -e
 
 ROOT="$HOME/tpv-trabajo"
 APPDIR="$ROOT/app/src/main/python"
-PORT="${TPV_PORT:-5000}"
+PORT="${TPV_PORT:-5050}"
 LOG="$ROOT/docs/evidencias/backend_termux_${PORT}.log"
 
 mkdir -p "$ROOT/docs/evidencias"

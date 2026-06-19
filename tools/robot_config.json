@@ -1,20 +1,28 @@
 {
-  "base_url": "http://127.0.0.1:5000",
+  "base_url": "http://127.0.0.1:5050",
   "database_paths": [],
   "restore_db_after": true,
   "pause_before_restore": true,
 
   "roles": {
     "cajero": {
-      "username": "cajero_piso1",
+      "username": "cajero1",
       "password": "123456"
     },
     "admin": {
-      "username": "desarrollador",
+      "username": "admin",
       "password": "123456"
     },
     "developer": {
       "username": "desarrollador",
+      "password": "123456"
+    },
+    "vendedor": {
+      "username": "vendedor1",
+      "password": "123456"
+    },
+    "supervisor": {
+      "username": "supervisor1",
       "password": "123456"
     }
   },

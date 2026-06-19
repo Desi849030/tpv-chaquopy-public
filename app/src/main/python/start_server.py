@@ -107,7 +107,7 @@ def _run():
         app.config['FRONTEND_DIR'] = frontend_dir
         print("🚀 Servidor TPV iniciado en puerto %s" % port)
         print("📁 Frontend: %s" % frontend_dir)
-        app.run(host='127.0.0.1', port=port, debug=False,
+        app.run(host='0.0.0.0', port=port, debug=False,
                 use_reloader=False, threaded=True)
     except Exception:
         err = traceback.format_exc()

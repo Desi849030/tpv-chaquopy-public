@@ -1,0 +1,122 @@
+{
+  "base_url": "http://127.0.0.1:5000",
+  "database_paths": [],
+  "restore_db_after": true,
+  "pause_before_restore": true,
+
+  "roles": {
+    "cajero": {
+      "username": "cajero_piso1",
+      "password": "123456"
+    },
+    "admin": {
+      "username": "desarrollador",
+      "password": "123456"
+    },
+    "developer": {
+      "username": "desarrollador",
+      "password": "123456"
+    }
+  },
+
+  "endpoints": {
+    "health": [
+      "/health",
+      "/api/health",
+      "/api/status",
+      "/api/state",
+      "/"
+    ],
+
+    "login": [
+      "/api/auth/login"
+    ],
+
+    "logout": [
+      "/api/auth/logout"
+    ],
+
+    "biometric": [
+      "/api/auth/biometric",
+      "/api/auth/bio/login",
+      "/api/biometric/setup"
+    ],
+
+    "branch": [
+      "/api/config",
+      "/api/branch/filter",
+      "/api/tiendas"
+    ],
+
+    "excel_import": {
+      "paths": [
+        "/api/tools/importar/productos",
+        "/api/inventario/importar-catalogo"
+      ],
+      "field": "file"
+    },
+
+    "employees": [
+      "/api/usuarios/crear",
+      "/api/admin/usuarios/crear"
+    ],
+
+    "products": [
+      "/api/inventario/entrada",
+      "/api/tools/importar/productos"
+    ],
+
+    "categories": [
+      "/api/publico/categorias"
+    ],
+
+    "theme": [
+      "/api/state",
+      "/api/config"
+    ],
+
+    "sale": [
+      "/api/ventas/registrar"
+    ],
+
+    "ticket": [
+      "/api/ventas/registrar"
+    ],
+
+    "ai": [
+      "/api/agent/chat",
+      "/api/agent/query",
+      "/api/ia/chat",
+      "/api/ia/chat/secure",
+      "/api/ia/public-chat"
+    ],
+
+    "telemetry": [
+      "/api/dev/metrics",
+      "/api/dev/telecom/full",
+      "/api/metrics",
+      "/api/tools/admin/status",
+      "/api/debug/agent_status"
+    ],
+
+    "report_z": [
+      "/api/reportes/resumen",
+      "/api/reportes/ventas",
+      "/api/ventas/totales",
+      "/api/dashboard/data"
+    ],
+
+    "close_cash": [
+      "/api/ventas/cierre",
+      "/api/cierres/cerrar-dia",
+      "/api/inventario/cierre-admin"
+    ],
+
+    "sync": [
+      "/api/supabase/sync",
+      "/api/supabase/sync-all",
+      "/api/supabase/push",
+      "/api/sincronizar-completo"
+    ]
+  }
+}

@@ -38,3 +38,16 @@ tpv_datos.db
 backups-tpv/
 *.bak
 
+
+# Robot E2E TPV
+.robot_backups/
+
+# Runtime local / Termux
+nohup.out
+*.db-wal
+*.db-shm
+.robot_backups/
+.backend_tpv.pid
+
+# Logs temporales, salvo evidencias seleccionadas
+*.log

@@ -1,0 +1,182 @@
+[
+  {
+    "flow": "Detección de bases SQLite",
+    "status": "PASSED",
+    "detail": "2 archivo(s) detectado(s)",
+    "evidence": ""
+  },
+  {
+    "flow": "Backup previo de SQLite",
+    "status": "PASSED",
+    "detail": "Backup en /data/data/com.termux/files/home/tpv-trabajo/.robot_backups/e2e_20260618_211131",
+    "evidence": ""
+  },
+  {
+    "flow": "Boot hasta pantalla de login",
+    "status": "PASSED",
+    "detail": "Backend respondió HTTP 200 en /health",
+    "evidence": ""
+  },
+  {
+    "flow": "Auditoría de tablas SQLite",
+    "status": "OBS",
+    "detail": "49 tabla(s). Incidencia: audit_logs sin columna usuario",
+    "evidence": ""
+  },
+  {
+    "flow": "Login rol cajero",
+    "status": "OBS",
+    "detail": "No validó con credenciales/ruta actual",
+    "evidence": "/api/auth/login(json)->401 | /api/auth/login(form)->400"
+  },
+  {
+    "flow": "Login rol admin",
+    "status": "PASSED",
+    "detail": "HTTP 200. Token Session OK",
+    "evidence": ""
+  },
+  {
+    "flow": "Escáner biométrico",
+    "status": "FAILED",
+    "detail": "Error servidor HTTP 500",
+    "evidence": "<!doctype html>\n<html lang=en>\n<title>500 Internal Server Error</title>\n<h1>Internal Server Error</h1>\n<p>The server encountered an internal error and was unable to complete your request. Either the server is overloaded or there is an error in the application.</p>\n"
+  },
+  {
+    "flow": "Configuración de sucursal",
+    "status": "PASSED",
+    "detail": "HTTP 200 en /api/config",
+    "evidence": ""
+  },
+  {
+    "flow": "Alta de empleado cajero",
+    "status": "OBS",
+    "detail": "Respuesta no concluyente",
+    "evidence": "/api/usuarios/crear->400 | /api/admin/usuarios/crear->400"
+  },
+  {
+    "flow": "Importación lote Excel",
+    "status": "PASSED",
+    "detail": "150 SKUs enviados. HTTP 200 en /api/inventario/importar-catalogo",
+    "evidence": ""
+  },
+  {
+    "flow": "Nomenclador categorías",
+    "status": "SKIPPED",
+    "detail": "Ruta no encontrada o método no permitido",
+    "evidence": "/api/publico/categorias->405"
+  },
+  {
+    "flow": "Nomenclador productos",
+    "status": "OBS",
+    "detail": "Respuesta no concluyente",
+    "evidence": "/api/inventario/entrada->400 | /api/tools/importar/productos->400"
+  },
+  {
+    "flow": "Nomencladores CRUD",
+    "status": "OBS",
+    "detail": "Revisar payload o rutas reales",
+    "evidence": ""
+  },
+  {
+    "flow": "Seguridad anti SQL Injection",
+    "status": "SKIPPED",
+    "detail": "No hubo endpoint de búsqueda detectable",
+    "evidence": ""
+  },
+  {
+    "flow": "Modo oscuro por API",
+    "status": "PASSED",
+    "detail": "HTTP 200 en /api/state",
+    "evidence": ""
+  },
+  {
+    "flow": "Despacho de venta POS",
+    "status": "OBS",
+    "detail": "Respuesta no concluyente",
+    "evidence": "/api/ventas/registrar->400"
+  },
+  {
+    "flow": "Cobro y emisión de ticket",
+    "status": "OBS",
+    "detail": "No se confirmó ticket",
+    "evidence": "/api/ventas/registrar->400"
+  },
+  {
+    "flow": "Login rol cajero",
+    "status": "OBS",
+    "detail": "No validó con credenciales/ruta actual",
+    "evidence": "/api/auth/login(json)->401 | /api/auth/login(form)->400"
+  },
+  {
+    "flow": "Agente IA rol cajero",
+    "status": "FAILED",
+    "detail": "Respuesta fuera de rol/leak: root access, desarrollador principal",
+    "evidence": "{\"anon_client_id\":\"\",\"autenticado\":true,\"intencion\":\"GREETING\",\"ok\":true,\"request_id\":\"req-de5fc05b4d2c\",\"respuesta\":\"Buenas noches \\ud83d\\udcbb Root Access concedido Desarrollador Principal. Telemetr\\u00eda del sistema, integridad de BD, logs y m\\u00e9tricas de telecomunicaciones listas.\",\"rol\":\"desarrollador\",\"ui_action\":null,\"usuario_id\":\"dev-001\"}\n"
+  },
+  {
+    "flow": "Login rol admin",
+    "status": "PASSED",
+    "detail": "HTTP 200. Token Session OK",
+    "evidence": ""
+  },
+  {
+    "flow": "Agente IA rol admin",
+    "status": "FAILED",
+    "detail": "Respuesta fuera de rol/leak: root access, desarrollador principal",
+    "evidence": "{\"anon_client_id\":\"\",\"autenticado\":true,\"intencion\":\"GREETING\",\"ok\":true,\"request_id\":\"req-cd0fc3e4b849\",\"respuesta\":\"Buenas noches \\ud83d\\udcbb Root Access concedido Desarrollador Principal. Telemetr\\u00eda del sistema, integridad de BD, logs y m\\u00e9tricas de telecomunicaciones listas.\",\"rol\":\"desarrollador\",\"ui_action\":null,\"usuario_id\":\"dev-001\"}\n"
+  },
+  {
+    "flow": "Login rol developer",
+    "status": "PASSED",
+    "detail": "HTTP 200. Token Session OK",
+    "evidence": ""
+  },
+  {
+    "flow": "Agente IA rol developer",
+    "status": "PASSED",
+    "detail": "HTTP 200. Respuesta validada",
+    "evidence": ""
+  },
+  {
+    "flow": "Login rol developer",
+    "status": "PASSED",
+    "detail": "HTTP 200. Token Session OK",
+    "evidence": ""
+  },
+  {
+    "flow": "Telemetría desarrollador",
+    "status": "PASSED",
+    "detail": "HTTP 200 en /api/dev/metrics",
+    "evidence": ""
+  },
+  {
+    "flow": "Telemetría sin secretos",
+    "status": "PASSED",
+    "detail": "No se detectaron claves obvias en respuesta",
+    "evidence": ""
+  },
+  {
+    "flow": "Reporte Z de fin de turno",
+    "status": "PASSED",
+    "detail": "HTTP 200 en /api/reportes/resumen",
+    "evidence": ""
+  },
+  {
+    "flow": "Arqueo y cierre de caja",
+    "status": "PASSED",
+    "detail": "HTTP 200 en /api/ventas/cierre",
+    "evidence": ""
+  },
+  {
+    "flow": "Sincronización Supabase Cloud",
+    "status": "SKIPPED",
+    "detail": "Protegida para no contaminar nube. Use --allow-remote-sync en entorno de pruebas",
+    "evidence": ""
+  },
+  {
+    "flow": "Restauración modo virgen",
+    "status": "SKIPPED",
+    "detail": "Desactivada por --no-restore",
+    "evidence": ""
+  }
+]

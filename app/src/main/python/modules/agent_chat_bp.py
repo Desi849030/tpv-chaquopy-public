@@ -19,8 +19,8 @@ except Exception as e:
 
 def _saludo_inteligente(rol, name):
     """Saludo contextual por rol. Por seguridad, nunca revela el rol interno
-    ni usa frases como 'Root Access' que puedan ser confundidas con escalado
-    de privilegios. El agente se presenta como asistente del negocio."""
+    ni usa frases que puedan ser confundidas con escalado de privilegios.
+    El agente se presenta como asistente del negocio."""
     h = datetime.now().hour
     t = "Buenos días" if h < 12 else "Buenas tardes" if h < 19 else "Buenas noches"
     icon = '👋'
@@ -54,7 +54,7 @@ def agent_chat():
     # El cliente puede declarar su rol esperado en el body para casos donde
     # la cookie de sesión se reutiliza entre usuarios (robots E2E, etc.).
     # Si hay mismatch con la sesión, prevalece el de la sesión pero se loguea
-    # para auditoría. Esto previene el bug "Root Access al cajero".
+    # para auditoría. Esto previene el bug de saludo cruzado entre roles.
     rol_esperado = str(d.get('rol', '')).strip().lower()
     if usuario and isinstance(usuario, dict):
         rol = usuario.get('rol', 'cliente')

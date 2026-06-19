@@ -112,6 +112,41 @@ def static_serve(f):
     return send_from_directory(_STAT, f)
 
 
+@app.route('/manifest.json')
+def manifest_json():
+    """Sirve el PWA manifest desde la raiz de assets/frontend/."""
+    path = os.path.join(_ASSETS, 'manifest.json')
+    if os.path.exists(path):
+        return send_from_directory(_ASSETS, 'manifest.json')
+    # fallback al manifest completo de /static/
+    path_static = os.path.join(_STAT, 'manifest.json')
+    if os.path.exists(path_static):
+        return send_from_directory(_STAT, 'manifest.json')
+    return jsonify({"name": "TPV", "short_name": "TPV"}), 404
+
+
+@app.route('/service-worker.js')
+def service_worker():
+    """Sirve el service worker desde la raiz de static/ para que el scope sea /."""
+    path = os.path.join(_STAT, 'service-worker.js')
+    if os.path.exists(path):
+        return send_from_directory(_STAT, 'service-worker.js', mimetype='application/javascript')
+    return '', 404
+
+
+# Alias de iconos PWA en la raiz (el index.html los pide sin /static/icons/)
+@app.route('/favicon-32.png')
+@app.route('/pwa-icon-192.png')
+@app.route('/pwa-icon-512.png')
+def pwa_icons_root():
+    from flask import abort
+    icon_name = request.path.rsplit('/', 1)[-1]
+    icon_path = os.path.join(_STAT, 'icons', icon_name)
+    if os.path.exists(icon_path):
+        return send_from_directory(os.path.join(_STAT, 'icons'), icon_name)
+    abort(404)
+
+
 @app.route('/health')
 @app.route('/api/health')
 def health():

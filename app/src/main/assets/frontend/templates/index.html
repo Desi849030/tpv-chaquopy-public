@@ -1760,5 +1760,48 @@ observer.observe(document.body, {childList: true, subtree: true});
     <script src="/static/js/app_5.js"></script>
     <script src="/static/js/app_7.js"></script>
     <script src="/static/js/app_8.js"></script>
-    </body>
+    
+<script>
+// Diagnóstico: si después de 8s no hay login visible, mostrar error
+setTimeout(function() {
+    var loginVisible = false;
+    var inputs = document.querySelectorAll('input[type=text], input[placeholder]');
+    for (var i = 0; i < inputs.length; i++) {
+        if (inputs[i].offsetParent !== null && inputs[i].offsetWidth > 0) {
+            loginVisible = true;
+            break;
+        }
+    }
+
+    if (!loginVisible) {
+        console.error('[DIAG] No se detectó login visible después de 8s');
+        // Mostrar error en el splash si sigue visible
+        if (typeof window.tpvShowSplashError === 'function') {
+            window.tpvShowSplashError('No se pudo cargar el login. Verifica la consola para más detalles.');
+        }
+        // Crear botón de login fallback
+        var fallback = document.createElement('div');
+        fallback.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1e293b;color:#fff;padding:24px;border-radius:16px;text-align:center;z-index:99999;font-family:system-ui;max-width:90vw';
+        fallback.innerHTML = '<div style="font-size:2rem;margin-bottom:12px">⚠️</div>' +
+            '<div style="font-size:1.1rem;font-weight:700;margin-bottom:8px">Error al cargar el login</div>' +
+            '<div style="font-size:.8rem;color:#94a3b8;margin-bottom:16px">URL: ' + window.location.href + '</div>' +
+            '<a href="/login-minimo" style="display:inline-block;padding:10px 20px;background:#4f46e5;color:#fff;text-decoration:none;border-radius:8px;font-size:.85rem">Ir a login mínimo</a>';
+        document.body.appendChild(fallback);
+    } else {
+        console.log('[DIAG] Login detectado correctamente');
+        if (typeof window.tpvHideSplash === 'function') {
+            window.tpvHideSplash();
+        }
+    }
+}, 8000);
+
+// Detectar errores de carga de scripts
+document.addEventListener('error', function(e) {
+    if (e.target && e.target.tagName === 'SCRIPT') {
+        console.error('[DIAG] Error cargando script:', e.target.src);
+    }
+}, true);
+</script>
+
+</body>
 </html>

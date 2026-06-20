@@ -1,4 +1,4 @@
-// tpv_chat.js v5 — Burbuja arrastrable + botón Enviar GRANDE
+// tpv_chat.js v6 — Botón Enviar SIEMPRE visible + drag robusto
 (function() {
   'use strict';
   if (document.getElementById('chat-tpv')) return;
@@ -30,17 +30,21 @@
     '#chat-sug button{background:#222b37;border:1px solid #2b3542;color:#cbd5e1;',
     '  padding:6px 12px;border-radius:16px;cursor:pointer;font-size:.72rem}',
     '#chat-sug button:hover{background:#4f46e5;color:#fff}',
-    '#chat-foot{padding:10px;display:flex;gap:8px;background:#141b24;border-top:1px solid #2b3542;align-items:stretch}',
-    '#chat-inp{flex:1;padding:10px 14px;background:#0f141b;border:1px solid #2b3542;',
-    '  border-radius:22px;color:#fff;font-size:.85rem;outline:none;min-height:44px}',
+    // FIX: chat-foot con flex-wrap para que el botón SIEMPRE quepa
+    '#chat-foot{padding:10px;display:flex;gap:8px;background:#141b24;border-top:1px solid #2b3542;align-items:center;flex-wrap:nowrap}',
+    // FIX: input con max-width para que no empuje al botón fuera
+    '#chat-inp{flex:1 1 auto;min-width:0;padding:10px 14px;background:#0f141b;border:1px solid #2b3542;',
+    '  border-radius:22px;color:#fff;font-size:.85rem;outline:none;min-height:44px;max-width:calc(100% - 100px)}',
     '#chat-inp:focus{border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,229,.15)}',
-    '#chat-send{background:linear-gradient(135deg,#4f46e5,#6366f1);border:none;color:#fff;',
-    '  padding:0 20px;border-radius:22px;cursor:pointer;font-weight:600;font-size:.85rem;',
-    '  min-height:44px;min-width:90px;display:inline-flex;align-items:center;justify-content:center;',
-    '  gap:6px;white-space:nowrap;transition:all .15s;box-shadow:0 4px 12px rgba(79,70,229,.3);',
-    '  flex-shrink:0}',
+    // FIX: botón Enviar con flex-shrink:0 (NUNCA se comprime) + width fijo
+    '#chat-send{flex:0 0 auto;width:90px;background:linear-gradient(135deg,#4f46e5,#6366f1);border:none;color:#fff;',
+    '  padding:0 16px;border-radius:22px;cursor:pointer;font-weight:600;font-size:.82rem;',
+    '  min-height:44px;display:inline-flex;align-items:center;justify-content:center;',
+    '  gap:4px;white-space:nowrap;transition:all .15s;box-shadow:0 4px 12px rgba(79,70,229,.3)}',
     '#chat-send:active{transform:scale(.96)}',
-    '#chat-send:hover{box-shadow:0 6px 16px rgba(79,70,229,.4)}'
+    '#chat-send:hover{box-shadow:0 6px 16px rgba(79,70,229,.4)}',
+    // Responsive: en móvil muy pequeño, input y botón en column
+    '@media(max-width:360px){#chat-foot{flex-direction:column}#chat-inp{max-width:100%}#chat-send{width:100%}}'
   ].join('');
   document.head.appendChild(css);
 
@@ -54,9 +58,9 @@
       '<div id="chat-msgs"></div>' +
       '<div id="chat-sug"></div>' +
       '<div id="chat-foot">' +
-        '<input id="chat-inp" placeholder="Escribe tu pregunta..." ' +
+        '<input id="chat-inp" placeholder="Escribe..." ' +
         'onkeypress="if(event.key===\'Enter\')window.tpvChat.send()">' +
-        '<button id="chat-send" onclick="window.tpvChat.send()">➤ Enviar</button>' +
+        '<button id="chat-send" onclick="window.tpvChat.send()">➤</button>' +
       '</div>' +
     '</div>' +
     '<button id="chat-btn" title="Asistente IA (mantén y arrastra para mover)">💬</button>';
@@ -66,7 +70,6 @@
   wrap.innerHTML = box;
   document.body.appendChild(wrap);
 
-  // Posición inicial con LEFT/TOP absolutos (CLAVE para drag)
   var btnSize = 60;
   var initialLeft = window.innerWidth - btnSize - 16;
   var initialTop = window.innerHeight - btnSize - 16;
@@ -115,7 +118,6 @@
     msgsEl.scrollTop = msgsEl.scrollHeight;
   }
 
-  // === DRAG con Pointer Events ===
   var btn = document.getElementById('chat-btn');
   if (!btn) return;
   var dragging = false, moved = false;
@@ -170,5 +172,5 @@
   btn.addEventListener('touchstart', function(e) { e.preventDefault(); }, {passive: false});
   btn.addEventListener('touchmove', function(e) { e.preventDefault(); }, {passive: false});
 
-  console.log('[CHAT] Burbuja 💬 inicializada en (' + initialLeft + ', ' + initialTop + ')');
+  console.log('[CHAT] v6 inicializado en (' + initialLeft + ', ' + initialTop + ')');
 })();

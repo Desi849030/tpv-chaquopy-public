@@ -239,31 +239,31 @@ window.addEventListener('tpv_role_changed', _syncChatIdentity);
   window.toggleChat = api.toggle;
   window.sendMsg = api.send;
 
+  // DRAG CON POINTER EVENTS (garantizado en móvil)
   (function () {
     var btn = document.getElementById('chat-btn');
+    if (!btn) return;
     var dragging = false, moved = false, sx, sy, ox, oy;
     var _lastToggle = 0;
+    var activePointerId = null;
+
     function _toggleSafe() {
       var now = Date.now();
       if (now - _lastToggle < 350) return;
       _lastToggle = now;
       api.toggle();
     }
-    btn.addEventListener('click', function (e) {
-      e.preventDefault();
-      if (!moved) _toggleSafe();
-      moved = false;
-    });
+
     function start(x, y) {
-      dragging = true; moved = false;
+      dragging = true; moved = false; sx = x; sy = y;
       var rect = wrap.getBoundingClientRect();
-      ox = rect.left; oy = rect.top; sx = x; sy = y;
+      ox = rect.left; oy = rect.top;
     }
     function move(x, y) {
       if (!dragging) return;
       var dx = x - sx, dy = y - sy;
-      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moved = true;
-      // Permitir mover por toda la pantalla con margen minimo
+      if (Math.abs(dx) > 6 || Math.abs(dy) > 6) moved = true;
+      if (!moved) return;
       var btnSize = 56;
       var nl = Math.min(Math.max(4, ox + dx), window.innerWidth - btnSize - 4);
       var nt = Math.min(Math.max(4, oy + dy), window.innerHeight - btnSize - 4);
@@ -275,29 +275,45 @@ window.addEventListener('tpv_role_changed', _syncChatIdentity);
       dragging = false;
       if (moved) {
         var rect = wrap.getBoundingClientRect();
-        // Snap al borde mas cercano (izq o der) para no tapar contenido
         var midX = window.innerWidth / 2;
         var snapLeft = rect.left < midX ? 8 : (window.innerWidth - 60);
-        wrap.style.left = snapLeft + 'px';
-        wrap.style.right = 'auto';
         wrap.style.transition = 'left 0.2s ease';
+        wrap.style.left = snapLeft + 'px';
         setTimeout(function() { wrap.style.transition = ''; }, 250);
-        try {
-            localStorage.setItem('tpv_chat_pos', JSON.stringify({left: snapLeft, top: rect.top}));
-        } catch (e) {}
+        try { localStorage.setItem('tpv_chat_pos', JSON.stringify({left: snapLeft, top: rect.top})); } catch (e) {}
       }
-    }
-    btn.addEventListener('mousedown', function (e) { start(e.clientX, e.clientY); });
-    window.addEventListener('mousemove', function (e) { move(e.clientX, e.clientY); });
-    window.addEventListener('mouseup', end);
-    btn.addEventListener('touchstart', function (e) { var t = e.touches[0]; start(t.clientX, t.clientY); }, {passive: true});
-    window.addEventListener('touchmove', function (e) { if (dragging && moved) { var t = e.touches[0]; move(t.clientX, t.clientY); e.preventDefault(); } }, {passive: false});
-    window.addEventListener('touchend', function () {
-      var wasDragging = dragging;
-      end();
-      if (wasDragging && !moved) _toggleSafe();
+      if (!moved) _toggleSafe();
       moved = false;
+    }
+
+    btn.addEventListener('pointerdown', function(e) {
+      if (activePointerId !== null) return;
+      activePointerId = e.pointerId;
+      start(e.clientX, e.clientY);
+      try { btn.setPointerCapture(e.pointerId); } catch(err) {}
+      e.preventDefault();
     });
+    btn.addEventListener('pointermove', function(e) {
+      if (!dragging || e.pointerId !== activePointerId) return;
+      move(e.clientX, e.clientY);
+      e.preventDefault();
+    });
+    btn.addEventListener('pointerup', function(e) {
+      if (e.pointerId !== activePointerId) return;
+      try { btn.releasePointerCapture(e.pointerId); } catch(err) {}
+      activePointerId = null;
+      end();
+    });
+    btn.addEventListener('pointercancel', function(e) {
+      if (e.pointerId !== activePointerId) return;
+      activePointerId = null;
+      end();
+    });
+    btn.addEventListener('click', function(e) {
+      if (moved) { e.preventDefault(); e.stopPropagation(); return false; }
+    });
+    btn.addEventListener('touchstart', function(e) { e.preventDefault(); }, {passive: false});
+    btn.addEventListener('touchmove', function(e) { e.preventDefault(); }, {passive: false});
   })();
 
   setTimeout(_cargarHistorial, 500);

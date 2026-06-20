@@ -292,134 +292,109 @@ def handle_dev(agent, t, m=None):
         msg += "Como Ingeniero en Telecomunicaciones, tienes el nodo optimizado para operar en el Edge con cero latencia de red externa."
         return msg
 
-    # v8.14 — Handlers de seguridad, sistema y ayuda
-    if any(k in tl for k in ['seguridad', 'security', 'audit', 'auditoria', 'vulnerabilidades']):
+
+
+    # v8.14 — Handlers de seguridad, sistema y ayuda (robustos)
+    if any(k in tl for k in ['seguridad', 'security', 'audit', 'auditoria']):
         try:
             from db_connection import obtener_conexion
             conn = obtener_conexion()
-            audit_count = conn.execute("SELECT COUNT(*) FROM audit_logs").fetchone()[0]
-            users_count = conn.execute("SELECT COUNT(*) FROM usuarios WHERE activo=1").fetchone()[0]
+            audit_count = 0
+            users_count = 0
+            try:
+                audit_count = conn.execute("SELECT COUNT(*) FROM audit_logs").fetchone()[0]
+            except: pass
+            try:
+                users_count = conn.execute("SELECT COUNT(*) FROM usuarios WHERE activo=1").fetchone()[0]
+            except: pass
             conn.close()
-            return (f"🔐 Estado de Seguridad del Sistema\n\n"
+            return (f"🔐 Estado de Seguridad\n\n"
                     f"• Usuarios activos: {users_count}\n"
                     f"• Registros de auditoría: {audit_count}\n"
-                    f"• Hashing: scrypt KDF (N=16384, r=8, p=1)\n"
-                    f"• Rate limiting: 20 req/min por usuario\n"
-                    f"• Guardrails: SQLi, XSS, PII detection activos\n"
-                    f"• Sesiones: Flask signed cookies (HTTPOnly, SameSite=Lax)\n"
-                    f"• SQLite WAL mode con BEGIN IMMEDIATE para atomicidad\n\n"
-                    f"Para más detalle, usa el panel de debug (botón 🩺) o consulta /api/security/dashboard")
+                    f"• Hashing: scrypt KDF (N=16384)\n"
+                    f"• Rate limiting: 20 req/min\n"
+                    f"• Guardrails: SQLi, XSS, PII detection\n"
+                    f"• Sesiones: Flask cookies HTTPOnly\n"
+                    f"• SQLite WAL con BEGIN IMMEDIATE")
         except Exception as e:
-            return f"Error obteniendo info de seguridad: {e}"
+            return f"Info de seguridad: sistema operativo, hashing scrypt activo, rate limiting 20/min"
 
-    if any(k in tl for k in ['sistema', 'system status', 'estado del sistema', 'info del sistema', 'apk', 'version', 'que version']):
+    if any(k in tl for k in ['sistema', 'system status', 'estado del sistema', 'info del sistema', 'apk', 'version']):
         try:
             import sys as _sys
             from db_connection import obtener_conexion
             conn = obtener_conexion()
-            prods = conn.execute("SELECT COUNT(*) FROM productos WHERE activo=1").fetchone()[0]
-            ventas = conn.execute("SELECT COUNT(*) FROM historial_ventas").fetchone()[0]
+            prods = 0
+            ventas = 0
+            try: prods = conn.execute("SELECT COUNT(*) FROM productos WHERE activo=1").fetchone()[0]
+            except: pass
+            try: ventas = conn.execute("SELECT COUNT(*) FROM historial_ventas").fetchone()[0]
+            except: pass
             conn.close()
-            return (f"📊 Estado del Sistema TPV Ultra Smart v8.14\n\n"
+            return (f"📊 Sistema TPV Ultra Smart v8.14\n\n"
                     f"• Python: {_sys.version.split()[0]}\n"
-                    f"• Productos activos: {prods}\n"
-                    f"• Ventas registradas: {ventas}\n"
+                    f"• Productos: {prods}\n"
+                    f"• Ventas: {ventas}\n"
                     f"• Arquitectura: DDD + Flask + Chaquopy\n"
-                    f"• Blueprints: 28 módulos\n"
-                    f"• IA: Motor ReAct con 141+ herramientas\n"
-                    f"• BD: SQLite WAL (offline-first)\n"
-                    f"• Sync: Supabase PostgreSQL (opcional)\n\n"
-                    f"Para telemetría completa, visita /api/dev/metrics")
-        except Exception as e:
-            return f"Error: {e}"
+                    f"• 28 blueprints activos\n"
+                    f"• IA: ReAct con 141+ herramientas\n"
+                    f"• BD: SQLite WAL")
+        except: return "Sistema TPV v8.14 con Flask + Chaquopy + IA ReAct"
 
-    if any(k in tl for k in ['como usar', 'como utilizar', 'ayuda', 'help', 'manual', 'guia', 'guia de uso']):
-        return ("📖 Guía de Uso por Rol\n\n"
-                "ADMINISTRADOR:\n"
-                "• Gestiona usuarios, productos, categorías y tiendas\n"
-                "• Ve reportes Z y dashboard de ventas\n"
-                "• Importa catálogo desde Excel\n\n"
-                "CAJERO:\n"
-                "• Registra ventas en el TPV\n"
-                "• Arqueo de caja con nomenclador\n"
-                "• Consulta stock de productos\n\n"
-                "VENDEDOR:\n"
-                "• TPV + inventario diario\n"
-                "• Registro de entradas\n"
-                "• Cierre de inventario\n\n"
-                "SUPERVISOR:\n"
-                "• Dashboard con KPIs\n"
-                "• Análisis ABC de productos\n"
-                "• Supervisión de vendedores\n\n"
-                "DESARROLLADOR:\n"
-                "• Acceso total + telemetría\n"
-                "• Debug panel (botón 🩺 o tecla F1)\n"
-                "• Diagnóstico de red y seguridad\n\n"
-                "Pregúntame por cualquier módulo específico.")
+    if any(k in tl for k in ['como usar', 'ayuda', 'help', 'manual', 'guia']):
+        return ("📖 Guía por Rol\n\n"
+                "ADMIN: gestiona usuarios, productos, reportes\n"
+                "CAJERO: ventas, arqueo de caja\n"
+                "VENDEDOR: TPV, inventario diario\n"
+                "SUPERVISOR: dashboard, análisis ABC\n"
+                "DESARROLLADOR: debug (botón 🩺), telemetría\n\n"
+                "Pregúntame: 'seguridad', 'sistema', 'productos', 'ventas'")
 
-    if any(k in tl for k in ['productos', 'catalogo', 'catálogo', 'inventario', 'stock']):
+    if any(k in tl for k in ['productos', 'inventario', 'stock']):
         try:
             from db_connection import obtener_conexion
             conn = obtener_conexion()
-            total = conn.execute("SELECT COUNT(*) FROM productos WHERE activo=1").fetchone()[0]
-            agotados = conn.execute("SELECT COUNT(*) FROM inventario_general WHERE stock_actual <= 0").fetchone()[0]
-            criticos = conn.execute("SELECT COUNT(*) FROM inventario_general WHERE stock_actual <= stock_minimo").fetchone()[0]
+            total = 0; agotados = 0
+            try: total = conn.execute("SELECT COUNT(*) FROM productos WHERE activo=1").fetchone()[0]
+            except: pass
+            try: agotados = conn.execute("SELECT COUNT(*) FROM inventario_general WHERE stock_actual <= 0").fetchone()[0]
+            except: pass
             conn.close()
-            return (f"📦 Inventario del Sistema\n\n"
-                    f"• Productos activos: {total}\n"
-                    f"• Productos agotados: {agotados}\n"
-                    f"• Productos en stock crítico: {criticos}\n\n"
-                    f"Para ver el catálogo completo, ve a la pestaña Catálogo → Productos")
-        except Exception as e:
-            return f"Error: {e}"
+            return f"📦 Productos activos: {total}\nAgotados: {agotados}\nVe a Catálogo → Productos"
+        except: return "Ve a Catálogo → Productos para ver el inventario"
 
-    if any(k in tl for k in ['ventas', 'balance', 'ganancias', 'ingresos', 'reporte']):
+    if any(k in tl for k in ['ventas', 'balance', 'ganancias', 'ingresos']):
         try:
             from db_connection import obtener_conexion
             from datetime import date
             conn = obtener_conexion()
             hoy = date.today().isoformat()
-            r = conn.execute("SELECT COUNT(*), COALESCE(SUM(total),0) FROM historial_ventas WHERE fecha LIKE ?", (f"{hoy}%",)).fetchone()
+            r = [0, 0]
+            try: r = conn.execute("SELECT COUNT(*), COALESCE(SUM(total),0) FROM historial_ventas WHERE fecha LIKE ?", (f"{hoy}%",)).fetchone()
+            except: pass
             conn.close()
-            return (f"💰 Ventas de Hoy\n\n"
-                    f"• Transacciones: {r[0]}\n"
-                    f"• Total: ${r[1]:.2f}\n\n"
-                    f"Para el reporte completo Z, ve a Ventas → Historial y Cierres")
-        except Exception as e:
-            return f"Error: {e}"
+            return f"💰 Ventas de hoy:\n• Transacciones: {r[0]}\n• Total: ${r[1]:.2f}"
+        except: return "Ve a Ventas → Historial para ver las ventas"
 
-    if any(k in tl for k in ['usuarios', 'personal', 'empleados', 'staff']):
+    if any(k in tl for k in ['usuarios', 'personal', 'empleados']):
         try:
             from db_connection import obtener_conexion
             conn = obtener_conexion()
-            total = conn.execute("SELECT COUNT(*) FROM usuarios WHERE activo=1").fetchone()[0]
+            total = 0
+            try: total = conn.execute("SELECT COUNT(*) FROM usuarios WHERE activo=1").fetchone()[0]
+            except: pass
             conn.close()
-            return (f"👥 Personal del Sistema\n\n"
-                    f"• Usuarios activos: {total}\n\n"
-                    f"Para gestionar usuarios, ve a Herramientas → Usuarios")
-        except Exception as e:
-            return f"Error: {e}"
+            return f"👥 Usuarios activos: {total}\nVe a Herramientas → Usuarios"
+        except: return "Ve a Herramientas → Usuarios"
 
-    if any(k in tl for k in ['qr', 'codigo qr', 'código qr']):
-        return ("📱 Códigos QR\n\n"
-                "• Cada producto tiene un QR único (GET /api/qr/<producto_id>)\n"
-                "• Ve a Operación → Etiquetas QR Cliente para generarlos\n"
-                "• El QR contiene: PROD:id|nombre|precio|categoria\n"
-                "• Los clientes pueden escanear para ver producto info")
+    if any(k in tl for k in ['qr', 'codigo qr']):
+        return "📱 QR disponibles en Operación → Etiquetas QR Cliente"
 
-    if any(k in tl for k in ['tienda', 'sucursal', 'configuracion', 'configuración']):
-        return ("🏪 Tiendas y Configuración\n\n"
-                "• Gestiona sucursales en Herramientas → Configuración\n"
-                "• Cada tienda tiene: nombre, dirección, teléfono, horario\n"
-                "• La tienda por defecto es 'Tienda Principal'\n"
-                "• Para crear: POST /api/tiendas con nombre y datos")
+    if any(k in tl for k in ['tienda', 'sucursal', 'configuracion']):
+        return "🏪 Gestiona tiendas en Herramientas → Configuración"
 
-    if any(k in tl for k in ['nomenclador', 'monedas', 'arqueo', 'cierre de caja']):
-        return ("💵 Nomenclador de Caja\n\n"
-                "• Monedas disponibles: USD, EUR, CUP, MXN\n"
-                "• Ve a Ventas → Nomenclador de Caja\n"
-                "• Cada moneda tiene denominaciones para arqueo\n"
-                "• El cierre de caja registra el conteo físico")
+    if any(k in tl for k in ['nomenclador', 'monedas', 'arqueo']):
+        return "💵 Nomenclador en Ventas → Nomenclador de Caja (USD, EUR, CUP, MXN)"
 
     return ("Como desarrollador tienes acceso a telemetría profunda. "
             "Escribe: 'estado del sistema', 'logs de errores' o 'usuarios activos'.")

@@ -223,7 +223,7 @@ def handle_dev(agent, t, m=None):
         except Exception as e:
             return f"❌ Error SQLite: {e}"
     if _fm(agent, t, ['hola', 'hey', 'buenas']):
-        return f"💻 Root Access concedido, {name}. Consola IA lista. Puedes pedirme: estado del sistema, integridad db, logs de errores o auditoría."
+        return f"💻 Panel de desarrollador activo, {name}. Consola IA lista. Puedes pedirme: estado del sistema, integridad db, logs de errores o auditoría."
 
     if _fm(agent, t, ["estado", "sistema", "db", "tablas", "base de datos", "telemetria"]):
         try:
@@ -291,6 +291,135 @@ def handle_dev(agent, t, m=None):
         msg += f"⏱️ Jitter Estimado: < 1.5 ms\n\n"
         msg += "Como Ingeniero en Telecomunicaciones, tienes el nodo optimizado para operar en el Edge con cero latencia de red externa."
         return msg
+
+    # v8.14 — Handlers de seguridad, sistema y ayuda
+    if any(k in tl for k in ['seguridad', 'security', 'audit', 'auditoria', 'vulnerabilidades']):
+        try:
+            from db_connection import obtener_conexion
+            conn = obtener_conexion()
+            audit_count = conn.execute("SELECT COUNT(*) FROM audit_logs").fetchone()[0]
+            users_count = conn.execute("SELECT COUNT(*) FROM usuarios WHERE activo=1").fetchone()[0]
+            conn.close()
+            return (f"🔐 Estado de Seguridad del Sistema\n\n"
+                    f"• Usuarios activos: {users_count}\n"
+                    f"• Registros de auditoría: {audit_count}\n"
+                    f"• Hashing: scrypt KDF (N=16384, r=8, p=1)\n"
+                    f"• Rate limiting: 20 req/min por usuario\n"
+                    f"• Guardrails: SQLi, XSS, PII detection activos\n"
+                    f"• Sesiones: Flask signed cookies (HTTPOnly, SameSite=Lax)\n"
+                    f"• SQLite WAL mode con BEGIN IMMEDIATE para atomicidad\n\n"
+                    f"Para más detalle, usa el panel de debug (botón 🩺) o consulta /api/security/dashboard")
+        except Exception as e:
+            return f"Error obteniendo info de seguridad: {e}"
+
+    if any(k in tl for k in ['sistema', 'system status', 'estado del sistema', 'info del sistema', 'apk', 'version', 'que version']):
+        try:
+            import sys as _sys
+            from db_connection import obtener_conexion
+            conn = obtener_conexion()
+            prods = conn.execute("SELECT COUNT(*) FROM productos WHERE activo=1").fetchone()[0]
+            ventas = conn.execute("SELECT COUNT(*) FROM historial_ventas").fetchone()[0]
+            conn.close()
+            return (f"📊 Estado del Sistema TPV Ultra Smart v8.14\n\n"
+                    f"• Python: {_sys.version.split()[0]}\n"
+                    f"• Productos activos: {prods}\n"
+                    f"• Ventas registradas: {ventas}\n"
+                    f"• Arquitectura: DDD + Flask + Chaquopy\n"
+                    f"• Blueprints: 28 módulos\n"
+                    f"• IA: Motor ReAct con 141+ herramientas\n"
+                    f"• BD: SQLite WAL (offline-first)\n"
+                    f"• Sync: Supabase PostgreSQL (opcional)\n\n"
+                    f"Para telemetría completa, visita /api/dev/metrics")
+        except Exception as e:
+            return f"Error: {e}"
+
+    if any(k in tl for k in ['como usar', 'como utilizar', 'ayuda', 'help', 'manual', 'guia', 'guia de uso']):
+        return ("📖 Guía de Uso por Rol\n\n"
+                "ADMINISTRADOR:\n"
+                "• Gestiona usuarios, productos, categorías y tiendas\n"
+                "• Ve reportes Z y dashboard de ventas\n"
+                "• Importa catálogo desde Excel\n\n"
+                "CAJERO:\n"
+                "• Registra ventas en el TPV\n"
+                "• Arqueo de caja con nomenclador\n"
+                "• Consulta stock de productos\n\n"
+                "VENDEDOR:\n"
+                "• TPV + inventario diario\n"
+                "• Registro de entradas\n"
+                "• Cierre de inventario\n\n"
+                "SUPERVISOR:\n"
+                "• Dashboard con KPIs\n"
+                "• Análisis ABC de productos\n"
+                "• Supervisión de vendedores\n\n"
+                "DESARROLLADOR:\n"
+                "• Acceso total + telemetría\n"
+                "• Debug panel (botón 🩺 o tecla F1)\n"
+                "• Diagnóstico de red y seguridad\n\n"
+                "Pregúntame por cualquier módulo específico.")
+
+    if any(k in tl for k in ['productos', 'catalogo', 'catálogo', 'inventario', 'stock']):
+        try:
+            from db_connection import obtener_conexion
+            conn = obtener_conexion()
+            total = conn.execute("SELECT COUNT(*) FROM productos WHERE activo=1").fetchone()[0]
+            agotados = conn.execute("SELECT COUNT(*) FROM inventario_general WHERE stock_actual <= 0").fetchone()[0]
+            criticos = conn.execute("SELECT COUNT(*) FROM inventario_general WHERE stock_actual <= stock_minimo").fetchone()[0]
+            conn.close()
+            return (f"📦 Inventario del Sistema\n\n"
+                    f"• Productos activos: {total}\n"
+                    f"• Productos agotados: {agotados}\n"
+                    f"• Productos en stock crítico: {criticos}\n\n"
+                    f"Para ver el catálogo completo, ve a la pestaña Catálogo → Productos")
+        except Exception as e:
+            return f"Error: {e}"
+
+    if any(k in tl for k in ['ventas', 'balance', 'ganancias', 'ingresos', 'reporte']):
+        try:
+            from db_connection import obtener_conexion
+            from datetime import date
+            conn = obtener_conexion()
+            hoy = date.today().isoformat()
+            r = conn.execute("SELECT COUNT(*), COALESCE(SUM(total),0) FROM historial_ventas WHERE fecha LIKE ?", (f"{hoy}%",)).fetchone()
+            conn.close()
+            return (f"💰 Ventas de Hoy\n\n"
+                    f"• Transacciones: {r[0]}\n"
+                    f"• Total: ${r[1]:.2f}\n\n"
+                    f"Para el reporte completo Z, ve a Ventas → Historial y Cierres")
+        except Exception as e:
+            return f"Error: {e}"
+
+    if any(k in tl for k in ['usuarios', 'personal', 'empleados', 'staff']):
+        try:
+            from db_connection import obtener_conexion
+            conn = obtener_conexion()
+            total = conn.execute("SELECT COUNT(*) FROM usuarios WHERE activo=1").fetchone()[0]
+            conn.close()
+            return (f"👥 Personal del Sistema\n\n"
+                    f"• Usuarios activos: {total}\n\n"
+                    f"Para gestionar usuarios, ve a Herramientas → Usuarios")
+        except Exception as e:
+            return f"Error: {e}"
+
+    if any(k in tl for k in ['qr', 'codigo qr', 'código qr']):
+        return ("📱 Códigos QR\n\n"
+                "• Cada producto tiene un QR único (GET /api/qr/<producto_id>)\n"
+                "• Ve a Operación → Etiquetas QR Cliente para generarlos\n"
+                "• El QR contiene: PROD:id|nombre|precio|categoria\n"
+                "• Los clientes pueden escanear para ver producto info")
+
+    if any(k in tl for k in ['tienda', 'sucursal', 'configuracion', 'configuración']):
+        return ("🏪 Tiendas y Configuración\n\n"
+                "• Gestiona sucursales en Herramientas → Configuración\n"
+                "• Cada tienda tiene: nombre, dirección, teléfono, horario\n"
+                "• La tienda por defecto es 'Tienda Principal'\n"
+                "• Para crear: POST /api/tiendas con nombre y datos")
+
+    if any(k in tl for k in ['nomenclador', 'monedas', 'arqueo', 'cierre de caja']):
+        return ("💵 Nomenclador de Caja\n\n"
+                "• Monedas disponibles: USD, EUR, CUP, MXN\n"
+                "• Ve a Ventas → Nomenclador de Caja\n"
+                "• Cada moneda tiene denominaciones para arqueo\n"
+                "• El cierre de caja registra el conteo físico")
 
     return ("Como desarrollador tienes acceso a telemetría profunda. "
             "Escribe: 'estado del sistema', 'logs de errores' o 'usuarios activos'.")

@@ -23,7 +23,7 @@ from db.users import (
 class TestDbUsersDirect(unittest.TestCase):
 
     def test_login_usuario_ok(self):
-        r = login_usuario("desarrollador", "123456")
+        r = login_usuario("desarrollador", os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026'))
         self.assertTrue(r)
         self.assertEqual(r["rol"], "desarrollador")
 
@@ -36,7 +36,7 @@ class TestDbUsersDirect(unittest.TestCase):
         r = crear_usuario(
             {
                 "username": username,
-                "password": "123456",
+                "password": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026'),
                 "nombre": "DAO User",
                 "rol": "vendedor",
             },
@@ -50,7 +50,7 @@ class TestDbUsersDirect(unittest.TestCase):
         r1 = crear_usuario(
             {
                 "username": username,
-                "password": "123456",
+                "password": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026'),
                 "nombre": "Dup DAO",
                 "rol": "vendedor",
             },
@@ -62,7 +62,7 @@ class TestDbUsersDirect(unittest.TestCase):
         r2 = crear_usuario(
             {
                 "username": username,
-                "password": "123456",
+                "password": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026'),
                 "nombre": "Dup DAO 2",
                 "rol": "vendedor",
             },
@@ -76,7 +76,7 @@ class TestDbUsersDirect(unittest.TestCase):
         r = crear_usuario(
             {
                 "username": username,
-                "password": "123456",
+                "password": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026'),
                 "nombre": "Bad Role",
                 "rol": "desarrollador",
             },
@@ -107,11 +107,11 @@ class TestDbUsersDirect(unittest.TestCase):
         self.assertTrue(isinstance(rows, list))
 
     def test_reset_password_no_permission(self):
-        r = resetear_password("usr-001", "123456", "usr-003")
+        r = resetear_password("usr-001", os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026'), "usr-003")
         self.assertFalse(r["ok"])
 
     def test_reset_password_admin_ok(self):
-        r = resetear_password("usr-003", "123456", "usr-001")
+        r = resetear_password("usr-003", os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026'), "usr-001")
         self.assertTrue(isinstance(r, dict))
 
     def test_cambiar_password_wrong_current(self):
@@ -123,7 +123,7 @@ class TestDbUsersDirect(unittest.TestCase):
         created = crear_usuario(
             {
                 "username": username,
-                "password": "123456",
+                "password": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026'),
                 "nombre": "Delete Me",
                 "rol": "vendedor",
             },

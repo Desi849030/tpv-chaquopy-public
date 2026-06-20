@@ -25,7 +25,7 @@ class TestBackendAuthExtended(unittest.TestCase):
     def login_dev(self):
         r = self.client.post("/api/auth/login", json={
             "username": "desarrollador",
-            "password": "123456"
+            "password": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')
         })
         self.assertEqual(r.status_code, 200)
         return r.get_json()
@@ -33,14 +33,14 @@ class TestBackendAuthExtended(unittest.TestCase):
     def login_admin(self):
         r = self.client.post("/api/auth/login", json={
             "username": "admin",
-            "password": "123456"
+            "password": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')
         })
         self.assertEqual(r.status_code, 200)
         return r.get_json()
 
     def test_cambiar_password_requires_login(self):
         r = self.client.post("/api/auth/cambiar-password", json={
-            "password_actual": "123456",
+            "password_actual": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026'),
             "password_nueva": "654321"
         })
         self.assertIn(r.status_code, (200, 401, 403))
@@ -81,7 +81,7 @@ class TestBackendAuthExtended(unittest.TestCase):
 
     def test_reset_password_requires_role(self):
         r = self.client.post("/api/usuarios/dev-001/reset-password", json={
-            "password_nueva": "123456"
+            "password_nueva": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')
         })
         self.assertEqual(r.status_code, 401)
 
@@ -102,7 +102,7 @@ class TestBackendAuthExtended(unittest.TestCase):
         username = f"dup_{uuid.uuid4().hex[:8]}"
         r1 = self.client.post("/api/admin/usuarios/crear", json={
             "username": username,
-            "password": "123456",
+            "password": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026'),
             "nombre": "Dup Uno",
             "rol": "vendedor"
         })
@@ -110,7 +110,7 @@ class TestBackendAuthExtended(unittest.TestCase):
 
         r2 = self.client.post("/api/admin/usuarios/crear", json={
             "username": username,
-            "password": "123456",
+            "password": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026'),
             "nombre": "Dup Dos",
             "rol": "vendedor"
         })

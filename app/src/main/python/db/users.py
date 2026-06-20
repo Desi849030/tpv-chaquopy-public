@@ -1,3 +1,4 @@
+import os
 """db_users.py - Usuarios, autenticacion, permisos (DAO)"""
 from __future__ import annotations
 import sqlite3, json, uuid, hashlib
@@ -14,7 +15,7 @@ def _crear_desarrollador_default(cursor, conn):
     con los del login de app.py (dev-001, usr-001..004). Así todos los roles
     existen en la tabla 'usuarios' y tienen acceso real (inventario general,
     privilegios, etc.) — antes solo existía el desarrollador."""
-    _PW = "123456"
+    _PW = os.environ.get("TPV_DEMO_PASSWORD", "demo-tpv-2026")
     # (usuario_id, username, nombre, rol)
     DEMO = [
         ("dev-001", "desarrollador", "Desarrollador Principal", "desarrollador"),
@@ -225,4 +226,4 @@ def desactivar_usuario(usuario_id, admin_id):
 
 
 def _get_default_password():
-    return "123456"
+    return os.environ.get("TPV_DEMO_PASSWORD", "demo-tpv-2026")

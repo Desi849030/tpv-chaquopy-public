@@ -1,3 +1,4 @@
+import os
 import unittest
 import requests
 
@@ -14,7 +15,7 @@ class TestTesisSmoke(unittest.TestCase):
     def test_login_dev(self):
         r = requests.post(
             f"{BASE}/api/auth/login",
-            json={"username": "desarrollador", "password": "123456"},
+            json={"username": "desarrollador", "password": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')},
             timeout=10
         )
         self.assertEqual(r.status_code, 200)
@@ -25,7 +26,7 @@ class TestTesisSmoke(unittest.TestCase):
     def test_login_admin(self):
         r = requests.post(
             f"{BASE}/api/auth/login",
-            json={"username": "admin", "password": "123456"},
+            json={"username": "admin", "password": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')},
             timeout=10
         )
         self.assertEqual(r.status_code, 200)
@@ -37,7 +38,7 @@ class TestTesisSmoke(unittest.TestCase):
         s = requests.Session()
         r = s.post(
             f"{BASE}/api/auth/login",
-            json={"username": "desarrollador", "password": "123456"},
+            json={"username": "desarrollador", "password": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')},
             timeout=10
         )
         self.assertEqual(r.status_code, 200)

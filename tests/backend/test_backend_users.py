@@ -25,7 +25,7 @@ class TestBackendUsers(unittest.TestCase):
     def login_dev(self):
         r = self.client.post("/api/auth/login", json={
             "username": "desarrollador",
-            "password": "123456"
+            "password": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')
         })
         self.assertEqual(r.status_code, 200)
 
@@ -34,7 +34,7 @@ class TestBackendUsers(unittest.TestCase):
         username = f"backend_{uuid.uuid4().hex[:8]}"
         r = self.client.post("/api/admin/usuarios/crear", json={
             "username": username,
-            "password": "123456",
+            "password": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026'),
             "nombre": "Backend User",
             "rol": "vendedor"
         })

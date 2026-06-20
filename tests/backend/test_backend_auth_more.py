@@ -24,7 +24,7 @@ class TestBackendAuthMore(unittest.TestCase):
     def login_dev(self):
         return self.client.post("/api/auth/login", json={
             "username": "desarrollador",
-            "password": "123456"
+            "password": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')
         })
 
     def test_delete_usuario(self):

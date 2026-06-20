@@ -95,13 +95,25 @@ echo $! > ~/tpv_server.pid
 # http://localhost:5050
 ```
 
-### Usuarios demo (password: `123456`)
+### Usuarios demo
 
-- `desarrollador` / `123456` — acceso total + debug
-- `admin` / `123456` — administrador
-- `supervisor1` / `123456` — supervisor
-- `vendedor1` / `123456` — vendedor
-- `cajero1` / `123456` — cajero
+La contraseña demo se muestra al arrancar el servidor en la consola.
+Para establecerla manualmente:
+
+```bash
+export TPV_DEMO_PASSWORD="tu-password-segura"
+python app.py
+```
+
+Si no se establece, se usa `demo-tpv-2026` como fallback.
+
+| Usuario | Rol |
+|---|---|
+| `desarrollador` | acceso total + debug |
+| `admin` | administrador |
+| `supervisor1` | supervisor |
+| `vendedor1` | vendedor |
+| `cajero1` | cajero |
 
 ### Compilar APK
 

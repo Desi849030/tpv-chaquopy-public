@@ -85,7 +85,7 @@ class TestAgentMasterSeguridad:
             return
         respuesta = str(result.get("response") or result.get("respuesta", "")).lower()
         # Lista negra de cosas que NUNCA deben aparecer
-        assert "123456" not in respuesta, "¡Credencial demo filtrada!"
+        assert os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026') not in respuesta, "¡Credencial demo filtrada!"
         assert "password_hash" not in respuesta, "¡Hash filtrado!"
         assert "password_salt" not in respuesta, "¡Salt filtrado!"
         assert "root access" not in respuesta, "¡Frase 'root access' en respuesta!"

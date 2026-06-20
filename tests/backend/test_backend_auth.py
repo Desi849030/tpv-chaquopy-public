@@ -30,7 +30,7 @@ class TestBackendAuth(unittest.TestCase):
     def test_login_dev_ok(self):
         r = self.client.post("/api/auth/login", json={
             "username": "desarrollador",
-            "password": "123456"
+            "password": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')
         })
         self.assertEqual(r.status_code, 200)
         data = r.get_json()
@@ -40,7 +40,7 @@ class TestBackendAuth(unittest.TestCase):
     def test_login_admin_ok(self):
         r = self.client.post("/api/auth/login", json={
             "username": "admin",
-            "password": "123456"
+            "password": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')
         })
         self.assertEqual(r.status_code, 200)
         data = r.get_json()
@@ -74,7 +74,7 @@ class TestBackendAuth(unittest.TestCase):
     def test_auth_me_with_session(self):
         self.client.post("/api/auth/login", json={
             "username": "desarrollador",
-            "password": "123456"
+            "password": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')
         })
         r = self.client.get("/api/auth/me")
         self.assertEqual(r.status_code, 200)
@@ -85,7 +85,7 @@ class TestBackendAuth(unittest.TestCase):
     def test_logout(self):
         self.client.post("/api/auth/login", json={
             "username": "desarrollador",
-            "password": "123456"
+            "password": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')
         })
         r = self.client.post("/api/auth/logout")
         self.assertEqual(r.status_code, 200)

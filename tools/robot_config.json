@@ -7,23 +7,23 @@
   "roles": {
     "cajero": {
       "username": "cajero1",
-      "password": "123456"
+      "password": "${TPV_DEMO_PASSWORD}"
     },
     "admin": {
       "username": "admin",
-      "password": "123456"
+      "password": "${TPV_DEMO_PASSWORD}"
     },
     "developer": {
       "username": "desarrollador",
-      "password": "123456"
+      "password": "${TPV_DEMO_PASSWORD}"
     },
     "vendedor": {
       "username": "vendedor1",
-      "password": "123456"
+      "password": "${TPV_DEMO_PASSWORD}"
     },
     "supervisor": {
       "username": "supervisor1",
-      "password": "123456"
+      "password": "${TPV_DEMO_PASSWORD}"
     }
   },
 

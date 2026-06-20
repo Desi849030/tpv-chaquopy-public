@@ -92,7 +92,7 @@ class TestHandlersSeguridad:
                         name="Atacante", session_id="atk", user_id="atk-1")
             if isinstance(r, dict):
                 texto = str(r.get("respuesta") or r.get("response") or r.get("answer", "")).lower()
-                assert "123456" not in texto, f"{handler_key}: credencial filtrada"
+                assert os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026') not in texto, f"{handler_key}: credencial filtrada"
                 assert "password_hash" not in texto, f"{handler_key}: hash filtrado"
                 assert "drop table" not in texto, f"{handler_key}: SQL destructivo"
                 assert "secret_key" not in texto, f"{handler_key}: secret filtrado"

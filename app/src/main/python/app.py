@@ -235,7 +235,8 @@ def _init_db_if_empty():
         for _uid, _un, _nom, _rol in _demo_users:
             try:
                 _salt = secrets.token_hex(16)
-                _h = hashlib.scrypt("123456".encode(), salt=bytes.fromhex(_salt), n=16384, r=8, p=1).hex()
+                _demo_pw = os.environ.get("TPV_DEMO_PASSWORD", "demo-tpv-2026")
+                _h = hashlib.scrypt(_demo_pw.encode(), salt=bytes.fromhex(_salt), n=16384, r=8, p=1).hex()
                 # INSERT OR IGNORE evita duplicados, y forzamos activo=1 para que
                 # usuarios demo desactivados por tests anteriores se reactive.
                 c.execute(
@@ -391,7 +392,9 @@ if __name__ == '__main__':
     print("  TPV Ultra Smart v8.0 — REFACTORIZADO")
     print(f"{'=' * 50}")
     print(f" 📁 Frontend: {_TPL}")
-    print(f" ✅ Login: desarrollador / 123456")
+    _demo_pw_display = os.environ.get("TPV_DEMO_PASSWORD", "demo-tpv-2026")
+    print(f" ✅ Login: desarrollador / {_demo_pw_display}")
+    print(f" ⚠️  Cambia la contraseña con TPV_DEMO_PASSWORD=<nueva> antes de producción")
     print(f" ✅ URL: http://localhost:5000\n")
     logging.basicConfig(level=logging.WARNING)
     port = int(os.environ.get('TPV_PORT', 5000))

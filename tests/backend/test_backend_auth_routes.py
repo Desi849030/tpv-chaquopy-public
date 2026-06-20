@@ -24,13 +24,13 @@ class TestBackendAuthRoutes(unittest.TestCase):
     def login_dev(self):
         return self.client.post("/api/auth/login", json={
             "username": "desarrollador",
-            "password": "123456"
+            "password": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')
         })
 
     def login_admin(self):
         return self.client.post("/api/auth/login", json={
             "username": "admin",
-            "password": "123456"
+            "password": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')
         })
 
     def test_logout_ok(self):
@@ -49,7 +49,7 @@ class TestBackendAuthRoutes(unittest.TestCase):
     def test_reset_password_as_dev(self):
         self.login_dev()
         r = self.client.post("/api/usuarios/usr-001/reset-password", json={
-            "password_nueva": "123456"
+            "password_nueva": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')
         })
         self.assertIn(r.status_code, (200, 400))
         self.assertTrue(isinstance(r.get_json(), dict))

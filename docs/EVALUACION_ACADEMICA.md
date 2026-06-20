@@ -104,7 +104,7 @@ tests/e2e/test_flujos_comerciales.py  — 24 tests login/venta/usuarios
 ### Mostrar en demo (5 minutos)
 
 1. **Splash profesional**: Logo con anillos girando + mesh gradient + 10 pasos
-2. **Login `desarrollador/123456`**: Botón 🩺 violeta aparece
+2. **Login `desarrollador (password en consola)`**: Botón 🩺 violeta aparece
 3. **Debug panel**: Click 🩺 → logs en tiempo real
 4. **Catálogo**: Stock real visible (no "Agotado")
 5. **Crear producto**: Emoji 🧪 → aparece en catálogo

@@ -205,7 +205,9 @@ echo $! > ~/tpv_server.pid
 
 # Abrir en Chrome del móvil (modo incógnito): http://localhost:5050
 
-### Usuarios demo (password: 123456)
+### Usuarios demo
+
+La contraseña se muestra al arrancar el servidor. Para personalizarla: `export TPV_DEMO_PASSWORD=<password>`
 
 - desarrollador — Debug + telemetría + acceso total
 - admin — CRUD + reportes + dashboard
@@ -232,7 +234,7 @@ coverage report -m
 ### Demo en vivo (5 minutos)
 
 1. Splash profesional: Logo con anillos girando + mesh gradient + 10 pasos animados
-2. Login desarrollador/123456: Botón 🩺 violeta aparece abajo izquierda
+2. Login desarrollador (ver password en consola): Botón 🩺 violeta aparece abajo izquierda
 3. Debug panel: Click 🩺 → panel con logs en tiempo real
 4. Catálogo: Productos con stock real (no "Agotado")
 5. Crear producto: "Nuevo Producto" con emoji 🧪 → aparece en catálogo

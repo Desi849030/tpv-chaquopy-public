@@ -6,15 +6,15 @@
   "roles": {
     "cajero": {
       "username": "cajero_piso1",
-      "password": "123456"
+      "password": "${TPV_DEMO_PASSWORD}"
     },
     "admin": {
       "username": "desarrollador",
-      "password": "123456"
+      "password": "${TPV_DEMO_PASSWORD}"
     },
     "developer": {
       "username": "desarrollador",
-      "password": "123456"
+      "password": "${TPV_DEMO_PASSWORD}"
     }
   },
   "endpoints": {

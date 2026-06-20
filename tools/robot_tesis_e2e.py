@@ -66,7 +66,7 @@ def default_config():
         "roles": {
             "cajero": {
                 "username": "cajero_piso1",
-                "password": "123456"
+                "password": os.environ.get("TPV_DEMO_PASSWORD", "demo-tpv-2026")
             },
             "admin": {
                 "username": "admin",
@@ -988,7 +988,7 @@ class RobotTPV:
                 "nombre": "Cajero Robot Tesis",
                 "rol": "cajero",
                 "terminal": 1,
-                "password": "123456"
+                "password": os.environ.get("TPV_DEMO_PASSWORD", "demo-tpv-2026")
             },
             role="admin"
         )

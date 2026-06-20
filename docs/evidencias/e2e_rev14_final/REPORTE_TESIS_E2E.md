@@ -154,7 +154,7 @@ r = c.post('/api/ventas/registrar', json={
 - **Estado**: ✅ CORREGIDO
 
 ### Bug #2: Login cajero1 fallaba (401)
-- **Antes**: `POST /api/auth/login` con cajero1/123456 → 401
+- **Antes**: `POST /api/auth/login` con cajero1 (password demo) → 401
 - **Ahora**: HTTP 200 + session_token
 - **Estado**: ✅ CORREGIDO
 

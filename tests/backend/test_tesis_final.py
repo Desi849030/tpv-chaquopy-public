@@ -24,7 +24,7 @@ class TestTesisFinal(unittest.TestCase):
     def test_z_licencias_logic_flow(self):
         """Cubre lineas de licencias en auth.py."""
         # Login dev para tener permiso
-        self.client.post("/api/auth/login", json={"username":"desarrollador", "password":"123456"})
+        self.client.post("/api/auth/login", json={"username":"desarrollador", "password":os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')})
         
         # Listar licencias
         r = self.client.get("/api/licencias")
@@ -42,7 +42,7 @@ class TestTesisFinal(unittest.TestCase):
         self.assertTrue(True)
     def test_z_admin_actions(self):
         # Login como dev
-        self.client.post("/api/auth/login", json={"username":"desarrollador", "password":"123456"})
+        self.client.post("/api/auth/login", json={"username":"desarrollador", "password":os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')})
         
         # Probar crear licencia (Cubre lineas en auth.py)
         self.client.post("/api/licencias/crear", json={

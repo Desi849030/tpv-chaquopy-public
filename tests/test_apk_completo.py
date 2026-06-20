@@ -32,7 +32,7 @@ print("\n🔌 1. VERIFICACIÓN DE ENDPOINTS")
 endpoints = {
     # Auth
     'GET /api/health': ('GET', '/api/health', 200),
-    'POST /api/auth/login': ('POST', '/api/auth/login', 200, {'username':'desarrollador','password':'123456'}),
+    'POST /api/auth/login': ('POST', '/api/auth/login', 200, {'username':'desarrollador','password':os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')}),
     'GET /api/auth/me': ('GET', '/api/auth/me', 200),
     'POST /api/auth/logout': ('POST', '/api/auth/logout', 200),
     # Catálogo
@@ -137,7 +137,7 @@ print("      1. Recibe username/password")
 print("      2. Busca en diccionario de usuarios")
 print("      3. Si coincide → crea sesión Flask")
 print("      4. Si no → devuelve 401")
-r = api('POST', '/api/auth/login', json={'username':'desarrollador','password':'123456'})
+r = api('POST', '/api/auth/login', json={'username':'desarrollador','password':os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')})
 check("Login exitoso", r and r.json().get('ok'))
 
 # 3.2 Algoritmo de Venta

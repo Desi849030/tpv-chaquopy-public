@@ -1,3 +1,4 @@
+import os
 """Tests Robustos - TPV Ultra Smart v8.0 - 50 pruebas"""
 import requests, json, time, random, string
 
@@ -31,7 +32,7 @@ print("=" * 70)
 print("\n🔐 AUTH (6 pruebas)")
 check("1. Health check", (r := api('GET','/api/health')) and r.status_code == 200)
 check("2. Health devuelve JSON", (r := api('GET','/api/health')) and r.json().get('status') == 'ok')
-check("3. Login dev", (r := api('POST','/api/auth/login', json={'username':'desarrollador','password':'123456'})) and r.json().get('ok'))
+check("3. Login dev", (r := api('POST','/api/auth/login', json={'username':'desarrollador','password':os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')})) and r.json().get('ok'))
 check("4. Login admin", (r := api('POST','/api/auth/login', json={'username':'admin','password':'admin'})) and r.json().get('ok'))
 check("5. Auth me autenticado", (r := api('GET','/api/auth/me')) and r.json().get('autenticado'))
 check("6. Auth me devuelve rol", (r := api('GET','/api/auth/me')) and r.json().get('usuario',{}).get('rol'))

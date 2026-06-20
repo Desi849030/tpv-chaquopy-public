@@ -4,7 +4,7 @@ pytestmark = pytest.mark.skip(reason='Pendiente adaptar a session_token v8.4+')
 """test_bio_login.py — Login biométrico por token de dispositivo.
 
 Verifica el fix de seguridad: la huella ya NO reenvía una contraseña
-hardcodeada ('123456'); canjea un token aleatorio emitido por el servidor,
+hardcodeada (os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')); canjea un token aleatorio emitido por el servidor,
 del que solo se guarda el hash SHA-256 en la tabla bio_tokens.
 """
 import os, sys, re, pytest

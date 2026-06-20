@@ -1,3 +1,4 @@
+import os
 """Tests básicos del TPV Ultra Smart"""
 import sys
 sys.path.insert(0, 'app/src/main/python')
@@ -23,7 +24,7 @@ def test_login():
     """Verifica login"""
     import requests
     r = requests.post('http://127.0.0.1:5000/api/auth/login', 
-                     json={'username': 'desarrollador', 'password': '123456'})
+                     json={'username': 'desarrollador', 'password': os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')})
     assert r.status_code == 200
     assert r.json()['ok'] == True
     print("✅ test_login OK")

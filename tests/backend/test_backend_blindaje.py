@@ -23,7 +23,7 @@ class TestBlindajeBackend(unittest.TestCase):
     def test_crear_usuario_rol_prohibido(self):
         """Un vendedor no puede crear un administrador."""
         # Login como vendedor
-        self.client.post("/api/auth/login", json={"username":"vendedor1", "password":"123456"})
+        self.client.post("/api/auth/login", json={"username":"vendedor1", "password":os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')})
         r = self.client.post("/api/usuarios/crear", json={
             "username": "hacker", "password": "123", "rol": "administrador", "nombre": "Hacker"
         })

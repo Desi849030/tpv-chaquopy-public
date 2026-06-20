@@ -60,7 +60,7 @@ print("=" * 75)
 
 endpoints = [
     ('GET', '/api/health'),
-    ('POST', '/api/auth/login', {'username':'desarrollador','password':'123456'}),
+    ('POST', '/api/auth/login', {'username':'desarrollador','password':os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')}),
     ('GET', '/api/auth/me'),
     ('POST', '/api/auth/logout'),
     ('GET', '/api/catalogo'),

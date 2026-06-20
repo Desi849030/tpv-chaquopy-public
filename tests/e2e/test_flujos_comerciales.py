@@ -26,7 +26,7 @@ def app():
 def cajero_client(app):
     """Cliente autenticado como cajero1."""
     c = app.test_client()
-    r = c.post('/api/auth/login', json={'username': 'cajero1', 'password': '123456'})
+    r = c.post('/api/auth/login', json={'username': 'cajero1', 'password': os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')})
     assert r.status_code == 200, f"Login cajero1 falló: {r.status_code}"
     return c
 
@@ -35,7 +35,7 @@ def cajero_client(app):
 def admin_client(app):
     """Cliente autenticado como admin."""
     c = app.test_client()
-    r = c.post('/api/auth/login', json={'username': 'admin', 'password': '123456'})
+    r = c.post('/api/auth/login', json={'username': 'admin', 'password': os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')})
     assert r.status_code == 200, f"Login admin falló: {r.status_code}"
     return c
 
@@ -53,7 +53,7 @@ class TestLoginRoles:
     def test_login_rol(self, app, username, rol_esperado):
         """Cada usuario demo debe poder loguearse y recibir su rol correcto."""
         c = app.test_client()
-        r = c.post('/api/auth/login', json={'username': username, 'password': '123456'})
+        r = c.post('/api/auth/login', json={'username': username, 'password': os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')})
         assert r.status_code == 200, f"{username}: HTTP {r.status_code}"
         data = r.get_json()
         assert data.get("ok") is True

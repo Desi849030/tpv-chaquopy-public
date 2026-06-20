@@ -1,3 +1,4 @@
+import os
 import unittest
 import requests
 import uuid
@@ -34,7 +35,7 @@ class TestAuthRoles(unittest.TestCase):
         s = requests.Session()
         r = s.post(
             f"{BASE}/api/auth/login",
-            json={"username": "desarrollador", "password": "123456"},
+            json={"username": "desarrollador", "password": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')},
             timeout=10
         )
         self.assertEqual(r.status_code, 200)
@@ -47,7 +48,7 @@ class TestAuthRoles(unittest.TestCase):
         s = requests.Session()
         r = s.post(
             f"{BASE}/api/auth/login",
-            json={"username": "desarrollador", "password": "123456"},
+            json={"username": "desarrollador", "password": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026')},
             timeout=10
         )
         self.assertEqual(r.status_code, 200)
@@ -57,7 +58,7 @@ class TestAuthRoles(unittest.TestCase):
             f"{BASE}/api/admin/usuarios/crear",
             json={
                 "username": username,
-                "password": "123456",
+                "password": os.environ.get('TPV_DEMO_PASSWORD', 'demo-tpv-2026'),
                 "nombre": "Usuario Tesis",
                 "rol": "vendedor"
             },

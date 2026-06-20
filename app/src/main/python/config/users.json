@@ -1,7 +1,7 @@
 {
-  "desarrollador": { "usuario": "dev", "password": "dev123", "nombre": "Desarrollador" },
-  "administradores": [{ "usuario": "admin", "password": "admin123", "nombre": "Administrador" }],
-  "supervisores": [{ "usuario": "supervisor", "password": "supervisor123", "nombre": "Supervisor" }],
-  "empleados": [{ "usuario": "empleado", "password": "empleado123", "nombre": "Empleado" }],
-  "clientes": [{ "usuario": "cliente", "password": "cliente123", "nombre": "Cliente" }]
+  "_comentario": "Plantilla. Contraseñas reales en .env (TPV_DEMO_PASSWORD)",
+  "desarrollador": { "usuario": "dev", "password": "CAMBIAR_EN_ENV", "nombre": "Desarrollador" },
+  "administradores": [{ "usuario": "admin", "password": "CAMBIAR_EN_ENV", "nombre": "Administrador" }],
+  "empleados": [{ "usuario": "empleado", "password": "CAMBIAR_EN_ENV", "nombre": "Empleado" }],
+  "clientes": [{ "usuario": "cliente", "password": "CAMBIAR_EN_ENV", "nombre": "Cliente" }]
 }

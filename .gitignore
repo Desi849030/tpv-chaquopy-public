@@ -52,3 +52,16 @@ nohup.out
 # Logs temporales, salvo evidencias seleccionadas
 *.log
 .coverage
+
+# Prevenir __init__.py en directorios Android (rompen el build)
+app/src/main/res/**/__init__.py
+app/src/main/java/**/__init__.py
+app/libs/__init__.py
+
+# Build artifacts
+app/build/
+.gradle/
+build/
+*.apk
+*.aab
+local.properties

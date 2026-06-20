@@ -21,7 +21,7 @@ El proyecto tiene 195 archivos Python. La mayoría son:
 
 Una cobertura del 95% requeriría simular todos esos entornos, lo cual no es realista en el plazo de tesis. **La cobertura del 32% es honesta**: cubre los flujos críticos que un jurado puede verificar en una demo en vivo.
 
-## Mejoras Cuantificables (Rev. 13 → Rev. 14)
+## Mejoras Cuantificables (Rev. 14 → Rev. 14)
 
 ### Bugs críticos corregidos
 

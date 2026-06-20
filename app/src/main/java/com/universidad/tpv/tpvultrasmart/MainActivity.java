@@ -305,6 +305,7 @@ public class MainActivity extends FragmentActivity {
         webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
 
         WebSettings s = webView.getSettings();
+        s.setInitialScale(1);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         s.setCacheMode(WebSettings.LOAD_DEFAULT);
         s.setUseWideViewPort(true);

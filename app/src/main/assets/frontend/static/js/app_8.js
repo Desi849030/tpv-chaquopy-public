@@ -1007,3 +1007,30 @@ window.dbg = function(msg, tipo) {
             : msg.startsWith('✅') ? 'success' : 'info';
     _dbgLog(msg, tipo || t, msg);
 };
+
+// FIX: Toggle debug-active class en body
+(function() {
+    var observer = new MutationObserver(function(mutations) {
+        var panel = document.getElementById('dbg-v2');
+        if (panel) {
+            var isVisible = panel.style.height && panel.style.height !== '38px' && panel.style.height !== '';
+            if (isVisible) {
+                document.body.classList.add('debug-active');
+            } else {
+                document.body.classList.remove('debug-active');
+            }
+        }
+    });
+    var panel = document.getElementById('dbg-v2');
+    if (panel) {
+        observer.observe(panel, { attributes: true, attributeFilter: ['style'] });
+    }
+    // Re-check cada 2s por si el panel se crea después
+    setInterval(function() {
+        var p = document.getElementById('dbg-v2');
+        if (p && !p._observed) {
+            observer.observe(p, { attributes: true, attributeFilter: ['style'] });
+            p._observed = true;
+        }
+    }, 2000);
+})();

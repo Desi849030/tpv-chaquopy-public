@@ -344,3 +344,20 @@ async function supabase_syncUsuarios() {
         showToast(d.ok ? '☁️ Usuarios sync OK' : 'Error sync usuarios', d.ok?'success':'danger');
     } catch(e) { if (el) el.innerHTML = '❌ Sin conexión'; }
 }
+
+
+// FIX: Destruir charts al salir del dashboard
+window._destroyDashCharts = function() {
+    if (window._dashChartVentas) { try { window._dashChartVentas.destroy(); } catch(e){} window._dashChartVentas = null; }
+    if (window._dashChartCat) { try { window._dashChartCat.destroy(); } catch(e){} window._dashChartCat = null; }
+};
+
+// Listener: cuando se cambia de tab, destruir charts
+document.addEventListener('shown.bs.tab', function(e) {
+    var target = e.target;
+    var targetId = target ? (target.getAttribute('data-bs-target') || target.id) : '';
+    if (targetId && targetId.indexOf('dashboard') === -1) {
+        // No es el dashboard → destruir charts
+        if (window._destroyDashCharts) window._destroyDashCharts();
+    }
+});

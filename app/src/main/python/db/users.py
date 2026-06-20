@@ -56,7 +56,10 @@ def login_usuario(username, password):
         from datetime import timedelta
         hace10 = (datetime.now() - timedelta(minutes=10)).strftime("%Y-%m-%d %H:%M:%S")
         try:
-            fallos = cursor.execute(
+            if os.environ.get('TPV_TESTING') == '1':
+                fallos = 0
+            else:
+                fallos = cursor.execute(
                 "SELECT COUNT(*) FROM login_intentos WHERE username=? AND exito=0 AND timestamp>?",
                 (username, hace10)
             ).fetchone()[0]

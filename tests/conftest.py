@@ -26,7 +26,7 @@ def client(app):
     with app.test_client() as c:
         c.post("/api/auth/login", json={
             "username": "desarrollador",
-            "password": "123456"
+            "password": os.environ.get("TPV_DEMO_PASSWORD", "demo-tpv-2026")
         })
         yield c
 

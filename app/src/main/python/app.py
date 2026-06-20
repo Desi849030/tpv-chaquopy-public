@@ -359,6 +359,26 @@ def _test_biometric():
 def _test_licencias():
     return jsonify({'ok': True, 'valida': True, 'estado': 'activa', 'licencias': [{'id': 1, 'estado': 'activa'}]}), 200
 
+
+@app.route('/apk-health')
+def apk_health():
+    """Health check específico para APK — devuelve info de debug."""
+    import os, sys
+    return jsonify({
+        "ok": True,
+        "status": "running",
+        "python_version": sys.version.split()[0],
+        "frontend_dir": _ASSETS,
+        "frontend_exists": os.path.isdir(_TPL),
+        "index_exists": os.path.exists(os.path.join(_TPL, 'index.html')),
+        "index_size": os.path.getsize(os.path.join(_TPL, 'index.html')) if os.path.exists(os.path.join(_TPL, 'index.html')) else 0,
+        "static_dir_exists": os.path.isdir(_STAT),
+        "db_path": os.path.abspath(os.path.join(os.getcwd(), 'tpv_datos.db')),
+        "db_exists": os.path.exists(os.path.join(os.getcwd(), 'tpv_datos.db')),
+        "routes_count": len(list(app.url_map.iter_rules())),
+        "port": os.environ.get('TPV_PORT', '5000'),
+    })
+
 @app.before_request
 def bouncer_tesis():
     from flask import request, session, jsonify
@@ -381,6 +401,16 @@ if __name__ == '__main__':
 def __debug_js():
     import json, datetime
     data = request.get_json() or {}
-    with open(os.path.expanduser('~/js_errors.log'), 'a') as f:
+    with open(os.path.join(os.getcwd(), 'js_errors.log'), 'a') as f:
         f.write(f"[{datetime.datetime.now()}] {data.get('msg','')}\n{data.get('stack','')}\n\n")
     return {'ok': True}
+
+
+@app.route('/login-minimo')
+def login_minimo():
+    """Login fallback mínimo (sin dependencias JS) para diagnóstico APK."""
+    path = os.path.join(_ASSETS, 'login_minimo.html')
+    if os.path.exists(path):
+        with open(path, 'r', encoding='utf-8') as f:
+            return f.read(), 200, {'Content-Type': 'text/html; charset=utf-8'}
+    return '<h1>Login no encontrado</h1>', 404

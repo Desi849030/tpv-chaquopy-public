@@ -50,6 +50,43 @@
     <!-- Fin TPV Ultra Smart PWA -->
 </head>
 <body style="background:#0a0e1a">
+<div id="apk-loading" style="position:fixed;inset:0;background:linear-gradient(135deg,#0f172a,#1e293b);color:#e2e8f0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:system-ui;z-index:99998;padding:20px;text-align:center">
+    <div style="font-size:3rem;margin-bottom:16px;animation:apkPulse 1.5s ease-in-out infinite">🚀</div>
+    <div style="font-size:1.3rem;font-weight:700;margin-bottom:8px">TPV Ultra Smart</div>
+    <div style="font-size:0.85rem;color:#94a3b8;margin-bottom:20px">Cargando sistema...</div>
+    <div style="font-size:0.7rem;color:#64748b" id="apk-loading-status">Inicializando...</div>
+</div>
+<style>
+@keyframes apkPulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.8; } }
+</style>
+<script>
+// Timeout: si después de 8 segundos no se quitó el overlay, mostrar error
+setTimeout(function() {
+    var ol = document.getElementById('apk-loading');
+    if (ol && ol.style.display !== 'none') {
+        ol.innerHTML = '<div style="font-size:2.5rem;margin-bottom:16px">⚠️</div>' +
+            '<div style="font-size:1.2rem;font-weight:700;margin-bottom:8px;color:#fbbf24">Error al cargar</div>' +
+            '<div style="font-size:0.8rem;color:#94a3b8;margin-bottom:20px;max-width:300px">No se pudo cargar el frontend. Verifica que el backend Flask esté corriendo en el puerto 5050.</div>' +
+            '<div style="font-size:0.7rem;color:#64748b">URL: ' + window.location.href + '</div>' +
+            '<button onclick="location.reload()" style="margin-top:16px;padding:8px 20px;background:#4f46e5;color:#fff;border:none;border-radius:8px;cursor:pointer">Reintentar</button>';
+    }
+}, 8000);
+
+// Quitar overlay cuando el DOM esté listo y el login exista
+function quitarOverlay() {
+    var ol = document.getElementById('apk-loading');
+    if (ol) ol.style.display = 'none';
+}
+
+// Si después de 3s hay contenido en el body, quitar overlay
+setTimeout(function() {
+    var login = document.querySelector('input[type=text], input[placeholder*=Usuario], .login-card, #login-form, #username');
+    if (login || document.body.innerText.length > 100) {
+        quitarOverlay();
+    }
+}, 3000);
+</script>
+
 
     <!-- Splash web sincronizado con el splash nativo (mismo color) para evitar
          el flash "tipo página web" durante 'Iniciando sistema'. Se oculta solo

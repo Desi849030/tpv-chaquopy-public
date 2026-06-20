@@ -428,6 +428,19 @@
                     const cats = [...new Set(tpvState.productos.map(p => p.categoria || 'General'))].sort();
                     if (cats.length) tpvState.categorias = cats;
                     console.log(`📦 Catálogo del servidor: ${data.productos.length} productos`);
+                    // FIX UI BUGS: Cargar inventario general para que el catálogo muestre stock real
+                    try {
+                        const rInv = await fetch('/api/inventario/general', { credentials: 'same-origin' });
+                        if (rInv.ok) {
+                            const dInv = await rInv.json();
+                            if (dInv && dInv.inventario) {
+                                tpvState.inventarioGeneral = dInv.inventario;
+                                console.log(`📦 Inventario general cargado: ${dInv.inventario.length} productos`);
+                            }
+                        }
+                    } catch(eInv) {
+                        console.warn('⚠️ No se pudo cargar inventario general:', eInv.message);
+                    }
                 }
             } catch(e) {
                 console.warn('⚠️ Catálogo local (sin servidor):', e.message);

@@ -3,6 +3,7 @@ from decorators import login_required, requiere_rol, usuario_actual
 from db_config import limpiar_tablas_completo, reconstruir_desde_productos, sincronizar_estado_completo
 from db_connection import obtener_conexion
 from db_products import actualizar_vendido_diario, asignar_inventario_diario, cargar_stock_masivo, eliminar_producto_inventario_general, importar_catalogo_a_inventario, limpiar_inventarios_diarios, obtener_historial_entradas, obtener_inventario_diario, obtener_inventario_general, registrar_entrada_producto
+from db.products_catalogo import obtener_productos_catalogo
 import supabase_sync as _sb
 from datetime import datetime
 

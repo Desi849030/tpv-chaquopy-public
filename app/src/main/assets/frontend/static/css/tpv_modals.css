@@ -97,3 +97,28 @@
     max-width: 400px !important;
     position: relative !important;
 }
+
+/* FIX UI BUGS — Responsive para tablas de gestión en móvil */
+@media (max-width: 768px) {
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        max-width: 100%;
+    }
+    .table-responsive table {
+        font-size: 0.78rem;
+        min-width: 600px;
+    }
+    .glass-card {
+        padding: 12px !important;
+        overflow-x: hidden;
+    }
+    /* Privilegios cards más compactas en móvil */
+    .priv-rol-card {
+        padding: 10px 6px !important;
+        font-size: 0.85rem;
+    }
+    .priv-rol-card i {
+        font-size: 1.4em !important;
+    }
+}

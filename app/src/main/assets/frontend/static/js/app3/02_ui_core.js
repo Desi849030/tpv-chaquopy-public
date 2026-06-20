@@ -368,10 +368,26 @@ async function initializeUI() {
         // --- TPV (Catálogo y Orden) ---
         // Obtiene el stock actual de un producto desde el inventario de hoy
         function tpv_getStock(productoId) {
+            // FIX UI BUGS: buscar stock en orden de prioridad
+            // 1. inventarios[hoy] (inventario diario del cajero)
+            // 2. inventarioGeneral (cargado al iniciar desde /api/inventario/general)
+            // 3. stock_total del propio producto (vía /api/publico/catalogo)
+            // 4. producto.stock si viene en el catálogo
+            const prod = (tpvState.productos || []).find(p => p.id === productoId);
+            if (prod && (prod.stock_total !== undefined && prod.stock_total !== null)) {
+                return parseFloat(prod.stock_total) || 0;
+            }
+            if (prod && prod.stock !== undefined && prod.stock !== null) {
+                return parseFloat(prod.stock) || 0;
+            }
             const hoy = getTodayDateString();
-            const _ir = tpvState.inventarios?.[hoy] || []; const inv = Array.isArray(_ir) ? _ir : Object.values(_ir);
-            const item = inv.find(i => i.id === productoId);
-            return item ? (item.cantFinal ?? item.cantInicial ?? 0) : null;
+            const _ir = tpvState.inventarios?.[hoy] || [];
+            const inv = Array.isArray(_ir) ? _ir : Object.values(_ir);
+            const item = inv.find(i => (i.id || i.producto_id) === productoId);
+            if (item) return item.cantFinal ?? item.cantInicial ?? item.stock_actual ?? 0;
+            const general = tpvState.inventarioGeneral || [];
+            const g = general.find(i => (i.id || i.producto_id) === productoId);
+            return g ? (g.stock_actual ?? g.cantFinal ?? 0) : null;
         }
 
         function tpv_stockBadge(stock) {

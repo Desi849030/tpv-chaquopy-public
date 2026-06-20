@@ -407,13 +407,3 @@ def __debug_js():
     with open(os.path.join(os.getcwd(), 'js_errors.log'), 'a') as f:
         f.write(f"[{datetime.datetime.now()}] {data.get('msg','')}\n{data.get('stack','')}\n\n")
     return {'ok': True}
-
-
-@app.route('/login-minimo')
-def login_minimo():
-    """Login fallback mínimo (sin dependencias JS) para diagnóstico APK."""
-    path = os.path.join(_ASSETS, 'login_minimo.html')
-    if os.path.exists(path):
-        with open(path, 'r', encoding='utf-8') as f:
-            return f.read(), 200, {'Content-Type': 'text/html; charset=utf-8'}
-    return '<h1>Login no encontrado</h1>', 404

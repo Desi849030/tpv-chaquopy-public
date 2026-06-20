@@ -1,6 +1,6 @@
-import os
 """db_users.py - Usuarios, autenticacion, permisos (DAO)"""
 from __future__ import annotations
+import os
 import sqlite3, json, uuid, hashlib
 from datetime import datetime
 from typing import Optional, List, Dict, Any, Tuple

@@ -50,43 +50,6 @@
     <!-- Fin TPV Ultra Smart PWA -->
 </head>
 <body style="background:#0a0e1a">
-<div id="apk-loading" style="position:fixed;inset:0;background:linear-gradient(135deg,#0f172a,#1e293b);color:#e2e8f0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:system-ui;z-index:99998;padding:20px;text-align:center">
-    <div style="font-size:3rem;margin-bottom:16px;animation:apkPulse 1.5s ease-in-out infinite">🚀</div>
-    <div style="font-size:1.3rem;font-weight:700;margin-bottom:8px">TPV Ultra Smart</div>
-    <div style="font-size:0.85rem;color:#94a3b8;margin-bottom:20px">Cargando sistema...</div>
-    <div style="font-size:0.7rem;color:#64748b" id="apk-loading-status">Inicializando...</div>
-</div>
-<style>
-@keyframes apkPulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.8; } }
-</style>
-<script>
-// Timeout: si después de 8 segundos no se quitó el overlay, mostrar error
-setTimeout(function() {
-    var ol = document.getElementById('apk-loading');
-    if (ol && ol.style.display !== 'none') {
-        ol.innerHTML = '<div style="font-size:2.5rem;margin-bottom:16px">⚠️</div>' +
-            '<div style="font-size:1.2rem;font-weight:700;margin-bottom:8px;color:#fbbf24">Error al cargar</div>' +
-            '<div style="font-size:0.8rem;color:#94a3b8;margin-bottom:20px;max-width:300px">No se pudo cargar el frontend. Verifica que el backend Flask esté corriendo en el puerto 5050.</div>' +
-            '<div style="font-size:0.7rem;color:#64748b">URL: ' + window.location.href + '</div>' +
-            '<button onclick="location.reload()" style="margin-top:16px;padding:8px 20px;background:#4f46e5;color:#fff;border:none;border-radius:8px;cursor:pointer">Reintentar</button>';
-    }
-}, 8000);
-
-// Quitar overlay cuando el DOM esté listo y el login exista
-function quitarOverlay() {
-    var ol = document.getElementById('apk-loading');
-    if (ol) ol.style.display = 'none';
-}
-
-// Si después de 3s hay contenido en el body, quitar overlay
-setTimeout(function() {
-    var login = document.querySelector('input[type=text], input[placeholder*=Usuario], .login-card, #login-form, #username');
-    if (login || document.body.innerText.length > 100) {
-        quitarOverlay();
-    }
-}, 3000);
-</script>
-
 
     <!-- Splash web sincronizado con el splash nativo (mismo color) para evitar
          el flash "tipo página web" durante 'Iniciando sistema'. Se oculta solo
@@ -237,26 +200,19 @@ setTimeout(function() {
                 overflow-x: auto;
                 overflow-y: visible;
                 gap: .45rem;
-                padding-bottom: .45rem;
+                padding-bottom: .4rem;
                 scrollbar-width: thin;
-                scrollbar-color: rgba(99,102,241,.35) transparent;
-                position: relative;
-                z-index: 30;
             }
-            #main-nav-tabs .nav-item {
-                flex: 0 0 auto;
-                position: relative;
-            }
+            #main-nav-tabs .nav-item { flex: 0 0 auto; }
             #main-nav-tabs .nav-link,
             #main-nav-tabs .dropdown-toggle {
                 display: inline-flex;
                 align-items: center;
-                gap: .38rem;
+                gap: .35rem;
                 border-radius: 14px;
                 padding: .72rem .95rem;
                 font-weight: 600;
                 white-space: nowrap;
-                min-height: 46px;
             }
             #main-nav-tabs .nav-link.active,
             #main-nav-tabs .dropdown-toggle.active {
@@ -265,24 +221,11 @@ setTimeout(function() {
                 color: #312e81;
             }
             #main-nav-tabs .dropdown-menu {
-                min-width: 300px;
-                max-width: min(92vw, 360px);
-                max-height: min(68vh, 520px);
-                overflow-y: auto;
-                overflow-x: hidden;
-                margin-top: .55rem;
-                padding: .55rem 0;
+                min-width: 290px;
+                padding: .5rem 0;
                 border-radius: 16px;
-                box-shadow: 0 18px 44px rgba(15,23,42,.22);
+                box-shadow: 0 16px 40px rgba(15,23,42,.18);
                 border: 1px solid rgba(99,102,241,.16);
-                z-index: 1085;
-            }
-            #main-nav-tabs .dropdown-menu.show {
-                animation: tpvMenuIn .14s ease-out both;
-            }
-            @keyframes tpvMenuIn {
-                from { opacity: 0; transform: translateY(6px) scale(.985); }
-                to { opacity: 1; transform: translateY(0) scale(1); }
             }
             #main-nav-tabs .dropdown-header {
                 font-size: .72rem;
@@ -290,29 +233,22 @@ setTimeout(function() {
                 text-transform: uppercase;
                 letter-spacing: .08em;
                 color: #4f46e5;
-                padding: .82rem 1rem .35rem;
-                white-space: normal;
+                padding: .8rem 1rem .35rem;
             }
             #main-nav-tabs .dropdown-item {
                 display: flex;
                 align-items: center;
-                gap: .68rem;
+                gap: .65rem;
                 margin: 0 .55rem;
-                padding: .76rem .88rem;
+                padding: .72rem .85rem;
                 border-radius: 10px;
                 font-size: .92rem;
-                line-height: 1.25;
-                white-space: normal;
                 transition: all .16s ease;
             }
             #main-nav-tabs .dropdown-item i {
                 width: 22px;
                 text-align: center;
                 flex: 0 0 22px;
-            }
-            #main-nav-tabs .dropdown-item .badge {
-                margin-left: auto;
-                flex-shrink: 0;
             }
             #main-nav-tabs .dropdown-item:hover,
             #main-nav-tabs .dropdown-item:focus {
@@ -321,48 +257,30 @@ setTimeout(function() {
                 transform: translateX(2px);
             }
             #main-nav-tabs .dropdown-item:hover i,
-            #main-nav-tabs .dropdown-item:focus i {
-                color: #fff !important;
-            }
+            #main-nav-tabs .dropdown-item:focus i { color: #fff !important; }
             #main-nav-tabs .dropdown-divider {
-                margin: .38rem .9rem;
+                margin: .35rem .9rem;
                 opacity: .25;
                 border-color: #6366f1;
             }
             #main-nav-tabs .badge { vertical-align: middle; }
             @media (max-width: 768px) {
-                #main-nav-tabs {
-                    gap: .35rem;
-                    padding-bottom: .55rem;
-                }
+                #main-nav-tabs .dropdown-menu { min-width: 260px; }
                 #main-nav-tabs .nav-link,
-                #main-nav-tabs .dropdown-toggle {
-                    padding: .68rem .82rem;
-                    font-size: .92rem;
-                }
-                #main-nav-tabs .dropdown-menu {
-                    position: fixed !important;
-                    left: 12px !important;
-                    right: 12px !important;
-                    top: 112px !important;
-                    bottom: auto !important;
-                    width: auto !important;
-                    max-width: none !important;
-                    min-width: 0 !important;
-                    transform: none !important;
-                    inset-inline: 12px !important;
-                }
+                #main-nav-tabs .dropdown-toggle { padding: .68rem .82rem; font-size: .92rem; }
             }
         </style>
         <ul class="nav nav-tabs mb-3" id="main-nav-tabs" role="tablist">
 
             <!-- ═══════════ 🛒 OPERACIÓN ═══════════ -->
             <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="true" href="javascript:void(0)" role="button" aria-expanded="false">
+                <a class="nav-link dropdown-toggle active" data-bs-toggle="dropdown" data-bs-auto-close="true" href="javascript:void(0)" role="button" aria-expanded="false">
                     <i class="bi bi-shop"></i><span>Operación</span>
                 </a>
                 <ul class="dropdown-menu">
-                    <li><h6 class="dropdown-header">Flujo de Caja</h6></li>
+                    <li><h6 class="dropdown-header">Punto de Venta</h6></li>
+                    <li><a class="dropdown-item active" id="tpv-caja-tab" data-bs-toggle="tab" data-bs-target="#tpv-caja-tab-pane" href="javascript:void(0)" role="tab">
+                        <i class="bi bi-grid-3x3-gap-fill text-primary"></i>Vista de Venta</a></li>
                     <li><a class="dropdown-item" id="orden-actual-tab" data-bs-toggle="tab" data-bs-target="#orden-actual-tab-pane" href="javascript:void(0)" role="tab">
                         <i class="bi bi-receipt text-warning"></i>Orden Actual
                         <span id="order-badge" class="badge rounded-pill bg-danger d-none ms-1">0</span></a></li>
@@ -371,6 +289,8 @@ setTimeout(function() {
                     <li><a class="dropdown-item" id="tienda-tab" data-bs-toggle="tab" data-bs-target="#tienda-tab-pane" href="javascript:void(0)" role="tab" onclick="tienda_init()">
                         <i class="bi bi-shop-window text-info"></i>Pedidos Online
                         <span id="tienda-pedidos-badge" class="badge rounded-pill bg-warning text-dark d-none ms-1">0</span></a></li>
+                    <li><a class="dropdown-item" id="cliente-qr-tab" data-bs-toggle="tab" data-bs-target="#cliente-qr-tab-pane" href="javascript:void(0)" role="tab">
+                        <i class="bi bi-qr-code text-success"></i>Etiquetas QR Cliente</a></li>
                 </ul>
             </li>
 
@@ -383,16 +303,10 @@ setTimeout(function() {
 
             <!-- ═══════════ 📦 CATÁLOGO ═══════════ -->
             <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle active" data-bs-toggle="dropdown" data-bs-auto-close="true" href="javascript:void(0)" role="button" aria-expanded="false">
+                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="true" href="javascript:void(0)" role="button" aria-expanded="false">
                     <i class="bi bi-box-seam"></i>Catálogo
                 </a>
                 <ul class="dropdown-menu">
-                    <li><h6 class="dropdown-header">Vista Comercial</h6></li>
-                    <li><a class="dropdown-item active" id="tpv-caja-tab" data-bs-toggle="tab" data-bs-target="#tpv-caja-tab-pane" href="javascript:void(0)" role="tab">
-                        <i class="bi bi-grid-3x3-gap-fill text-primary"></i>Catálogo de Venta</a></li>
-                    <li><a class="dropdown-item" id="cliente-qr-tab" data-bs-toggle="tab" data-bs-target="#cliente-qr-tab-pane" href="javascript:void(0)" role="tab">
-                        <i class="bi bi-qr-code text-success"></i>Etiquetas QR Cliente</a></li>
-                    <li><hr class="dropdown-divider"></li>
                     <li><h6 class="dropdown-header">Gestión de Productos</h6></li>
                     <li><a class="dropdown-item" id="gestion-productos-tab" data-bs-toggle="tab" data-bs-target="#gestion-productos-tab-pane" href="javascript:void(0)" role="tab">
                         <i class="bi bi-journal-album text-primary"></i>Productos</a></li>
@@ -458,21 +372,6 @@ setTimeout(function() {
                 </ul>
             </li>
         </ul>
-        <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            if (!window.bootstrap) return;
-            document.querySelectorAll('#main-nav-tabs .dropdown-item').forEach(function (item) {
-                item.addEventListener('click', function () {
-                    var menu = item.closest('.dropdown-menu');
-                    var toggle = menu && menu.parentElement && menu.parentElement.querySelector('[data-bs-toggle="dropdown"]');
-                    if (!toggle) return;
-                    setTimeout(function () {
-                        try { bootstrap.Dropdown.getOrCreateInstance(toggle).hide(); } catch (e) {}
-                    }, 80);
-                });
-            });
-        });
-        </script>
 
         <!-- Contenido de las Pestañas -->
         <main class="tab-content" id="myTabContent">
@@ -1471,10 +1370,8 @@ setTimeout(function() {
     
     <!-- JavaScript Corregido -->
     <script src="/static/js/tpv_ui_dialogs.js"></script>
-    <script src="/static/js/tpv_anon.js"></script>
     <script src="/static/js/tpv_api.js"></script>
     <!-- app_3.js dividido en módulos por dominio (#4) — orden de carga importa -->
-    <script src="/static/js/app_6.js"></script>
     <script src="/static/js/app3/01_estado.js"></script>
     <script src="/static/js/app3/02_ui_core.js"></script>
     <script src="/static/js/app3/03_tpv.js"></script>
@@ -1488,6 +1385,7 @@ setTimeout(function() {
 
 <!-- ================= EXPORTACIÓN UNIFICADA SEGURA ================= -->
 
+<script src="/static/js/app_4.js"></script>
 <!-- =============================================================== -->
 
 
@@ -1497,7 +1395,9 @@ setTimeout(function() {
 ══════════════════════════════════════════════════════════════════ -->
 <link rel="stylesheet" href="/static/css/modulo_2.css">
 
+<script src="/static/js/app_5.js"></script>
 
+<script src="/static/js/app_6.js"></script>
 
     <!-- CSS movido al final para no bloquear render -->
 <link rel="stylesheet" href="/static/css/modulo_3.css">
@@ -1506,6 +1406,7 @@ setTimeout(function() {
 <!-- ══════════════════════════════════════════════════════════
      DASHBOARD — Gráficos y KPIs
 ══════════════════════════════════════════════════════════ -->
+<script src="/static/js/app_7.js"></script>
 
 <!-- Google Translate + integración bidireccional ES/EN con persistencia offline -->
 <script type="text/javascript">
@@ -1677,6 +1578,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
     <!-- TPV Debugger v6.0 — solo visible para rol desarrollador -->
+    <script src="/static/js/app_8.js"></script>
 
 <script src="/static/js/tpv_chat.js"></script>
 
@@ -1753,54 +1655,6 @@ observer.observe(document.body, {childList: true, subtree: true});
   document.addEventListener('DOMContentLoaded', function() {
     if (typeof i18n_init === 'function') i18n_init();
   });
-</script>
-
-<script>window.onerror=function(m,u,l,c,e){fetch("/api/__debug_js",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({msg:m,url:u,line:l,col:c,stack:e&&e.stack||""})}).catch(function(){})}</script><script src="/static/js/tpv_boot_splash.js"></script>
-    <script src="/static/js/app_4.js"></script>
-    <script src="/static/js/app_5.js"></script>
-    <script src="/static/js/app_7.js"></script>
-    <script src="/static/js/app_8.js"></script>
-    
-<script>
-// Diagnóstico: si después de 8s no hay login visible, mostrar error
-setTimeout(function() {
-    var loginVisible = false;
-    var inputs = document.querySelectorAll('input[type=text], input[placeholder]');
-    for (var i = 0; i < inputs.length; i++) {
-        if (inputs[i].offsetParent !== null && inputs[i].offsetWidth > 0) {
-            loginVisible = true;
-            break;
-        }
-    }
-
-    if (!loginVisible) {
-        console.error('[DIAG] No se detectó login visible después de 8s');
-        // Mostrar error en el splash si sigue visible
-        if (typeof window.tpvShowSplashError === 'function') {
-            window.tpvShowSplashError('No se pudo cargar el login. Verifica la consola para más detalles.');
-        }
-        // Crear botón de login fallback
-        var fallback = document.createElement('div');
-        fallback.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1e293b;color:#fff;padding:24px;border-radius:16px;text-align:center;z-index:99999;font-family:system-ui;max-width:90vw';
-        fallback.innerHTML = '<div style="font-size:2rem;margin-bottom:12px">⚠️</div>' +
-            '<div style="font-size:1.1rem;font-weight:700;margin-bottom:8px">Error al cargar el login</div>' +
-            '<div style="font-size:.8rem;color:#94a3b8;margin-bottom:16px">URL: ' + window.location.href + '</div>' +
-            '<a href="/login-minimo" style="display:inline-block;padding:10px 20px;background:#4f46e5;color:#fff;text-decoration:none;border-radius:8px;font-size:.85rem">Ir a login mínimo</a>';
-        document.body.appendChild(fallback);
-    } else {
-        console.log('[DIAG] Login detectado correctamente');
-        if (typeof window.tpvHideSplash === 'function') {
-            window.tpvHideSplash();
-        }
-    }
-}, 8000);
-
-// Detectar errores de carga de scripts
-document.addEventListener('error', function(e) {
-    if (e.target && e.target.tagName === 'SCRIPT') {
-        console.error('[DIAG] Error cargando script:', e.target.src);
-    }
-}, true);
 </script>
 
 </body>

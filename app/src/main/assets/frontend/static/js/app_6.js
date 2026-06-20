@@ -868,7 +868,6 @@ async function auth_login() {
             // v8.0: limpieza atomica ANTES de asignar nuevo usuario
             try { _tpv_limpiarEstadoUsuarioAnterior(); } catch(e){}
             AUTH.usuario = data.usuario;
-            if (typeof window.tpvDebugCheck === 'function') window.tpvDebugCheck();
             // Entrar de inmediato (no bloquear el login con la oferta de huella).
             _auth_mostrarApp();
             // Ofrecer registrar huella DESPUÉS, sin bloquear la entrada.
@@ -982,7 +981,7 @@ async function auth_loginBiometrico() {
                     body: JSON.stringify({ token: raw.t })
                 });
                 var data = await res.json();
-                if (res.ok && data.ok) { AUTH.usuario = data.usuario; if (typeof window.tpvDebugCheck === 'function') window.tpvDebugCheck(); _auth_mostrarApp(); }
+                if (res.ok && data.ok) { AUTH.usuario = data.usuario; _auth_mostrarApp(); }
                 else {
                     // Token revocado/expirado: limpiar y pedir contraseña.
                     try { localStorage.removeItem(_BIO_KEY); } catch (e) {}
@@ -1163,7 +1162,7 @@ function _auth_aplicarTabs() {
     if (['administrador','desarrollador'].includes(rol))    cfg_cargarTienda();
 
     console.log(`[Auth] Tabs aplicados — rol: ${rol}`);
-    if (typeof window.tpvDebugCheck === "function") window.tpvDebugCheck();
+}
 
 // ══════════════════════════════════════════════════════════════
 //  SETUP INVENTARIO — VENDEDOR

@@ -65,3 +65,4 @@ build/
 *.apk
 *.aab
 local.properties
+tpv-review/

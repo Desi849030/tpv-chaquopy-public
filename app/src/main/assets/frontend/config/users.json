@@ -1,6 +1,7 @@
 {
-  "desarrollador": { "usuario": "dev", "password": "dev123" },
-  "administradores": [{ "usuario": "admin", "password": "admin123" }],
-  "empleados": [{ "usuario": "empleado", "password": "empleado123" }],
-  "clientes": [{ "usuario": "cliente", "password": "cliente123" }]
+  "_comentario": "Plantilla. Configurar contraseñas en .env (TPV_DEMO_PASSWORD)",
+  "desarrollador": { "usuario": "dev", "password": "CAMBIAR_EN_ENV" },
+  "administradores": [{ "usuario": "admin", "password": "CAMBIAR_EN_ENV" }],
+  "empleados": [{ "usuario": "empleado", "password": "CAMBIAR_EN_ENV" }],
+  "clientes": [{ "usuario": "cliente", "password": "CAMBIAR_EN_ENV" }]
 }

@@ -635,6 +635,14 @@
             const result = await _post('/api/auth/logout', {});
             // Limpiar cachés sensibles al cerrar sesión
             _cacheInvalidate('GET:');
+            // Resetear chat a estado anónimo
+            if (window.tpvChat && typeof window.tpvChat.resetParaNuevoUsuario === 'function') {
+                window.tpvChat.resetParaNuevoUsuario();
+            }
+            window.TPV_ROL = 'cliente';
+            window.TPV_USER = 'Cliente anónimo';
+            window.TPV_USER_ID = 'anon';
+            window.TPV_AUTH = false;
             return result;
         },
 

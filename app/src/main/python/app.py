@@ -59,6 +59,40 @@ try:
         _conn.commit()
     _conn.close()
     print("📚 Documentación cargada en BD")
+
+# ═══ DATOS DEMO ═══
+try:
+    _demo_count = _conn.execute("SELECT COUNT(*) FROM productos").fetchone()[0]
+    if _demo_count == 0:
+        _productos_demo = [
+            ("p1", "Arroz Premium 1kg", 25.50, 18.00, "Alimentos", "Unidad"),
+            ("p2", "Frijoles Negros 500g", 18.75, 12.50, "Alimentos", "Unidad"),
+            ("p3", "Aceite Vegetal 1L", 45.00, 32.00, "Alimentos", "Unidad"),
+            ("p4", "Cafe Molido 250g", 65.00, 45.00, "Bebidas", "Unidad"),
+            ("p5", "Leche Entera 1L", 28.00, 20.00, "Lácteos", "Unidad"),
+            ("p6", "Pan Integral", 35.00, 22.00, "Panadería", "Unidad"),
+            ("p7", "Huevos 12un", 42.00, 30.00, "Alimentos", "Unidad"),
+            ("p8", "Azucar Morena 1kg", 22.30, 15.00, "Alimentos", "Unidad"),
+            ("p9", "Refresco Cola 2L", 32.00, 22.00, "Bebidas", "Unidad"),
+            ("p10", "Detergente Liquido 500ml", 38.00, 25.00, "Limpieza", "Unidad"),
+            ("p11", "Jabon Liquido Multiusos", 55.00, 38.00, "Limpieza", "Unidad"),
+            ("p12", "Pasta Dental", 28.00, 18.00, "Higiene", "Unidad"),
+        ]
+        for pid, nombre, precio, costo, cat, um in _productos_demo:
+            _conn.execute(
+                "INSERT INTO productos (producto_id, nombre, precio, costo, categoria, unidad_medida, activo) VALUES (?,?,?,?,?,?,1)",
+                (pid, nombre, precio, costo, cat, um)
+            )
+            _conn.execute(
+                "INSERT OR IGNORE INTO inventario_general (producto_id, nombre, stock_actual, stock_minimo, precio_compra, precio_venta, categoria, unidad_medida, actualizado) VALUES (?,?,?,5,?,?,?,?,datetime('now','localtime'))",
+                (pid, nombre, 30, costo, precio, cat, um)
+            )
+        _conn.commit()
+        print(f"✅ {len(_productos_demo)} productos demo creados")
+    else:
+        print(f"ℹ️ Ya hay {_demo_count} productos")
+except Exception as _e2:
+    print(f"⚠️ Error creando demo: {_e2}")
 except Exception as _e:
     print(f"⚠️ Error migrando documentacion: {_e}")
 

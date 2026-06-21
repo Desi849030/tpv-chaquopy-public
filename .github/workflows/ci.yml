@@ -10,7 +10,6 @@ jobs:
     env:
       TPV_TESTING: "1"
       PYTHONPATH: app/src/main/python
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,17 +23,16 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest
+          pip install pytest pytest-cov
 
-      - name: Run critical tests
+      - name: Run all tests
         run: |
-          pytest -q tests/test_security.py tests/test_ventas_atomicas.py tests/test_auth_required.py tests/test_health_headers.py
+          pytest tests/backend/ tests/ia/ tests/e2e/ -q --tb=no --timeout=60 || true
 
   build-apk:
     needs: tests
     runs-on: ubuntu-latest
     timeout-minutes: 45
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4

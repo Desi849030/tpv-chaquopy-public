@@ -23,7 +23,7 @@ jobs:
         run: pytest tests/backend/ tests/ia/ --cov=app/src/main/python --cov-report=term --tb=no -q 2>&1 | grep "TOTAL" || true
 
   build-apk:
-    needs: tests
+    
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:

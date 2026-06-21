@@ -1,0 +1,35 @@
+0000000000000000000000000000000000000000 71f643fe55acac9ecb5682afa36fa9d90cf2e127 Desi849030 <tu@email.com> 1781850099 -0400	clone: from https://github.com/Desi849030/tpv-chaquopy.git
+71f643fe55acac9ecb5682afa36fa9d90cf2e127 3785018c703de97d3ae60e6e8faab7a80b7ac39b Desi849030 <tu@email.com> 1781851030 -0400	am: fix(critico): Rev. 14 — bugs E2E + tests IA + docs honestas
+3785018c703de97d3ae60e6e8faab7a80b7ac39b a88190d4c58a88c952433c6a205c04ad2cecb5ca Desi849030 <tu@email.com> 1781851991 -0400	commit: fix(rutas-pwa): agregar /manifest.json, /service-worker.js, iconos PWA
+a88190d4c58a88c952433c6a205c04ad2cecb5ca 515a4d985a271cc9324b54ec23928c8b4a8c77f9 Desi849030 <tu@email.com> 1781856647 -0400	commit: fix(ui): arreglar stock, chat, drag, usuarios fantasmas
+515a4d985a271cc9324b54ec23928c8b4a8c77f9 18179bdbf8f402c146eded63262601185df86924 Desi849030 <tu@email.com> 1781941842 -0400	commit: Rev. 14 final: fix integral v5 + documentación tesis + E2E
+18179bdbf8f402c146eded63262601185df86924 604ae2720ae37e6d028a1702473f2147e2274217 Desi849030 <tu@email.com> 1781953713 -0400	commit: fix(build): eliminar __init__.py de res/ + versión 8.14.0 Rev. 14
+604ae2720ae37e6d028a1702473f2147e2274217 8a269b5f763d3c2c2a515ba6caf220df5fbcb89c Desi849030 <tu@email.com> 1781955122 -0400	commit: fix(apk): pantalla en blanco — WebView settings + manifest + login fallback
+8a269b5f763d3c2c2a515ba6caf220df5fbcb89c 61561658cb76fac462528d5f97e0b073c34e229c Desi849030 <tu@email.com> 1781955697 -0400	commit: security: eliminar contraseñas hardcodeadas del repo
+61561658cb76fac462528d5f97e0b073c34e229c f233b696bed8d7af4a62938f31e10d7650fa59b2 Desi849030 <tu@email.com> 1781963660 -0400	commit: fix(ui): botón enviar siempre visible + login garantizado + splash timeout 5s
+f233b696bed8d7af4a62938f31e10d7650fa59b2 4d54ad6e1194596499a7a4294490170756d2ab27 Desi849030 <tu@email.com> 1781975067 -0400	commit: fix: restaurar archivos originales desde git f2f8e06
+4d54ad6e1194596499a7a4294490170756d2ab27 9b3c7ee09573503cd988de3d533330e228f67f3e Desi849030 <tu@email.com> 1781981353 -0400	commit: fix(v2): usuarios + submenus scroll + canvas + agente dev
+9b3c7ee09573503cd988de3d533330e228f67f3e 95a2324b485323737cb30d2663bc80581e430653 Desi849030 <tu@email.com> 1781982835 -0400	commit: fix(agente+tests): Root Access eliminado + 7 handlers IA + 50 tests E2E
+95a2324b485323737cb30d2663bc80581e430653 f39235aa916a9d4e0ecb05c6807f7f83f1124b10 Desi849030 <tu@email.com> 1781983812 -0400	commit: fix(tests): 97% éxito — rate limiter + auth.py + conftest + 387 tests pasan
+f39235aa916a9d4e0ecb05c6807f7f83f1124b10 ebb510f10132499d5cfbd17c14a939a399d8441e Desi849030 <tu@email.com> 1781986501 -0400	commit: v8.14.0: auth + users + rate limiter + conftest + Root Access + build
+ebb510f10132499d5cfbd17c14a939a399d8441e 894e71b85207d2c0a634d99f5c03be2755a37d7c Desi849030 <tu@email.com> 1781989477 -0400	commit: fix(tests): test_blueprints corregido — 99.5% éxito (398/400 tests)
+894e71b85207d2c0a634d99f5c03be2755a37d7c f019d1af01fe4b3116efed0394d50769c8ed2c53 Desi849030 <tu@email.com> 1781990352 -0400	commit: fix(css): reaplicar todos los fixes UI — submenus + usuarios + debug + responsive
+f019d1af01fe4b3116efed0394d50769c8ed2c53 964ec4201a37589ee41914cfdb4961f5da29cbbf Desi849030 <tu@email.com> 1781991934 -0400	commit: fix(maestro): audit_logs + IA robusta + burbuja pointer + CSS integral
+964ec4201a37589ee41914cfdb4961f5da29cbbf f2b9fa7e54d0f0a6c2a42591e8b44c89eacc18c4 Desi849030 <tu@email.com> 1781992653 -0400	commit: security: saneamiento completo — cookies, credenciales, BD, HMAC, limpieza
+f2b9fa7e54d0f0a6c2a42591e8b44c89eacc18c4 a4da34b0296684748bb06835e43afb9850cc1d68 Desi849030 <tu@email.com> 1781992653 -0400	filter-branch: rewrite
+a4da34b0296684748bb06835e43afb9850cc1d68 eae900f550c1dc324acf01d6b4224faf9f4bb98a Desi849030 <tu@email.com> 1781993039 -0400	commit: docs: agregar scripts de generación CSS al repo
+eae900f550c1dc324acf01d6b4224faf9f4bb98a 81ed1c7b8da6f1634ab07d08dba0d9e8cd3c88a8 Desi849030 <tu@email.com> 1781994122 -0400	commit: fix(7.8): sanitizar users.json + eliminar JS obsoleto + head duplicado
+81ed1c7b8da6f1634ab07d08dba0d9e8cd3c88a8 371cdccf668074f065daf733b86876e8618ef443 Desi849030 <tu@email.com> 1782014424 -0400	commit: test: 317 tests nuevos — cobertura global 24% -> 47%
+371cdccf668074f065daf733b86876e8618ef443 3f8d145db12e6c1a247f37edf26bd340daf910e8 Desi849030 <tu@email.com> 1782016036 -0400	commit: test: cobertura tools/ 0% -> 80% — global 24% -> 48%
+3f8d145db12e6c1a247f37edf26bd340daf910e8 70c99117fcf1f8905f4d51664c629e0ef60a1978 Desi849030 <tu@email.com> 1782018490 -0400	commit: test: E2E completo — 121 tests, 100% pasan
+70c99117fcf1f8905f4d51664c629e0ef60a1978 b32be61e388ee8667ab3d1ae22c79f91d3209495 Desi849030 <tu@email.com> 1782019546 -0400	commit: feat: script reset_bd.py — backup/restore BD limpia post-tests
+b32be61e388ee8667ab3d1ae22c79f91d3209495 ed56a3bf6fe51cd58ead8f5e137fb57a4a547231 Desi849030 <tu@email.com> 1782019741 -0400	commit: feat: backup/restore automático de BD en tests — sin intervención manual
+ed56a3bf6fe51cd58ead8f5e137fb57a4a547231 d6e9d5d979a45f3bb5fbfa233a35d9be95911091 Desi849030 <tu@email.com> 1782020402 -0400	commit: fix(8.5): checks.py + head.html + HSTS + JS obsoleto + CSS strategy
+d6e9d5d979a45f3bb5fbfa233a35d9be95911091 13cb86def1d552f98e389c6e20a40136c76f0faa Desi849030 <tu@email.com> 1782022588 -0400	commit: fix: 6 arreglos mayores — tests 100% pasan
+13cb86def1d552f98e389c6e20a40136c76f0faa 90c9cdb9d87aded1347af2ac8d9443a40ee29f1c Desi849030 <tu@email.com> 1782026276 -0400	commit: feat: lector de documentos Markdown desde el chat (solo desarrollador)
+90c9cdb9d87aded1347af2ac8d9443a40ee29f1c ec906b9bbf4cf24589822afe0dda707688e09901 Desi849030 <tu@email.com> 1782027784 -0400	commit: feat: documentos en SQLite + cobertura 54% modules
+ec906b9bbf4cf24589822afe0dda707688e09901 486fd0259b86aa1a235cac159745d45f027e4919 Desi849030 <tu@email.com> 1782029484 -0400	commit: feat: documentos en SQLite + cobertura modules/ 54%
+486fd0259b86aa1a235cac159745d45f027e4919 673fd65a6d165a6a192a565ac677107f65320baa Desi849030 <tu@email.com> 1782032184 -0400	commit: fix(critico): restaurar app_4-8.js — sin ellos el login no carga
+673fd65a6d165a6a192a565ac677107f65320baa 880f278a999a7030fdecde6982aaac15fbf91413 Desi849030 <tu@email.com> 1782046218 -0400	commit: feat: lector de documentos funcional con vocabulario natural amplio
+880f278a999a7030fdecde6982aaac15fbf91413 16226678c78215c318e6da6dbb553cf258c3feb7 Desi849030 <tu@email.com> 1782047058 -0400	commit: test: cobertura ia/ 30% -> 37% — 23 tests nuevos
+16226678c78215c318e6da6dbb553cf258c3feb7 3c3d76d73f1a2ab9f19de257ad5fe5a367b764a0 Desi849030 <tu@email.com> 1782048180 -0400	commit: security: SameSite Strict + README actualizado (541 tests, 48% coverage)

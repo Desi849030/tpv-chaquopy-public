@@ -70,3 +70,6 @@ tpv-review/
 supabase_config.json
 *.db.backup
 .tpv_crypto_key
+tpv_datos.db
+reporte_calidad.txt
+resultado_cobertura.txt

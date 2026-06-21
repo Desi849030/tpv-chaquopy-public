@@ -336,7 +336,7 @@ class TestHealthEndpoints:
         assert len(r.data) > 100000  # HTML completo
 
     def test_static_js(self, client):
-        for js in ['tpv_chat.js', 'app_8.js', 'app_6.js']:
+        for js in ['tpv_chat.js', 'tpv_api.js', 'tpv_ventas.js']:
             r = client.get(f'/static/js/{js}')
             assert r.status_code == 200
             assert len(r.data) > 1000

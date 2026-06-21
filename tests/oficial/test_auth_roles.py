@@ -3,7 +3,7 @@ import unittest
 import requests
 import uuid
 
-BASE = "http://127.0.0.1:5000"
+BASE = "http://127.0.0.1:5050"
 
 
 class TestAuthRoles(unittest.TestCase):

@@ -1,7 +1,7 @@
 import unittest
 import requests
 
-BASE = "http://127.0.0.1:5000"
+BASE = "http://127.0.0.1:5050"
 
 
 class TestCatalogoShape(unittest.TestCase):

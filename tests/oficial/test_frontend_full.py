@@ -1,5 +1,5 @@
 import unittest, os, requests
-BASE = "http://127.0.0.1:5000"
+BASE = "http://127.0.0.1:5050"
 
 class TestFrontendFull(unittest.TestCase):
     def test_page_load(self):

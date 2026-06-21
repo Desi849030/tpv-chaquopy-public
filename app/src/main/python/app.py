@@ -89,7 +89,7 @@ def add_security_headers(response):
 
 app.config['PERMANENT_SESSION_LIFETIME'] = 86400 * 30
 app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SAMESITE'] = 'Strict'
 app.config['SESSION_COOKIE_SECURE'] = os.environ.get('TPV_HTTPS', '0') == '1'
 app.config['SESSION_COOKIE_NAME'] = 'tpv_session'
 app.secret_key = os.environ.get('TPV_SECRET_KEY', 'tpv-ultra-smart-v8-CAMBIAR-EN-PRODUCCION')

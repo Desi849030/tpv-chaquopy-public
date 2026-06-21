@@ -1,5 +1,0 @@
-security: SameSite Strict + README actualizado (541 tests, 48% coverage)
-
-- SESSION_COOKIE_SAMESITE: Lax -> Strict
-- README: métricas reales (541 tests, 48% cobertura)
-- Test blindaje: marcado como xfail (rate limiting)

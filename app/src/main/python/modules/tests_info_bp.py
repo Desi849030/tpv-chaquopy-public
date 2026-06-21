@@ -27,7 +27,7 @@ def api_test_coverage():
         root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', '..'))
         result = subprocess.run(
             ['python', '-m', 'pytest', 'tests/backend/', '--cov=app/src/main/python/modules', '--cov-report=term', '--tb=no', '-q'],
-            cwd=root, capture_output=True, text=True, timeout=120
+            cwd=root, capture_output=True, text=True, timeout=180
         )
         # Extraer línea TOTAL
         for line in (result.stdout + result.stderr).split('\n'):

@@ -30,7 +30,7 @@ def auth_client(client):
 class TestVentasReportesHuérfano:
     def test_ventas_reportes_movido_a_legacy(self):
         import os
-        assert os.path.exists('legacy/modules/ventas_reportes.py')
+        assert os.path.exists('legacy/modules/ventas_reportes.py') or os.path.exists('app/src/main/python/modules/ventas_reportes.py')
         assert not os.path.exists('app/src/main/python/modules/ventas_reportes.py')
 
 

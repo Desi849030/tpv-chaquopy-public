@@ -31,11 +31,13 @@ _TPL = os.path.join(_ASSETS, 'templates')
 _STAT = os.path.join(_ASSETS, 'static')
 print("📁 Frontend en uso:", _ASSETS)
 
-# ═══ MIGRACIÓN: tabla documentacion ═══
+# ═══ MIGRACIÓN: tabla documentacion + datos demo ═══
 try:
     import sqlite3 as _sql
     _db_path = os.path.join(_CD, 'tpv_datos.db')
     _conn = _sql.connect(_db_path)
+    
+    # Crear tabla documentacion
     _conn.execute("CREATE TABLE IF NOT EXISTS documentacion (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT NOT NULL UNIQUE, contenido TEXT NOT NULL, lineas INTEGER DEFAULT 0, actualizado TEXT DEFAULT (datetime('now','localtime')))")
     _count = _conn.execute("SELECT COUNT(*) FROM documentacion").fetchone()[0]
     if _count == 0:
@@ -57,11 +59,9 @@ try:
                     _cont = _f.read()
                 _conn.execute("INSERT OR REPLACE INTO documentacion (nombre, contenido, lineas, actualizado) VALUES (?,?,?,datetime('now','localtime'))", (_nombre, _cont, len(_cont.split('\n'))))
         _conn.commit()
-    _conn.close()
-    print("📚 Documentación cargada en BD")
-
-# ═══ DATOS DEMO ═══
-try:
+        print("📚 Documentación cargada en BD")
+    
+    # Datos demo
     _demo_count = _conn.execute("SELECT COUNT(*) FROM productos").fetchone()[0]
     if _demo_count == 0:
         _productos_demo = [
@@ -91,10 +91,10 @@ try:
         print(f"✅ {len(_productos_demo)} productos demo creados")
     else:
         print(f"ℹ️ Ya hay {_demo_count} productos")
-except Exception as _e2:
-    print(f"⚠️ Error creando demo: {_e2}")
+    
+    _conn.close()
 except Exception as _e:
-    print(f"⚠️ Error migrando documentacion: {_e}")
+    print(f"⚠️ Error en migración inicial: {_e}")
 
 app = Flask(__name__, static_folder=_STAT, static_url_path='/static')
 

@@ -17,7 +17,7 @@ node "Dispositivo Android (APK)" as ANDROID {
   FE --> FLASK : HTTP :5050
   FLASK --> SQLITE : SQL
 }
-cloud "GitHub Actions\nCI/CD" as CI
-cloud "Supabase\n(Opcional)" as SUP
+rectangle "GitHub Actions\nCI/CD" as CI
+rectangle "Supabase\n(Opcional)" as SUP
 SQLITE ..> SUP : sync opcional
 @enduml

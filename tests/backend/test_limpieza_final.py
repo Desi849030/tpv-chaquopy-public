@@ -28,12 +28,10 @@ def auth_client(client):
 
 
 class TestVentasReportesHuérfano:
-    def test_funciones_importables(self):
-        from modules.ventas_reportes import api_reporte_ventas, api_resumen, api_ganancias, api_dashboard_data
-        assert callable(api_reporte_ventas)
-        assert callable(api_resumen)
-        assert callable(api_ganancias)
-        assert callable(api_dashboard_data)
+    def test_ventas_reportes_movido_a_legacy(self):
+        import os
+        assert os.path.exists('legacy/modules/ventas_reportes.py')
+        assert not os.path.exists('app/src/main/python/modules/ventas_reportes.py')
 
 
 class TestTestModels:

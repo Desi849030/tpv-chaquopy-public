@@ -1,0 +1,43 @@
+@startuml
+!theme vibrant
+skinparam backgroundColor #F5F5F5
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 13
+title **Comparativa con Soluciones Existentes**
+rectangle "Características" as FEAT {
+  (Offline total)
+  (Sin servidor)
+  (IA integrada)
+  (Código abierto)
+  (Testing auto)
+  (Docs en app)
+}
+rectangle "Square" as SQ { }
+rectangle "Loyverse" as LO { }
+rectangle "Odoo POS" as OD { }
+rectangle "Ultra Smart" as US #2ECC71 { }
+(Offline total) -- SQ : ❌
+(Offline total) -- LO : ❌
+(Offline total) -- OD : ⚠
+(Offline total) -- US : ✅
+(Sin servidor) -- SQ : ❌
+(Sin servidor) -- LO : ❌
+(Sin servidor) -- OD : ❌
+(Sin servidor) -- US : ✅
+(IA integrada) -- SQ : ❌
+(IA integrada) -- LO : ❌
+(IA integrada) -- OD : ❌
+(IA integrada) -- US : ✅
+(Código abierto) -- SQ : ❌
+(Código abierto) -- LO : ❌
+(Código abierto) -- OD : ✅
+(Código abierto) -- US : ✅
+(Testing auto) -- SQ : ❌
+(Testing auto) -- LO : ❌
+(Testing auto) -- OD : ❌
+(Testing auto) -- US : ✅
+(Docs en app) -- SQ : ❌
+(Docs en app) -- LO : ❌
+(Docs en app) -- OD : ❌
+(Docs en app) -- US : ✅
+@enduml

@@ -1,0 +1,43 @@
+@startuml
+!theme vibrant
+skinparam backgroundColor #F5F5F5
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 12
+title **Mapa de Endpoints REST (221 total)**
+package "Auth (8)" {
+  [POST /api/auth/login]
+  [POST /api/auth/logout]
+  [GET /api/auth/me]
+}
+package "Catálogo (8)" {
+  [GET /api/productos]
+  [POST /api/productos/crear]
+  [DELETE /api/productos/<id>]
+}
+package "Ventas (10)" {
+  [POST /api/ventas/registrar]
+  [GET /api/ventas/hoy]
+  [POST /api/ventas/cierre]
+}
+package "Inventario (15)" {
+  [GET /api/inventario/general]
+  [POST /api/inventario/entrada]
+  [POST /api/stock/masivo]
+}
+package "IA Agent (12)" {
+  [POST /api/agent/chat]
+  [GET /api/agent/status]
+}
+package "Usuarios (6)" {
+  [GET /api/usuarios]
+  [POST /api/usuarios/crear]
+}
+package "Reportes (5)" {
+  [GET /api/reportes/ventas]
+  [GET /api/reportes/ganancias]
+}
+package "Tools (10)" {
+  [GET /api/tools/finanzas]
+  [GET /api/tools/abc]
+}
+@enduml

@@ -1,0 +1,28 @@
+@startuml
+!theme vibrant
+skinparam backgroundColor #F5F5F5
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 13
+title **Pirámide de Testing — 547 tests**
+rectangle "**E2E**\n112 tests\n100% pass" as E2E #E74C3C
+rectangle "**IA**\n122 tests\n99% pass" as IAT #9B59B6
+rectangle "**Unitarios**\n412 tests\n99% pass" as UNIT #2980B9 {
+  (Backend: 306)
+  (DB: 23)
+  (Security: 23)
+  (Models: 12)
+  (License: 3)
+  (Dictionary: 6)
+  (Tools: 24)
+  (Metrics: 5)
+  (IA Extra: 10)
+}
+E2E -down-> IAT
+IAT -down-> UNIT
+note right of UNIT
+  **Cobertura global: 47%**
+  modules/: 53%
+  db/: 55%
+  models/: 100%
+end note
+@enduml

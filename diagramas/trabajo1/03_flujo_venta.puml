@@ -1,0 +1,37 @@
+@startuml
+!theme vibrant
+skinparam backgroundColor #F5F5F5
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 13
+title **Flujo de Venta Atómica**
+actor "Vendedor" as USER
+participant "Frontend" as FE
+participant "Flask" as API
+participant "SQLite WAL" as DB
+USER -> FE : Ingresa items
+FE -> API : POST /api/ventas/registrar
+API -> DB : Verificar client_txn_id
+alt Ya existe (idempotencia)
+  API --> FE : 200 OK (venta anterior)
+else Nueva venta
+  API -> DB : BEGIN IMMEDIATE
+  loop Cada item
+    API -> DB : Verificar stock
+    alt Stock insuficiente
+      API -> DB : ROLLBACK
+      API --> FE : 409 Conflict
+    else Stock OK
+      API -> DB : Descontar stock
+      API -> DB : Insertar detalle
+    end
+  end
+  API -> DB : COMMIT
+  API --> FE : 200 OK {venta_id, total}
+end
+note right of DB
+  **Garantía WAL**
+  Corte eléctrico:
+  - Sin COMMIT → ROLLBACK
+  - Con COMMIT → Datos seguros
+end note
+@enduml

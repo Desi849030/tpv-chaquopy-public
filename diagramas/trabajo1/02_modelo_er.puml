@@ -1,0 +1,60 @@
+@startuml
+!theme vibrant
+skinparam backgroundColor #F5F5F5
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 13
+title **Modelo Entidad-Relación**
+entity "usuarios" {
+  * **usuario_id** : TEXT <<PK>>
+  username : TEXT <<UNIQUE>>
+  nombre : TEXT
+  rol : TEXT
+  password_hash : TEXT
+  activo : INTEGER
+}
+entity "productos" {
+  * **producto_id** : TEXT <<PK>>
+  nombre : TEXT
+  precio : REAL
+  costo : REAL
+  categoria : TEXT
+  activo : INTEGER
+}
+entity "inventario_general" {
+  * **producto_id** : TEXT <<PK,FK>>
+  stock_actual : REAL
+  stock_minimo : REAL
+  precio_venta : REAL
+}
+entity "ventas_cabecera" {
+  * **venta_id** : TEXT <<PK>>
+  * client_txn_id : TEXT <<UNIQUE>>
+  vendedor_id : TEXT <<FK>>
+  total : REAL
+  metodo_pago : TEXT
+  fecha : TEXT
+}
+entity "ventas_detalle" {
+  * **id** : INTEGER <<PK,AUTO>>
+  venta_id : TEXT <<FK>>
+  producto_id : TEXT <<FK>>
+  cantidad : REAL
+  subtotal : REAL
+}
+entity "historial_ventas" {
+  * **id** : INTEGER <<PK,AUTO>>
+  venta_id : TEXT
+  nombre : TEXT
+  total : REAL
+  fecha : TEXT
+}
+entity "documentacion" {
+  * **nombre** : TEXT <<PK>>
+  contenido : TEXT
+}
+usuarios ||--o{ ventas_cabecera : realiza
+productos ||--|| inventario_general : stock
+productos ||--o{ ventas_detalle : vendido
+ventas_cabecera ||--o{ ventas_detalle : contiene
+ventas_cabecera ||--o{ historial_ventas : registra
+@enduml

@@ -1,0 +1,18 @@
+@startuml
+!theme vibrant
+skinparam backgroundColor #F5F5F5
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 14
+title **Evolución de la Cobertura de Código**
+rectangle "24%" as S1 #E74C3C
+rectangle "30%" as S2 #E67E22
+rectangle "38%" as S3 #F1C40F
+rectangle "44%" as S4 #2ECC71
+rectangle "47%" as S5 #2980B9
+S1 --> S2 : +54 tests
+S2 --> S3 : +190 tests
+S3 --> S4 : +40 tests
+S4 --> S5 : +23 tests
+note top of S1: **Inicio**\n76 tests originales
+note top of S5: **Final**\n547 tests\n+23 puntos
+@enduml

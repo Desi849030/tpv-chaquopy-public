@@ -1,0 +1,23 @@
+@startuml
+!theme vibrant
+skinparam backgroundColor #F5F5F5
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 14
+title **TPV Ultra Smart — Diagrama de Despliegue**
+actor "Usuario\n(Comerciante)" as USER
+node "Dispositivo Android (APK)" as ANDROID {
+  node "WebView\nChrome/WebKit" as WV {
+    component "SPA Frontend\nBootstrap 5 + Vanilla JS" as FE
+  }
+  node "Chaquopy Runtime\nPython 3.10" as CHAQUOPY {
+    component "Flask 2.2.5\n28 Blueprints\n221 Endpoints REST" as FLASK
+    component "IA Engine\n33 Módulos • ReAct\n13 Tools" as IA
+  }
+  database "SQLite WAL\n24 Tablas • 41 Índices" as SQLITE
+  FE --> FLASK : HTTP :5050
+  FLASK --> SQLITE : SQL
+}
+cloud "GitHub Actions\nCI/CD" as CI
+cloud "Supabase\n(Opcional)" as SUP
+SQLITE ..> SUP : sync opcional
+@enduml

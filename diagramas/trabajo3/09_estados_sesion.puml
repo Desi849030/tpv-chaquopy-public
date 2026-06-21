@@ -1,0 +1,26 @@
+@startuml
+!theme vibrant
+skinparam backgroundColor #F5F5F5
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 13
+title **Diagrama de Estados de Sesión**
+[*] --> Anónimo : Abre la app
+Anónimo : Rol: cliente
+Anónimo --> Autenticado : POST /api/auth/login
+state Autenticado {
+  [*] --> Desarrollador
+  [*] --> Administrador
+  [*] --> Supervisor
+  [*] --> Vendedor
+  [*] --> Cajero
+  Desarrollador : 13 tools IA + Docs
+  Administrador : 11 tools IA + CRUD
+  Supervisor : 8 tools IA + Reportes
+  Vendedor : 5 tools IA + Ventas
+  Cajero : Registro de ventas
+}
+Autenticado --> Anónimo : POST /api/auth/logout\n• Limpia sesión\n• Resetea chat
+Autenticado --> Bloqueado : 5 intentos fallidos
+Bloqueado : 60s de espera
+Bloqueado --> Anónimo : Timeout 60s
+@enduml

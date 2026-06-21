@@ -1,0 +1,33 @@
+@startuml
+!theme vibrant
+skinparam backgroundColor #F5F5F5
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 13
+title **Herramientas IA por Rol**
+package "DESARROLLADOR (13/13)" as DEV {
+  [finanzas] [abc] [punto_eq] [stock]
+  [predicciones] [ofertas] [rotacion] [gastos]
+  [eoq] [ventas_hoy] [top_productos] [dashboard]
+  [busqueda]
+}
+package "ADMINISTRADOR (11/13)" as ADMIN {
+  [finanzas] [abc] [punto_eq] [stock]
+  [predicciones] [ofertas] [rotacion] [gastos]
+  [eoq] [dashboard] [busqueda]
+}
+package "SUPERVISOR (8/13)" as SUP {
+  [finanzas] [abc] [stock] [predicciones]
+  [rotacion] [gastos] [dashboard] [busqueda]
+}
+package "VENDEDOR (5/13)" as VEND {
+  [stock] [ofertas] [ventas_hoy]
+  [top_productos] [busqueda]
+}
+package "CLIENTE (1/13)" as CLI {
+  [busqueda]
+}
+DEV --> ADMIN : hereda
+ADMIN --> SUP : hereda
+SUP --> VEND : hereda
+VEND --> CLI : hereda
+@enduml

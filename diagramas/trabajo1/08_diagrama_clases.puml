@@ -1,0 +1,54 @@
+@startuml
+!theme vibrant
+skinparam backgroundColor #F5F5F5
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 12
+title **Diagrama de Clases**
+abstract class Blueprint {
+  + name: str
+  + register(app)
+}
+class AuthBlueprint {
+  + login()
+  + logout()
+  + me()
+}
+class VentasBlueprint {
+  + registrar_venta()
+  + ventas_hoy()
+}
+class InventarioBlueprint {
+  + inventario_general()
+  + entrada_producto()
+}
+class CatalogoBlueprint {
+  + listar_productos()
+  + crear_producto()
+}
+class DatabaseConnection {
+  - db_path: str
+  + obtener_conexion()
+}
+class UsuarioDAO {
+  + crear_usuario()
+  + login_usuario()
+}
+class ProductoDAO {
+  + obtener_catalogo()
+  + sincronizar_productos()
+}
+class InventarioDAO {
+  + obtener_inventario()
+  + registrar_entrada()
+}
+Blueprint <|-- AuthBlueprint
+Blueprint <|-- VentasBlueprint
+Blueprint <|-- InventarioBlueprint
+Blueprint <|-- CatalogoBlueprint
+AuthBlueprint --> UsuarioDAO : usa
+CatalogoBlueprint --> ProductoDAO : usa
+InventarioBlueprint --> InventarioDAO : usa
+DatabaseConnection <|-- UsuarioDAO
+DatabaseConnection <|-- ProductoDAO
+DatabaseConnection <|-- InventarioDAO
+@enduml

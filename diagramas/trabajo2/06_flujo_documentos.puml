@@ -1,0 +1,29 @@
+@startuml
+!theme vibrant
+skinparam backgroundColor #F5F5F5
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 13
+title **Flujo del Lector de Documentos**
+start
+:Usuario escribe "dame la licencia";
+if (¿Rol = desarrollador?) then (No)
+  :Responder sin acceso;
+  stop
+else (Sí)
+endif
+:Detectar documento\n(25+ alias);
+:Consultar SQLite\nSELECT FROM documentacion;
+if (¿Encontrado?) then (No)
+  :Responder no encontrado;
+  stop
+else (Sí)
+endif
+:Paginar (10 líneas/pág);
+:Mostrar página 1\n📄 LICENSE (pág 1/3);
+while (¿"siguiente"?) is (Sí)
+  :Mostrar siguiente página;
+endwhile (No)
+:Usuario escribe "cerrar";
+:Finalizar lectura;
+stop
+@enduml

@@ -1,0 +1,31 @@
+@startuml
+!theme vibrant
+skinparam backgroundColor #F5F5F5
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 13
+title **Pipeline CI/CD (GitHub Actions)**
+start
+:Desarrollador hace\n**git push origin main**;
+partition "GitHub Actions" {
+  :**Trigger**: Push a main;
+  fork
+    partition "Job 1: Tests" {
+      :Setup Python 3.10;
+      :pytest tests/backend/ tests/ia/;
+      :**547 tests en 90s**;
+    }
+  fork again
+    partition "Job 2: Cobertura" {
+      :pytest --cov;
+      :**Cobertura: 47%**;
+    }
+  fork again
+    partition "Job 3: Build APK" {
+      :./gradlew :app:assembleDebug;
+      :**Generar APK**;
+    }
+  end fork
+}
+:Artefactos:\n📦 APK Debug\n📊 Reporte 47%\n🧪 541/547 tests;
+stop
+@enduml

@@ -1,0 +1,59 @@
+@startuml
+!theme vibrant
+skinparam backgroundColor #F5F5F5
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 12
+title **Arquitectura del Agente IA (ReAct)**
+actor "Usuario\n(5 roles)" as USER
+package "Agent Chat Blueprint" as BP {
+  interface "POST /api/agent/chat" as CHAT
+}
+package "Core IA Engine" as CORE {
+  component "Orquestador\nprocess()" as PROC
+  component "Saludo\n_greet()" as GREET
+}
+package "Pipeline NLP\n33 módulos" as NLP {
+  component "Normalizador" as NORM
+  component "Intenciones\n(22 categorías)" as INTENT
+  component "Guardrails" as GUARD
+  component "Herramientas\n(13 tools)" as TOOLS
+  component "ReAct Core" as REACT
+  component "Templates" as TEMPL
+}
+package "Post-Procesamiento" as POST {
+  component "Humanizador" as HUM
+  component "Anti-Slop" as ASLOP
+}
+package "Documentación\n(11 docs)" as DOCS {
+  database "SQLite\ndocumentacion" as DOCDB
+}
+USER --> CHAT
+CHAT --> PROC
+PROC --> NORM
+NORM --> INTENT
+INTENT --> GUARD
+GUARD --> TOOLS
+TOOLS --> REACT
+REACT --> TEMPL
+TEMPL --> HUM
+HUM --> ASLOP
+ASLOP --> USER
+PROC --> DOCDB : "leer readme"
+DOCDB --> USER : Documento
+note right of TOOLS
+  **13 Herramientas**
+  • finanzas
+  • abc
+  • stock
+  • predicciones
+  • ofertas
+  • rotacion
+  • gastos
+  • eoq
+  • ventas_hoy
+  • top_productos
+  • dashboard
+  • busqueda
+  • punto_equilibrio
+end note
+@enduml

@@ -48,7 +48,7 @@ function _tpv_limpiarEstadoUsuarioAnterior() {
         window._tpvChatSaludado = false;
         window._tpvChatInteract = false;
         var chatBox = document.getElementById('chat-box');
-        if (chatBox) chatBox.style.display = 'none';
+        if (chatBox) // chatBox.style.display = 'none'; // desactivado para usar tpv_chat.js
         var chatMsgs = document.getElementById('chat-msgs');
         if (chatMsgs) chatMsgs.innerHTML = '';
         var chatSug = document.getElementById('chat-sug');

@@ -98,7 +98,9 @@ def agent_chat():
                             "data": d
                         })
                 except Exception as _e:
+                    import traceback
                     print('DEBUG DOCS ERROR:', str(_e))
+                    traceback.print_exc()
             
             # Tests
             if any(k in msg_lower for k in ["test", "tests", "cobertura", "coverage", "pytest", "pruebas"]):
@@ -122,7 +124,9 @@ def agent_chat():
                             "data": d
                         })
                 except Exception as _e:
+                    import traceback
                     print('DEBUG DOCS ERROR:', str(_e))
+                    traceback.print_exc()
 
 
         # ─── LECTURA DE DOCUMENTOS MARKDOWN (paginado) ───
@@ -134,6 +138,16 @@ def agent_chat():
         
         # Comando: leer documento X
         doc_map = {
+                "licencia": "LICENSE", "licence": "LICENSE", "license": "LICENSE",
+                "api reference": "docs/API_REFERENCE.md", "api_ref": "docs/API_REFERENCE.md", "endpoints": "docs/API_REFERENCE.md",
+                "arquitectura": "docs/ARCHITECTURE.md", "architecture": "docs/ARCHITECTURE.md",
+                "mapa": "docs/BACKEND_MAP.md", "mapa backend": "docs/BACKEND_MAP.md", "backend map": "docs/BACKEND_MAP.md",
+                "base de datos": "docs/DATABASE_SCHEMA.md", "database": "docs/DATABASE_SCHEMA.md", "schema": "docs/DATABASE_SCHEMA.md",
+                "tesis": "docs/DOCUMENTACION_TESIS.md", "documentacion tesis": "docs/DOCUMENTACION_TESIS.md", "doc tesis": "docs/DOCUMENTACION_TESIS.md",
+                "contribuir": "docs/CONTRIBUTING.md", "contributing": "docs/CONTRIBUTING.md", "como contribuir": "docs/CONTRIBUTING.md",
+                "checklist": "docs/CHECKLIST_RELEASE.md", "release": "docs/CHECKLIST_RELEASE.md", "lanzamiento": "docs/CHECKLIST_RELEASE.md",
+                "requisitos": "requirements.txt", "requirements": "requirements.txt", "dependencias": "requirements.txt",
+                "registro cambios": "CHANGELOG.md", "changelog": "CHANGELOG.md", "cambios": "CHANGELOG.md", "historial": "CHANGELOG.md",
             "readme": "README.md", "changelog": "CHANGELOG.md",
             "api": "docs/API_REFERENCE.md", "arquitectura": "docs/ARCHITECTURE.md",
             "backend": "docs/BACKEND_MAP.md", "schema": "docs/DATABASE_SCHEMA.md",
@@ -196,7 +210,44 @@ def agent_chat():
             session.pop("doc_reader", None)
             return jsonify({"ok": True, "tipo": "info", "respuesta": "📄 Documento cerrado."})
 
+
+        # ─── LEER DOCUMENTOS ───
+        if rol == "desarrollador":
+            doc_map = {
+                "licencia": "LICENSE", "licence": "LICENSE", "license": "LICENSE",
+                "api reference": "docs/API_REFERENCE.md", "api_ref": "docs/API_REFERENCE.md", "endpoints": "docs/API_REFERENCE.md",
+                "arquitectura": "docs/ARCHITECTURE.md", "architecture": "docs/ARCHITECTURE.md",
+                "mapa": "docs/BACKEND_MAP.md", "mapa backend": "docs/BACKEND_MAP.md", "backend map": "docs/BACKEND_MAP.md",
+                "base de datos": "docs/DATABASE_SCHEMA.md", "database": "docs/DATABASE_SCHEMA.md", "schema": "docs/DATABASE_SCHEMA.md",
+                "tesis": "docs/DOCUMENTACION_TESIS.md", "documentacion tesis": "docs/DOCUMENTACION_TESIS.md", "doc tesis": "docs/DOCUMENTACION_TESIS.md",
+                "contribuir": "docs/CONTRIBUTING.md", "contributing": "docs/CONTRIBUTING.md", "como contribuir": "docs/CONTRIBUTING.md",
+                "checklist": "docs/CHECKLIST_RELEASE.md", "release": "docs/CHECKLIST_RELEASE.md", "lanzamiento": "docs/CHECKLIST_RELEASE.md",
+                "requisitos": "requirements.txt", "requirements": "requirements.txt", "dependencias": "requirements.txt",
+                "registro cambios": "CHANGELOG.md", "changelog": "CHANGELOG.md", "cambios": "CHANGELOG.md", "historial": "CHANGELOG.md",
+                "readme": "README.md", "changelog": "CHANGELOG.md",
+                "api": "docs/API_REFERENCE.md", "arquitectura": "docs/ARCHITECTURE.md",
+                "backend": "docs/BACKEND_MAP.md", "schema": "docs/DATABASE_SCHEMA.md",
+                "tesis": "docs/DOCUMENTACION_TESIS.md", "contributing": "docs/CONTRIBUTING.md",
+                "checklist": "docs/CHECKLIST_RELEASE.md", "requirements": "requirements.txt"
+            }
+            for keyword, filename in doc_map.items():
+                if keyword in msg_lower and any(k in msg_lower for k in ["leer", "abrir", "mostrar", "ver", "documento", "doc", "lee", "abre", "muestra", "dame", "quiero", "enseñame", "mostrame", "consultar", "revisar", "ver el", "ver la", "lee el", "lee la", "abre el", "abre la", "dame el", "dame la", "mostrar el", "mostrar la", "quiero ver", "quiero leer", "quiero el", "necesito ver", "necesito leer", "puedes mostrar", "puedes darme", "podrias mostrar", "podrias darme"]):
+                    try:
+                        import sqlite3
+                        db = '/data/data/com.termux/files/home/tpv-chaquopy/app/src/main/python/tpv_datos.db'
+                        conn = sqlite3.connect(db)
+                        row = conn.execute("SELECT contenido FROM documentacion WHERE nombre=?", (filename,)).fetchone()
+                        conn.close()
+                        if row:
+                            lines = row[0].split("\n")
+                            texto = "\n".join(lines[:10])
+                            total = len(lines)
+                            return jsonify({"ok": True, "tipo": "documento", "respuesta": f"📄 {filename} (primeras 10/{total} líneas)\n\n{texto}\n\nEscribe 'siguiente' para continuar."})
+                    except:
+                        pass
+        
         # ─── FIN COMANDOS DE DOCUMENTACIÓN ───
+
 
 
         usuario_id = usuario.get('usuario_id', '')

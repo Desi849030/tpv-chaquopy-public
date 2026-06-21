@@ -60,6 +60,22 @@ except Exception:
 logger = logging.getLogger(__name__)
 
 
+# Caché de documentos en memoria
+_DOCS_CACHE = {}
+def _cargar_docs():
+    global _DOCS_CACHE
+    if not _DOCS_CACHE:
+        try:
+            import sqlite3, os
+            db = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tpv_datos.db')
+            conn = sqlite3.connect(db)
+            rows = conn.execute("SELECT nombre, contenido FROM documentacion").fetchall()
+            _DOCS_CACHE = {row[0]: row[1] for row in rows}
+            conn.close()
+        except:
+            pass
+    return _DOCS_CACHE
+
 class AgentMaster:
     def __init__(self):
         self.nlp = NLPEngine()
@@ -129,6 +145,79 @@ class AgentMaster:
         tools_used = []
         confidence = 0.85
         ui_action = None
+
+        # ═══ COMANDOS DE DOCUMENTACIÓN (desarrollador) ═══
+        if role == 'desarrollador':
+            if any(k in t for k in ['documentacion', 'docs', 'documentación', 'estructura', 'endpoints', 'rutas']):
+                try:
+                    from modules.docs_dev_bp import api_dev_docs as _f
+                    import json as _j
+                    r = _f()
+                    d = r.get_json() if hasattr(r, 'get_json') else _j.loads(r[0].get_data())
+                    mods = "\n".join(f"  📁 {m}: {len(files)} archivos" for m, files in d['modulos'].items())
+                    seg = "\n".join(f"  🔒 {k}: {v}" for k, v in d['seguridad'].items())
+                    arr = "\n".join(f"  ✅ {a}" for a in d['arreglos_recientes'])
+                    docs_list = ", ".join(d['contenido_documentos'].keys())
+                    return {
+                        "response": (
+                            f"📚 DOCUMENTACIÓN COMPLETA\n\n"
+                            f"🔹 Tests: {d['estadisticas']['total_tests']} ({d['estadisticas']['tests_pasan']} pasan)\n"
+                            f"🔹 Cobertura: {d['estadisticas']['cobertura_backend']}\n"
+                            f"🔹 Endpoints: {d['endpoints_total']}\n"
+                            f"🔹 Blueprints: {len(d['blueprints'])}\n\n"
+                            f"═══ MÓDULOS ═══\n{mods}\n\n"
+                            f"═══ SEGURIDAD ═══\n{seg}\n\n"
+                            f"═══ ARREGLOS ═══\n{arr}\n\n"
+                            f"📄 Docs: {docs_list}\n\n"
+                            "Escribe 'tests' para resultados o 'leer readme' para leer un documento."
+                        ),
+                        "intent": "DOCS", "confidence": 1.0, "tools": [], "ui_action": None
+                    }
+                except:
+                    pass
+            if any(k in t for k in ['test', 'tests', 'cobertura', 'coverage', 'pytest', 'pruebas']):
+                try:
+                    from modules.tests_info_bp import api_test_summary as _f
+                    import json as _j
+                    r = _f()
+                    d = r.get_json() if hasattr(r, 'get_json') else _j.loads(r[0].get_data())
+                    return {
+                        "response": (
+                            f"🧪 RESULTADOS DE TESTS\n\n"
+                            f"🔹 Total: {d['total_tests']}\n"
+                            f"🔹 Pasan: {d['pasan']} ✅\n"
+                            f"🔹 Fallan: {d['fallan']} ❌\n"
+                            f"🔹 Cobertura backend: {d['cobertura_backend']}\n"
+                            f"🔹 Cobertura E2E: {d['cobertura_e2e']}\n"
+                            f"🔹 Archivos: {d['archivos_test']}"
+                        ),
+                        "intent": "TESTS", "confidence": 1.0, "tools": [], "ui_action": None
+                    }
+                except:
+                    pass
+            if any(k in t for k in ['leer', 'abrir', 'mostrar', 'ver', 'documento', 'doc', 'lee', 'abre', 'muestra', 'dame', 'quiero', 'enseñame', 'mostrame']) or any(d in t for d in ['readme', 'changelog', 'api', 'arquitectura', 'backend', 'schema', 'tesis', 'contributing', 'checklist', 'requirements', 'license']):
+                doc_map = {
+                    'readme': 'README.md', 'changelog': 'CHANGELOG.md',
+                    'api': 'docs/API_REFERENCE.md', 'arquitectura': 'docs/ARCHITECTURE.md',
+                    'backend': 'docs/BACKEND_MAP.md', 'schema': 'docs/DATABASE_SCHEMA.md',
+                    'tesis': 'docs/DOCUMENTACION_TESIS.md', 'contributing': 'docs/CONTRIBUTING.md',
+                    'checklist': 'docs/CHECKLIST_RELEASE.md', 'requirements': 'requirements.txt'
+                }
+                for keyword, filename in doc_map.items():
+                    if keyword in t:
+                        try:
+                            docs = _cargar_docs()
+                            if filename in docs:
+                                lines = docs[filename].split('\n')
+                                texto = '\n'.join(lines[:30])
+                                total = len(lines)
+                                return {
+                                    "response": f"📄 {filename} (primeras 30/{total} líneas)\n\n{texto}\n\nEscribe 'siguiente' para continuar.",
+                                    "intent": "DOC_READ", "confidence": 1.0, "tools": [], "ui_action": None
+                                }
+                        except:
+                            pass
+        # ═══ FIN COMANDOS DOCS ═══
 
         # Detectar acciones de UI
         if role in ('vendedor', 'cajero'):

@@ -66,3 +66,7 @@ build/
 *.aab
 local.properties
 tpv-review/
+.tpv_secret_key
+supabase_config.json
+*.db.backup
+.tpv_crypto_key

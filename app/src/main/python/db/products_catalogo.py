@@ -79,8 +79,7 @@ def sincronizar_productos_catalogo(productos, admin_id):
         ids = [p.get("id","") for p in productos if p.get("id","")]
         if ids:
             ph = ",".join("?"*len(ids))
-            # Columns from code, values parameterized
-        cursor.execute(f"UPDATE productos SET activo=0 WHERE producto_id NOT IN ({ph})",ids)
+            cursor.execute(f"UPDATE productos SET activo=0 WHERE producto_id NOT IN ({ph})",ids)
         conn.commit()
         return {"ok": True, "sincronizados": len(productos)}
     except sqlite3.Error as e:

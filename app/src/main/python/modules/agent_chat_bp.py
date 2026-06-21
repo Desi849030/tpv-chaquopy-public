@@ -234,7 +234,8 @@ def agent_chat():
                 if keyword in msg_lower and any(k in msg_lower for k in ["leer", "abrir", "mostrar", "ver", "documento", "doc", "lee", "abre", "muestra", "dame", "quiero", "enseñame", "mostrame", "consultar", "revisar", "ver el", "ver la", "lee el", "lee la", "abre el", "abre la", "dame el", "dame la", "mostrar el", "mostrar la", "quiero ver", "quiero leer", "quiero el", "necesito ver", "necesito leer", "puedes mostrar", "puedes darme", "podrias mostrar", "podrias darme"]):
                     try:
                         import sqlite3
-                        db = '/data/data/com.termux/files/home/tpv-chaquopy/app/src/main/python/tpv_datos.db'
+                        import os as _os
+                        db = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'tpv_datos.db')
                         conn = sqlite3.connect(db)
                         row = conn.execute("SELECT contenido FROM documentacion WHERE nombre=?", (filename,)).fetchone()
                         conn.close()

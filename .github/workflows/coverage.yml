@@ -1,0 +1,38 @@
+name: Coverage Report
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    env:
+      TPV_TESTING: "1"
+      PYTHONPATH: app/src/main/python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+      - name: Run coverage
+        run: |
+          pytest tests/backend/ tests/ia/ tests/e2e/ \
+            --cov=app/src/main/python \
+            --cov-report=term \
+            --cov-report=html \
+            --tb=no -q || true
+      - name: Extract coverage %
+        run: |
+          grep "TOTAL" -A1 htmlcov/index.html | grep -oP '[0-9]+%' | head -1 > coverage.txt
+          cat coverage.txt
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            htmlcov/
+            coverage.txt

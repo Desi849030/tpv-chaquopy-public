@@ -1,0 +1,14 @@
+name: TestAPK
+
+on: [push]
+
+jobs:
+  hola:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Hola"
+  
+  adios:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Adios"

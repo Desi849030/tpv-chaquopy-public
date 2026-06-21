@@ -42,7 +42,14 @@ try:
                 or 'Content-Encoding' in response.headers
                 or not response.content_type
                 or not response.content_type.startswith(('application/json', 'text/'))):
-            return response
+        
+    # HSTS: forzar HTTPS en producción
+    if os.environ.get('TPV_HTTPS') == '1' and not request.is_secure:
+        return redirect(request.url.replace('http://', 'https://'), code=301)
+    if os.environ.get('TPV_HTTPS') == '1':
+        response.headers.setdefault('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+
+    return response
         try:
             data_raw = response.get_data()
         except RuntimeError:

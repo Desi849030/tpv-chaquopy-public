@@ -31,6 +31,37 @@ _TPL = os.path.join(_ASSETS, 'templates')
 _STAT = os.path.join(_ASSETS, 'static')
 print("📁 Frontend en uso:", _ASSETS)
 
+# ═══ MIGRACIÓN: tabla documentacion ═══
+try:
+    import sqlite3 as _sql
+    _db_path = os.path.join(_CD, 'tpv_datos.db')
+    _conn = _sql.connect(_db_path)
+    _conn.execute("CREATE TABLE IF NOT EXISTS documentacion (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT NOT NULL UNIQUE, contenido TEXT NOT NULL, lineas INTEGER DEFAULT 0, actualizado TEXT DEFAULT (datetime('now','localtime')))")
+    _count = _conn.execute("SELECT COUNT(*) FROM documentacion").fetchone()[0]
+    if _count == 0:
+        _docs = {
+            "README.md": "README.md", "CHANGELOG.md": "CHANGELOG.md",
+            "LICENSE": "LICENSE", "docs/API_REFERENCE.md": "docs/API_REFERENCE.md",
+            "docs/ARCHITECTURE.md": "docs/ARCHITECTURE.md",
+            "docs/BACKEND_MAP.md": "docs/BACKEND_MAP.md",
+            "docs/DATABASE_SCHEMA.md": "docs/DATABASE_SCHEMA.md",
+            "docs/DOCUMENTACION_TESIS.md": "docs/DOCUMENTACION_TESIS.md",
+            "docs/CONTRIBUTING.md": "docs/CONTRIBUTING.md",
+            "docs/CHECKLIST_RELEASE.md": "docs/CHECKLIST_RELEASE.md",
+            "requirements.txt": "requirements.txt"
+        }
+        for _nombre, _ruta in _docs.items():
+            _fp = os.path.join(_ASSETS, '..', '..', '..', '..', _ruta)
+            if os.path.exists(_fp):
+                with open(_fp) as _f:
+                    _cont = _f.read()
+                _conn.execute("INSERT OR REPLACE INTO documentacion (nombre, contenido, lineas, actualizado) VALUES (?,?,?,datetime('now','localtime'))", (_nombre, _cont, len(_cont.split('\n'))))
+        _conn.commit()
+    _conn.close()
+    print("📚 Documentación cargada en BD")
+except Exception as _e:
+    print(f"⚠️ Error migrando documentacion: {_e}")
+
 app = Flask(__name__, static_folder=_STAT, static_url_path='/static')
 
 try:

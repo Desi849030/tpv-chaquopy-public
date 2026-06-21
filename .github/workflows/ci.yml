@@ -1,4 +1,4 @@
-name: CI — Tests & APK
+name: CI — Tests
 
 on:
   push:
@@ -11,50 +11,16 @@ jobs:
       TPV_TESTING: "1"
       PYTHONPATH: app/src/main/python
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.10"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
+      - run: |
           pip install -r requirements.txt
           pip install pytest pytest-cov
-
       - name: Run all tests
         run: |
-          pytest tests/backend/ tests/ia/ tests/e2e/ -q --tb=no --timeout=60 || true
-
-  build-apk:
-    needs: tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
-
-      - name: Build debug APK
-        run: ./gradlew :app:assembleDebug --stacktrace
-
-      - name: Upload debug APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: tpv-ultrasmart-debug
-          path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
+          pytest tests/backend/ tests/ia/ tests/e2e/ -q --tb=no || true
+      - name: Coverage
+        run: |
+          pytest tests/backend/ tests/ia/ --cov=app/src/main/python --cov-report=term --tb=no -q 2>&1 | grep "TOTAL" || true

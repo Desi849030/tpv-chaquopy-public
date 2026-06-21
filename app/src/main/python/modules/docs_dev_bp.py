@@ -8,6 +8,17 @@ docs_bp = Blueprint('docs_dev', __name__)
 @docs_bp.route('/api/dev/docs')
 @login_required
 @requiere_rol('desarrollador')
+def _leer_docs_de_bd():
+    """Lee todos los documentos desde SQLite"""
+    try:
+        from db_connection import obtener_conexion
+        conn = obtener_conexion()
+        rows = conn.execute("SELECT nombre, contenido FROM documentacion ORDER BY nombre").fetchall()
+        conn.close()
+        return {row[0]: row[1] for row in rows}
+    except:
+        return {}
+
 def api_dev_docs():
     """Documentación completa: estructura, tests, cobertura, endpoints, módulos"""
     ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', '..'))

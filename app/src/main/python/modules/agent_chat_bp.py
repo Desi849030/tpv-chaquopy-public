@@ -144,11 +144,12 @@ def agent_chat():
         
         for keyword, filename in doc_map.items():
             if rol == "desarrollador" and keyword in msg_lower and ("leer" in msg_lower or "documento" in msg_lower or "abrir" in msg_lower or "mostrar" in msg_lower or keyword == msg_lower.strip()):
-                ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", ".."))
-                filepath = os.path.join(ROOT, filename)
-                if os.path.exists(filepath):
-                    with open(filepath) as f:
-                        lines = f.readlines()
+                from db_connection import obtener_conexion
+                conn = obtener_conexion()
+                row = conn.execute("SELECT contenido FROM documentacion WHERE nombre=?", (filename,)).fetchone()
+                conn.close()
+                if row:
+                    lines = row[0].split('\n')
                     reader["file"] = filename
                     reader["lines"] = lines
                     reader["page"] = 0

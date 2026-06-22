@@ -53,8 +53,19 @@ try:
             "requirements.txt": "requirements.txt"
         }
         for _nombre, _ruta in _docs.items():
-            _fp = os.path.join(_ASSETS, '..', '..', '..', '..', _ruta)
-            if os.path.exists(_fp):
+            # Buscar en múltiples ubicaciones (Termux + APK compilada)
+            _fp = None
+            _candidatos = [
+                os.path.join(_ASSETS, '..', '..', '..', '..', _ruta),
+                os.path.join(_CD, '..', '..', '..', '..', _ruta),
+                os.path.join(_CD, _ruta),
+                os.path.join(_CD, '..', _ruta),
+            ]
+            for _c in _candidatos:
+                if os.path.exists(_c):
+                    _fp = _c
+                    break
+            if _fp:
                 with open(_fp) as _f:
                     _cont = _f.read()
                 _conn.execute("INSERT OR REPLACE INTO documentacion (nombre, contenido, lineas, actualizado) VALUES (?,?,?,datetime('now','localtime'))", (_nombre, _cont, len(_cont.split('\n'))))

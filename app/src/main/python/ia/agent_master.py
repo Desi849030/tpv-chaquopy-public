@@ -287,29 +287,52 @@ class AgentMaster:
         }
 
     def _greet(self, role, name):
+        import random
         h = datetime.now().hour
         if h < 12:
-            saludo = "Buenos días"
+            saludos = ["Buenos días", "Buen día", "Feliz mañana"]
         elif h < 19:
-            saludo = "Buenas tardes"
+            saludos = ["Buenas tardes", "Buena tarde"]
         else:
-            saludo = "Buenas noches"
-
+            saludos = ["Buenas noches", "Buena noche"]
+        
+        saludo = random.choice(saludos)
         icon = self.role_icons.get(role, '👋')
         n = name or role
 
         if role == 'cliente':
-            return f"{saludo} {icon} ¡Bienvenido! Soy el asistente de la tienda. Puedo ayudarte a buscar productos, ver precios y ofertas."
+            frases = [
+                f"{saludo} {icon} ¡Bienvenido a la tienda! ¿Qué buscas hoy?",
+                f"{saludo} {icon} Soy tu asistente de compras. Dime qué necesitas.",
+                f"{saludo} {icon} ¿Te ayudo a encontrar algo? Tenemos ofertas.",
+            ]
         elif role == 'vendedor':
-            return f"{saludo} {n} {icon} Listo para vender. Pregúntame por ventas de hoy, stock o precios."
+            frases = [
+                f"{saludo} {n} {icon} ¿Listo para vender? Mira tus ventas de hoy.",
+                f"{saludo} {n} {icon} ¿Cómo va la jornada? Revisa tu inventario.",
+                f"{saludo} {n} {icon} Pregúntame por stock, precios o ventas.",
+            ]
         elif role == 'administrador':
-            return f"{saludo} Admin {n} {icon} Sistemas operativos. Pídeme balance, gastos, rendimiento o inventario."
+            frases = [
+                f"{saludo} {n} {icon} Todo en orden. ¿Revisamos el balance?",
+                f"{saludo} {n} {icon} Panel de control listo. Mira tus KPIs.",
+                f"{saludo} {n} {icon} ¿Qué necesitas supervisar hoy?",
+            ]
         elif role == 'supervisor':
-            return f"{saludo} {n} {icon} Panel de supervisión activo. Dashboard, ABC, tendencias."
+            frases = [
+                f"{saludo} {n} {icon} Dashboard activo. ¿Vemos las métricas?",
+                f"{saludo} {n} {icon} Turno iniciado. Revisa el rendimiento.",
+            ]
         elif role == 'desarrollador':
-            return f"{saludo} {n} {icon} Root Access concedido. Telemetría, DB, logs, métricas."
+            frases = [
+                f"{saludo} {n} {icon} Sistema operativo. ¿Tests, docs o métricas?",
+                f"{saludo} {n} {icon} ¿Depuramos algo? Escribe 'tests' o 'documentación'.",
+                f"{saludo} {n} {icon} Consola lista. Pídeme lo que necesites.",
+            ]
         else:
-            return f"{saludo} {icon} ¿En qué te ayudo?"
+            frases = [f"{saludo} {icon} ¿En qué puedo ayudarte?"]
+        
+        return random.choice(frases)
 
     def get_status(self):
         return {

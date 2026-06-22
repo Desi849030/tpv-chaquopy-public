@@ -1129,8 +1129,8 @@ function tienda_iniciarPolling() {
         const tabActivo = document.getElementById('tienda-tab-pane')?.classList.contains('show');
         // Siempre actualizar el badge aunque no esté en la pestaña
         try {
-            const r = await fetch('/api/pedidos?estado=pendiente');
-            if (r.ok) {
+            const r = await fetch('/api/pedidos?estado=pendiente').catch(() => null);
+            if (r && r.ok) {
                 const data = await r.json();
                 const n = (data.pedidos || []).length;
                 const badge = document.getElementById('tienda-pedidos-badge');

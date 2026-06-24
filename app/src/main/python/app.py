@@ -168,7 +168,7 @@ app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Strict'
 app.config['SESSION_COOKIE_SECURE'] = os.environ.get('TPV_HTTPS', '0') == '1'
 app.config['SESSION_COOKIE_NAME'] = 'tpv_session'
-app.secret_key = os.environ.get('TPV_SECRET_KEY', 'tpv-ultra-smart-v8-CAMBIAR-EN-PRODUCCION')
+app.secret_key = os.environ.get('TPV_SECRET_KEY', os.urandom(24).hex())
 
 
 @app.route('/')
@@ -311,7 +311,7 @@ def _init_db_if_empty():
         for _uid, _un, _nom, _rol in _demo_users:
             try:
                 _salt = secrets.token_hex(16)
-                _demo_pw = os.environ.get("TPV_DEMO_PASSWORD", "demo-tpv-2026")
+                _demo_pw = os.environ.get("TPV_DEMO_PASSWORD", "CAMBIAME-EN-PRODUCCION")
                 _h = hashlib.scrypt(_demo_pw.encode(), salt=bytes.fromhex(_salt), n=16384, r=8, p=1).hex()
                 # INSERT OR IGNORE evita duplicados, y forzamos activo=1 para que
                 # usuarios demo desactivados por tests anteriores se reactive.
@@ -465,12 +465,27 @@ def bouncer_tesis():
         if not session.get('user') and not session.get('usuario'):
             return jsonify({'error':'unauthorized'}), 401
 
+
+
+@app.errorhandler(404)
+def not_found(e):
+    return jsonify({"error":"not_found","message":"No encontrado"}),404
+
+@app.errorhandler(500)
+def server_error(e):
+    return jsonify({"error":"internal_error","message":"Error interno"}),500
+
+@app.errorhandler(403)
+def forbidden(e):
+    return jsonify({"error":"forbidden","message":"Acceso denegado"}),403
+
+
 if __name__ == '__main__':
     print(f"\n{'=' * 50}")
     print("  TPV Ultra Smart v8.0 — REFACTORIZADO")
     print(f"{'=' * 50}")
     print(f" 📁 Frontend: {_TPL}")
-    _demo_pw_display = os.environ.get("TPV_DEMO_PASSWORD", "demo-tpv-2026")
+    _demo_pw_display = os.environ.get("TPV_DEMO_PASSWORD", "CAMBIAME-EN-PRODUCCION")
     print(f" ✅ Login: desarrollador / {_demo_pw_display}")
     print(f" ⚠️  Cambia la contraseña con TPV_DEMO_PASSWORD=<nueva> antes de producción")
     print(f" ✅ URL: http://localhost:5000\n")

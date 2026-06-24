@@ -23,7 +23,7 @@ def _hash_password(password: str, salt: str = None) -> tuple:
     return h.hex(), salt
 
 
-def verificar_password(password, hash_guardado, salt):
+def verify_password(password, hash_guardado, salt):
     h, _ = _hash_password(password, salt)
     return hmac.compare_digest(h, str(hash_guardado))
 
@@ -31,7 +31,7 @@ def verificar_password(password, hash_guardado, salt):
 #  CONEXIÓN
 # ══════════════════════════════════════════════════════════════
 
-def obtener_conexion():
+def get_connection():
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA encoding='UTF-8'")
@@ -47,8 +47,8 @@ def obtener_conexion():
 #  CREAR TABLAS
 # ══════════════════════════════════════════════════════════════
 
-def agregar_log(mensaje, tipo="info", usuario=None):
-    conn = obtener_conexion()
+def log_event(mensaje, tipo="info", usuario=None):
+    conn = get_connection()
     try:
         conn.execute("INSERT INTO logs_sistema (tipo, usuario, mensaje) VALUES (?, ?, ?)",
                      (tipo, usuario, mensaje))
@@ -66,8 +66,8 @@ TABLAS_PERMITIDAS = frozenset([
     "cierres_caja", "inventarios", "logs_sistema", "licencias",
 ])
 
-def obtener_info_db():
-    conn = obtener_conexion()
+def get_db_info():
+    conn = get_connection()
     cursor = conn.cursor()
     try:
         info = {"archivo": DB_FILE, "tablas": {}}
@@ -86,8 +86,8 @@ def obtener_info_db():
         conn.close()
 
 
-def crear_tabla_audit():
-    conn = obtener_conexion()
+def create_audit_table():
+    conn = get_connection()
     try:
         conn.execute('''
             CREATE TABLE IF NOT EXISTS audit_logs (
@@ -110,7 +110,7 @@ def crear_tabla_audit():
 
 
 def audit_log(usuario, accion, tabla, registro_id="", valor_anterior="", valor_nuevo=""):
-    conn = obtener_conexion()
+    conn = get_connection()
     try:
         conn.execute(
             "INSERT INTO audit_logs (usuario,accion,tabla,registro_id,valor_anterior,valor_nuevo) VALUES (?,?,?,?,?,?)",
@@ -122,3 +122,19 @@ def audit_log(usuario, accion, tabla, registro_id="", valor_anterior="", valor_n
         print("[AUDIT ERROR] audit_log: %s" % e, file=sys.stderr)
     finally:
         conn.close()
+
+
+# Backward-compatible aliases
+obtener_conexion = get_connection
+verificar_password = verify_password
+agregar_log = log_event
+obtener_info_db = get_db_info
+crear_tabla_audit = create_audit_table
+
+
+# Aliases
+obtener_conexion = get_connection
+verificar_password = verify_password
+agregar_log = log_event
+obtener_info_db = get_db_info
+crear_tabla_audit = create_audit_table

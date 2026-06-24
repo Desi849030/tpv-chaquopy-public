@@ -83,3 +83,7 @@ reporte_calidad.txt
 resultado_cobertura.txt
 .git.backup
 main
+# SEGURIDAD
+*.keystore
+tpv-ultrasmart.keystore
+.env.production

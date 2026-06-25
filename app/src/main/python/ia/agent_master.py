@@ -1,352 +1,223 @@
-# -*- coding: utf-8 -*-
-"""AgentMaster - Agente IA del TPV Ultra Smart v8.0
-Integra: memoria avanzada, handlers por rol, fuzzy match, skills, metricas."""
-
-import json, random, time, logging
+"""Agent Master v3 — Orquestador profesional del agente IA."""
+from __future__ import annotations
+import logging, json, uuid, os, sys
+from typing import Optional, Dict, Any, List
 from datetime import datetime
-from ia.nlp_engine import NLPEngine
-from ia.tool_system import TOOLS
-from ia.humanizer import Humanizer
-
-# --- Modulos avanzados con importacion segura ---
-try:
-    from ia.memory_advanced import (
-        extract_and_save, get_enriched_context, get_summary as mem_summary,
-        cleanup as mem_cleanup, recall, search as mem_search,
-        forget as mem_forget, save as mem_save, init as mem_init
-    )
-    _HAS_ADV_MEMORY = True
-except Exception:
-    _HAS_ADV_MEMORY = False
-
-try:
-    from ia.react_core import ReActEngine
-    _HAS_REACT = True
-except Exception:
-    _HAS_REACT = False
-
-try:
-    from ia.handlers import (
-        handle_cliente, handle_vendedor, handle_supervisor,
-        handle_admin, handle_dev
-    )
-    _HAS_HANDLERS = True
-except Exception:
-    try:
-        from ia.handlers_cliente import handle_cliente
-        from ia.handlers_staff import handle_vendedor, handle_supervisor, handle_admin, handle_dev
-        _HAS_HANDLERS = True
-    except Exception:
-        _HAS_HANDLERS = False
-
-try:
-    from ia.fuzzy_match import fuzzy_score, best_match, quick_search, contains_frustration
-    _HAS_FUZZY = True
-except Exception:
-    _HAS_FUZZY = False
-
-try:
-    from ia.skills import get_registry as get_skill_registry
-    _HAS_SKILLS = True
-except Exception:
-    _HAS_SKILLS = False
-
-try:
-    from ia.metrics import F, M
-    _HAS_METRICS = True
-except Exception:
-    _HAS_METRICS = False
 
 logger = logging.getLogger(__name__)
 
+try:
+    from ia.nlp_engine import classifier, extractor, responder
+except ImportError:
+    classifier = None; extractor = None; responder = None
 
-# Caché de documentos en memoria
-_DOCS_CACHE = {}
-def _cargar_docs():
-    global _DOCS_CACHE
-    if not _DOCS_CACHE:
-        try:
-            import sqlite3, os
-            db = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tpv_datos.db')
-            conn = sqlite3.connect(db)
-            rows = conn.execute("SELECT nombre, contenido FROM documentacion").fetchall()
-            _DOCS_CACHE = {row[0]: row[1] for row in rows}
-            conn.close()
-        except:
-            pass
-    return _DOCS_CACHE
+try:
+    from ia.memory_advanced import advanced_memory
+except ImportError:
+    advanced_memory = None
+
+try:
+    from ia.guardrails_pro import guardrails_pro
+except ImportError:
+    guardrails_pro = None
+
+try:
+    from db_connection import get_connection
+except ImportError:
+    get_connection = None
+
 
 class AgentMaster:
+    """Orquestador profesional del agente IA conversacional."""
+
     def __init__(self):
-        self.nlp = NLPEngine()
-        self.humanizer = Humanizer()
-        self.tools = TOOLS
-        self.sessions = {}
+        self.session_id = str(uuid.uuid4())[:8]
+        self.conversation_context: Dict[str, Any] = {}
 
-        # Memoria avanzada
-        self.adv_memory_ok = _HAS_ADV_MEMORY
-        if self.adv_memory_ok:
-            try:
-                mem_init()
-            except Exception:
-                self.adv_memory_ok = False
+    def process(self, message: str, user_id: str = "anonimo",
+                role: str = "cliente") -> Dict:
+        """Procesar mensaje y generar respuesta profesional."""
 
-        # Motor ReAct
-        self.react_engine = None
-        if _HAS_REACT:
-            try:
-                self.react_engine = ReActEngine()
-            except Exception:
-                pass
+        if guardrails_pro:
+            check = guardrails_pro.check_input(message, user_id, role)
+            if not check["allowed"]:
+                return {
+                    "ok": True,
+                    "response": "⚠️ " + check["blocks"][0],
+                    "intent": "bloqueado",
+                    "session_id": self.session_id,
+                }
+            message = check["sanitized"]
 
-        # Skills
-        self.skill_registry = None
-        if _HAS_SKILLS:
-            try:
-                self.skill_registry = get_skill_registry()
-            except Exception:
-                pass
+        intent = "ayuda"
+        if classifier:
+            intent, confidence = classifier.get_primary_intent(message)
+        else:
+            confidence = 0.5
 
-        # Metricas
-        self._usage_metrics = {
-            'total_queries': 0,
-            'by_role': {},
-            'start_time': datetime.now().isoformat(),
-            'errors': 0,
-        }
-
-        # Mapa de roles a iconos
-        self.role_icons = {
-            'desarrollador': '🔧',
-            'administrador': '📊',
-            'supervisor': '👁️',
-            'vendedor': '💼',
-            'cajero': '💵',
-            'cliente': '🛍️',
-        }
-
-    def process(self, text, role='cliente', name='', **kwargs):
-        """Punto de entrada principal - procesa mensaje y devuelve respuesta."""
-        if not text or not text.strip():
-            return {
-                "response": self.humanizer.enhance(
-                    self._greet(role, name), role
-                ),
-                "intent": "GREETING",
-                "confidence": 1.0,
-                "tools": [],
-                "ui_action": None,
+        entities = {}
+        if extractor:
+            entities = {
+                "products": extractor.extract_products(message),
+                "price": extractor.extract_price(message),
+                "quantity": extractor.extract_quantity(message),
             }
 
-        t = text.lower().strip()
-        start = time.time()
-        response = ""
-        intent = "GENERAL"
-        tools_used = []
-        confidence = 0.85
-        ui_action = None
+        if advanced_memory:
+            advanced_memory.save_conversation(
+                user_id=user_id, session_id=self.session_id,
+                role="user", content=message, intent=intent,
+                entities=json.dumps(entities),
+            )
 
-        # ═══ COMANDOS DE DOCUMENTACIÓN (desarrollador) ═══
-        if role == 'desarrollador':
-            if any(k in t for k in ['documentacion', 'docs', 'documentación', 'estructura', 'endpoints', 'rutas']):
-                try:
-                    from modules.docs_dev_bp import api_dev_docs as _f
-                    import json as _j
-                    r = _f()
-                    d = r.get_json() if hasattr(r, 'get_json') else _j.loads(r[0].get_data())
-                    mods = "\n".join(f"  📁 {m}: {len(files)} archivos" for m, files in d['modulos'].items())
-                    seg = "\n".join(f"  🔒 {k}: {v}" for k, v in d['seguridad'].items())
-                    arr = "\n".join(f"  ✅ {a}" for a in d['arreglos_recientes'])
-                    docs_list = ", ".join(d['contenido_documentos'].keys())
-                    return {
-                        "response": (
-                            f"📚 DOCUMENTACIÓN COMPLETA\n\n"
-                            f"🔹 Tests: {d['estadisticas']['total_tests']} ({d['estadisticas']['tests_pasan']} pasan)\n"
-                            f"🔹 Cobertura: {d['estadisticas']['cobertura_backend']}\n"
-                            f"🔹 Endpoints: {d['endpoints_total']}\n"
-                            f"🔹 Blueprints: {len(d['blueprints'])}\n\n"
-                            f"═══ MÓDULOS ═══\n{mods}\n\n"
-                            f"═══ SEGURIDAD ═══\n{seg}\n\n"
-                            f"═══ ARREGLOS ═══\n{arr}\n\n"
-                            f"📄 Docs: {docs_list}\n\n"
-                            "Escribe 'tests' para resultados o 'leer readme' para leer un documento."
-                        ),
-                        "intent": "DOCS", "confidence": 1.0, "tools": [], "ui_action": None
-                    }
-                except:
-                    pass
-            if any(k in t for k in ['test', 'tests', 'cobertura', 'coverage', 'pytest', 'pruebas']):
-                try:
-                    from modules.tests_info_bp import api_test_summary as _f
-                    import json as _j
-                    r = _f()
-                    d = r.get_json() if hasattr(r, 'get_json') else _j.loads(r[0].get_data())
-                    return {
-                        "response": (
-                            f"🧪 RESULTADOS DE TESTS\n\n"
-                            f"🔹 Total: {d['total_tests']}\n"
-                            f"🔹 Pasan: {d['pasan']} ✅\n"
-                            f"🔹 Fallan: {d['fallan']} ❌\n"
-                            f"🔹 Cobertura backend: {d['cobertura_backend']}\n"
-                            f"🔹 Cobertura E2E: {d['cobertura_e2e']}\n"
-                            f"🔹 Archivos: {d['archivos_test']}"
-                        ),
-                        "intent": "TESTS", "confidence": 1.0, "tools": [], "ui_action": None
-                    }
-                except:
-                    pass
-            if any(k in t for k in ['leer', 'abrir', 'mostrar', 'ver', 'documento', 'doc', 'lee', 'abre', 'muestra', 'dame', 'quiero', 'enseñame', 'mostrame']) or any(d in t for d in ['readme', 'changelog', 'api', 'arquitectura', 'backend', 'schema', 'tesis', 'contributing', 'checklist', 'requirements', 'license']):
-                doc_map = {
-                    'readme': 'README.md', 'changelog': 'CHANGELOG.md',
-                    'api': 'docs/API_REFERENCE.md', 'arquitectura': 'docs/ARCHITECTURE.md',
-                    'backend': 'docs/BACKEND_MAP.md', 'schema': 'docs/DATABASE_SCHEMA.md',
-                    'tesis': 'docs/DOCUMENTACION_TESIS.md', 'contributing': 'docs/CONTRIBUTING.md',
-                    'checklist': 'docs/CHECKLIST_RELEASE.md', 'requirements': 'requirements.txt'
-                }
-                for keyword, filename in doc_map.items():
-                    if keyword in t:
-                        try:
-                            docs = _cargar_docs()
-                            if filename in docs:
-                                lines = docs[filename].split('\n')
-                                texto = '\n'.join(lines[:30])
-                                total = len(lines)
-                                return {
-                                    "response": f"📄 {filename} (primeras 30/{total} líneas)\n\n{texto}\n\nEscribe 'siguiente' para continuar.",
-                                    "intent": "DOC_READ", "confidence": 1.0, "tools": [], "ui_action": None
-                                }
-                        except:
-                            pass
-        # ═══ FIN COMANDOS DOCS ═══
+        tool_map = {
+            "buscar_producto": self._tool_buscar_producto,
+            "consultar_precio": self._tool_consultar_precio,
+            "ver_stock": self._tool_ver_stock,
+            "vender": self._tool_vender,
+            "reporte_ventas": self._tool_reporte_ventas,
+            "saludo": self._tool_saludo,
+            "ayuda": self._tool_ayuda,
+        }
+        tool = tool_map.get(intent, self._tool_ayuda)
+        try:
+            response = tool(message, user_id, role, entities)
+        except Exception as e:
+            logger.error("Error en tool %s: %s", intent, e)
+            response = self._tool_fallback(message)
 
-        # Detectar acciones de UI
-        if role in ('vendedor', 'cajero'):
-            if any(w in t for w in ['cobrar', 'pagar', 'carrito', 'venta']):
-                ui_action = "OPEN_CART"
-        if role in ('administrador', 'desarrollador'):
-            if any(w in t for w in ['dashboard', 'graficos', 'panel']):
-                ui_action = "OPEN_DASHBOARD"
-        if any(w in t for w in ['catalogo', 'productos', 'inventario']):
-            ui_action = "OPEN_CATALOG"
+        if guardrails_pro:
+            valid, msg = guardrails_pro.check_output(response)
+            if not valid:
+                response = "Lo siento, no puedo proporcionar esa informacion."
 
-        # Detectar intents simples
-        if any(w in t for w in ['hola', 'buenos', 'buenas', 'hey', 'saludos']):
-            intent = "GREETING"
-            response = self.humanizer.enhance(self._greet(role, name), role)
-            return {"response": response, "intent": intent, "confidence": 1.0,
-                    "tools": [], "ui_action": ui_action}
-
-        if any(w in t for w in ['gracias', 'adios', 'hasta luego', 'chao']):
-            intent = "FAREWELL"
-            closer = self.humanizer.get_closer(role)
-            return {"response": closer, "intent": intent, "confidence": 1.0,
-                    "tools": [], "ui_action": None}
-
-        if any(w in t for w in ['ayuda', 'qué puedes', 'opciones', 'menu']):
-            intent = "HELP"
-            response = self.humanizer.human_help(role)
-            return {"response": response, "intent": intent, "confidence": 1.0,
-                    "tools": [], "ui_action": None}
-
-        # Dispatch por rol
-        if _HAS_HANDLERS:
-            try:
-                if role == 'cliente':
-                    response = handle_cliente(self, t, {})
-                elif role == 'vendedor':
-                    response = handle_vendedor(self, t, name)
-                elif role == 'supervisor':
-                    response = handle_supervisor(self, t, name)
-                elif role == 'administrador':
-                    response = handle_admin(self, t, name)
-                elif role == 'desarrollador':
-                    response = handle_dev(self, t, name)
-                else:
-                    response = handle_cliente(self, t, {})
-            except Exception as e:
-                logger.error("Handler error: %s", e)
-                response = f"Ocurrió un error al procesar tu solicitud: {e}"
-        else:
-            response = "El motor de handlers no está disponible."
-
-        # Humanizar
-        response = self.humanizer.enhance(response, role)
-
-        # Métricas
-        elapsed = (time.time() - start) * 1000
-        self._usage_metrics['total_queries'] += 1
-        self._usage_metrics['by_role'][role] = self._usage_metrics['by_role'].get(role, 0) + 1
+        if advanced_memory:
+            advanced_memory.save_conversation(
+                user_id=user_id, session_id=self.session_id,
+                role="assistant", content=response, intent=intent,
+            )
 
         return {
+            "ok": True,
             "response": response,
             "intent": intent,
-            "confidence": confidence,
-            "tools": tools_used,
-            "ui_action": ui_action,
-            "response_time_ms": round(elapsed, 1),
+            "confidence": round(confidence, 2),
+            "session_id": self.session_id,
+            "timestamp": datetime.now().isoformat(),
         }
 
-    def _greet(self, role, name):
-        import random
-        h = datetime.now().hour
-        if h < 12:
-            saludos = ["Buenos días", "Buen día", "Feliz mañana"]
-        elif h < 19:
-            saludos = ["Buenas tardes", "Buena tarde"]
-        else:
-            saludos = ["Buenas noches", "Buena noche"]
-        
-        saludo = random.choice(saludos)
-        icon = self.role_icons.get(role, '👋')
-        n = name or role
+    def _tool_buscar_producto(self, msg, uid, role, entities):
+        """Buscar productos en el catalogo."""
+        query = msg.lower()
+        if entities.get("products"):
+            query = entities["products"][0]
+        if get_connection:
+            try:
+                conn = get_connection()
+                cursor = conn.execute(
+                    "SELECT nombre, precio, stock_actual FROM productos p "
+                    "LEFT JOIN inventario_general i ON p.producto_id = i.producto_id "
+                    "WHERE p.nombre LIKE ? AND p.activo = 1 LIMIT 10",
+                    ("%" + query + "%",)
+                )
+                products = [dict(r) for r in cursor.fetchall()]
+                conn.close()
+                if products:
+                    lines = []
+                    for p in products:
+                        stock = p.get("stock_actual", "N/A")
+                        precio = p.get("precio", 0)
+                        lines.append("  - " + p["nombre"] + " — " + str(precio) + " MXN (stock: " + str(stock) + ")")
+                    return "Encontre " + str(len(products)) + " producto(s):\n" + "\n".join(lines)
+                else:
+                    return "No encontre productos para '" + query + "'. Intenta con otra palabra."
+            except Exception as e:
+                logger.error("Error buscando: %s", e)
+                return "Error al buscar. Intenta de nuevo."
+        return "Buscando en el catalogo..."
 
-        if role == 'cliente':
-            frases = [
-                f"{saludo} {icon} ¡Bienvenido a la tienda! ¿Qué buscas hoy?",
-                f"{saludo} {icon} Soy tu asistente de compras. Dime qué necesitas.",
-                f"{saludo} {icon} ¿Te ayudo a encontrar algo? Tenemos ofertas.",
-            ]
-        elif role == 'vendedor':
-            frases = [
-                f"{saludo} {n} {icon} ¿Listo para vender? Mira tus ventas de hoy.",
-                f"{saludo} {n} {icon} ¿Cómo va la jornada? Revisa tu inventario.",
-                f"{saludo} {n} {icon} Pregúntame por stock, precios o ventas.",
-            ]
-        elif role == 'administrador':
-            frases = [
-                f"{saludo} {n} {icon} Todo en orden. ¿Revisamos el balance?",
-                f"{saludo} {n} {icon} Panel de control listo. Mira tus KPIs.",
-                f"{saludo} {n} {icon} ¿Qué necesitas supervisar hoy?",
-            ]
-        elif role == 'supervisor':
-            frases = [
-                f"{saludo} {n} {icon} Dashboard activo. ¿Vemos las métricas?",
-                f"{saludo} {n} {icon} Turno iniciado. Revisa el rendimiento.",
-            ]
-        elif role == 'desarrollador':
-            frases = [
-                f"{saludo} {n} {icon} Sistema operativo. ¿Tests, docs o métricas?",
-                f"{saludo} {n} {icon} ¿Depuramos algo? Escribe 'tests' o 'documentación'.",
-                f"{saludo} {n} {icon} Consola lista. Pídeme lo que necesites.",
-            ]
-        else:
-            frases = [f"{saludo} {icon} ¿En qué puedo ayudarte?"]
-        
-        return random.choice(frases)
+    def _tool_consultar_precio(self, msg, uid, role, entities):
+        """Consultar precio de un producto."""
+        if entities.get("products"):
+            product = entities["products"][0]
+            if get_connection:
+                try:
+                    conn = get_connection()
+                    cursor = conn.execute(
+                        "SELECT nombre, precio FROM productos WHERE nombre LIKE ? AND activo=1",
+                        ("%" + product + "%",)
+                    )
+                    p = cursor.fetchone()
+                    conn.close()
+                    if p:
+                        return "Precio de " + p["nombre"] + ": " + str(p["precio"]) + " MXN"
+                    return "No encontre '" + product + "' en el catalogo."
+                except Exception as e:
+                    logger.error("Error precio: %s", e)
+        return "Que producto te gustaria consultar?"
 
-    def get_status(self):
-        return {
-            'active': True,
-            'handlers': _HAS_HANDLERS,
-            'fuzzy': _HAS_FUZZY,
-            'memory': self.adv_memory_ok,
-            'skills': _HAS_SKILLS,
-            'react': self.react_engine is not None,
-            'metrics': self._usage_metrics,
+    def _tool_ver_stock(self, msg, uid, role, entities):
+        """Consultar stock de un producto."""
+        if entities.get("products"):
+            product = entities["products"][0]
+            if get_connection:
+                try:
+                    conn = get_connection()
+                    cursor = conn.execute(
+                        "SELECT nombre, stock_actual, stock_minimo FROM inventario_general WHERE nombre LIKE ? LIMIT 1",
+                        ("%" + product + "%",)
+                    )
+                    p = cursor.fetchone()
+                    conn.close()
+                    if p:
+                        stock = p["stock_actual"]
+                        minimo = p["stock_minimo"]
+                        status = "stock bajo" if stock <= minimo else "stock OK"
+                        return "Stock de " + p["nombre"] + ": " + str(stock) + " unidades (" + status + ")"
+                    return "No encontre '" + product + "' en inventario."
+                except Exception as e:
+                    logger.error("Error stock: %s", e)
+        return "De que producto quieres ver el stock?"
+
+    def _tool_vender(self, msg, uid, role, entities):
+        if role in ("cliente",):
+            return "Para vender necesitas iniciar sesion como vendedor o cajero."
+        return "Funcion de venta disponible en el modulo de caja."
+
+    def _tool_reporte_ventas(self, msg, uid, role, entities):
+        if role in ("cliente",):
+            return "Los reportes son para personal autorizado."
+        return "Puedes ver los reportes en el panel de ventas."
+
+    def _tool_saludo(self, msg, uid, role, entities):
+        saludos = {
+            "desarrollador": "Bienvenido! Panel de desarrollo activo.",
+            "administrador": "Hola! En que puedo ayudarte con la administracion?",
+            "supervisor": "Buen dia! Reportes y dashboard disponibles.",
+            "vendedor": "Hola! Necesitas ayuda con una venta?",
+            "cajero": "Bienvenido! Caja lista para operar.",
+            "cliente": "Bienvenido! Estoy aqui para ayudarte a encontrar productos.",
         }
+        return saludos.get(role, "Hola! En que puedo ayudarte?")
+
+    def _tool_ayuda(self, msg, uid, role, entities):
+        return (
+            "Asistente TPV Ultra Smart\n\n"
+            "Puedo ayudarte con:\n"
+            "  - Buscar productos: 'buscar cafe'\n"
+            "  - Consultar precios: 'cuanto cuesta el arroz'\n"
+            "  - Ver stock: 'hay stock de leche'\n"
+            "  - Vender: 'registrar venta' (requiere sesion)\n"
+            "  - Reportes: 'ventas del dia'\n\n"
+            "Que deseas hacer?"
+        )
+
+    def _tool_fallback(self, msg):
+        return (
+            "No entendi completamente tu mensaje. "
+            "Puedes preguntarme por productos, precios, stock, "
+            "ventas y reportes. Escribe 'ayuda' para mas opciones."
+        )
 
 
-# ══════════════════════════════════════════════════════════════
-# INSTANCIA GLOBAL - Esto es lo que importa agent_chat_bp.py
-# ══════════════════════════════════════════════════════════════
-agent = AgentMaster()
+agent_master = AgentMaster()

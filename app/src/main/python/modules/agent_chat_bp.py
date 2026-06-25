@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
 """Blueprint: Agente IA chat + status (v8.0 definitivo)."""
 
+try:
+    from ia.agent_master import agent_master
+    AGENT_AVAILABLE = True
+except ImportError:
+    AGENT_AVAILABLE = False
+    agent_master = None
+
 from flask import Blueprint, request, jsonify, session, current_app
 import os
 from datetime import datetime

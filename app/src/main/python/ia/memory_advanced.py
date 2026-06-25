@@ -1,138 +1,234 @@
-"""memory_advanced.py - Extracted from memory.py"""
-# -*- coding: utf-8 -*-
-"""ia/memory.py - Memoria persistente para la IA del TPV
-Almacena en SQLite datos clave de conversaciones:
-- Preferencias de clientes
-- Consultas frecuentes
-- Patrones de venta
-- Contexto de negocio
-No afecta el rendimiento. Funciona 100% offline."""
-
-import sqlite3, os, re, time, threading, json
+"""Sistema de memoria avanzada con persistencia SQLite y caché LRU."""
+from __future__ import annotations
+import sqlite3, json, time, os, logging
+from typing import Optional, List, Dict, Any
+from collections import OrderedDict
 from datetime import datetime, timedelta
 
+logger = logging.getLogger(__name__)
 
-_DB_PATH = None
-_DB_LOCK = threading.Lock()
+class LRUCache:
+    """Caché LRU con expiración temporal."""
+    
+    def __init__(self, maxsize: int = 100, ttl: int = 3600):
+        self.maxsize = maxsize
+        self.ttl = ttl
+        self._cache: OrderedDict = OrderedDict()
+        self._timestamps: Dict[str, float] = {}
+    
+    def get(self, key: str) -> Optional[Any]:
+        if key not in self._cache:
+            return None
+        if time.time() - self._timestamps.get(key, 0) > self.ttl:
+            self._cache.pop(key, None)
+            self._timestamps.pop(key, None)
+            return None
+        self._cache.move_to_end(key)
+        return self._cache[key]
+    
+    def set(self, key: str, value: Any):
+        if key in self._cache:
+            self._cache.move_to_end(key)
+        self._cache[key] = value
+        self._timestamps[key] = time.time()
+        if len(self._cache) > self.maxsize:
+            oldest = next(iter(self._cache))
+            self._cache.pop(oldest, None)
+            self._timestamps.pop(oldest, None)
+    
+    def invalidate(self, key: str):
+        self._cache.pop(key, None)
+        self._timestamps.pop(key, None)
+    
+    def clear(self):
+        self._cache.clear()
+        self._timestamps.clear()
 
 
-from ia.memory_core import _get_db, init, save, search, recall, forget, get_summary
-
-def cleanup(expired_only=True, max_age_days=90):
-    """Limpia recuerdos expirados o antiguos."""
-    conn = _get_db()
-    if not conn:
-        return 0
-    try:
-        with _DB_LOCK:
-            if expired_only:
-                n = conn.execute('''DELETE FROM ia_memory WHERE expires_at IS NOT NULL
-                    AND expires_at <= datetime("now","localtime")''').rowcount
-            else:
-                n = conn.execute('''DELETE FROM ia_memory WHERE updated_at < datetime("now","localtime",?)
-                    AND confidence < 0.5''', (f'-{max_age_days} days',)).rowcount
+class AdvancedMemory:
+    """Sistema de memoria persistente con SQLite y caché LRU."""
+    
+    def __init__(self, db_path: Optional[str] = None):
+        if db_path is None:
+            db_path = os.path.join(os.path.dirname(__file__), "..", "tpv_datos.db")
+        self.db_path = db_path
+        self.cache = LRUCache(maxsize=200, ttl=300)
+        self._init_db()
+    
+    def _init_db(self):
+        """Inicializar tabla de memoria."""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS ia_memory (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id TEXT NOT NULL,
+                    session_id TEXT NOT NULL,
+                    role TEXT DEFAULT 'user',
+                    content TEXT NOT NULL,
+                    intent TEXT,
+                    entities TEXT,
+                    sentiment TEXT DEFAULT 'neutral',
+                    timestamp TEXT DEFAULT (datetime('now','localtime')),
+                    metadata TEXT
+                )
+            """)
+            conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_memory_user 
+                ON ia_memory(user_id, timestamp)
+            """)
+            conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_memory_session
+                ON ia_memory(session_id)
+            """)
             conn.commit()
             conn.close()
-            return n
-    except Exception:
-        try: conn.close()
-        except: pass
-        return 0
+        except Exception as e:
+            logger.error(f"Error init memoria: {e}")
+    
+    def save_conversation(self, user_id: str, session_id: str, role: str, 
+                          content: str, intent: str = "", entities: str = "",
+                          metadata: Optional[dict] = None):
+        """Guardar mensaje en memoria persistente."""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            conn.execute(
+                """INSERT INTO ia_memory (user_id, session_id, role, content, intent, entities, metadata)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (user_id, session_id, role, content, intent, entities,
+                 json.dumps(metadata) if metadata else "{}")
+            )
+            conn.commit()
+            conn.close()
+            # Invalidar caché
+            self.cache.invalidate(f"history:{user_id}:{session_id}")
+        except Exception as e:
+            logger.error(f"Error guardando conversación: {e}")
+    
+    def get_conversation_history(self, user_id: str, session_id: str, 
+                                  limit: int = 20) -> List[Dict]:
+        """Obtener historial de conversación."""
+        cache_key = f"history:{user_id}:{session_id}:{limit}"
+        cached = self.cache.get(cache_key)
+        if cached:
+            return cached
+        
+        try:
+            conn = sqlite3.connect(self.db_path)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.execute(
+                """SELECT role, content, intent, timestamp FROM ia_memory
+                   WHERE user_id = ? AND session_id = ?
+                   ORDER BY id DESC LIMIT ?""",
+                (user_id, session_id, limit)
+            )
+            rows = [dict(row) for row in cursor.fetchall()]
+            rows.reverse()
+            conn.close()
+            self.cache.set(cache_key, rows)
+            return rows
+        except Exception as e:
+            logger.error(f"Error obteniendo historial: {e}")
+            return []
+    
+    def get_user_context(self, user_id: str) -> Dict:
+        """Obtener contexto del usuario (últimas interacciones)."""
+        cache_key = f"context:{user_id}"
+        cached = self.cache.get(cache_key)
+        if cached:
+            return cached
+        
+        try:
+            conn = sqlite3.connect(self.db_path)
+            conn.row_factory = sqlite3.Row
+            
+            # Última intención
+            cursor = conn.execute(
+                """SELECT intent, content, timestamp FROM ia_memory
+                   WHERE user_id = ? AND role = 'user' AND intent != ''
+                   ORDER BY id DESC LIMIT 1""", (user_id,)
+            )
+            last_intent = dict(cursor.fetchone()) if cursor.fetchone() else {}
+            
+            # Intenciones frecuentes
+            cursor = conn.execute(
+                """SELECT intent, COUNT(*) as count FROM ia_memory
+                   WHERE user_id = ? AND intent != ''
+                   GROUP BY intent ORDER BY count DESC LIMIT 5""", (user_id,)
+            )
+            frequent_intents = [dict(r) for r in cursor.fetchall()]
+            
+            # Total de interacciones
+            cursor = conn.execute(
+                "SELECT COUNT(*) as total FROM ia_memory WHERE user_id = ?",
+                (user_id,)
+            )
+            total = cursor.fetchone()["total"]
+            
+            context = {
+                "user_id": user_id,
+                "last_intent": last_intent.get("intent", ""),
+                "last_message": last_intent.get("content", ""),
+                "frequent_intents": frequent_intents,
+                "total_interactions": total,
+                "last_active": last_intent.get("timestamp", ""),
+            }
+            conn.close()
+            self.cache.set(cache_key, context)
+            return context
+        except Exception as e:
+            logger.error(f"Error obteniendo contexto: {e}")
+            return {"user_id": user_id}
+    
+    def search_memory(self, user_id: str, query: str, limit: int = 10) -> List[Dict]:
+        """Buscar en memoria por contenido."""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.execute(
+                """SELECT role, content, intent, timestamp FROM ia_memory
+                   WHERE user_id = ? AND content LIKE ?
+                   ORDER BY id DESC LIMIT ?""",
+                (user_id, f"%{query}%", limit)
+            )
+            return [dict(r) for r in cursor.fetchall()]
+        except Exception as e:
+            logger.error(f"Error buscando en memoria: {e}")
+            return []
+    
+    def get_session_stats(self, user_id: str, session_id: str) -> Dict:
+        """Estadísticas de la sesión actual."""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.execute(
+                """SELECT COUNT(*) as messages,
+                          COUNT(DISTINCT intent) as intents,
+                          MIN(timestamp) as started,
+                          MAX(timestamp) as last
+                   FROM ia_memory
+                   WHERE user_id = ? AND session_id = ?""",
+                (user_id, session_id)
+            )
+            stats = dict(cursor.fetchone())
+            conn.close()
+            return stats
+        except Exception as e:
+            logger.error(f"Error obteniendo stats: {e}")
+            return {}
+    
+    def clear_user_memory(self, user_id: str):
+        """Limpiar memoria de un usuario."""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            conn.execute("DELETE FROM ia_memory WHERE user_id = ?", (user_id,))
+            conn.commit()
+            conn.close()
+            self.cache.invalidate(f"context:{user_id}")
+            return True
+        except Exception as e:
+            logger.error(f"Error limpiando memoria: {e}")
+            return False
 
-
-def extract_and_save(session_id, user_text, intent, response_summary, role='cliente'):
-    """Extrae datos clave de una conversacion y los guarda automaticamente.
-    Se llama despues de cada respuesta de la IA."""
-    if not user_text or len(user_text) < 3:
-        return
-    t = user_text.lower().strip()
-    ts = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-    # Detectar preferencias de producto ("me gusta X", "busco X", "quiero X")
-    pref_patterns = [
-        (r'(?:me gusta|prefiero|quiero|busco|necesito|interesa)\s+(.+?)(?:\.|$|,)', 'preferencia'),
-        (r'(?:cuanto cuesta|precio de|precio del?)\s+(.+?)(?:\.|$|\?)', 'consulta_precio'),
-        (r'(?:hay|tiene|disponible)\s+(.+?)(?:\?|$)', 'consulta_stock'),
-    ]
-    for pattern, cat in pref_patterns:
-        m = re.search(pattern, t)
-        if m:
-            val = m.group(1).strip()[:200]
-            if len(val) >= 3:
-                save(session_id, cat, val[:80], val,
-                     metadata={'source': 'auto', 'role': role, 'intent': intent},
-                     confidence=0.7, expires_days=30)
-
-    # Guardar consulta frecuente (si se repite, confidence sube)
-    existing = search(t[:50], session_id=session_id, category='consulta_frecuente', limit=1)
-    if existing:
-        conf = min(existing[0].get('confidence', 0.7) + 0.1, 1.0)
-        count = existing[0].get('access_count', 1) + 1
-        save(session_id, 'consulta_frecuente', t[:80],
-             response_summary[:200] if response_summary else t[:200],
-             metadata={'count': count, 'source': 'auto', 'role': role},
-             confidence=conf, expires_days=60)
-    elif intent and intent not in ('chat', 'saludo', 'despedida', 'ayuda'):
-        save(session_id, 'consulta_frecuente', t[:80],
-             response_summary[:200] if response_summary else t[:200],
-             metadata={'count': 1, 'source': 'auto', 'role': role},
-             confidence=0.5, expires_days=60)
-
-    # Detectar nombre de cliente si lo menciona
-    if role == 'cliente':
-        name_match = re.search(r'(?:me llamo|soy|mi nombre es)\s+(\w+)', t)
-        if name_match:
-            save(session_id, 'dato_cliente', 'nombre', name_match.group(1),
-                 confidence=0.9, expires_days=120)
-
-
-def get_enriched_context(session_id, user_text):
-    """Recupera contexto relevante para enriquecer la respuesta de la IA.
-    Se llama antes de procesar una pregunta."""
-    t = user_text.lower().strip()
-    context = {
-        'memories': [],
-        'frequent_queries': [],
-        'preferences': [],
-        'client_data': {}
-    }
-
-    # Buscar preferencias relacionadas
-    for term in t.split():
-        if len(term) >= 3:
-            prefs = search(term, session_id=session_id, category='preferencia', limit=3)
-            context['preferences'].extend(prefs)
-
-    # Deduplicar preferencias
-    seen = set()
-    unique_prefs = []
-    for p in context['preferences']:
-        k = p.get('key', '')
-        if k not in seen:
-            seen.add(k)
-            unique_prefs.append(p)
-    context['preferences'] = unique_prefs[:5]
-
-    # Datos del cliente
-    client = recall(session_id, category='dato_cliente', limit=10)
-    if client:
-        for c in client:
-            context['client_data'][c['key']] = c['value']
-
-    # Consultas frecuentes recientes
-    freq = recall(session_id, category='consulta_frecuente', limit=3)
-    context['frequent_queries'] = freq
-
-    # Recuerdos generales recientes
-    general = recall(session_id, category='general', limit=5)
-    context['memories'] = general
-
-    return context
-
-
-# Inicializar al importar
-_init_done = init()
-if _init_done:
-    print("[ia/memory.py] Memoria persistente inicializada")
-else:
-    print("[ia/memory.py] WARN: No se pudo inicializar BD de memoria")
+# Singleton
+advanced_memory = AdvancedMemory()

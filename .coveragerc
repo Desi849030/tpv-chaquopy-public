@@ -1,0 +1,20 @@
+[run]
+source = app/src/main/python
+omit =
+    */supabase_sync*
+    */supabase_rls*
+    */sync/*
+    */security_websocket*
+    */modules/settings_supabase*
+    */modules/telecom_diag*
+    */modules/debug_sync*
+    */security_attestation*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    except ImportError:
+    except Exception:
+    raise NotImplementedError

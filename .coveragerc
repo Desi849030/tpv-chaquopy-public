@@ -5,10 +5,10 @@ omit =
     */supabase_rls*
     */sync/*
     */security_websocket*
-    */modules/settings_supabase*
-    */modules/telecom_diag*
-    */modules/debug_sync*
     */security_attestation*
+    */modules/settings_supabase*
+    */modules/debug_sync*
+    */modules/telecom_diag*
 
 [report]
 exclude_lines =
@@ -18,3 +18,8 @@ exclude_lines =
     except ImportError:
     except Exception:
     raise NotImplementedError
+
+# NOTA: Modulos excluidos requieren credenciales cloud (Supabase)
+# o hardware especifico (telecom, biometrico). Son funcionalidades
+# opcionales que no afectan el nucleo del TPV. La cobertura reportada
+# es sobre el codigo 100% testeable sin dependencias externas.

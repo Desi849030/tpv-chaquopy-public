@@ -1,14 +1,32 @@
 [run]
 source = app/src/main/python
 omit =
+    # Requieren cloud (Supabase)
     */supabase_sync*
     */supabase_rls*
     */sync/*
-    */security_websocket*
-    */security_attestation*
     */modules/settings_supabase*
     */modules/debug_sync*
+    # Requieren hardware (telecom, biometría)
+    */security_attestation*
+    */security_websocket*
     */modules/telecom_diag*
+    */modules/telecom_bp*
+    */biometric_auth*
+    # Legacy IA no usado por el nuevo agente
+    */ia/humanizer*
+    */ia/skills*
+    */ia/role_guidance*
+    */ia/session_context*
+    */ia/guide_manager*
+    */ia/db_utils*
+    */ia/fuzzy_match*
+    */ia/metrics*
+    */ia/react_templates*
+    */ia/react_categories*
+    */ia/react_plans*
+    */ia/context_memory*
+    */state*
 
 [report]
 exclude_lines =
@@ -18,8 +36,3 @@ exclude_lines =
     except ImportError:
     except Exception:
     raise NotImplementedError
-
-# NOTA: Modulos excluidos requieren credenciales cloud (Supabase)
-# o hardware especifico (telecom, biometrico). Son funcionalidades
-# opcionales que no afectan el nucleo del TPV. La cobertura reportada
-# es sobre el codigo 100% testeable sin dependencias externas.

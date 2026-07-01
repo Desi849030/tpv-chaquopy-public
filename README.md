@@ -1,6 +1,6 @@
 # 🚀 TPV Ultra Smart v8.0 — Rev. 14 (Tesis)
 
-![Python](https://img.shields.io/badge/Python-3.10-blue?style=flat-square) ![Flask](https://img.shields.io/badge/Flask-2.2.5-black?style=flat-square) ![Chaquopy](https://img.shields.io/badge/Android-Chaquopy-green?style=flat-square) ![Tests](https://img.shields.io/badge/Tests-541%20pass-brightgreen?style=flat-square) ![Coverage](https://img.shields.io/badge/Coverage-51%25%20real-blue?style=flat-square)
+![Python](https://img.shields.io/badge/Python-3.10-blue?style=flat-square) ![Flask](https://img.shields.io/badge/Flask-2.2.5-black?style=flat-square) ![Chaquopy](https://img.shields.io/badge/Android-Chaquopy-green?style=flat-square) ![Tests](https://img.shields.io/badge/Tests-541%20pass-brightgreen?style=flat-square) ![Coverage](https://img.shields.io/badge/Coverage-0%25%20real-blue?style=flat-square)
 
 Sistema de Punto de Venta (TPV) híbrido de grado enterprise para Android nativo vía Chaquopy, con persistencia atómica local (SQLite WAL), sincronización asíncrona a Supabase, y motor de IA ReAct para asistencia conversacional por rol.
 

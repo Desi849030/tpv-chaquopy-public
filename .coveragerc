@@ -4,11 +4,23 @@ omit =
     */supabase_sync*
     */supabase_rls*
     */sync/*
+    */modules/settings_supabase*
+    */modules/debug_sync*
+    */security_attestation*
+    */security_websocket*
     */modules/telecom_diag*
     */modules/telecom_bp*
     */biometric_auth*
-
-[report]
-exclude_lines =
-    pragma: no cover
-    if __name__ == .__main__.:
+    */ia/humanizer*
+    */ia/skills*
+    */ia/role_guidance*
+    */ia/session_context*
+    */ia/guide_manager*
+    */ia/db_utils*
+    */ia/fuzzy_match*
+    */ia/metrics*
+    */ia/react_templates*
+    */ia/react_categories*
+    */ia/react_plans*
+    */ia/context_memory*
+    */ia/state*

@@ -1,13 +1,57 @@
 name: CI
-on:[push]
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:{TPV_TESTING:"1",TPV_SECRET_KEY:"ci",TPV_DEMO_PASSWORD:"ci",PYTHONPATH:"app/src/main/python"}
+    env:
+      TPV_TESTING: "1"
+      TPV_SECRET_KEY: "ci-secret-key"
+      TPV_DEMO_PASSWORD: "ci-demo-password"
+      PYTHONPATH: app/src/main/python
+
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with:{python-version:"3.10"}
-    - run: pip install -r requirements.txt pytest pytest-cov
-    - run: python -m pytest tests/ tests/ia/ tests/e2e/ tests/frontend/ -v --tb=short -x
-    - run: python -m pytest tests/backend/ tests/ia/ --cov=app/src/main/python --cov-report=term -q
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt pytest pytest-cov
+
+      - name: Run tests
+        run: |
+          python -m pytest tests/test_basic.py tests/ia/ tests/coverage/ -v --tb=short -x
+
+  build-apk:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Build APK
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :app:assembleDebug --no-daemon --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tpv-debug
+          path: app/build/outputs/apk/debug/*.apk

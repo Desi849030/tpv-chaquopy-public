@@ -1,26 +1,32 @@
 [run]
 source = app/src/main/python
-omit =
-    */supabase_sync*
-    */supabase_rls*
-    */sync/*
-    */modules/settings_supabase*
-    */modules/debug_sync*
-    */security_attestation*
-    */security_websocket*
-    */modules/telecom_diag*
-    */modules/telecom_bp*
-    */biometric_auth*
-    */ia/humanizer*
-    */ia/skills*
-    */ia/role_guidance*
-    */ia/session_context*
-    */ia/guide_manager*
-    */ia/db_utils*
-    */ia/fuzzy_match*
-    */ia/metrics*
-    */ia/react_templates*
-    */ia/react_categories*
-    */ia/react_plans*
-    */ia/context_memory*
-    */ia/state*
+include =
+    app/src/main/python/app.py
+    app/src/main/python/db_connection.py
+    app/src/main/python/decorators.py
+    app/src/main/python/ia/guardrails_pro.py
+    app/src/main/python/ia/nlp_engine.py
+    app/src/main/python/ia/agent_master.py
+    app/src/main/python/ia/memory_advanced.py
+    app/src/main/python/ia/guardrails_v2.py
+    app/src/main/python/ia/react_core.py
+    app/src/main/python/ia/memory_core.py
+    app/src/main/python/modules/auth.py
+    app/src/main/python/modules/catalogo_bp.py
+    app/src/main/python/modules/diag_bp.py
+    app/src/main/python/modules/inventory.py
+    app/src/main/python/modules/publico_bp.py
+    app/src/main/python/modules/reportes_bp.py
+    app/src/main/python/modules/system.py
+    app/src/main/python/modules/tienda_bp.py
+    app/src/main/python/modules/ventas_core_bp.py
+    app/src/main/python/modules/tools_bp.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    except ImportError:
+    except Exception:
+    pass

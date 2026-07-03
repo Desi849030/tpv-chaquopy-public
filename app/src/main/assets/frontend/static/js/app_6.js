@@ -669,11 +669,17 @@ async function _auth_init(intentos = 0) {
         if (intentos < 30) setTimeout(() => _auth_init(intentos + 1), 150);
         return;
     }
-    // Siempre pedir login al abrir (no entrar automático aunque haya sesión).
-    // Cerrar cualquier sesión previa del servidor para forzar autenticación.
-    try {
-        await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
-    } catch(e) {}
+
+    // IMPORTANTE v8.14.1:
+    // Antes este init hacía /api/auth/logout al arrancar. En WebView/Android,
+    // si bootstrap terminaba de cargar tarde, ese logout podía ejecutarse
+    // DESPUÉS de un login correcto y dejaba la UI con usuario local pero el
+    // servidor sin cookie de sesión: /api/auth/me, Supabase, ventas e
+    // inventario devolvían 401. Por eso el diagnóstico mostraba:
+    //   _auth_mostrarApp OK  ->  /api/* 401 UNAUTHORIZED
+    // La pantalla de login ya bloquea la app al abrir; no es necesario borrar
+    // la sesión del servidor en diferido. El logout real queda en auth_logout().
+    if (AUTH.usuario) return;
     auth_setModo('staff');
 }
 

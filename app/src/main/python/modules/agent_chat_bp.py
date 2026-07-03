@@ -19,7 +19,12 @@ agent_chat_bp = Blueprint('agent_chat', __name__)
 _agent = None
 _agent_loaded = False
 try:
-    from ia.agent_master import agent as _agent
+    # Motor conversacional principal. El código anterior intentaba importar
+    # `agent` desde ia.agent_master, pero ese módulo expone `agent_master`, no
+    # `agent`; por eso en APK aparecía: "Agente IA no disponible" y el chat
+    # caía siempre al modo catálogo. ia.agent sí expone process_question(),
+    # get_status() y el pipeline modular completo.
+    from ia import agent as _agent
     _agent_loaded = True
 except Exception as e:
     print(f"⚠️ Agente IA no disponible: {e}")
@@ -301,16 +306,37 @@ def agent_chat():
 
     if _agent_loaded and _agent:
         try:
-            result = _agent.process(text=msg, role=rol, name=name)
-            tools = [f"{t.get('icon', '')} {t.get('name', '')}" for t in result.get('tools', [])]
+            if hasattr(_agent, 'process_question'):
+                result = _agent.process_question(
+                    str(usuario_id or request_id), msg,
+                    role=rol, user_name=name,
+                    user_session={"request_id": request_id, "autenticado": autenticado},
+                )
+            elif hasattr(_agent, 'agent_master'):
+                result = _agent.agent_master.process(msg, user_id=str(usuario_id or request_id), role=rol)
+            elif hasattr(_agent, 'process'):
+                result = _agent.process(text=msg, role=rol, name=name)
+            else:
+                raise RuntimeError('Motor IA sin método process compatible')
+
+            respuesta = (result.get('response') or result.get('answer') or
+                         result.get('respuesta') or result.get('message') or '')
+            tools_raw = result.get('tools') or result.get('tools_used') or []
+            tools = []
+            for t in tools_raw:
+                if isinstance(t, dict):
+                    tools.append(f"{t.get('icon', '')} {t.get('name') or t.get('tool') or ''}".strip())
+                else:
+                    tools.append(str(t))
             return jsonify({
                 "ok": True,
-                "respuesta": result.get('response', ''),
+                "respuesta": respuesta,
                 "rol": rol,
                 "intencion": result.get('intent', ''),
                 "confianza": result.get('confidence', 0.85),
                 "herramientas": tools,
                 "ui_action": result.get('ui_action'),
+                "modo": result.get('mode', 'classic'),
                 "request_id": request_id,
                 "anon_client_id": anon_client_id,
                 "usuario_id": usuario_id,
@@ -349,7 +375,10 @@ def agent_status():
     if _agent_loaded and _agent:
         try:
             status["agent"] = "active"
-            status["details"] = _agent.get_status()
+            if hasattr(_agent, 'get_status'):
+                status["details"] = _agent.get_status()
+            elif hasattr(_agent, 'agent_master'):
+                status["details"] = {"status": "active", "engine": "agent_master"}
         except Exception:
             status["agent"] = "active"
     return jsonify(status)

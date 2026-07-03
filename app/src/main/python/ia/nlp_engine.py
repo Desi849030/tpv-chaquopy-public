@@ -121,3 +121,33 @@ class ResponseGenerator:
 classifier = IntentClassifier()
 extractor = EntityExtractor()
 responder = ResponseGenerator()
+
+
+class NLPEngine:
+    """Facade de compatibilidad para ia.agent.
+
+    Versiones anteriores importaban NLPEngine, mientras que el módulo actual
+    expone classifier/extractor/responder. Esta clase evita que el motor IA
+    quede desactivado por un simple cambio de API interna.
+    """
+
+    def __init__(self):
+        self.classifier = classifier
+        self.extractor = extractor
+        self.responder = responder
+
+    def classify(self, text: str):
+        return self.classifier.classify(text)
+
+    def get_primary_intent(self, text: str):
+        return self.classifier.get_primary_intent(text)
+
+    def extract_entities(self, text: str):
+        return {
+            "products": self.extractor.extract_products(text),
+            "price": self.extractor.extract_price(text),
+            "quantity": self.extractor.extract_quantity(text),
+        }
+
+    def generate(self, intent: str, context: dict):
+        return self.responder.generate(intent, context)

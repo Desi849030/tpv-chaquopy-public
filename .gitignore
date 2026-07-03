@@ -6,9 +6,6 @@ venv/
 env/
 
 # Bases de datos locales
-app/src/main/python/*.db
-app/src/main/python/*.db.backup
-app/src/main/python/tpv_datos.db
 
 # Configuración sensible
 app/src/main/python/supabase_config.json
@@ -28,10 +25,6 @@ app/src/main/python/cookies_*.txt
 **/.tpv_hmac_secret
 .supabase_config.json
 **/.supabase_config.json
-*.db
-*.sqlite
-*.sqlite3
-tpv_datos.db
 
 # === BACKUPS LOCALES ===
 .backup-tpv-*/
@@ -44,8 +37,6 @@ backups-tpv/
 
 # Runtime local / Termux
 nohup.out
-*.db-wal
-*.db-shm
 .robot_backups/
 .backend_tpv.pid
 
@@ -68,12 +59,9 @@ local.properties
 tpv-review/
 .tpv_secret_key
 supabase_config.json
-*.db.backup
 .tpv_crypto_key
-tpv_datos.db
 reporte_calidad.txt
 resultado_cobertura.txt
-tpv_datos.db
 reporte_calidad.txt
 resultado_cobertura.txt
 reporte_calidad.txt

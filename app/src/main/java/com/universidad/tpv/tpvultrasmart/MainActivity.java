@@ -1,6 +1,6 @@
 package com.universidad.tpv.tpvultrasmart;
 
-import android.app.Activity; // Cambiado a Activity normal para evitar crashes de tema
+import android.app.Activity;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -10,9 +10,6 @@ import com.chaquo.python.Python;
 import com.chaquo.python.PyObject;
 import com.chaquo.python.android.AndroidPlatform;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
 
 public class MainActivity extends Activity {
 
@@ -53,19 +50,15 @@ public class MainActivity extends Activity {
                     PyObject module = py.getModule("agente_apk");
                     
                     File modeloFile = new File(getFilesDir(), "qwen-coder.gguf");
+                    
+                    // Si el modelo no existe, lo descargamos (Requiere internet solo la primera vez)
                     if (!modeloFile.exists()) {
-                        runOnUiThread(() -> txtChat.append("Copiando modelo de IA (1.2 GB)...\n"));
-                        
-                        try (InputStream is = getAssets().open("qwen-coder.gguf");
-                             OutputStream os = new FileOutputStream(modeloFile)) {
-                            byte[] buffer = new byte[8192];
-                            int length;
-                            while ((length = is.read(buffer)) > 0) {
-                                os.write(buffer, 0, length);
-                            }
-                        }
+                        runOnUiThread(() -> txtChat.append("Descargando modelo de IA (1.2 GB)...\nEsto tardará varios minutos. No cierres la app.\n"));
+                        PyObject dlResult = module.callAttr("descargar_modelo", modeloFile.getAbsolutePath());
+                        runOnUiThread(() -> txtChat.append(dlResult.toString() + "\n"));
                     }
                     
+                    runOnUiThread(() -> txtChat.append("Cargando IA en RAM...\n"));
                     PyObject result = module.callAttr("inicializar_ia", modeloFile.getAbsolutePath());
                     iaLista = true;
                     

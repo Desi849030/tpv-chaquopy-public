@@ -1,7 +1,7 @@
 import json
 import os
+import urllib.request
 
-# Intentamos importar la IA, si falla, no rompemos la app
 try:
     from llama_cpp import Llama
     IA_DISPONIBLE = True
@@ -12,6 +12,15 @@ except Exception as e:
 from react_engine import procesar_respuesta_agentic
 
 llm_model = None
+
+def descargar_modelo(ruta_destino):
+    """Descarga el modelo desde Hugging Face si no está en el teléfono."""
+    url = "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q5_k_m.gguf"
+    try:
+        urllib.request.urlretrieve(url, ruta_destino)
+        return "Descarga completada"
+    except Exception as e:
+        return f"Error descarga: {str(e)}"
 
 def inicializar_ia(ruta_modelo):
     global llm_model

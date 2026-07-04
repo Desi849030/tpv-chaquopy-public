@@ -24,7 +24,7 @@ jobs:
           
       - name: Run AI Tests with Coverage
         run: |
-          pytest --cov=app/src/main/python --cov-report=xml --cov-report=term-missing
+          pytest --cov=app/src/main/python/src/main/python --cov-report=xml --cov-report=term-missing
           
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v4

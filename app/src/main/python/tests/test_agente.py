@@ -1,18 +1,5 @@
-import json
-import re
 import pytest
-
-# Simulamos la lógica del agente ReAct para medir su cobertura
-def procesar_respuesta_agentic(ia_output):
-    match = re.search(r"<accion>(.*?)</accion>", ia_output, re.DOTALL)
-    if not match:
-        return "RESPUESTA_FINAL", ia_output.strip()
-    
-    try:
-        accion_json = json.loads(match.group(1).strip())
-        return "ACCION", accion_json
-    except json.JSONDecodeError:
-        return "ERROR_FORMATO", None
+from react_engine import procesar_respuesta_agentic
 
 def test_agente_respuesta_normal():
     output = "Hola, soy una IA y estoy aquí para ayudarte."
@@ -28,6 +15,6 @@ def test_agente_usa_herramienta_correcta():
     assert resultado["argumentos"]["ruta"] == "main.py"
 
 def test_agente_json_roto():
-    output = '<accion>{nombre: "leer_archivo"}</accion>' # JSON inválido (sin comillas)
+    output = '<accion>{nombre: "leer_archivo"}</accion>'
     tipo, resultado = procesar_respuesta_agentic(output)
     assert tipo == "ERROR_FORMATO"

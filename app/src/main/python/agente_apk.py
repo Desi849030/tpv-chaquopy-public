@@ -1,12 +1,23 @@
 import json
 import os
-from llama_cpp import Llama
-from react_engine import procesar_respuesta_agentic # Importa la lógica testeable
+
+# Intentamos importar la IA, si falla, no rompemos la app
+try:
+    from llama_cpp import Llama
+    IA_DISPONIBLE = True
+except Exception as e:
+    IA_DISPONIBLE = False
+    ERROR_IMPORT = str(e)
+
+from react_engine import procesar_respuesta_agentic
 
 llm_model = None
 
 def inicializar_ia(ruta_modelo):
     global llm_model
+    if not IA_DISPONIBLE:
+        return f"Error de librería: {ERROR_IMPORT}"
+        
     try:
         llm_model = Llama(
             model_path=ruta_modelo,
@@ -18,7 +29,7 @@ def inicializar_ia(ruta_modelo):
         )
         return "IA Agentic lista"
     except Exception as e:
-        return f"Error: {str(e)}"
+        return f"Error modelo: {str(e)}"
 
 def procesar_pregunta(user_input):
     if not llm_model:
@@ -35,10 +46,13 @@ Si no necesitas herramientas, responde normalmente."""
     ]
 
     for _ in range(3):
-        response = llm_model.create_chat_completion(messages=messages, temperature=0.1, max_tokens=512)
-        ia_output = response["choices"][0]["message"]["content"]
+        try:
+            response = llm_model.create_chat_completion(messages=messages, temperature=0.1, max_tokens=512)
+            ia_output = response["choices"][0]["message"]["content"]
+        except Exception as e:
+            return f"Error generando: {str(e)}"
+            
         messages.append({"role": "assistant", "content": ia_output})
-
         tipo, resultado = procesar_respuesta_agentic(ia_output)
 
         if tipo == "RESPUESTA_FINAL":

@@ -500,12 +500,3 @@ def __debug_js():
     with open(os.path.join(os.getcwd(), 'js_errors.log'), 'a') as f:
         f.write(f"[{datetime.datetime.now()}] {data.get('msg','')}\n{data.get('stack','')}\n\n")
     return {'ok': True}
-
-# CREACIÓN AUTOMÁTICA DEL USUARIO DESARROLLADOR AL INICIAR LA APP
-try:
-    from db.users import _crear_desarrollador_default
-    _crear_desarrollador_default()
-    print('✅ Usuario desarrollador creado automáticamente')
-except Exception as e:
-    print(f'⚠️ No se pudo crear el usuario: {e}')
-

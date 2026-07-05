@@ -1,5 +1,5 @@
 import pytest
-from react_engine import procesar_respuesta_agentic
+from agente_apk import procesar_respuesta_agentic
 
 def test_agente_respuesta_normal():
     output = "Hola, soy una IA y estoy aquí para ayudarte."

@@ -1,8 +1,9 @@
 import json
 import os
+import re
 import platform
 
-# Intentamos importar la IA, si falla, no rompamos la app
+# 1. Importación del cerebro de IA (Manejo seguro de errores)
 try:
     from llama_cpp import Llama
     IA_DISPONIBLE = True
@@ -10,12 +11,10 @@ except Exception as e:
     IA_DISPONIBLE = False
     ERROR_IMPORT = str(e)
 
-from react_engine import procesar_respuesta_agentic
-
 llm_model = None
 
 # ==========================================
-# HERRAMIENTAS OFFLINE NIVEL PRO
+# 2. HERRAMIENTAS OFFLINE DEL SISTEMA
 # ==========================================
 def tool_listar_directorio(ruta="."):
     """Lista archivos y carpetas en un directorio."""
@@ -29,7 +28,7 @@ def tool_leer_archivo(ruta):
     """Lee el contenido de un archivo."""
     try:
         with open(ruta, 'r', encoding='utf-8') as f:
-            return f.read()[:2000] # Limitamos a 2000 chars para no saturar RAM
+            return f.read()[:2000]
     except Exception as e:
         return f"Error: {str(e)}"
 
@@ -48,12 +47,10 @@ def tool_info_sistema():
         info = f"Sistema: {platform.system()} {platform.machine()}\n"
         info += f"Python: {platform.python_version()}\n"
         info += f"Directorio actual: {os.getcwd()}\n"
-        info += f"RAM libre aproximada: {os.sysconf('SC_AVPHYS_PAGES') * os.sysconf('SC_PAGE_SIZE') // (1024*1024)} MB"
         return info
     except Exception as e:
         return f"Error: {str(e)}"
 
-# Mapa de herramientas disponibles para el Agente
 TOOLS_MAP = {
     "listar_directorio": tool_listar_directorio,
     "leer_archivo": tool_leer_archivo,
@@ -61,6 +58,24 @@ TOOLS_MAP = {
     "info_sistema": tool_info_sistema
 }
 
+# ==========================================
+# 3. MOTOR REACT FUSIONADO (Lógica de parseo)
+# ==========================================
+def procesar_respuesta_agentic(ia_output):
+    """Extrae la acción de la IA o devuelve la respuesta final."""
+    match = re.search(r"<accion>(.*?)</accion>", ia_output, re.DOTALL)
+    if not match:
+        return "RESPUESTA_FINAL", ia_output.strip()
+    
+    try:
+        accion_json = json.loads(match.group(1).strip())
+        return "ACCION", accion_json
+    except json.JSONDecodeError:
+        return "ERROR_FORMATO", None
+
+# ==========================================
+# 4. INICIALIZACIÓN Y BUCLE DEL AGENTE
+# ==========================================
 def inicializar_ia(ruta_modelo):
     global llm_model
     if not IA_DISPONIBLE:
@@ -69,7 +84,7 @@ def inicializar_ia(ruta_modelo):
     try:
         llm_model = Llama(
             model_path=ruta_modelo,
-            n_ctx=2048, # Subimos el contexto para que pueda razonar herramientas
+            n_ctx=2048,
             n_threads=4,
             use_mmap=False,
             use_mlock=False,
@@ -94,7 +109,7 @@ Herramientas disponibles:
 1. listar_directorio(ruta: str): Lista los archivos y carpetas.
 2. leer_archivo(ruta: str): Lee el contenido de un archivo.
 3. escribir_archivo(ruta: str, contenido: str): Crea o sobrescribe un archivo.
-4. info_sistema(): Obtiene información del sistema operativo y RAM.
+4. info_sistema(): Obtiene información del sistema operativo y directorio actual.
 
 Reglas:
 - Usa info_sistema() si no sabes dónde estás.
@@ -126,17 +141,14 @@ Reglas:
             if tool_name in TOOLS_MAP:
                 func = TOOLS_MAP[tool_name]
                 try:
-                    # Ejecutamos la herramienta real en Python
                     obs = func(**tool_args)
                 except TypeError:
                     obs = "Error: Faltan argumentos o son incorrectos para esta herramienta."
             else:
                 obs = f"Error: La herramienta '{tool_name}' no existe."
                 
-            # Le damos la observación a la IA para que siga pensando
             messages.append({"role": "user", "content": f"<observacion>{obs}</observacion>\nContinúa tu tarea basándote en esta información."})
         else:
             messages.append({"role": "user", "content": "Error: El JSON en <accion> está mal formateado. Asegúrate de usar comillas dobles."})
 
     return "El agente excedió el límite de pasos de razonamiento."
-

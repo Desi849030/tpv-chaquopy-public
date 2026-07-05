@@ -4,12 +4,17 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import com.chaquo.python.Python;
 import com.chaquo.python.PyObject;
 import com.chaquo.python.android.AndroidPlatform;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 public class MainActivity extends Activity {
 
@@ -17,6 +22,7 @@ public class MainActivity extends Activity {
     private EditText txtInput;
     private Button btnSend;
     private ScrollView scrollView;
+    private ProgressBar progressBar;
     private boolean iaLista = false;
 
     @Override
@@ -38,6 +44,7 @@ public class MainActivity extends Activity {
         txtInput = findViewById(R.id.txtInput);
         btnSend = findViewById(R.id.btnSend);
         scrollView = findViewById(R.id.scrollView);
+        progressBar = findViewById(R.id.progressBar);
 
         txtChat.setText("Inicializando IA en el dispositivo...\n");
         btnSend.setEnabled(false);
@@ -51,14 +58,44 @@ public class MainActivity extends Activity {
                     
                     File modeloFile = new File(getFilesDir(), "qwen-coder.gguf");
                     
-                    // Si el modelo no existe, lo descargamos (Requiere internet solo la primera vez)
                     if (!modeloFile.exists()) {
-                        runOnUiThread(() -> txtChat.append("Descargando modelo de IA (1.2 GB)...\nEsto tardará varios minutos. No cierres la app.\n"));
-                        PyObject dlResult = module.callAttr("descargar_modelo", modeloFile.getAbsolutePath());
-                        runOnUiThread(() -> txtChat.append(dlResult.toString() + "\n"));
+                        runOnUiThread(() -> {
+                            txtChat.append("Descargando modelo de IA (1.2 GB)...\n");
+                            progressBar.setVisibility(ProgressBar.VISIBLE);
+                            progressBar.setProgress(0);
+                        });
+                        
+                        // Descarga nativa con progreso
+                        URL url = new URL("https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q5_k_m.gguf");
+                        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                        connection.connect();
+                        
+                        int fileLength = connection.getContentLength();
+                        InputStream input = connection.getInputStream();
+                        FileOutputStream output = new FileOutputStream(modeloFile);
+                        
+                        byte data[] = new byte[8192];
+                        long total = 0;
+                        int count;
+                        
+                        while ((count = input.read(data)) != -1) {
+                            total += count;
+                            final int progress = (int) (total * 100 / fileLength);
+                            runOnUiThread(() -> progressBar.setProgress(progress));
+                            output.write(data, 0, count);
+                        }
+                        
+                        output.flush();
+                        output.close();
+                        input.close();
+                        
+                        runOnUiThread(() -> {
+                            progressBar.setVisibility(ProgressBar.GONE);
+                            txtChat.append("Descarga completada.\n");
+                        });
                     }
                     
-                    runOnUiThread(() -> txtChat.append("Cargando IA en RAM...\n"));
+                    runOnUiThread(() -> txtChat.append("Cargando IA en RAM (10 segundos)...\n"));
                     PyObject result = module.callAttr("inicializar_ia", modeloFile.getAbsolutePath());
                     iaLista = true;
                     
@@ -67,7 +104,7 @@ public class MainActivity extends Activity {
                         btnSend.setEnabled(true);
                     });
                 } catch (final Exception e) {
-                    runOnUiThread(() -> txtChat.append("Error Python: " + e.getMessage() + "\n"));
+                    runOnUiThread(() -> txtChat.append("Error: " + e.getMessage() + "\n"));
                 }
             }
         }).start();

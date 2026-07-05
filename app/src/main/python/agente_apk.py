@@ -83,7 +83,7 @@ def procesar_pregunta(user_input):
     if not llm_model:
         return "Error: IA no inicializada."
 
-    system_prompt = """Eres un Agente IA de nivel Senior operando offline en un dispositivo Android.
+    system_prompt = """Eres un Asistente IA Profesional. Operas offline en un dispositivo Android y ayudas al usuario con programación y análisis de archivos.
 Tienes acceso a herramientas para interactuar con el sistema de archivos. 
 Para usar una herramienta, debes responder EXACTAMENTE con este formato XML:
 

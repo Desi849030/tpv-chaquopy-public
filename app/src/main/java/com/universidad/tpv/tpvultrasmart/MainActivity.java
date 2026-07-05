@@ -6,9 +6,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.ScrollView;
-import android.widget.TextView;
 import com.chaquo.python.Python;
 import com.chaquo.python.PyObject;
 import com.chaquo.python.android.AndroidPlatform;
@@ -20,12 +19,12 @@ import java.net.URL;
 
 public class MainActivity extends Activity {
 
-    private TextView txtChat;
+    private ListView listViewChat;
     private EditText txtInput;
     private Button btnSend, btnDescargarIA;
-    private ScrollView scrollView;
     private ProgressBar progressBar;
     private LinearLayout layoutChat;
+    private ChatAdapter chatAdapter;
     private boolean iaLista = false;
 
     @Override
@@ -38,39 +37,38 @@ public class MainActivity extends Activity {
                 Python.start(new AndroidPlatform(this));
             }
         } catch (Exception e) {
-            txtChat = findViewById(R.id.txtChat);
-            txtChat.setText("Error fatal iniciando Python: " + e.getMessage());
+            chatAdapter.addMessage("Error fatal iniciando Python: " + e.getMessage(), false);
             return;
         }
 
-        txtChat = findViewById(R.id.txtChat);
+        listViewChat = findViewById(R.id.listViewChat);
         txtInput = findViewById(R.id.txtInput);
         btnSend = findViewById(R.id.btnSend);
         btnDescargarIA = findViewById(R.id.btnDescargarIA);
-        scrollView = findViewById(R.id.scrollView);
         progressBar = findViewById(R.id.progressBar);
         layoutChat = findViewById(R.id.layoutChat);
 
+        chatAdapter = new ChatAdapter(this);
+        listViewChat.setAdapter(chatAdapter);
+
         File modeloFile = new File(getFilesDir(), "qwen-coder.gguf");
         
-        // Si el modelo ya existe, cambiamos el botón a "Activar"
         if (modeloFile.exists()) {
             btnDescargarIA.setText("Activar Asistente IA");
         }
 
-        txtChat.setText("Bienvenido.\n\nEsta aplicación incluye un Asistente IA Agentic offline.\n\nPresiona el botón para descargarlo (1.2 GB) y activarlo.");
+        chatAdapter.addMessage("Bienvenido. Esta app incluye un Asistente IA offline de nivel profesional.", false);
+        chatAdapter.addMessage("Presiona el botón para descargar el cerebro de la IA (1.2 GB) y comenzar.", false);
 
         btnDescargarIA.setOnClickListener(v -> {
             btnDescargarIA.setEnabled(false);
             btnDescargarIA.setText("Procesando...");
             
             if (modeloFile.exists()) {
-                // Si ya está descargado, solo carga en RAM
-                txtChat.append("\n\nCargando IA en RAM (10 segundos)...\n");
+                chatAdapter.addMessage("Cargando IA en RAM...", false);
                 cargarIA(modeloFile);
             } else {
-                // Si no existe, descarga y luego carga
-                txtChat.append("\n\nIniciando descarga...\n");
+                chatAdapter.addMessage("Iniciando descarga...", false);
                 progressBar.setVisibility(View.VISIBLE);
                 descargarYcargarIA(modeloFile);
             }
@@ -79,11 +77,10 @@ public class MainActivity extends Activity {
         btnSend.setOnClickListener(v -> {
             String pregunta = txtInput.getText().toString();
             if (!pregunta.isEmpty() && iaLista) {
-                txtChat.append("\nTú: " + pregunta + "\n");
+                chatAdapter.addMessage(pregunta, true);
                 txtInput.setText("");
-                txtChat.append("IA: Pensando...\n");
-                scrollView.post(() -> scrollView.fullScroll(ScrollView.FOCUS_DOWN));
-
+                chatAdapter.addMessage("Pensando...", false);
+                
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
@@ -91,14 +88,11 @@ public class MainActivity extends Activity {
                             Python py = Python.getInstance();
                             PyObject module = py.getModule("agente_apk");
                             PyObject respuesta = module.callAttr("procesar_pregunta", pregunta);
+                            final String respText = respuesta.toString();
                             
-                            runOnUiThread(() -> {
-                                String textoActual = txtChat.getText().toString();
-                                txtChat.setText(textoActual.replace("IA: Pensando...\n", "IA: " + respuesta.toString() + "\n"));
-                                scrollView.post(() -> scrollView.fullScroll(ScrollView.FOCUS_DOWN));
-                            });
+                            runOnUiThread(() -> chatAdapter.replaceLastMessage(respText));
                         } catch (final Exception e) {
-                            runOnUiThread(() -> txtChat.append("Error procesando: " + e.getMessage() + "\n"));
+                            runOnUiThread(() -> chatAdapter.replaceLastMessage("Error: " + e.getMessage()));
                         }
                     }
                 }).start();
@@ -136,15 +130,14 @@ public class MainActivity extends Activity {
                     
                     runOnUiThread(() -> {
                         progressBar.setVisibility(View.GONE);
-                        txtChat.append("Descarga completada.\n");
-                        txtChat.append("Cargando IA en RAM...\n");
+                        chatAdapter.addMessage("Descarga completada. Cargando en RAM...", false);
                     });
                     
                     cargarIA(modeloFile);
                     
                 } catch (final Exception e) {
                     runOnUiThread(() -> {
-                        txtChat.append("Error descarga: " + e.getMessage() + "\n");
+                        chatAdapter.addMessage("Error descarga: " + e.getMessage(), false);
                         btnDescargarIA.setEnabled(true);
                         btnDescargarIA.setText("Reintentar Descarga");
                     });
@@ -164,14 +157,14 @@ public class MainActivity extends Activity {
                     iaLista = true;
                     
                     runOnUiThread(() -> {
-                        txtChat.append(result.toString() + "\n\n¡IA lista! Puedes escribir tu mensaje:\n");
+                        chatAdapter.addMessage(result.toString(), false);
+                        chatAdapter.addMessage("¡Hola! Soy tu asistente IA. Puedo leer archivos y ayudarte a programar. ¿En qué puedo ayudarte hoy?", false);
                         btnDescargarIA.setVisibility(View.GONE);
                         layoutChat.setVisibility(View.VISIBLE);
-                        scrollView.post(() -> scrollView.fullScroll(ScrollView.FOCUS_DOWN));
                     });
                 } catch (final Exception e) {
                     runOnUiThread(() -> {
-                        txtChat.append("Error activando IA: " + e.getMessage() + "\n");
+                        chatAdapter.addMessage("Error activando IA: " + e.getMessage(), false);
                         btnDescargarIA.setEnabled(true);
                         btnDescargarIA.setText("Reintentar Activación");
                     });

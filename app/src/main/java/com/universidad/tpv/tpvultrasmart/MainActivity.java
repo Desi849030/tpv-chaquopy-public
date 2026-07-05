@@ -32,15 +32,6 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        try {
-            if (!Python.isStarted()) {
-                Python.start(new AndroidPlatform(this));
-            }
-        } catch (Exception e) {
-            chatAdapter.addMessage("Error fatal iniciando Python: " + e.getMessage(), false);
-            return;
-        }
-
         listViewChat = findViewById(R.id.listViewChat);
         txtInput = findViewById(R.id.txtInput);
         btnSend = findViewById(R.id.btnSend);
@@ -57,21 +48,42 @@ public class MainActivity extends Activity {
             btnDescargarIA.setText("Activar Asistente IA");
         }
 
-        chatAdapter.addMessage("Bienvenido. Esta app incluye un Asistente IA offline de nivel profesional.", false);
-        chatAdapter.addMessage("Presiona el botón para descargar el cerebro de la IA (1.2 GB) y comenzar.", false);
+        chatAdapter.addMessage("Bienvenido a TPV Ultra Smart.", false);
+        chatAdapter.addMessage("Esta app incluye un Asistente IA offline de nivel profesional. Presiona el botón para comenzar.", false);
 
         btnDescargarIA.setOnClickListener(v -> {
             btnDescargarIA.setEnabled(false);
-            btnDescargarIA.setText("Procesando...");
+            btnDescargarIA.setText("Iniciando motor...");
             
-            if (modeloFile.exists()) {
-                chatAdapter.addMessage("Cargando IA en RAM...", false);
-                cargarIA(modeloFile);
-            } else {
-                chatAdapter.addMessage("Iniciando descarga...", false);
-                progressBar.setVisibility(View.VISIBLE);
-                descargarYcargarIA(modeloFile);
-            }
+            // Ejecutamos todo en segundo plano para NO congelar la app
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        // Iniciamos Python aquí para no bloquear la UI
+                        if (!Python.isStarted()) {
+                            Python.start(new AndroidPlatform(MainActivity.this));
+                        }
+                        
+                        if (modeloFile.exists()) {
+                            runOnUiThread(() -> chatAdapter.addMessage("Cargando IA en RAM...", false));
+                            cargarIA(modeloFile);
+                        } else {
+                            runOnUiThread(() -> {
+                                chatAdapter.addMessage("Iniciando descarga del modelo (1.2 GB)...", false);
+                                progressBar.setVisibility(View.VISIBLE);
+                            });
+                            descargarYcargarIA(modeloFile);
+                        }
+                    } catch (final Exception e) {
+                        runOnUiThread(() -> {
+                            chatAdapter.addMessage("Error crítico: " + e.getMessage(), false);
+                            btnDescargarIA.setEnabled(true);
+                            btnDescargarIA.setText("Reintentar");
+                        });
+                    }
+                }
+            }).start();
         });
 
         btnSend.setOnClickListener(v -> {
@@ -79,7 +91,7 @@ public class MainActivity extends Activity {
             if (!pregunta.isEmpty() && iaLista) {
                 chatAdapter.addMessage(pregunta, true);
                 txtInput.setText("");
-                chatAdapter.addMessage("Pensando...", false);
+                chatAdapter.addMessage("Escribiendo...", false);
                 
                 new Thread(new Runnable() {
                     @Override

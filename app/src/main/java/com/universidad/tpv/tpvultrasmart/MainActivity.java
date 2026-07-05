@@ -32,6 +32,11 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // 1. Python se inicializa aquí (rápido y seguro, no congela)
+        if (!Python.isStarted()) {
+            Python.start(new AndroidPlatform(this));
+        }
+
         listViewChat = findViewById(R.id.listViewChat);
         txtInput = findViewById(R.id.txtInput);
         btnSend = findViewById(R.id.btnSend);
@@ -49,41 +54,21 @@ public class MainActivity extends Activity {
         }
 
         chatAdapter.addMessage("Bienvenido a TPV Ultra Smart.", false);
-        chatAdapter.addMessage("Esta app incluye un Asistente IA offline de nivel profesional. Presiona el botón para comenzar.", false);
+        chatAdapter.addMessage("Esta app incluye un Asistente IA offline. Presiona el botón para comenzar.", false);
 
         btnDescargarIA.setOnClickListener(v -> {
             btnDescargarIA.setEnabled(false);
-            btnDescargarIA.setText("Iniciando motor...");
+            btnDescargarIA.setText("Iniciando...");
             
-            // Ejecutamos todo en segundo plano para NO congelar la app
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        // Iniciamos Python aquí para no bloquear la UI
-                        if (!Python.isStarted()) {
-                            Python.start(new AndroidPlatform(MainActivity.this));
-                        }
-                        
-                        if (modeloFile.exists()) {
-                            runOnUiThread(() -> chatAdapter.addMessage("Cargando IA en RAM...", false));
-                            cargarIA(modeloFile);
-                        } else {
-                            runOnUiThread(() -> {
-                                chatAdapter.addMessage("Iniciando descarga del modelo (1.2 GB)...", false);
-                                progressBar.setVisibility(View.VISIBLE);
-                            });
-                            descargarYcargarIA(modeloFile);
-                        }
-                    } catch (final Exception e) {
-                        runOnUiThread(() -> {
-                            chatAdapter.addMessage("Error crítico: " + e.getMessage(), false);
-                            btnDescargarIA.setEnabled(true);
-                            btnDescargarIA.setText("Reintentar");
-                        });
-                    }
-                }
-            }).start();
+            if (modeloFile.exists()) {
+                chatAdapter.addMessage("Cargando IA en RAM...", false);
+                cargarIA(modeloFile);
+            } else {
+                chatAdapter.addMessage("Iniciando descarga del modelo...", false);
+                progressBar.setVisibility(View.VISIBLE);
+                progressBar.setIndeterminate(true); // Evita crash si el servidor no da el tamaño
+                descargarYcargarIA(modeloFile);
+            }
         });
 
         btnSend.setOnClickListener(v -> {
@@ -91,7 +76,7 @@ public class MainActivity extends Activity {
             if (!pregunta.isEmpty() && iaLista) {
                 chatAdapter.addMessage(pregunta, true);
                 txtInput.setText("");
-                chatAdapter.addMessage("Escribiendo...", false);
+                chatAdapter.addMessage("Pensando...", false);
                 
                 new Thread(new Runnable() {
                     @Override
@@ -122,6 +107,10 @@ public class MainActivity extends Activity {
                     connection.connect();
                     
                     int fileLength = connection.getContentLength();
+                    if (fileLength > 0) {
+                        runOnUiThread(() -> progressBar.setIndeterminate(false));
+                    }
+                    
                     InputStream input = connection.getInputStream();
                     FileOutputStream output = new FileOutputStream(modeloFile);
                     
@@ -131,8 +120,10 @@ public class MainActivity extends Activity {
                     
                     while ((count = input.read(data)) != -1) {
                         total += count;
-                        final int progress = (int) (total * 100 / fileLength);
-                        runOnUiThread(() -> progressBar.setProgress(progress));
+                        if (fileLength > 0) {
+                            final int progress = (int) (total * 100 / fileLength);
+                            runOnUiThread(() -> progressBar.setProgress(progress));
+                        }
                         output.write(data, 0, count);
                     }
                     
@@ -170,7 +161,7 @@ public class MainActivity extends Activity {
                     
                     runOnUiThread(() -> {
                         chatAdapter.addMessage(result.toString(), false);
-                        chatAdapter.addMessage("¡Hola! Soy tu asistente IA. Puedo leer archivos y ayudarte a programar. ¿En qué puedo ayudarte hoy?", false);
+                        chatAdapter.addMessage("¡Hola! Soy tu asistente. ¿En qué puedo ayudarte hoy?", false);
                         btnDescargarIA.setVisibility(View.GONE);
                         layoutChat.setVisibility(View.VISIBLE);
                     });

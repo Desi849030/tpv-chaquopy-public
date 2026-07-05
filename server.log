@@ -1,0 +1,14 @@
+ * Serving Flask app 'server'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [05/Jul/2026 15:41:23] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [05/Jul/2026 15:41:25] "[33mGET /service-worker.js HTTP/1.1[0m" 404 -
+127.0.0.1 - - [05/Jul/2026 15:41:26] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [05/Jul/2026 15:41:27] "GET /activar_ia HTTP/1.1" 200 -
+127.0.0.1 - - [05/Jul/2026 15:41:46] "GET /estado_ia HTTP/1.1" 200 -
+127.0.0.1 - - [05/Jul/2026 15:42:26] "POST /chat_stream HTTP/1.1" 200 -
+127.0.0.1 - - [05/Jul/2026 15:42:38] "[33mGET /service-worker.js HTTP/1.1[0m" 404 -
+127.0.0.1 - - [05/Jul/2026 15:43:07] "POST /chat_stream HTTP/1.1" 200 -
+127.0.0.1 - - [05/Jul/2026 15:43:29] "[33mGET /service-worker.js HTTP/1.1[0m" 404 -

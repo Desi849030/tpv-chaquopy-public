@@ -2,56 +2,66 @@ import os, sys, threading
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from app import app
 from agente_apk import inicializar_ia, procesar_pregunta
-from flask import request, jsonify, session
+from flask import request, jsonify
 
 ia_estado = "inactiva"
 
 @app.before_request
-def bypass_and_intercept():
+def interceptor_total():
     global ia_estado
     
-    # 1. BYPASS DE LOGIN Y SESIÓN
+    # 1. BYPASS DE LOGIN (Devuelve todo en el formato que el frontend espera)
     if request.path == '/api/auth/login':
-        return jsonify({"success": True, "token": "admin_token", "user": {"id": 1, "role": "admin", "name": "Admin"}})
-    if request.path == '/api/auth/me':
-        return jsonify({"id": 1, "role": "admin", "name": "Admin"})
+        return jsonify({
+            "success": True, 
+            "status": "ok",
+            "token": "admin_bypass_token", 
+            "user": {"id": 1, "role": "admin", "name": "Desarrollador", "username": "admin"}
+        })
     
-    # Inyectamos sesión de admin para todas las demás rutas
-    session['user_id'] = 1
-    session['role'] = 'admin'
-
-    # 2. INTERCEPTOR DE CHAT (Evita el error 405)
+    # 2. BYPASS DE SESIÓN
+    if request.path == '/api/auth/me':
+        return jsonify({"id": 1, "role": "admin", "name": "Desarrollador", "username": "admin"})
+        
+    # 3. INTERCEPTOR DE CHAT
     if '/agent/chat' in request.path:
         if ia_estado != "lista":
-            return jsonify({"reply": "La IA está cargando. Espera 15 segundos."})
+            return jsonify({"reply": "Cargando IA. Espera 15 seg.", "response": "Cargando..."})
         
         data = request.get_json(silent=True) or {}
-        msg = data.get('message', data.get('msg', data.get('query', data.get('text', ''))))
-        if not msg:
+        # Capturamos el mensaje venga de donde venga
+        msg = data.get('mensaje', data.get('message', data.get('msg', data.get('query', data.get('text', '')))))
+        if not msg: 
             msg = request.data.decode('utf-8')
             
-        print(f"[IA] Pregunta: {msg}")
+        print(f"[IA] Pregunta limpia: {msg}")
         respuesta = procesar_pregunta(msg)
         print(f"[IA] Respuesta: {respuesta}")
-        return jsonify({"reply": respuesta, "response": respuesta, "message": respuesta})
+        
+        # Devolvemos en el formato que tu frontend espera
+        return jsonify({
+            "reply": respuesta, 
+            "response": respuesta, 
+            "message": respuesta,
+            "text": respuesta,
+            "status": "ok"
+        })
 
 def preload_ia():
     global ia_estado
     ia_estado = "cargando"
     print("\n[IA] Cargando modelo local (15 seg)...")
-    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-    ruta = os.path.join(base_dir, 'models', 'qwen-coder.gguf')
-    if not os.path.exists(ruta):
-        ruta = os.path.join(os.environ.get('FILES_DIR', ''), 'qwen-coder.gguf')
-        
-    res = inicializar_ia(ruta)
-    ia_estado = "lista" if "Lista" in res else "error"
-    print(f"\n[IA] Estado: {ia_estado}\n")
+    ruta = os.path.expanduser('~/tpv-chaquopy-public/models/qwen-coder.gguf')
+    
+    if os.path.exists(ruta):
+        res = inicializar_ia(ruta)
+        ia_estado = "lista" if "Lista" in res else "error"
+        print(f"[IA] Estado: {ia_estado}")
+    else:
+        ia_estado = "error"
+        print("[IA] ERROR: Modelo no encontrado.")
 
 threading.Thread(target=preload_ia).start()
 
-def iniciar_servidor():
-    app.run(host='127.0.0.1', port=5050, debug=False, threaded=True)
-
 if __name__ == '__main__':
-    iniciar_servidor()
+    app.run(host='127.0.0.1', port=5050, debug=False, threaded=True)

@@ -1,157 +1,164 @@
-# -*- coding: utf-8 -*-
+"""start_server.py v9.0.0 — 5 blindajes + IA Edge v9.0 + MPOC + SSE + Loyalty Omnicanal + IA Aprendizaje
+FIX v9.0:
+  - Eliminado doble registro de assistant_bp (ya se registra en app.py)
+  - Set TPV_DB_PATH para que ia_assistant.py encuentre la DB rapido
+  - IA Assistant se carga DESPUES de crear_tablas para asegurar DB lista
 """
-Iniciar servidor Flask para TPV Ultra Smart (Chaquopy / Android).
-
-IMPORTANTE: MainActivity hace `py.getModule("start_server")`, que IMPORTA este
-módulo pero NO ejecuta `if __name__ == '__main__'`. Por eso el servidor se
-arranca automáticamente al importar (en un hilo daemon).
-
-CAPTURA DE CRASH: si el servidor principal falla al arrancar, se guarda el
-traceback completo en TPV_FILES_DIR/crash.log y se levanta un servidor MÍNIMO
-de emergencia que MUESTRA el error en el WebView (en vez de cerrar la app).
-"""
-import os
-import sys
-import threading
-import traceback
-from datetime import datetime
-
-_SERVER_THREAD = None
-
-
-def configurar(files_dir, frontend_dir):
-    """Recibe las rutas DESDE Java y las pone en os.environ.
-
-    CLAVE: Java usa System.setProperty(), que NO aparece en os.environ de
-    Python. Por eso MainActivity debe llamar a esta función pasando las rutas;
-    así Python sí las ve. Llamar ANTES de que se importe 'app'.
-    """
-    try:
-        if files_dir:
-            os.environ['TPV_FILES_DIR'] = str(files_dir)
-        if frontend_dir:
-            os.environ['TPV_FRONTEND_DIR'] = str(frontend_dir)
-        print("⚙️ Config recibida de Java: files=%s frontend=%s" % (files_dir, frontend_dir))
-    except Exception:
-        traceback.print_exc()
-    return True
-
-
-def _files_dir():
-    return os.environ.get('TPV_FILES_DIR', os.path.dirname(os.path.abspath(__file__)))
-
-
-def _guardar_crash(texto):
-    """Guarda el error en crash.log (para poder verlo/enviarlo después)."""
-    try:
-        ruta = os.path.join(_files_dir(), 'crash.log')
-        with open(ruta, 'a', encoding='utf-8') as f:
-            f.write("\n===== %s =====\n%s\n" % (datetime.now().isoformat(), texto))
-        return ruta
-    except Exception:
-        return ''
-
-
-def _servidor_emergencia(port, error_texto):
-    """Servidor mínimo que muestra el error en el navegador/WebView."""
-    try:
-        from http.server import BaseHTTPRequestHandler, HTTPServer
-
-        html = (
-            "<!DOCTYPE html><html><head><meta charset='utf-8'>"
-            "<meta name='viewport' content='width=device-width,initial-scale=1'>"
-            "<title>TPV - Error</title></head>"
-            "<body style='background:#0a0e1a;color:#e2e8f0;font-family:sans-serif;padding:18px'>"
-            "<h2 style='color:#f87171'>⚠️ El servidor TPV no pudo iniciar</h2>"
-            "<p>Comparte esta información para diagnosticar el problema:</p>"
-            "<pre style='white-space:pre-wrap;background:#111827;padding:12px;"
-            "border-radius:8px;font-size:11px;color:#cbd5e1;overflow:auto'>"
-            + (error_texto.replace('<', '&lt;').replace('>', '&gt;')) +
-            "</pre></body></html>"
-        )
-        html_bytes = html.encode('utf-8')
-
-        class H(BaseHTTPRequestHandler):
-            def _send(self, body, ctype='text/html; charset=utf-8'):
-                self.send_response(200)
-                self.send_header('Content-Type', ctype)
-                self.send_header('Content-Length', str(len(body)))
-                self.end_headers()
-                self.wfile.write(body)
-
-            def do_GET(self):
-                if self.path == '/api/health':
-                    self._send(b'{"status":"error","db":false}', 'application/json')
-                else:
-                    self._send(html_bytes)
-
-            def log_message(self, *a):
-                pass
-
-        HTTPServer(('127.0.0.1', port), H).serve_forever()
-    except Exception:
-        traceback.print_exc()
-
-
-def _run():
-    """Arranca Flask. En error, guarda crash.log y levanta el de emergencia."""
-    port = int(os.environ.get('TPV_PORT', 5050))
-    try:
-        files_dir = _files_dir()
-        frontend_dir = os.environ.get('TPV_FRONTEND_DIR', files_dir + '/frontend')
-        if files_dir not in sys.path:
-            sys.path.insert(0, files_dir)
-
-        from app import app
-
-        app.config['FRONTEND_DIR'] = frontend_dir
-        print("🚀 Servidor TPV iniciado en puerto %s" % port)
-        print("📁 Frontend: %s" % frontend_dir)
-        app.run(host='0.0.0.0', port=port, debug=False,
-                use_reloader=False, threaded=True)
-    except Exception:
-        err = traceback.format_exc()
-        ruta = _guardar_crash(err)
-        print("❌ CRASH al iniciar el servidor. Guardado en: %s\n%s" % (ruta, err))
-        # Levantar servidor de emergencia para mostrar el error en el WebView.
-        _servidor_emergencia(port, err)
-
-
-def start_server():
-    """Arranca el servidor en un hilo daemon (idempotente)."""
-    global _SERVER_THREAD
-    if _SERVER_THREAD and _SERVER_THREAD.is_alive():
-        return _SERVER_THREAD
-    _SERVER_THREAD = threading.Thread(target=_run, name="tpv-flask", daemon=True)
-    _SERVER_THREAD.start()
-    return _SERVER_THREAD
-
-
-def iniciar(files_dir=None, frontend_dir=None):
-    """Punto de entrada que llama MainActivity: configura rutas y arranca.
-    Se invoca con callAttr('iniciar', filesDir, frontendDir). Configura las
-    rutas en os.environ ANTES de importar 'app' (dentro de start_server)."""
-    configurar(files_dir, frontend_dir)
-    return start_server()
-
-
-# Auto-arranque SOLO si una variable de entorno ya está disponible (Termux/CI)
-# o si nadie va a llamar iniciar(). En la APK, MainActivity llama iniciar(...)
-# con las rutas correctas, así que NO autoarrancamos aquí para no hacerlo antes
-# de recibir las rutas (evita el 'TPV no encontrado').
-_EN_ANDROID = False
+import sys,os,threading,traceback,time
+print("[TPV] Iniciando start_server.py v9.0.0...",flush=True)
 try:
-    import java  # noqa: F401  (solo existe dentro de Chaquopy/Android)
-    _EN_ANDROID = True
-except Exception:
-    _EN_ANDROID = False
+    from java.lang import System
+    FILES_DIR=str(System.getProperty("TPV_FILES_DIR"))
+    FRONTEND_DIR=str(System.getProperty("TPV_FRONTEND_DIR"))
+except Exception as e:
+    FILES_DIR=os.getcwd(); FRONTEND_DIR=os.path.join(FILES_DIR,"frontend")
+os.chdir(FILES_DIR); sys.path.insert(0,FILES_DIR)
+os.environ["TPV_FILES_DIR"]=FILES_DIR
+os.environ["TPV_FRONTEND_DIR"]=FRONTEND_DIR
+# v9.0 CRITICAL: Set TPV_DB_PATH para ia_assistant.py encuentre la DB
+_db_path = os.path.join(FILES_DIR, "tpv_datos.db")
+os.environ["TPV_DB_PATH"]=_db_path
+print("[TPV] DB path: %s" % _db_path, flush=True)
 
-if not _EN_ANDROID:
-    # Termux / navegador / CI: arrancar al importar (no hay Java que llame iniciar)
-    start_server()
+print("[TPV] Cargando blindaje PCI-DSS...",flush=True)
+try:
+    from security_pci import tokenize_pan,mask_pan,validate_luhn,process_payment_token
+    print("[TPV] PCI-DSS OK",flush=True)
+except Exception as e:
+    print(f"[TPV] PCI-DSS advertencia: {e}",flush=True)
+print("[TPV] Cargando blindaje HET...",flush=True)
+try:
+    from security_het import create_het_middleware,check_login,record_login_result,get_threat_summary
+    print("[TPV] HET OK",flush=True)
+except Exception as e:
+    print(f"[TPV] HET advertencia: {e}",flush=True)
+print("[TPV] Cargando blindaje WebSockets...",flush=True)
+try:
+    from security_websocket import create_ws_routes,register_terminal,notify_sale,start_cleanup_thread
+    start_cleanup_thread()
+    print("[TPV] WebSockets OK",flush=True)
+except Exception as e:
+    print(f"[TPV] WebSockets advertencia: {e}",flush=True)
+try:
+    from app import app as flask_app
+    print("[TPV] Flask app importada OK",flush=True)
+except Exception as e:
+    print(f"[TPV] ERROR app: {e}",flush=True); traceback.print_exc(); raise
+try:
+    create_het_middleware(flask_app)
+    print("[TPV] HET middleware integrado",flush=True)
+except Exception as e:
+    print(f"[TPV] HET middleware adv: {e}",flush=True)
+try:
+    create_ws_routes(flask_app)
+    print("[TPV] WebSocket rutas integradas",flush=True)
+except Exception as e:
+    print(f"[TPV] WS rutas adv: {e}",flush=True)
+try:
+    from security_routes import sec_bp
+    flask_app.register_blueprint(sec_bp)
+    print("[TPV] Security API rutas integradas",flush=True)
+except Exception as e:
+    print(f"[TPV] Security routes adv: {e}",flush=True)
+try:
+    from database import crear_tablas; crear_tablas()
+    print("[TPV] Tablas OK",flush=True)
+except Exception as e:
+    print(f"[TPV] DB error: {e}",flush=True); traceback.print_exc()
+try:
+    from tienda_routes import crear_tablas_tienda; crear_tablas_tienda()
+    print("[TPV] Tablas tienda OK",flush=True)
+except Exception as e:
+    print(f"[TPV] Tienda adv: {e}",flush=True)
+try:
+    from migrar_tablas_tienda import migrar; migrar()
+    print("[TPV] Migracion OK",flush=True)
+except Exception as e:
+    print(f"[TPV] Migracion adv: {e}",flush=True)
+try:
+    from inject_rol_fix import injectar_script; injectar_script(flask_app)
+    print("[TPV] Fix rol OK",flush=True)
+except Exception as e:
+    print(f"[TPV] Rol fix adv: {e}",flush=True)
 
+def _run_flask():
+    try:
+        print("[TPV] Flask en http://127.0.0.1:5050",flush=True)
+        flask_app.run(host="127.0.0.1",port=5050,debug=False,use_reloader=False,threaded=True)
+    except Exception as e:
+        print(f"[TPV] ERROR Flask: {e}",flush=True); traceback.print_exc()
 
-if __name__ == '__main__':
-    import time
-    while True:
-        time.sleep(3600)
+t=threading.Thread(target=_run_flask,daemon=False); t.start()
+
+# Esperar a que Flask esté listo (hasta 15 segundos)
+for i in range(30):
+    time.sleep(0.5)
+    try:
+        import urllib.request
+        urllib.request.urlopen("http://127.0.0.1:5050/api/health",timeout=1)
+        print("[TPV] Flask listo en http://127.0.0.1:5050",flush=True); break
+    except: pass
+time.sleep(1)
+
+# v9.0: Cargar IA Assistant DESPUES de que Flask y la DB estan listos
+print("[TPV] Cargando Asistente IA v9.0 (aprendizaje + SQLite + rol automatico)...",flush=True)
+try:
+    from ia_assistant import _init_learning_table; _init_learning_table()
+    print("[TPV] IA Learning tabla OK",flush=True)
+except Exception as e:
+    print(f"[TPV] IA Learning adv: {e}",flush=True)
+
+# v9.0: NO registrar assistant_bp de nuevo (ya lo hace app.py)
+# Verificar que el modulo está cargado y accesible
+try:
+    from ia_assistant_routes import assistant_bp
+    # Verificar si ya está registrado (app.py lo registra al importar)
+    already_registered = False
+    for rule in flask_app.url_map.iter_rules():
+        if '/api/ia/chat' in str(rule):
+            already_registered = True
+            break
+    if not already_registered:
+        flask_app.register_blueprint(assistant_bp)
+        print("[TPV] IA Assistant v9.0 blueprint registrado",flush=True)
+    else:
+        print("[TPV] IA Assistant v9.0 ya estaba registrado (via app.py)",flush=True)
+except Exception as e:
+    print(f"[TPV] IA Assistant adv: {e}",flush=True)
+
+print("[TPV] Cargando IA Edge + Loyalty + MPOC...",flush=True)
+# ai_bp y analytics_bp ya se registran en app.py (evitar doble registro)
+try:
+    from ai_routes import ai_bp, analytics_bp
+    # Verificar si ya estan registrados (app.py los registra al importar)
+    ai_registered = any('/api/ai/' in str(rule) for rule in flask_app.url_map.iter_rules())
+    analytics_registered = any('/api/analytics/' in str(rule) for rule in flask_app.url_map.iter_rules())
+    if not ai_registered:
+        flask_app.register_blueprint(ai_bp)
+    if not analytics_registered:
+        flask_app.register_blueprint(analytics_bp)
+    print("[TPV] IA Edge API integrada (ai_bp + analytics_bp)",flush=True)
+except Exception as e:
+    print(f"[TPV] IA Edge adv: {e}",flush=True)
+try:
+    from loyalty_routes import loyalty_bp
+    flask_app.register_blueprint(loyalty_bp)
+    print("[TPV] Loyalty + Headless Commerce OK",flush=True)
+except Exception as e:
+    print(f"[TPV] Loyalty adv: {e}",flush=True)
+try:
+    from security_attestation import run_full_attestation
+    print("[TPV] MPOC Attestation OK",flush=True)
+except Exception as e:
+    print(f"[TPV] MPOC Attestation adv: {e}",flush=True)
+
+# v9.0: Verificar que el IA ping responde
+try:
+    import urllib.request
+    resp = urllib.request.urlopen("http://127.0.0.1:5050/api/ia/ping",timeout=5)
+    data = resp.read().decode()
+    print("[TPV] IA Ping: %s" % data.strip(),flush=True)
+except Exception as e:
+    print(f"[TPV] IA Ping fallo: {e}",flush=True)
+
+print("[TPV] start_server.py v9.0.0 completado con 5 blindajes + IA Edge v9.0 + MPOC + SSE + Loyalty activos",flush=True)

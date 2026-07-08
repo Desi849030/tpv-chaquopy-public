@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import math
 
 def _get_db():
-    from db_connection import obtener_conexion
+    from database import obtener_conexion
     return obtener_conexion()
 
 def get_fraud_dashboard():

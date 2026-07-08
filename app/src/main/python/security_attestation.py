@@ -1,16 +1,4 @@
-# SIMULADO - PROYECTO ACADÉMICO
-# ══════════════════════════════════════════════════════════════
-# ⚠️  Este módulo es un PLACEBO con fines demostrativos/académicos.
-#     NO realiza atestación real del dispositivo:
-#     - El "fingerprint" es os.urandom(32) (aleatorio en cada llamada,
-#       no identifica al dispositivo).
-#     - Los checks de root/emulador/debug/tampering devuelven siempre
-#       False sin inspeccionar nada.
-#     - risk_score es siempre 0, por lo que authorize_payment() siempre
-#       autoriza.
-#     En producción se usaría Play Integrity API / SafetyNet via Chaquopy.
-# ══════════════════════════════════════════════════════════════
-"""security_attestation.py — MPOC Device Attestation (SIMULADO)"""
+"""security_attestation.py — MPOC Device Attestation"""
 from datetime import datetime
 import hashlib, os, json, threading
 

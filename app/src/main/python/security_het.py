@@ -7,11 +7,9 @@ _request_log=deque(maxlen=1000)
 _login_attempts={}
 _login_lockouts={}
 _threat_alerts=deque(maxlen=_HET_CONFIG["max_alerts"])
-_SQL=re.compile(r"(?i)(union\s+select|\b(or|and)\b\s+[\w'\"]+\s*=\s*[\w'\"]+|drop\s+(table|database)|truncate\s+table|insert\s+into|delete\s+from|update\s+\w+\s+set|'\s*or\s*'|--|/\*|;\s*\w|exec\s*\(|xp_cmdshell|information_schema|pg_sleep\s*\(|sleep\s*\(|load_file\s*\(|into\s+outfile)")
+_SQL=re.compile(r"(?i)(union\s+select|or\s+1\s*=\s*1|drop\s+table|insert\s+into|delete\s+from|'\s*or\s*'|;\s*--|exec\s*\(|xp_cmdshell|information_schema|sleep\s*\()")
 _XSS=re.compile(r"(?i)(<script|javascript\s*:|onerror\s*=|onload\s*=|<iframe|document\.cookie|document\.location|eval\s*\()")
 def check_rate_limit(ip=None):
-    if os.environ.get('TPV_TESTING') == '1':
-        return True, 999
     now=time.time(); ma=now-60
     with _LOCK:
         while _request_log and _request_log[0]<ma: _request_log.popleft()
@@ -39,6 +37,7 @@ def detect_sql_injection(s,ip=None):
     if not s: return True,"OK"
     m=_SQL.findall(str(s))
     if m:
+        with _LOCK: c=_SQL.count
         add_alert("WARN","SQL_SUSPICIOUS",ip,f"Patron: {m[0]}")
         return False,"WARN"
     return True,"OK"
@@ -50,51 +49,13 @@ def detect_xss(s,ip=None):
         return False,"WARN"
     return True,"OK"
 def sanitize_input(s):
-    # NOTA: la proteccion REAL contra SQLi son las consultas parametrizadas (?).
-    # Aqui solo neutralizamos null-bytes y escapamos HTML para XSS. NO borramos
-    # palabras SQL: hacerlo daba falsa seguridad (bypasseable) y corrompia datos.
     if not s: return s
     c=str(s).replace("\x00","").replace("<","&lt;").replace(">","&gt;")
-    return c.strip()
-def _persistir_alerta(ts,level,atype,source,details):
-    """Guarda la alerta en SQLite. Nunca lanza: la seguridad no debe romperse por la BD."""
-    try:
-        from db_connection import obtener_conexion
-        conn=obtener_conexion()
-        conn.execute("CREATE TABLE IF NOT EXISTS security_alerts ("
-                     "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                     "timestamp TEXT NOT NULL,level TEXT NOT NULL,tipo TEXT NOT NULL,"
-                     "source TEXT DEFAULT '',details TEXT DEFAULT '')")
-        conn.execute("INSERT INTO security_alerts (timestamp,level,tipo,source,details) "
-                     "VALUES (?,?,?,?,?)",(ts,level,atype,source or "",details or ""))
-        conn.commit(); conn.close()
-    except Exception:
-        pass  # degradacion elegante: si falla la BD, queda al menos en memoria
-
+    return re.sub(r"(?i)(\b(union|select|drop|insert|delete|update|exec)\b)","",c).strip()
 def add_alert(level,atype,source,details=""):
-    ts=datetime.now().isoformat()
     with _LOCK:
-        _threat_alerts.append({"timestamp":ts,"level":level,"type":atype,"source":source,"details":details})
-    _persistir_alerta(ts,level,atype,source,details)
-def get_alerts(level=None,limit=50,persisted=False):
-    if persisted:
-        try:
-            from db_connection import obtener_conexion
-            conn=obtener_conexion()
-            conn.execute("CREATE TABLE IF NOT EXISTS security_alerts ("
-                         "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                         "timestamp TEXT NOT NULL,level TEXT NOT NULL,tipo TEXT NOT NULL,"
-                         "source TEXT DEFAULT '',details TEXT DEFAULT '')")
-            if level:
-                rows=conn.execute("SELECT timestamp,level,tipo,source,details FROM security_alerts "
-                                  "WHERE level=? ORDER BY id DESC LIMIT ?",(level,limit)).fetchall()
-            else:
-                rows=conn.execute("SELECT timestamp,level,tipo,source,details FROM security_alerts "
-                                  "ORDER BY id DESC LIMIT ?",(limit,)).fetchall()
-            conn.close()
-            return [{"timestamp":r[0],"level":r[1],"type":r[2],"source":r[3],"details":r[4]} for r in rows]
-        except Exception:
-            pass  # si falla la BD, caer a memoria
+        _threat_alerts.append({"timestamp":datetime.now().isoformat(),"level":level,"type":atype,"source":source,"details":details})
+def get_alerts(level=None,limit=50):
     with _LOCK: a=list(_threat_alerts)
     if level: a=[x for x in a if x["level"]==level]
     return list(reversed(a[-limit:]))

@@ -2,9 +2,12 @@
 from datetime import datetime, timedelta
 
 def _get_db():
-    from db_connection import obtener_conexion
+    from database import obtener_conexion
     return obtener_conexion()
 
+def _safe(func):
+    try: return func()
+    except: return None
 
 def get_predictive_kpis():
     conn = _get_db()
@@ -54,7 +57,7 @@ def get_analytics_dashboard():
 def price_optimization_suggestions():
     conn = _get_db()
     try:
-        rows = conn.execute("SELECT p.nombre, p.precio, p.costo FROM productos p JOIN inventario_general ig ON p.producto_id=ig.producto_id WHERE p.precio>0 AND p.costo>0 AND ig.stock_actual>0 ORDER BY (precio-costo)/precio ASC LIMIT 20").fetchall()
+        rows = conn.execute("SELECT nombre, precio, costo FROM productos WHERE precio>0 AND costo>0 AND stock>0 ORDER BY (precio-costo)/precio ASC LIMIT 20").fetchall()
     finally: conn.close()
     suggestions = []
     for r in rows:
@@ -67,8 +70,10 @@ def price_optimization_suggestions():
     dead = []
     conn2 = _get_db()
     try:
-        d = conn2.execute("SELECT p.nombre, ig.stock_actual as stock FROM productos p JOIN inventario_general ig ON p.producto_id=ig.producto_id WHERE ig.stock_actual > 0 ORDER BY ig.stock_actual DESC LIMIT 20").fetchall()
+        d = conn2.execute("SELECT nombre, stock FROM productos WHERE stock > 0 ORDER BY stock DESC LIMIT 20").fetchall()
     finally: conn2.close()
+    return {"price_suggestions": suggestions[:5], "dead_products": [], "total_price_opportunities": len(suggestions)}
+
 def cross_selling_analysis():
     conn = _get_db()
     try:

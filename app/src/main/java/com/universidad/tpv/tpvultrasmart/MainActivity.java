@@ -1,111 +1,63 @@
 package com.universidad.tpv.tpvultrasmart;
 
-import android.app.Activity; // Cambiado a Activity normal para evitar crashes de tema
+import android.app.Activity;
 import android.os.Bundle;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ScrollView;
-import android.widget.TextView;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import com.chaquo.python.Python;
 import com.chaquo.python.PyObject;
 import com.chaquo.python.android.AndroidPlatform;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 public class MainActivity extends Activity {
-
-    private TextView txtChat;
-    private EditText txtInput;
-    private Button btnSend;
-    private ScrollView scrollView;
-    private boolean iaLista = false;
+    private WebView webView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        try {
-            if (!Python.isStarted()) {
-                Python.start(new AndroidPlatform(this));
-            }
-        } catch (Exception e) {
-            txtChat = findViewById(R.id.txtChat);
-            txtChat.setText("Error fatal iniciando Python: " + e.getMessage());
-            return;
+        
+        if (!Python.isStarted()) {
+            Python.start(new AndroidPlatform(this));
         }
-
-        txtChat = findViewById(R.id.txtChat);
-        txtInput = findViewById(R.id.txtInput);
-        btnSend = findViewById(R.id.btnSend);
-        scrollView = findViewById(R.id.scrollView);
-
-        txtChat.setText("Inicializando IA en el dispositivo...\n");
-        btnSend.setEnabled(false);
-
+        
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    Python py = Python.getInstance();
-                    PyObject module = py.getModule("agente_apk");
-                    
                     File modeloFile = new File(getFilesDir(), "qwen-coder.gguf");
                     if (!modeloFile.exists()) {
-                        runOnUiThread(() -> txtChat.append("Copiando modelo de IA (1.2 GB)...\n"));
-                        
-                        try (InputStream is = getAssets().open("qwen-coder.gguf");
-                             OutputStream os = new FileOutputStream(modeloFile)) {
-                            byte[] buffer = new byte[8192];
-                            int length;
-                            while ((length = is.read(buffer)) > 0) {
-                                os.write(buffer, 0, length);
-                            }
+                        runOnUiThread(() -> setContentView(R.layout.activity_main));
+                        URL url = new URL("https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q5_k_m.gguf");
+                        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                        conn.connect();
+                        InputStream input = conn.getInputStream();
+                        FileOutputStream output = new FileOutputStream(modeloFile);
+                        byte data[] = new byte[8192];
+                        int count;
+                        while ((count = input.read(data)) != -1) {
+                            output.write(data, 0, count);
                         }
+                        output.flush(); output.close(); input.close();
                     }
                     
-                    PyObject result = module.callAttr("inicializar_ia", modeloFile.getAbsolutePath());
-                    iaLista = true;
+                    Python py = Python.getInstance();
+                    PyObject server = py.getModule("patch_ai");
+                    server.callAttr("iniciar_servidor");
                     
-                    runOnUiThread(() -> {
-                        txtChat.append(result.toString() + "\n\nPuedes hablar con la IA:\n");
-                        btnSend.setEnabled(true);
-                    });
-                } catch (final Exception e) {
-                    runOnUiThread(() -> txtChat.append("Error Python: " + e.getMessage() + "\n"));
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         }).start();
 
-        btnSend.setOnClickListener(v -> {
-            String pregunta = txtInput.getText().toString();
-            if (!pregunta.isEmpty() && iaLista) {
-                txtChat.append("\nTú: " + pregunta + "\n");
-                txtInput.setText("");
-                txtChat.append("IA: Pensando...\n");
-                scrollView.post(() -> scrollView.fullScroll(ScrollView.FOCUS_DOWN));
-
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            Python py = Python.getInstance();
-                            PyObject module = py.getModule("agente_apk");
-                            PyObject respuesta = module.callAttr("procesar_pregunta", pregunta);
-                            
-                            runOnUiThread(() -> {
-                                String textoActual = txtChat.getText().toString();
-                                txtChat.setText(textoActual.replace("IA: Pensando...\n", "IA: " + respuesta.toString() + "\n"));
-                                scrollView.post(() -> scrollView.fullScroll(ScrollView.FOCUS_DOWN));
-                            });
-                        } catch (final Exception e) {
-                            runOnUiThread(() -> txtChat.append("Error procesando: " + e.getMessage() + "\n"));
-                        }
-                    }
-                }).start();
-            }
-        });
+        webView = new WebView(this);
+        setContentView(webView);
+        webView.getSettings().setJavaScriptEnabled(true);
+        webView.setWebViewClient(new WebViewClient());
+        webView.postDelayed(() -> webView.loadUrl("http://127.0.0.1:5050/"), 2000);
     }
 }

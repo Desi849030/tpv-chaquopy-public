@@ -10,7 +10,11 @@ ia_estado = "inactiva"
 def interceptor_total():
     global ia_estado
     
-    # 1. BYPASS DE LOGIN TOTAL
+    # SOLUCIÓN AL LOGIN: Dejar pasar las peticiones CORS preflight
+    if request.method == 'OPTIONS':
+        return '', 204
+    
+    # 1. BYPASS DE LOGIN
     if request.path == '/api/auth/login':
         return jsonify({"success": True, "token": "admin_bypass", "user": {"id": 1, "role": "admin", "name": "Dev"}})
     if request.path == '/api/auth/me':
@@ -42,29 +46,13 @@ def preload_ia():
     global ia_estado
     ia_estado = "cargando"
     print("\n[IA] Buscando modelo...")
-    
-    # RUTA UNIVERSAL: Busca en Termux y en la APK
-    rutas_posibles = [
-        os.path.expanduser('~/tpv-chaquopy-public/models/qwen-coder.gguf'), # Termux
-        os.path.join(os.getcwd(), 'qwen-coder.gguf'),                      # APK Raíz
-        os.path.join(os.getcwd(), 'models/qwen-coder.gguf'),               # APK Models
-        os.path.join(os.environ.get('FILES_DIR', ''), 'qwen-coder.gguf')   # APK Env Var
-    ]
-    
-    ruta = None
-    for r in rutas_posibles:
-        if os.path.exists(r):
-            ruta = r
-            break
-            
-    if ruta:
-        print(f"[IA] Cargando desde: {ruta}")
+    ruta = os.path.expanduser('~/tpv-chaquopy-public/models/qwen-coder.gguf')
+    if os.path.exists(ruta):
         res = inicializar_ia(ruta)
         ia_estado = "lista" if "Lista" in res else "error"
         print(f"[IA] Estado: {ia_estado}")
     else:
         ia_estado = "error"
-        print("[IA] ERROR: Modelo no encontrado en ninguna ruta.")
 
 threading.Thread(target=preload_ia).start()
 

@@ -10,32 +10,19 @@ ia_estado = "inactiva"
 def bypass_total():
     global ia_estado
     
-    # 1. INYECTAR SESIÓN DE ADMIN EN TODAS LAS PETICIONES (Adiós 401)
-    g.user = {'id': 1, 'role': 'admin', 'name': 'Desarrollador', 'username': 'admin'}
-    session['user_id'] = 1
-    session['role'] = 'admin'
+    # Evitar caché del navegador
+    if request.method == 'OPTIONS': return '', 204
     
-    # Dejar pasar peticiones CORS
-    if request.method == 'OPTIONS':
-        return '', 204
-        
-    # 2. LOGIN BYPASS (Devuelve éxito sí o sí)
+    # Bypass de Login
     if request.path == '/api/auth/login':
-        return jsonify({
-            "success": True,
-            "status": "success",
-            "token": "admin_bypass_token",
-            "access_token": "admin_bypass_token",
-            "user": g.user
-        })
-        
+        return jsonify({"success": True, "token": "admin_bypass", "user": {"id": 1, "role": "admin", "name": "Dev"}})
     if request.path == '/api/auth/me':
-        return jsonify(g.user)
+        return jsonify({"id": 1, "role": "admin", "name": "Dev"})
         
-    # 3. CHAT IA
+    # Chat IA
     if '/agent/chat' in request.path:
         if ia_estado != "lista":
-            return jsonify({"reply": "Cargando IA. Espera 15 seg.", "response": "Cargando..."})
+            return jsonify({"reply": "Cargando IA...", "response": "Cargando..."})
         
         data = request.get_json(silent=True) or {}
         msg = data.get('mensaje', data.get('message', data.get('msg', data.get('query', data.get('text', '')))))
@@ -44,13 +31,7 @@ def bypass_total():
         print(f"[IA] Pregunta: {msg}")
         respuesta = procesar_pregunta(msg)
         print(f"[IA] Respuesta: {respuesta}")
-        return jsonify({
-            "reply": respuesta, 
-            "response": respuesta, 
-            "message": respuesta, 
-            "text": respuesta,
-            "status": "ok"
-        })
+        return jsonify({"reply": respuesta, "response": respuesta, "message": respuesta, "text": respuesta})
 
 def preload_ia():
     global ia_estado
@@ -60,8 +41,6 @@ def preload_ia():
         res = inicializar_ia(ruta)
         ia_estado = "lista" if "Lista" in res else "error"
         print(f"[IA] Estado: {ia_estado}")
-    else:
-        ia_estado = "error"
 
 threading.Thread(target=preload_ia).start()
 

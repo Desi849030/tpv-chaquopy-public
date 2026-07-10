@@ -1,30 +1,3 @@
-# === MODULO LLM OFFLINE INYECTADO ===
-import os, threading
-try:
-    from llama_cpp import Llama
-    _LLM_MODEL = None
-    _LLM_LOCK = threading.Lock()
-    def init_llm():
-        global _LLM_MODEL
-        if not _LLM_MODEL:
-            ruta = os.path.expanduser("~/tpv-chaquopy-public/models/qwen-coder.gguf")
-            if os.path.exists(ruta):
-                _LLM_MODEL = Llama(model_path=ruta, n_ctx=256, n_threads=4, use_mmap=False, use_mlock=False, verbose=False)
-                print("[LLM] Cerebro offline cargado en ia_assistant.py")
-    def ask_llm(pregunta):
-        global _LLM_MODEL
-        if not _LLM_MODEL: init_llm()
-        if _LLM_MODEL:
-            with _LLM_LOCK:
-                try:
-                    r = _LLM_MODEL.create_chat_completion(messages=[{"role":"system","content":"Responde muy breve."},{"role":"user","content":pregunta}], max_tokens=32, temperature=0.7)
-                    return r["choices"][0]["message"]["content"].strip()
-                except Exception as e: return str(e)
-        return "IA local no disponible."
-except Exception as e:
-    print(f"[LLM] Error importando: {e}")
-# === FIN MODULO INYECTADO ===
-
 # -*- coding: utf-8 -*-
 """
 ia_assistant.py - TPV Smart v13.0.0

@@ -109,31 +109,6 @@ _CARPETA = os.environ.get("TPV_FRONTEND_DIR") or _CARPETA_DETECTADA or os.getcwd
 # Sin static_folder ni template_folder — Flask NO busca carpetas especiales.
 # Los archivos se leen directamente con open() desde _CARPETA.
 app = Flask(__name__, static_folder=None)
-
-@app.before_request
-def bypass_definitivo():
-    from flask import session, g, request, jsonify
-    # Bypass CORS
-    if request.method == 'OPTIONS': return '', 204
-    # Bypass Login
-    if request.path == '/api/auth/login':
-        return jsonify({"success": True, "token": "admin_bypass", "user": {"id": 1, "role": "admin", "name": "Dev"}})
-    # Bypass Sesión
-    if request.path == '/api/auth/me':
-        return jsonify({"id": 1, "role": "admin", "name": "Dev"})
-    # Inyectar sesión para evitar 401
-    g.user = {"id": 1, "role": "admin"}
-    session["user_id"] = 1
-    session["role"] = "admin"
-    # Interceptar Chat IA (Arregla 405 y conecta a Llama)
-    if '/agent/chat' in request.path:
-        from ia_assistant import ask_llm
-        data = request.get_json(silent=True) or {}
-        msg = data.get('mensaje', data.get('message', data.get('text', '')))
-        if not msg: msg = request.data.decode('utf-8')
-        resp = ask_llm(msg)
-        return jsonify({"reply": resp, "response": resp, "message": resp, "text": resp, "status": "ok"})
-
 app.config["JSON_ENSURE_ASCII"]         = False
 app.config["SESSION_COOKIE_SAMESITE"]   = "Lax"
 app.config["SESSION_COOKIE_SECURE"]     = False

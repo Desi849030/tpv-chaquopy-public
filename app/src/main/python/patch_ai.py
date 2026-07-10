@@ -2,7 +2,7 @@ import os, sys, threading
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from app import app
 from agente_apk import inicializar_ia, procesar_pregunta
-from flask import request, jsonify
+from flask import request, jsonify, session, g
 
 ia_estado = "inactiva"
 
@@ -10,34 +10,47 @@ ia_estado = "inactiva"
 def bypass_total():
     global ia_estado
     
-    # 1. EVITAR QUE CORS BLOQUEE (Deja pasar las peticiones de seguridad del navegador)
+    # 1. INYECTAR SESIÓN DE ADMIN EN TODAS LAS PETICIONES (Adiós 401)
+    g.user = {'id': 1, 'role': 'admin', 'name': 'Desarrollador', 'username': 'admin'}
+    session['user_id'] = 1
+    session['role'] = 'admin'
+    
+    # Dejar pasar peticiones CORS
     if request.method == 'OPTIONS':
         return '', 204
-    
-    # 2. BYPASS DE LOGIN ABSOLUTO
+        
+    # 2. LOGIN BYPASS (Devuelve éxito sí o sí)
     if request.path == '/api/auth/login':
         return jsonify({
-            "success": True, 
-            "status": "ok",
-            "token": "admin_bypass_token", 
-            "user": {"id": 1, "role": "admin", "name": "Desarrollador", "username": "admin"}
+            "success": True,
+            "status": "success",
+            "token": "admin_bypass_token",
+            "access_token": "admin_bypass_token",
+            "user": g.user
         })
         
-    # 3. BYPASS DE SESIÓN
     if request.path == '/api/auth/me':
-        return jsonify({"id": 1, "role": "admin", "name": "Desarrollador", "username": "admin"})
+        return jsonify(g.user)
         
-    # 4. INTERCEPTOR DE CHAT IA
+    # 3. CHAT IA
     if '/agent/chat' in request.path:
         if ia_estado != "lista":
-            return jsonify({"reply": "Cargando IA...", "response": "Cargando..."})
+            return jsonify({"reply": "Cargando IA. Espera 15 seg.", "response": "Cargando..."})
         
         data = request.get_json(silent=True) or {}
         msg = data.get('mensaje', data.get('message', data.get('msg', data.get('query', data.get('text', '')))))
         if not msg: msg = request.data.decode('utf-8')
             
+        print(f"[IA] Pregunta: {msg}")
         respuesta = procesar_pregunta(msg)
-        return jsonify({"reply": respuesta, "response": respuesta, "message": respuesta, "text": respuesta})
+        print(f"[IA] Respuesta: {respuesta}")
+        return jsonify({
+            "reply": respuesta, 
+            "response": respuesta, 
+            "message": respuesta, 
+            "text": respuesta,
+            "status": "ok"
+        })
 
 def preload_ia():
     global ia_estado

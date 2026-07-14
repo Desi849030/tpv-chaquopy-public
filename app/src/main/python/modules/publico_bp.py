@@ -3,7 +3,11 @@
 
 from flask import Blueprint, jsonify, request, session
 
-from anon_identity import identity_payload, meta_payload
+try:
+    from anon_identity import identity_payload, meta_payload
+except ImportError:
+    def identity_payload(r, s): return {}
+    def meta_payload(r, s): return {}
 
 publico_bp = Blueprint('publico', __name__)
 

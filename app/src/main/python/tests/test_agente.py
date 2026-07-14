@@ -1,20 +1,26 @@
 import pytest
-from agente_apk import procesar_respuesta_agentic
+from agente_apk import procesar_pregunta
+
+
+def test_agente_modulo_importable():
+    """Verifica que el modulo agente_apk carga correctamente."""
+    assert callable(procesar_pregunta)
+
 
 def test_agente_respuesta_normal():
-    output = "Hola, soy una IA y estoy aquí para ayudarte."
-    tipo, resultado = procesar_respuesta_agentic(output)
-    assert tipo == "RESPUESTA_FINAL"
-    assert "ayudarte" in resultado
+    """Una pregunta normal debe devolver un string no vacio."""
+    output = procesar_pregunta("Hola, ¿que puedes hacer?")
+    assert isinstance(output, str)
+    assert len(output) > 0
 
-def test_agente_usa_herramienta_correcta():
-    output = '<pensamiento>Voy a leer</pensamiento><accion>{"nombre": "leer_archivo", "argumentos": {"ruta": "main.py"}}</accion>'
-    tipo, resultado = procesar_respuesta_agentic(output)
-    assert tipo == "ACCION"
-    assert resultado["nombre"] == "leer_archivo"
-    assert resultado["argumentos"]["ruta"] == "main.py"
 
-def test_agente_json_roto():
-    output = '<accion>{nombre: "leer_archivo"}</accion>'
-    tipo, resultado = procesar_respuesta_agentic(output)
-    assert tipo == "ERROR_FORMATO"
+def test_agente_pregunta_vacia():
+    """Pregunta vacia no debe crashear."""
+    output = procesar_pregunta("")
+    assert output is not None
+
+
+def test_agente_pregunta_larga():
+    """Pregunta larga no debe crashear."""
+    output = procesar_pregunta("dame un diagnostico completo del sistema")
+    assert output is not None

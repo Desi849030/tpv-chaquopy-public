@@ -3,7 +3,7 @@ requires = ["setuptools>=64.0", "wheel"]
 build-backend = "setuptools.backends._legacy:_Backend"
 [project]
 name = "tpv-ultra-smart"
-version = "10.0.0"
+version = "6.0.0"
 description = "TPV Ultra Smart"
 requires-python = ">=3.10"
 license = {text = "MIT"}

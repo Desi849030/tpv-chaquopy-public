@@ -1446,7 +1446,7 @@ def abrir_navegador():
 
 def main():
     print("\n" + "="*58)
-    print("   TPV ULTRA SMART v5.0")
+    print("   TPV ULTRA SMART v6.0")
     print("="*58)
     crear_tablas()
     crear_tablas_tienda()

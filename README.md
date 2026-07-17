@@ -17,15 +17,15 @@ app.py (Flask) ←→ ia/agent.py ←→ ia/handlers*.py
 
 | Módulo | Función | Ubicación |
 |--------|---------|-----------|
-| `intent_router` | Detección de intención por keywords | `ia/intent_router.py` |
-| `compaction` | Compactación de historial largo | `ia/compaction.py` |
-| `skill_registry` | Registro dinámico de habilidades | `ia/skill_registry.py` |
-| `denial_tracking` | Seguimiento de respuestas negativas | `ia/denial_tracking.py` |
-| `error_formatter` | Formateo amigable de errores | `ia/error_formatter.py` |
-| `task_manager` | Gestor de tareas multi-paso | `ia/task_manager.py` |
-| `hooks` | Pre/post hooks del pipeline | `ia/hooks.py` |
-| `result_cache` | Cache de resultados por query | `ia/result_cache.py` |
-| `response_budget` | Límite de tokens en respuesta | `ia/response_budget.py` |
+| `intent_router` | `IntentRouter` → `get_router()` | Detección de intención | `ia/intent_router.py` |
+| `compaction` | `ConversationCompactor` → `compact_history()` | Compactación | `ia/compaction.py` |
+| `skill_registry` | `SkillRegistry` → `get_registry()` | Registro habilidades | `ia/skill_registry.py` |
+| `denial_tracking` | `DenialTracker` → `get_tracker()` | Seguimiento negativas | `ia/denial_tracking.py` |
+| `error_formatter` | `ErrorFormatter` → `get_error_formatter()` | Formateo errores | `ia/error_formatter.py` |
+| `task_manager` | `TaskManager` → `get_task_manager()` | Tareas multi-paso | `ia/task_manager.py` |
+| `hooks` | `HookPipeline` → `get_hook_pipeline()` | Pre/post hooks | `ia/hooks.py` |
+| `result_cache` | `ResultCache` → `get_cache()` | Cache por query | `ia/result_cache.py` |
+| `response_budget` | `ResponseBudget` → `get_budget()` | Limite tokens | `ia/response_budget.py` |
 
 ### Pipeline del Agente
 
@@ -109,6 +109,17 @@ python patch_v13d_integrate.py
 # Ejecutar tests
 python tests/test_v13_modules.py
 ```
+
+## Tests
+
+| Suite | PASS | FAIL | SKIP | Total |
+|-------|------|------|------|-------|
+| test_v13_modules | 31 | 0 | 0 | 31 |
+| test_unitarios_v12 | 32 | 0 | 0 | 32 |
+| test_agent_roles_v12 | 90 | 2 | 0 | 92 |
+| test_e2e_pipeline | 19 | 0 | 0 | 19 |
+| test_coverage_boost | 104 | 3 | 40 | 147 |
+| **Total** | **276** | **5** | **40** | **321** |
 
 ## Características
 

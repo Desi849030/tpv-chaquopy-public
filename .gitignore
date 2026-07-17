@@ -45,3 +45,23 @@ venv/
 Compilation
 Run
 =3.1
+# Python
+__pycache__/
+*.pyc
+*.pyo
+htmlcov/
+.coverage
+*.db
+*.db.clean*
+
+# Android build
+*.apk
+*.aab
+*.dex
+build/
+.gradle/
+.idea/
+
+# Temp/backup
+*_backup*
+patch_v*.py

@@ -1,0 +1,28 @@
+
+# === PATCH: Integración de caché en db_utils.py ===
+# Agregar después de la definición de la función q():
+
+try:
+    from ia.result_cache import get_cache
+    HAS_CACHE = True
+except ImportError:
+    HAS_CACHE = False
+
+# Para habilitar caché en q(), reemplazar la llamada original con:
+# if HAS_CACHE:
+#     cache = get_cache()
+#     cached_result = cache.get(query, params)
+#     if cached_result is not None:
+#         return cached_result
+#     result = _original_q(query, *args, **kwargs)
+#     if query.strip().upper().startswith("SELECT"):
+#         cache.set(query, result, params, ttl=30.0)
+#     return result
+# else:
+#     return _original_q(query, *args, **kwargs)
+
+# Forma más simple: envolver la función
+# if HAS_CACHE:
+#     from ia.result_cache import get_cache
+#     q_cached = get_cache().wrap_query(q)
+#     # Usar q_cached en lugar de q para lecturas

@@ -11,6 +11,7 @@ def _db():
             return c
     return None
 
+
 # v13: Query result cache
 try:
     from ia.result_cache import get_cache as _get_qcache
@@ -24,10 +25,13 @@ def q(sql, params=(), one=False):
     """Execute query and return results."""
     _sql_up = sql.strip().upper()
     _is_select = _sql_up.startswith("SELECT")
+
+    # v13: Cache hit for SELECTs
     if _is_select and _HAS_QCACHE and _qcache is not None:
         _cached = _qcache.get(sql, params)
         if _cached is not None:
             return _cached[0] if one else _cached
+
     c = _db()
     if not c:
         return None
@@ -35,10 +39,12 @@ def q(sql, params=(), one=False):
         cur = c.execute(sql, params)
         if _is_select:
             rows = cur.fetchall()
+            # v13: Cache SELECT results
             if _HAS_QCACHE and _qcache is not None and rows:
                 _qcache.set(sql, rows, params, ttl=30.0)
             return rows[0] if one and rows else (rows if rows else None)
         else:
+            # Non-SELECT: invalidate cache (data changed)
             if _HAS_QCACHE and _qcache is not None:
                 _qcache.invalidate()
             return cur.fetchone() if one else cur.fetchall()

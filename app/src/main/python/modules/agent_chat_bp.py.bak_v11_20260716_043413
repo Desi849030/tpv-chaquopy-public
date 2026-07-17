@@ -357,47 +357,16 @@ def agent_chat():
                 "autenticado": autenticado,
             })
 
-    # === FALLBACK OFFLINE ROBUSTO ===
-    # Si el agente no cargo (Chaquopy no encontro el modulo), intentar
-    # usar los handlers directamente sin pasar por ia.agent
-    try:
-        from ia.handlers import handle_cliente, handle_vendedor, handle_cajero
-        from ia.handlers_staff import handle_supervisor, handle_admin, handle_dev
-        _dispatch = {
-            'cliente': handle_cliente,
-            'vendedor': handle_vendedor,
-            'cajero': handle_cajero,
-            'supervisor': handle_supervisor,
-            'administrador': handle_admin,
-            'desarrollador': handle_dev,
-        }
-        handler = _dispatch.get(rol, handle_cliente)
-        answer = handler(None, msg, name)
-        return jsonify({
-            "ok": True,
-            "respuesta": answer,
-            "rol": rol,
-            "intencion": "offline_fallback",
-            "modo": "offline",
-            "ui_action": None,
-            "request_id": request_id,
-            "anon_client_id": anon_client_id,
-            "usuario_id": usuario_id,
-            "autenticado": autenticado,
-        })
-    except Exception as fb_err:
-        import traceback
-        traceback.print_exc()
-        return jsonify({
-            "ok": True,
-            "respuesta": _saludo_inteligente(rol, name) + "\n\n(Modo offline directo. Puedo ayudarte con productos, ventas y stock.)",
-            "rol": rol,
-            "ui_action": None,
-            "request_id": request_id,
-            "anon_client_id": anon_client_id,
-            "usuario_id": usuario_id,
-            "autenticado": autenticado,
-        })
+    return jsonify({
+        "ok": True,
+        "respuesta": _saludo_inteligente(rol, name) + " (Motor IA no disponible, modo catálogo)",
+        "rol": rol,
+        "ui_action": None,
+        "request_id": request_id,
+        "anon_client_id": anon_client_id,
+        "usuario_id": usuario_id,
+        "autenticado": autenticado,
+    })
 
 
 @agent_chat_bp.route('/api/agent/status')

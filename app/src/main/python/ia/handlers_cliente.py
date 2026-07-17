@@ -338,8 +338,29 @@ def handle_cliente(agent, t, ctx=None):
                 msg += " — $" + str(p.get('precio', 0))
                 if p.get('en_oferta'):
                     msg += " 🏷️"
+                stock = int(p.get('stock_total') or 0)
+                if stock > 0:
+                    msg += f" ({stock} uds)"
                 msg += NL
+            # v12_mejora: sugerir productos relacionados
+            if items and len(items) >= 1:
+                try:
+                    cat_primera = items[0].get('categoria', '')
+                    if cat_primera:
+                        msg += NL + f"📂 Más en *{cat_primera}*: pregúntame 'productos de {cat_primera}'"
+                except Exception:
+                    pass
             return msg
+
+    # ─── MENSAJE POR DEFECTO CON CATEGORÍAS (v12_mejora) ───────
+    n = _contar_productos()
+    cats = _todas_categorias()
+    if cats:
+        msg = (f"🛍️ Tenemos **{n} productos** en {len(cats)} categorías:" + NL + NL)
+        for c in cats[:5]:
+            msg += f"• {c['categoria']} ({c['total']} productos)" + NL
+        msg += NL + "Pregúntame por cualquier producto o categoría."
+        return msg
 
     return ("🛍️ ¿En qué te ayudo? Puedes preguntarme por productos, precios, "
             "ofertas, categorías o stock. Escribe 'ayuda' para opciones.")

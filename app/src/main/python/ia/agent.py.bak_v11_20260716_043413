@@ -65,25 +65,12 @@ try:
     _HAS_ANTI_SLOP = True
 except Exception:
     _HAS_ANTI_SLOP = False
-# --- v13 Architecture Modules (safe fallback) ---
-try:
-    from ia.intent_router import get_router as _get_v13_router
-    from ia.compaction import compact_history as _v13_compact, Message as _v13_msg
-    from ia.denial_tracking import get_tracker as _get_v13_tracker
-    from ia.error_formatter import get_error_formatter as _get_v13_efmt
-    from ia.hooks import (get_hook_pipeline as _get_v13_hooks,
-                          HookPoint as _v13_hp, HookContext as _v13_hctx)
-    from ia.response_budget import get_budget as _get_v13_budget, BudgetMode as _v13_bm
-    from ia.result_cache import get_cache as _get_v13_cache
-    _HAS_V13 = True
-except Exception:
-    _HAS_V13 = False
 
 # --- Import modular components ---
 from ia.catalog import P, O
 from ia.handlers import (
     greet, help_text, _follow, _get_sug, _fm,
-    handle_cliente, handle_vendedor, handle_cajero, handle_supervisor,
+    handle_cliente, handle_vendedor, handle_supervisor,
     handle_admin, handle_dev,
 )
 from ia.db_utils import q
@@ -95,7 +82,6 @@ from ia.db_utils import q
 ROLES = {
     'cliente':      {'label': 'Cliente',      'color': '#2ecc71', 'icon': 'C'},
     'vendedor':     {'label': 'Vendedor',     'color': '#3498db', 'icon': 'V'},
-    'cajero':       {'label': 'Cajero',       'color': '#e67e22', 'icon': 'C'},
     'supervisor':   {'label': 'Supervisor',   'color': '#f39c12', 'icon': 'S'},
     'administrador': {'label': 'Administrador', 'color': '#e74c3c', 'icon': 'A'},
     'desarrollador': {'label': 'Desarrollador', 'color': '#9b59b6', 'icon': 'D'},
@@ -115,13 +101,6 @@ class Agent:
         self.humanizer = Humanizer()
         self._mem_ok = _HAS_MEM
         self._as_ok = _HAS_ANTI_SLOP
-        # v13 modules
-        self._v13_ok = _HAS_V13
-        if _HAS_V13:
-            self._v13_tracker = _get_v13_tracker()
-            self._v13_hooks = _get_v13_hooks()
-            self._v13_budget = _get_v13_budget()
-            self._v13_efmt = _get_v13_efmt()
         self._sk_ok = _HAS_SKILLS
         self._skills = _get_skills_registry() if _HAS_SKILLS else None
 
@@ -140,28 +119,8 @@ class Agent:
         t = text.lower().strip()
         m = self._get_mem(sid)
         m['h'].append(t)
-        # v13: Smart compaction (replaces simple truncation)
-        if self._v13_ok and len(m['h']) > 40:
-            try:
-                msgs = [_v13_msg(role='user', content=h) for h in m['h']]
-                cr = _v13_compact(msgs, max_messages=30)
-                m['h'] = [msg.content for msg in cr.messages if msg.role == 'user']
-            except Exception:
-                m['h'] = m['h'][-20:]
-        elif len(m['h']) > 20:
+        if len(m['h']) > 20:
             m['h'] = m['h'][-20:]
-
-        # v13: Pre-processing hooks
-        if self._v13_ok:
-            try:
-                hctx = _v13_hctx(hook_point=_v13_hp.PRE_PROCESS, agent=self, text=t, role=role)
-                hr = self._v13_hooks.execute(_v13_hp.PRE_PROCESS, hctx)
-                if hr.modified_text:
-                    t = hr.modified_text
-                if hr.override:
-                    return self._r(hr.override, role, 'HOOK_OVERRIDE')
-            except Exception:
-                pass
 
         # === AGENTIC PIPELINE ===
         # 1. Intent detection
@@ -208,38 +167,17 @@ class Agent:
             return self._r('Detecto que algo no va bien. Estoy aqui para ayudarle. Que problema tiene?',
                            role, primary, ['ayuda'])
 
-        # === DISPATCH POR ROL (v13: error formatter + denial tracking) ===
-        result = ''
-        try:
-            if role == 'cliente':
-                result = handle_cliente(self, t, m)
-            elif role == 'vendedor':
-                result = handle_vendedor(self, t, m)
-            elif role == 'cajero':
-                result = handle_cajero(self, t, m)
-            elif role == 'supervisor':
-                result = handle_supervisor(self, t, m)
-            elif role == 'administrador':
-                result = handle_admin(self, t, name)
-            else:
-                result = handle_dev(self, t, name)
-            if self._v13_ok:
-                self._v13_tracker.record_success()
-        except Exception as _e:
-            result = ''
-            if self._v13_ok:
-                self._v13_tracker.record_failure(str(_e))
-                try:
-                    _fe = self._v13_efmt.format(_e, context={'role': role, 'text': t[:100]})
-                    result = _fe.to_user_string()
-                except Exception:
-                    result = 'Lo siento, ocurrio un error procesando tu solicitud.'
-                if self._v13_tracker.state.is_stuck:
-                    _rec = self._v13_tracker.get_recovery_message()
-                    if _rec:
-                        result = _rec
-            else:
-                result = 'Lo siento, ocurrio un error procesando tu solicitud.'
+        # === DISPATCH POR ROL ===
+        if role == 'cliente':
+            result = handle_cliente(self, t, m)
+        elif role == 'vendedor':
+            result = handle_vendedor(self, t, m)
+        elif role == 'supervisor':
+            result = handle_supervisor(self, t, m)
+        elif role == 'administrador':
+            result = handle_admin(self, t, name)
+        else:
+            result = handle_dev(self, t, name)
 
         # Update contextual memory
         if ctx:
@@ -270,12 +208,6 @@ class Agent:
         msg = self.humanizer.sanitize_text(msg)
         if suggestions is None:
             suggestions = []
-        # v13: Apply response budget
-        if self._v13_ok:
-            try:
-                msg = self._v13_budget.apply(msg, mode=_v13_bm.NORMAL)
-            except Exception:
-                pass
         return {
             'answer': msg,
             'role': role,

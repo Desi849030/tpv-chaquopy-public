@@ -995,6 +995,130 @@ def api_ganancias():
 # ══════════════════════════════════════════════════════════════
 #  STATUS
 # ══════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════
+#  DEV METRICS (fallback directo — funciona sin diag_bp)
+# ══════════════════════════════════════════════════════════════
+@app.route("/api/dev/metrics", methods=["GET"])
+def api_dev_metrics_fallback():
+    """Métricas de sistema: RAM, disco, BD. Fallback si diag_bp no carga."""
+    try:
+        import gc, time
+        ram = {"proceso_mb": 0.0, "sistema_total_mb": 0.0, "sistema_usado_mb": 0.0,
+               "sistema_libre_mb": 0.0, "sistema_pct": 0.0, "fuente": "basico"}
+        try:
+            gc.collect()
+            objetos = len(gc.get_objects())
+            estimado = objetos * 256
+            ram["proceso_mb"] = round(estimado / 1024 / 1024, 2)
+            ram["fuente"] = "gc_estimado"
+        except Exception:
+            pass
+        try:
+            import psutil
+            proc = psutil.Process(os.getpid())
+            mem = proc.memory_info()
+            ram["proceso_mb"] = round(mem.rss / 1024 / 1024, 2)
+            vm = psutil.virtual_memory()
+            ram["sistema_total_mb"] = round(vm.total / 1024 / 1024, 2)
+            ram["sistema_usado_mb"] = round(vm.used / 1024 / 1024, 2)
+            ram["sistema_libre_mb"] = round(vm.available / 1024 / 1024, 2)
+            ram["sistema_pct"] = vm.percent
+            ram["fuente"] = "psutil"
+        except Exception:
+            pass
+        try:
+            with open("/proc/self/status", "r") as fh:
+                for ln in fh:
+                    if ln.startswith("VmRSS:"):
+                        kb = int(ln.split()[1])
+                        ram["proceso_mb"] = round(kb / 1024, 2)
+                        ram["fuente"] = "/proc"
+                        break
+        except Exception:
+            pass
+
+        # Disco y BD
+        db_path = "desconocido"
+        db_size_kb = 0.0
+        num_indexes = 0
+        try:
+            from db_connection import DB_FILE
+            db_path = DB_FILE
+        except Exception:
+            pass
+        if not os.path.exists(db_path):
+            for p in sys.path:
+                c = os.path.join(p, 'tpv_datos.db')
+                if os.path.exists(c):
+                    db_path = c
+                    break
+        if os.path.exists(db_path):
+            try:
+                db_size_kb = round(os.path.getsize(db_path) / 1024, 2)
+            except Exception:
+                pass
+            try:
+                import sqlite3
+                conn = sqlite3.connect(db_path)
+                num_indexes = conn.execute(
+                    "SELECT COUNT(*) FROM sqlite_master WHERE type='index'"
+                ).fetchone()[0]
+                conn.close()
+            except Exception:
+                pass
+
+        storage = {"db_path": db_path, "db_size_kb": db_size_kb, "db_size_mb": round(db_size_kb/1024,3),
+                   "disco_total_mb": 0.0, "disco_usado_mb": 0.0, "disco_libre_mb": 0.0,
+                   "disco_pct": 0.0, "num_indexes": num_indexes}
+        try:
+            d = os.path.dirname(db_path) or os.getcwd()
+            st = os.statvfs(d)
+            total = st.f_blocks * st.f_frsize
+            free = st.f_bavail * st.f_frsize
+            used = total - free
+            storage["disco_total_mb"] = round(total/1024/1024, 2)
+            storage["disco_usado_mb"] = round(used/1024/1024, 2)
+            storage["disco_libre_mb"] = round(free/1024/1024, 2)
+            storage["disco_pct"] = round(used/total*100, 1) if total else 0
+        except Exception:
+            pass
+
+        # Tablas
+        tablas = {"tablas": [], "total_tablas": 0, "total_filas": 0}
+        try:
+            import sqlite3
+            conn = sqlite3.connect(db_path if os.path.exists(db_path) else ":memory:")
+            nombres = [r[0] for r in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' "
+                "AND name NOT LIKE 'sqlite_%' ORDER BY name")]
+            total_filas = 0
+            for t in nombres:
+                try:
+                    n = conn.execute('SELECT COUNT(*) FROM "%s"' % t).fetchone()[0]
+                except Exception:
+                    n = -1
+                tablas["tablas"].append({"nombre": t, "filas": n})
+                if n > 0:
+                    total_filas += n
+            tablas["total_tablas"] = len(nombres)
+            tablas["total_filas"] = total_filas
+            conn.close()
+        except Exception:
+            pass
+
+        return jsonify({
+            "ok": True,
+            "ram": ram,
+            "storage": storage,
+            "tablas": tablas,
+            "db_path": db_path,
+            "timestamp": datetime.now().isoformat(),
+        })
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
+
 @app.route("/api/status", methods=["GET"])
 def get_status():
     try:
@@ -1114,7 +1238,7 @@ def _sse_broadcast(evento: dict):
 def api_sse():
     """Stream de eventos en tiempo real para el cliente autenticado."""
     u = usuario_actual()
-    uid = u["usuario_id"]
+    uid = u.get("usuario_id", u.get("username", "anon"))
     q = _queue.Queue(maxsize=50)
     with _sse_lock:
         _sse_clientes[uid] = q

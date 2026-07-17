@@ -1,4 +1,213 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
+"""
+patch_handlers_v11.py — Mejora las herramientas offline del agente IA
+Ejecutar:  python patch_handlers_v11.py
+
+Cambios:
+  1. Crea tabla 'documentacion' con docs del proyecto si no existe
+  2. Agrega handle_cajero() (falta en la version actual)
+  3. Mejora handle_vendedor con busqueda de precio, metas, historial 100% offline
+  4. Mejora handle_admin con hora pico, ticket promedio, categorias, clientes 100% offline
+  5. Mejora handle_supervisor con dias de stock, ventas por categoria 100% offline
+  6. Mejora handle_dev con herramientas offline puras (sin depender de telecom_diag)
+  7. Unifica queries a ia.db_utils.q() evitando db_connection.obtener_conexion()
+  8. Fallback inteligente: nunca responde "sin conexion" o "motor no disponible"
+  9. Agrega handlers_cliente mejorado con recomendaciones y ofertas
+"""
+import os
+import re
+import shutil
+import sys
+from datetime import datetime
+
+BASE = os.path.dirname(os.path.abspath(__file__))
+HANDLERS_STAFF = os.path.join(BASE, 'ia', 'handlers_staff.py')
+HANDLERS_CLIENTE = os.path.join(BASE, 'ia', 'handlers_cliente.py')
+HANDLERS_PY = os.path.join(BASE, 'ia', 'handlers.py')
+AGENT_CHAT_BP = os.path.join(BASE, 'modules', 'agent_chat_bp.py')
+DB_PATH = os.path.join(BASE, 'tpv_datos.db')
+
+# Backup
+def backup(path):
+    if os.path.exists(path):
+        ts = datetime.now().strftime('%Y%m%d_%H%M%S')
+        bak = f"{path}.bak_v11_{ts}"
+        shutil.copy2(path, bak)
+        print(f"  Backup: {bak}")
+        return True
+    return False
+
+# ═══════════════════════════════════════════════════════════════
+#  0. CREAR TABLA DOCUMENTACION + SEED
+# ═══════════════════════════════════════════════════════════════
+def step_0_create_documentacion_table():
+    print("\n[0] Creando tabla 'documentacion' con datos de referencia...")
+    import sqlite3
+    if not os.path.exists(DB_PATH):
+        print(f"  BD no encontrada: {DB_PATH} — saltando")
+        return
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("""CREATE TABLE IF NOT EXISTS documentacion (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT UNIQUE NOT NULL,
+        contenido TEXT NOT NULL,
+        fecha_actualizacion TEXT DEFAULT CURRENT_TIMESTAMP
+    )""")
+    conn.commit()
+    
+    # Verificar si ya tiene datos
+    existing = conn.execute("SELECT COUNT(*) FROM documentacion").fetchone()[0]
+    if existing > 0:
+        print(f"  Tabla ya tiene {existing} documentos — saltando seed")
+        conn.close()
+        return
+    
+    docs = {
+        "README.md": """# TPV Ultra Smart v8.14
+## Sistema Punto de Venta Inteligente
+
+### Arquitectura
+- Backend: Flask (Python) corriendo en Chaquopy (Android)
+- Base de datos: SQLite local (tpv_datos.db)
+- IA: Motor simbolico offline con handlers por rol
+- Sync: Supabase (opcional, modo offline-first)
+
+### Modulos Principales
+- ia/agent.py — Orquestador del agente IA
+- ia/handlers_staff.py — Handlers para vendedor, admin, supervisor, dev
+- ia/handlers_cliente.py — Handler para clientes
+- ia/db_utils.py — Utilidades de base de datos
+- ia/metrics.py — Modelos matematicos (ABC, EOQ, Regresion)
+- ia/catalog.py — Acceso a productos y ofertas
+- modules/agent_chat_bp.py — Blueprint del chat IA
+- app.py — Servidor Flask principal
+
+### Roles
+- cliente: Busca productos, precios y ofertas
+- vendedor: Ventas diarias, stock, productos rapidos
+- cajero: Registro de ventas, arqueo de caja
+- supervisor: Dashboard, ABC, rotacion, predicciones
+- administrador: Finanzas, gastos, punto equilibrio
+- desarrollador: Telemetria, SQL executor, diagnostico
+""",
+        "API_REFERENCE.md": """# API Reference — TPV Ultra Smart
+
+## Autenticacion
+POST /api/auth/login — Inicio de sesion
+POST /api/auth/logout — Cerrar sesion
+
+## Productos
+GET /api/productos — Listar productos
+GET /api/productos/<id> — Detalle de producto
+POST /api/productos — Crear producto (admin)
+PUT /api/productos/<id> — Actualizar producto
+
+## Ventas
+GET /api/ventas — Historial de ventas
+POST /api/ventas — Registrar venta
+GET /api/ventas/diarias — Resumen del dia
+
+## Chat IA
+POST /api/agent/chat — Enviar mensaje al agente
+GET /api/agent/status — Estado del agente IA
+GET /api/agent/identity — Identidad del usuario
+
+## Inventario
+GET /api/inventario — Estado del inventario
+GET /api/inventario/stock-bajo — Productos con stock critico
+
+## Catalogo Publico
+GET /api/publico/catalogo — Productos activos
+
+## Analytics
+GET /api/analytics/dashboard — Dashboard de metricas
+GET /api/analytics/ventas-semana — Ventas de la semana
+""",
+        "ARCHITECTURE.md": """# Arquitectura TPV Ultra Smart
+
+## Capas
+1. **Presentacion**: HTML/CSS/JS servido por Flask
+2. **API REST**: Blueprints de Flask (28 modulos)
+3. **Logica de Negocio**: ia/ (agent, handlers, metrics)
+4. **Datos**: SQLite (tpv_datos.db) + Supabase (sync opcional)
+
+## Flujo del Chat IA
+Usuario → agent_chat_bp → ia.agent.process_question()
+  → Intent detection (NLP Engine)
+  → Dispatch por rol (cliente/vendedor/admin/supervisor/dev)
+  → Handlers usan ia.db_utils.q() para consultar SQLite
+  → Respuesta formateada al usuario
+
+## Modo Offline
+El sistema funciona 100% offline:
+- BD local SQLite con todos los datos
+- IA simbolica (no necesita LLM externo)
+- Handlers por rol con reglas y consultas directas
+- Sync con Supabase es opcional (no bloquea)
+""",
+        "DATABASE_SCHEMA.md": """# Esquema de Base de Datos
+
+## Tablas Principales
+- productos: producto_id, nombre, precio, costo, categoria, activo
+- inventario_general: producto_id, stock_actual, stock_minimo, precio_venta
+- historial_ventas: id, producto_id, nombre, cantidad, total, fecha, vendedor_nombre
+- usuarios: usuario_id, username, password_hash, rol, activo
+- gastos: id, descripcion, monto, fecha, categoria
+- clientes: id, nombre, telefono, email
+- logs_sistema: id, fecha, tipo, mensaje
+- audit_logs: id, fecha, accion, usuario, detalle
+- sesiones: id, usuario_id, token, fecha_expiracion
+- documentacion: id, nombre, contenido, fecha_actualizacion
+- categorias: id, nombre, descripcion
+- metodos_pago: id, nombre, activo
+""",
+        "CHANGELOG.md": """# Changelog TPV Ultra Smart
+
+## v8.14 (Actual)
+- Motor IA ReAct con 141+ herramientas
+- Handlers mejorados offline por rol
+- SQL Executor para desarrollador
+- Dashboard ejecutivo para admin y supervisor
+- Predicciones de ventas por regresion lineal
+- Analisis ABC de Pareto
+- Calculo de EOQ (Lote Optimo)
+- Punto de equilibrio dinamico
+- Diagnostico de red y telecomunicaciones
+
+## v8.0
+- Arquitectura DDD
+- Blueprints modulares
+- NLP Engine con fuzzy matching
+- Guardrails de seguridad
+
+## v7.0
+- Migracion a Chaquopy
+- SQLite WAL
+- Sync Supabase opcional
+""",
+    }
+    
+    for nombre, contenido in docs.items():
+        try:
+            conn.execute("INSERT OR IGNORE INTO documentacion (nombre, contenido) VALUES (?, ?)",
+                        (nombre, contenido))
+        except Exception as e:
+            print(f"  Error insertando {nombre}: {e}")
+    
+    conn.commit()
+    count = conn.execute("SELECT COUNT(*) FROM documentacion").fetchone()[0]
+    conn.close()
+    print(f"  Tabla creada con {count} documentos de referencia")
+
+
+# ═══════════════════════════════════════════════════════════════
+#  1. NUEVO handlers_staff.py — 100% offline, sin db_connection
+# ═══════════════════════════════════════════════════════════════
+def step_1_handlers_staff():
+    print("\n[1] Escribiendo handlers_staff.py mejorado (v11)...")
+    backup(HANDLERS_STAFF)
+    
+    content = r'''# -*- coding: utf-8 -*-
 """handlers_staff.py v11 — Role-specific IA handlers 100% OFFLINE
 Todas las consultas usan ia.db_utils.q() — sin depender de db_connection.
 """
@@ -767,3 +976,314 @@ def handle_dev(agent, t, m=None):
         return "Parece que quieres ejecutar SQL. Usa: 'ejecutar SELECT ...'"
 
     return "Dev tools: estado, integridad, ejecutar SQL, documentacion, logs, usuarios, seguridad, red. Escribe 'ayuda' para ver todo."
+'''
+
+    with open(HANDLERS_STAFF, 'w', encoding='utf-8') as f:
+        f.write(content)
+    print(f"  Escrito: {HANDLERS_STAFF} ({len(content)} chars)")
+
+
+# ═══════════════════════════════════════════════════════════════
+#  2. ACTUALIZAR handlers.py — agregar handle_cajero
+# ═══════════════════════════════════════════════════════════════
+def step_2_update_handlers_py():
+    print("\n[2] Actualizando handlers.py (re-exports)...")
+    backup(HANDLERS_PY)
+    
+    content = """# Re-export from split modules
+from ia.handlers_base import _fm, _follow, _get_sug, greet, help_text
+from ia.handlers_cliente import handle_cliente
+from ia.handlers_staff import (
+    handle_vendedor, handle_cajero, handle_supervisor, handle_admin, handle_dev
+)
+"""
+    with open(HANDLERS_PY, 'w', encoding='utf-8') as f:
+        f.write(content)
+    print(f"  Escrito: {HANDLERS_PY}")
+
+
+# ═══════════════════════════════════════════════════════════════
+#  3. ACTUALIZAR ia/agent.py — agregar handle_cajero al dispatch
+# ═══════════════════════════════════════════════════════════════
+def step_3_update_agent_py():
+    print("\n[3] Actualizando ia/agent.py (dispatch cajero)...")
+    agent_path = os.path.join(BASE, 'ia', 'agent.py')
+    if not os.path.exists(agent_path):
+        print(f"  No encontrado: {agent_path} — saltando")
+        return
+    backup(agent_path)
+    
+    with open(agent_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    # Actualizar import
+    old_import = "from ia.handlers import (\n    greet, help_text, _follow, _get_sug, _fm,\n    handle_cliente, handle_vendedor, handle_supervisor,\n    handle_admin, handle_dev,\n)"
+    new_import = "from ia.handlers import (\n    greet, help_text, _follow, _get_sug, _fm,\n    handle_cliente, handle_vendedor, handle_cajero, handle_supervisor,\n    handle_admin, handle_dev,\n)"
+    content = content.replace(old_import, new_import)
+    
+    # Actualizar dispatch (agregar cajero antes de supervisor)
+    old_dispatch = """        elif role == 'supervisor':
+            result = handle_supervisor(self, t, m)"""
+    new_dispatch = """        elif role == 'cajero':
+            result = handle_cajero(self, t, m)
+        elif role == 'supervisor':
+            result = handle_supervisor(self, t, m)"""
+    content = content.replace(old_dispatch, new_dispatch)
+    
+    # Agregar cajero al ROLES registry
+    old_roles = """    'vendedor':     {'label': 'Vendedor',     'color': '#3498db', 'icon': 'V'},\n    'supervisor':"""
+    new_roles = """    'vendedor':     {'label': 'Vendedor',     'color': '#3498db', 'icon': 'V'},\n    'cajero':       {'label': 'Cajero',       'color': '#e67e22', 'icon': 'C'},\n    'supervisor':"""
+    content = content.replace(old_roles, new_roles)
+    
+    with open(agent_path, 'w', encoding='utf-8') as f:
+        f.write(content)
+    print(f"  Escrito: {agent_path}")
+
+
+# ═══════════════════════════════════════════════════════════════
+#  4. ACTUALIZAR agent_chat_bp.py — fallback offline robusto
+# ═══════════════════════════════════════════════════════════════
+def step_4_update_agent_chat_bp():
+    print("\n[4] Actualizando agent_chat_bp.py (fallback offline)...")
+    if not os.path.exists(AGENT_CHAT_BP):
+        print(f"  No encontrado: {AGENT_CHAT_BP} — saltando")
+        return
+    backup(AGENT_CHAT_BP)
+    
+    with open(AGENT_CHAT_BP, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    # Reemplazar el fallback "Motor IA no disponible" con algo util
+    old_fallback = '''    return jsonify({
+        "ok": True,
+        "respuesta": _saludo_inteligente(rol, name) + " (Motor IA no disponible, modo catálogo)",
+        "rol": rol,
+        "ui_action": None,
+        "request_id": request_id,
+        "anon_client_id": anon_client_id,
+        "usuario_id": usuario_id,
+        "autenticado": autenticado,
+    })'''
+    
+    new_fallback = '''    # === FALLBACK OFFLINE ROBUSTO ===
+    # Si el agente no cargo (Chaquopy no encontro el modulo), intentar
+    # usar los handlers directamente sin pasar por ia.agent
+    try:
+        from ia.handlers import handle_cliente, handle_vendedor, handle_cajero
+        from ia.handlers_staff import handle_supervisor, handle_admin, handle_dev
+        _dispatch = {
+            'cliente': handle_cliente,
+            'vendedor': handle_vendedor,
+            'cajero': handle_cajero,
+            'supervisor': handle_supervisor,
+            'administrador': handle_admin,
+            'desarrollador': handle_dev,
+        }
+        handler = _dispatch.get(rol, handle_cliente)
+        answer = handler(None, msg, name)
+        return jsonify({
+            "ok": True,
+            "respuesta": answer,
+            "rol": rol,
+            "intencion": "offline_fallback",
+            "modo": "offline",
+            "ui_action": None,
+            "request_id": request_id,
+            "anon_client_id": anon_client_id,
+            "usuario_id": usuario_id,
+            "autenticado": autenticado,
+        })
+    except Exception as fb_err:
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "ok": True,
+            "respuesta": _saludo_inteligente(rol, name) + "\\n\\n(Modo offline directo. Puedo ayudarte con productos, ventas y stock.)",
+            "rol": rol,
+            "ui_action": None,
+            "request_id": request_id,
+            "anon_client_id": anon_client_id,
+            "usuario_id": usuario_id,
+            "autenticado": autenticado,
+        })'''
+    
+    content = content.replace(old_fallback, new_fallback)
+    
+    # Tambien mejorar el error fallback del agente
+    old_error = '''            return jsonify({
+                "ok": True,
+                "respuesta": _saludo_inteligente(rol, name),
+                "rol": rol,
+                "ui_action": None,
+                "request_id": request_id,
+                "anon_client_id": anon_client_id,
+                "usuario_id": usuario_id,
+                "autenticado": autenticado,
+            })
+
+    return jsonify({'''
+    
+    new_error = '''            # Si el agente fallo, intentar handlers directos
+            try:
+                from ia.handlers import handle_cliente, handle_vendedor, handle_cajero
+                from ia.handlers_staff import handle_supervisor, handle_admin, handle_dev
+                _d2 = {
+                    'cliente': handle_cliente, 'vendedor': handle_vendedor,
+                    'cajero': handle_cajero, 'supervisor': handle_supervisor,
+                    'administrador': handle_admin, 'desarrollador': handle_dev,
+                }
+                h2 = _d2.get(rol, handle_cliente)
+                answer2 = h2(None, msg, name)
+                return jsonify({
+                    "ok": True, "respuesta": answer2, "rol": rol,
+                    "intencion": "error_fallback", "modo": "offline",
+                    "ui_action": None, "request_id": request_id,
+                    "anon_client_id": anon_client_id,
+                    "usuario_id": usuario_id, "autenticado": autenticado,
+                })
+            except:
+                pass
+            return jsonify({
+                "ok": True,
+                "respuesta": _saludo_inteligente(rol, name),
+                "rol": rol,
+                "ui_action": None,
+                "request_id": request_id,
+                "anon_client_id": anon_client_id,
+                "usuario_id": usuario_id,
+                "autenticado": autenticado,
+            })
+
+    return jsonify({'''
+    
+    content = content.replace(old_error, new_error)
+    
+    with open(AGENT_CHAT_BP, 'w', encoding='utf-8') as f:
+        f.write(content)
+    print(f"  Escrito: {AGENT_CHAT_BP}")
+
+
+# ═══════════════════════════════════════════════════════════════
+#  5. VERIFICAR handlers_cliente.py existe
+# ═══════════════════════════════════════════════════════════════
+def step_5_check_handlers_cliente():
+    print("\n[5] Verificando handlers_cliente.py...")
+    if not os.path.exists(HANDLERS_CLIENTE):
+        print(f"  No encontrado: {HANDLERS_CLIENTE} — creando version basica")
+        content = r'''# -*- coding: utf-8 -*-
+"""handlers_cliente.py - Handler para rol cliente"""
+from ia.db_utils import q, fmt_money
+from ia.catalog import P, O
+from ia.handlers_base import _fm, _follow
+
+def handle_cliente(agent, t, m=None):
+    tl = (t or '').lower().strip()
+    
+    if _fm(agent, t, ['hola', 'buenos', 'buenas', 'hey', 'buenos dias', 'buenas tardes']):
+        return "Hola! Bienvenido a la tienda. Puedo ayudarte a buscar productos, ver precios y ofertas. Que necesitas?"
+    
+    if _fm(agent, t, ['gracias', 'muchas gracias', 'genial', 'perfecto']):
+        return "De nada! Si necesitas algo mas, aqui estoy."
+    
+    if _fm(agent, t, ['adios', 'bye', 'hasta luego', 'nos vemos']):
+        return "Hasta luego! Vuelve cuando quieras."
+    
+    if _fm(agent, t, ['ayuda', 'help', 'que puedes', 'que haces']):
+        return "Puedo ayudarte con:\n- Buscar productos y precios\n- Ver ofertas del dia\n- Conocer categorias disponibles\n- Encontrar productos relacionados\n\nEscribe el nombre de un producto para buscarlo."
+    
+    # --- Ofertas ---
+    if _fm(agent, t, ['ofertas', 'descuentos', 'promociones', 'promos', 'que hay de oferta']):
+        ofertas = O.mejores()
+        if not ofertas:
+            return "No hay ofertas activas ahora. Puedo buscar productos por nombre o categoria."
+        msg = "Ofertas del dia (15% descuento):\n\n"
+        for o in ofertas[:5]:
+            msg += f"  {o['n']}\n"
+            msg += f"    Precio normal: {fmt_money(o['p'])}\n"
+            msg += f"    Con descuento: {fmt_money(o['d'])}\n\n"
+        return msg
+    
+    # --- Categorias ---
+    if _fm(agent, t, ['categorias', 'que tienen', 'que venden', 'que productos hay']):
+        cats = P.cats
+        if not cats:
+            return "No hay categorias disponibles."
+        msg = "Categorias disponibles:\n"
+        for c in cats:
+            msg += f"  - {c}\n"
+        msg += "\nPreguntame por cualquier categoria para ver los productos."
+        return msg
+    
+    # --- Buscar producto (con relacion) ---
+    prods = P.search(t, 5)
+    if prods and len(t.split()) > 1:
+        msg = ""
+        for p in prods:
+            stock_st = "Disponible" if (p.get('s', 0) or 0) > 0 else "Agotado"
+            msg += f"  {p['n']}: {fmt_money(p['p'])} [{stock_st}]\n"
+        # Productos relacionados
+        if len(prods) == 1:
+            rels = O.relacionados(prods[0]['n'])
+            if rels:
+                msg += "\nTambien te puede interesar:\n"
+                for r in rels:
+                    msg += f"  {r['nombre']}: {fmt_money(r['precio'])}\n"
+        return msg
+    
+    # --- Precio directo ---
+    if _fm(agent, t, ['precio', 'cuesta', 'cuanto vale', 'cuanto es']):
+        prods = P.search(t, 3)
+        if prods:
+            msg = ""
+            for p in prods:
+                msg += f"  {p['n']}: {fmt_money(p['p'])}\n"
+            return msg
+        return "No encontre ese producto. Intenta con otro nombre."
+    
+    return _follow('cliente')
+'''
+        with open(HANDLERS_CLIENTE, 'w', encoding='utf-8') as f:
+            f.write(content)
+        print(f"  Creado: {HANDLERS_CLIENTE}")
+    else:
+        print(f"  Ya existe: {HANDLERS_CLIENTE}")
+
+
+# ═══════════════════════════════════════════════════════════════
+# MAIN
+# ═══════════════════════════════════════════════════════════════
+if __name__ == '__main__':
+    print("=" * 60)
+    print("PATCH v11 — Mejora herramientas offline del agente IA")
+    print("=" * 60)
+    print(f"Directorio base: {BASE}")
+    print(f"BD: {DB_PATH}")
+    
+    step_0_create_documentacion_table()
+    step_1_handlers_staff()
+    step_2_update_handlers_py()
+    step_3_update_agent_py()
+    step_4_update_agent_chat_bp()
+    step_5_check_handlers_cliente()
+    
+    print("\n" + "=" * 60)
+    print("PATCH v11 COMPLETADO")
+    print("=" * 60)
+    print("""
+Resumen de cambios:
+  [0] Tabla 'documentacion' creada con 5 documentos de referencia
+  [1] handlers_staff.py reescrito 100% offline (sin db_connection)
+  [2] handlers.py actualizado con handle_cajero
+  [3] ia/agent.py actualizado con dispatch cajero
+  [4] agent_chat_bp.py: fallback offline robusto (nunca dice 'sin conexion')
+  [5] handlers_cliente.py verificado/creado
+
+Nuevas herramientas por rol:
+  VENDEDOR: metas diarias, historial, top productos, categorias, ofertas
+  CAJERO:   arqueo de caja, metodo de pago, resumen rapido
+  ADMIN:    hora pico, ticket promedio, categorias, clientes, ABC
+  SUPERVISOR: dias de stock, ventas por categoria, prediccion
+  DEV:      lectura de docs offline, SQL executor, integridad BD
+
+Reinicia el servidor: python app.py
+""")

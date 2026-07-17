@@ -1,0 +1,73 @@
+
+# === PATCH: Integración de módulos v13 en agent_chat_bp.py ===
+# Agregar estos imports al inicio del archivo (después de los imports existentes):
+
+try:
+    from ia.intent_router import get_router, IntentMatch
+    from ia.compaction import compact_history, Message as CompactionMessage
+    from ia.denial_tracking import get_tracker
+    from ia.error_formatter import get_error_formatter
+    from ia.hooks import get_hook_pipeline, HookPoint, HookContext
+    from ia.response_budget import get_budget, BudgetMode
+    from ia.task_manager import get_task_manager, TaskStep
+    HAS_V13_MODULES = True
+except ImportError:
+    HAS_V13_MODULES = False
+
+# === PATCH: En la función principal de procesamiento de mensajes ===
+# Después de obtener el texto del usuario y antes del dispatch a handlers,
+# insertar este bloque:
+
+# --- v13: Pre-processing hooks ---
+if HAS_V13_MODULES:
+    pipeline = get_hook_pipeline()
+    hook_ctx = HookContext(
+        hook_point=HookPoint.PRE_PROCESS,
+        agent=agent,
+        text=text,
+        role=role,
+    )
+    hook_result = pipeline.execute(HookPoint.PRE_PROCESS, hook_ctx)
+    if hook_result.modified_text:
+        text = hook_result.modified_text
+    if hook_result.override:
+        return hook_result.override
+
+# --- v13: Denial tracking (registrar resultado después del handler) ---
+# Después de obtener la respuesta del handler:
+# tracker = get_tracker()
+# if response_ok:
+#     tracker.record_success()
+# else:
+#     tracker.record_failure("Razón del fallo")
+# if tracker.state.is_stuck:
+#     recovery = tracker.get_recovery_message()
+#     if recovery:
+#         response = recovery
+
+# --- v13: Response budget ---
+# Antes de retornar la respuesta final:
+# budget = get_budget()
+# response = budget.apply(response, mode=BudgetMode.NORMAL)
+
+# --- v13: Post-processing hooks ---
+# if HAS_V13_MODULES:
+#     post_ctx = HookContext(
+#         hook_point=HookPoint.POST_PROCESS,
+#         agent=agent,
+#         text=text,
+#         role=role,
+#         response=response,
+#     )
+#     post_result = pipeline.execute(HookPoint.POST_PROCESS, post_ctx)
+#     if post_result.modified_response:
+#         response = post_result.modified_response
+#     if post_result.override:
+#         response = post_result.override
+
+# --- v13: Compaction (llamar periódicamente en conversaciones largas) ---
+# if HAS_V13_MODULES and len(history) > 50:
+#     from ia.compaction import compact_history, Message as CMsg
+#     msgs = [CMsg(role=m["role"], content=m["content"]) for m in history]
+#     result = compact_history(msgs, max_messages=40)
+#     history = [{"role": m.role, "content": m.content} for m in result.messages]

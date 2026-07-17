@@ -1,0 +1,71 @@
+nohup: ignoring input
+[LLM] Error importando: No module named 'llama_cpp'
+[OK] IA disponible
+============================================================
+🔧 SERVIDOR TPV - MODO BYPASS COMPLETO
+============================================================
+📱 Usuario: CUALQUIERA
+🔑 Contraseña: CUALQUIERA
+============================================================
+✅ IA disponible: True
+============================================================
+🌐 http://127.0.0.1:5050
+📋 Logs en tiempo real
+============================================================
+ * Serving Flask app 'debug_server'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5050
+ * Running on http://10.128.225.175:5050
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 114-356-272
+127.0.0.1 - - [10/Jul/2026 15:08:11] "POST /api/agent/chat HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:08:11] "POST /api/agent/chat HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:08:11] "POST /api/agent/chat HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:08:21] "GET /api/publico/catalogo HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:08:22] "[36mGET / HTTP/1.1[0m" 304 -
+127.0.0.1 - - [10/Jul/2026 15:08:22] "[36mGET /service-worker.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [10/Jul/2026 15:08:24] "GET /api/i18n/dict HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:08:24] "GET /api/agent/identity HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:08:24] "GET /api/i18n/dict HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:08:24] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:08:24] "GET /api/catalogo HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:08:24] "GET /api/metrics HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:08:24] "GET /api/ventas/totales HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:08:24] "GET /api/publico/catalogo HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:08:25] "GET /api/auth/me HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:08:26] "GET /api/ventas/hoy HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:08:26] "GET /api/agent/identity HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:08:28] "GET /api/agent/identity HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:08:29] "GET /api/agent/identity HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:08:30] "GET /api/agent/identity HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:08:30] "GET /api/agent/identity HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:08:33] "POST /api/auth/login HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:08:54] "GET /api/publico/catalogo HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:09:24] "GET /api/publico/catalogo HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:10:17] "POST /api/agent/chat HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:10:17] "POST /api/agent/chat HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:10:17] "POST /api/agent/chat HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:10:22] "GET /api/publico/catalogo HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:10:24] "[36mGET / HTTP/1.1[0m" 304 -
+127.0.0.1 - - [10/Jul/2026 15:10:24] "[36mGET /service-worker.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [10/Jul/2026 15:10:28] "GET /api/agent/identity HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:10:28] "GET /api/i18n/dict HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:10:29] "GET /api/i18n/dict HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:10:29] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:10:29] "GET /api/catalogo HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:10:29] "GET /api/metrics HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:10:29] "GET /api/ventas/totales HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:10:29] "GET /api/publico/catalogo HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:10:30] "GET /api/auth/me HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:10:30] "GET /api/agent/identity HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:10:30] "GET /api/ventas/hoy HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:10:30] "GET /api/agent/identity HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:10:33] "POST /api/auth/login HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:10:55] "GET /api/publico/catalogo HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jul/2026 15:11:25] "GET /api/publico/catalogo HTTP/1.1" 200 -
+/data/data/com.termux/files/usr/lib/python3.14/multiprocessing/resource_tracker.py:475: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown: {'/mp-uy57jx4v'}
+  warnings.warn(

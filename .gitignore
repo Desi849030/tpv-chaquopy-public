@@ -1,57 +1,17 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.coverage
-htmlcov/
-.pytest_cache/
-.mypy_cache/
+# Modelos (1.2GB!)
+models/
 
-# Backups
-*.bak
-*.bak_*
-backup_*/
+# Python venv
+agent_env/
 
-# Logs
-*.log
-tpv.log
-debug_server.log
-tpv_server.log
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Build
-build/
-dist/
-*.apk
-*.aab
-
-# Environment
-.env
-.env.local
-venv/
-
-# Temp
-*.tmp
-Compilation
-Run
-=3.1
-# Python
+# Python cache
 __pycache__/
 *.pyc
 *.pyo
 htmlcov/
 .coverage
 *.db
+*.db.backup
 *.db.clean*
 
 # Android build
@@ -62,6 +22,7 @@ build/
 .gradle/
 .idea/
 
-# Temp/backup
+# Temp/backup/patch
 *_backup*
 patch_v*.py
+*.gguf

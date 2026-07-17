@@ -1,6 +1,47 @@
-models/
-*.gguf
-agent_env/
+# Python
 __pycache__/
-coverage.xml
+*.py[cod]
+*$py.class
+*.so
+.coverage
+htmlcov/
 .pytest_cache/
+.mypy_cache/
+
+# Backups
+*.bak
+*.bak_*
+backup_*/
+
+# Logs
+*.log
+tpv.log
+debug_server.log
+tpv_server.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+build/
+dist/
+*.apk
+*.aab
+
+# Environment
+.env
+.env.local
+venv/
+
+# Temp
+*.tmp
+Compilation
+Run
+=3.1

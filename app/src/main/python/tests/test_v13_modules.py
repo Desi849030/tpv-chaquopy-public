@@ -143,7 +143,11 @@ def test_result_cache_basic_ops():
             kwargs[pn] = "/tmp/test_cache_v13"
         else:
             try:
-                kwargs[pn] = int if sig.parameters[pn].annotation is int else str
+                ann = sig.parameters[pn].annotation
+                if ann is int:
+                    kwargs[pn] = 60
+                elif ann is str:
+                    kwargs[pn] = "/tmp"
             except Exception:
                 pass
     try:

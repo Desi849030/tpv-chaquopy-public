@@ -1,3 +1,18 @@
 app/src/main/python/tpv_datos.db
 app/src/main/python/*.db.backup
 app/src/main/python/supabase_config.json
+# Binaries & large files
+*.apk
+*.aar
+*.jar
+*.dex
+*.db
+*.sqlite
+*.sqlite3
+*.pyc
+__pycache__/
+*.pyo
+.ipynb_checkpoints/
+*.log
+downloads/
+storage/

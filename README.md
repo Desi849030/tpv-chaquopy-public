@@ -96,20 +96,6 @@ python app.py
 # Login: desarrollador / dev2024
 ```
 
-## Aplicar Patches
-
-```bash
-# Crear módulos v13
-python patch_v13_agent_10_10.py
-
-# Integrar en agent.py + db_utils.py
-python patch_v13c_integrate.py
-python patch_v13d_integrate.py
-
-# Ejecutar tests
-python tests/test_v13_modules.py
-```
-
 ## Tests
 
 | Suite | PASS | FAIL | SKIP | Total |
@@ -120,6 +106,17 @@ python tests/test_v13_modules.py
 | test_e2e_pipeline | 19 | 0 | 0 | 19 |
 | test_coverage_boost | 104 | 3 | 40 | 147 |
 | **Total** | **276** | **5** | **40** | **321** |
+
+## Tests
+
+| Suite | PASS | FAIL | SKIP | Total |
+|-------|------|------|------|-------|
+| test_v13_modules | 31 | 0 | 0 | 31 |
+| test_unitarios_v12 | 32 | 0 | 0 | 32 |
+| test_agent_roles_v12 | 92 | 0 | 0 | 92 |
+| test_e2e_pipeline | 19 | 0 | 0 | 19 |
+| test_coverage_boost | 107 | 0 | 40 | 147 |
+| **Total** | **281** | **0** | **40** | **321** |
 
 ## Características
 

@@ -1,28 +1,54 @@
-# Modelos (1.2GB!)
-models/
+# Secrets
+.tpv_hmac_secret
+.tpv_secret_key
 
-# Python venv
-agent_env/
-
-# Python cache
-__pycache__/
-*.pyc
-*.pyo
-htmlcov/
-.coverage
+# Database
 *.db
+*.db-shm
+*.db-wal
 *.db.backup
 *.db.clean*
 
-# Android build
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.coverage
+.coveragerc
+htmlcov/
+
+# Models & Venv
+models/
+agent_env/
+
+# Logs
+*.log
+
+# Root junk
+=*
+[*
+Compilation
+Run
+servidor_*.py
+crear_db_demo.py
+debug_server.py
+fix_v3.py
+hija_offline.py
+index_autocontenido.html
+run_*.py
+run_*.sh
+termux_probar.sh
+test.puml
+test.svg
+
+# Build
 *.apk
 *.aab
-*.dex
 build/
-.gradle/
 .idea/
 
-# Temp/backup/patch
+# Backup/temp
 *_backup*
+*_backup.py
 patch_v*.py
-*.gguf

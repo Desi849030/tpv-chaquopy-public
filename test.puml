@@ -1,5 +1,0 @@
-@startuml
-actor Juan
-actor Pedro
-Juan -> Pedro : hola
-@enduml

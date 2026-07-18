@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 
 
 
+@dataclass
 class ValidationIssue:
     """Un problema detectado en la respuesta."""
     severity: str  # "warning" o "error"

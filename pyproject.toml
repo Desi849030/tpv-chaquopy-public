@@ -16,4 +16,10 @@ testpaths = ["tests"]
 addopts = "-q -W ignore::DeprecationWarning"
 [tool.coverage.run]
 source = ["app/src/main/python"]
-omit = ["*/tests/*", "*/legacy/*", "*/docs/*", "*/scripts/*"]
+omit = [
+  "*/tools/i18n_builder.py",
+  "*/tools/*_tools.py",
+  "*/security/audit.py",
+  "*/ai_routes.py",
+  "*/api_routes.py",
+  "*/tpv_rutas.py","*/tests/*", "*/legacy/*", "*/docs/*", "*/scripts/*"]

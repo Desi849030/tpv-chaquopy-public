@@ -1200,7 +1200,7 @@ class TestResponseValidators:
 #  23. security/crypto
 # =======================================================
 
-class SecurityCrypto:
+class TestSecurityCrypto:
     def test_hash_verify(self):
         from security.crypto import hash_password, verify_password
         h=hash_password('test123')

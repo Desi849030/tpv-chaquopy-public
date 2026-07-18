@@ -1,0 +1,10 @@
+[run]
+source = app/src/main/python
+omit =
+    */tests/*
+    */legacy/*
+    */docs/*
+    */scripts/*
+
+[report]
+fail_under = 40

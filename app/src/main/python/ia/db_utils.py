@@ -2,13 +2,23 @@
 import sqlite3, os
 
 def _db():
-    """Get database connection."""
-    for p in ['tpv_datos.db',
-              os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tpv_datos.db')]:
-        if os.path.exists(p):
-            c = sqlite3.connect(p, timeout=3, check_same_thread=False)
-            c.row_factory = sqlite3.Row
-            return c
+    """Get a connection from Android/Termux data storage or local fallback."""
+    files_dir = os.environ.get("TPV_FILES_DIR")
+    paths = []
+    if files_dir:
+        paths.append(os.path.join(files_dir, "tpv_datos.db"))
+    paths.extend([
+        "tpv_datos.db",
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tpv_datos.db"),
+    ])
+    for path in paths:
+        if os.path.exists(path):
+            try:
+                connection = sqlite3.connect(path, timeout=3, check_same_thread=False)
+                connection.row_factory = sqlite3.Row
+                return connection
+            except sqlite3.Error:
+                continue
     return None
 
 # v13: Query result cache

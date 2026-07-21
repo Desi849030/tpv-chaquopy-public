@@ -57,6 +57,7 @@ _XSS = re.compile(r'<script|javascript:|on\w+=|<iframe|<object|data:', re.IGNORE
 _SQLI_PATTERNS = ["';", "--", "/*", "*/", "xp_", "UNION ", "SELECT ", "INSERT ", "DELETE ", "UPDATE ", "DROP "]
 
 
+_OBFUSC_KEY = None
 def _get_key():
     global _OBFUSC_KEY
     if _OBFUSC_KEY is None:

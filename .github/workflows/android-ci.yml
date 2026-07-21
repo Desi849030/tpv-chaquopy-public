@@ -20,11 +20,16 @@ jobs:
           
       - name: Install Test Dependencies
         run: |
-          pip install pytest pytest-cov
-          
-      - name: Run AI Tests with Coverage
+          pip install -r requirements.txt pytest pytest-cov
+
+      - name: Run Python Tests with Real Coverage Gate
         run: |
-          pytest --cov=app/src/main/python --cov-report=xml --cov-report=term-missing
+          pytest \
+            --cov=app/src/main/python \
+            --cov-config=.coveragerc \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --cov-fail-under=50
           
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v4

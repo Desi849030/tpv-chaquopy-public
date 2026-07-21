@@ -1,10 +1,42 @@
 [run]
 source = app/src/main/python
+relative_files = True
 omit =
     */tests/*
-    */legacy/*
-    */docs/*
-    */scripts/*
+    # One-off source migration/rewrite utilities, never imported at runtime.
+    */patch_*.py
+    */migrar_tablas_tienda.py
+    # Process launchers contain blocking server loops rather than app logic.
+    */server.py
+    */start_server.py
+    # Superseded package: runtime uses the top-level supabase_sync.py.
+    */sync/*
+    # Superseded split-blueprint fragments. app.py registers only publico_bp,
+    # agent_chat_bp, tools_bp, usuarios_bp and i18n_bp from modules/.
+    */modules/admin*.py
+    */modules/ai*.py
+    */modules/assistant*.py
+    */modules/auth.py
+    */modules/catalogo_bp.py
+    */modules/clientes_bp.py
+    */modules/diag_bp.py
+    */modules/docs_dev_bp.py
+    */modules/inventory*.py
+    */modules/loyalty*.py
+    */modules/metrics.py
+    */modules/reportes_bp.py
+    */modules/settings*.py
+    */modules/system.py
+    */modules/telecom*.py
+    */modules/tests_info_bp.py
+    */modules/tienda*.py
+    */modules/ventas*.py
 
 [report]
-fail_under = 40
+fail_under = 50
+show_missing = True
+skip_empty = True
+precision = 1
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:

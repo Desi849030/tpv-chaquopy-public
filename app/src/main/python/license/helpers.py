@@ -37,11 +37,24 @@ def _get_secret():
 # ═════════════════════════════════════════════════════
 
 def _db():
-    for p in ['tpv_datos.db', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tpv_datos.db')]:
-        if os.path.exists(p):
-            c = sqlite3.connect(p, timeout=3, check_same_thread=False)
-            c.row_factory = sqlite3.Row
-            return c
+    """Open the application database, including Android/isolated data dirs."""
+    data_dir = os.environ.get("TPV_FILES_DIR")
+    paths = []
+    if data_dir:
+        paths.append(os.path.join(data_dir, "tpv_datos.db"))
+    paths.extend([
+        "tpv_datos.db",
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "tpv_datos.db"),
+    ])
+    for p in paths:
+        if os.path.exists(p) or (data_dir and p == paths[0]):
+            try:
+                os.makedirs(os.path.dirname(os.path.abspath(p)), exist_ok=True)
+                c = sqlite3.connect(p, timeout=3, check_same_thread=False)
+                c.row_factory = sqlite3.Row
+                return c
+            except sqlite3.Error:
+                continue
     return None
 
 

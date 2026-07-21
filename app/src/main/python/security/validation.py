@@ -3,6 +3,12 @@ from functools import wraps
 from datetime import datetime
 
 
+# Vectores XSS que pueden permanecer después de retirar etiquetas HTML.
+_XSS = re.compile(
+    r"javascript:|on\w+\s*=|data\s*:\s*text/html|<\s*(?:script|iframe|object)\b",
+    re.IGNORECASE,
+)
+
 
 def sanitize_string(val):
     if not isinstance(val, str): return val
@@ -21,7 +27,7 @@ def sanitize_data(data):
     return data
 
 
-_SQLI_PATTERNS = ["'; ", "--", "/*", "*/", "xp_", "UNION ", "SELECT ", "INSERT ", "DELETE ", "UPDATE ", "DROP "]
+_SQLI_PATTERNS = ["';", "--", "/*", "*/", "xp_", "UNION ", "SELECT ", "INSERT ", "DELETE ", "UPDATE ", "DROP"]
 
 # Patrones regex para vectores que no se detectan por subcadena simple:
 # - Tautologias:  ' OR '1'='1 ,  " OR 1=1 ,  ) OR (1=1

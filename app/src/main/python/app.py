@@ -62,7 +62,7 @@ from database import (
     crear_tablas, cargar_estado, guardar_estado,
     consultar_ventas_por_fecha, consultar_resumen_ventas,
     consultar_inventario_actual, consultar_ganancias_por_dia,
-    agregar_log, obtener_info_db, DB_FILE,
+    agregar_log, obtener_info_db, obtener_conexion, DB_FILE,
     login_usuario, crear_usuario, cambiar_password, resetear_password,
     listar_usuarios, desactivar_usuario,
     registrar_entrada_producto, obtener_inventario_general,

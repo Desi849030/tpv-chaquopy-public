@@ -56,7 +56,9 @@ def _clean_text(text):
     return text
 
 _sessions = {}
-_sessions_lock = __import__('threading').Lock()
+# RLock is required because set_session_role acquires the lock and delegates to
+# _get_session, which protects the same state as well.
+_sessions_lock = __import__('threading').RLock()
 
 def _get_session(sid):
     with _sessions_lock:

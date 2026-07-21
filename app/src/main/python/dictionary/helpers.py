@@ -100,11 +100,11 @@ def _levenshtein(a, b):
     if len(b) == 0:
         return len(a)
     prev = list(range(len(b) + 1))
-    for i, ca in enumerate(a):
-        curr = [i + 1]
-        for j, cb in enumerate(b):
+    for i, ca in enumerate(a, start=1):
+        curr = [i]
+        for j, cb in enumerate(b, start=1):
             cost = 0 if ca == cb else 1
-            curr.append(min(curr[j] + 1, prev[j + 1] + cost, prev[j] + 1))
+            curr.append(min(curr[j - 1] + 1, prev[j] + 1, prev[j - 1] + cost))
         prev = curr
     return prev[-1]
 

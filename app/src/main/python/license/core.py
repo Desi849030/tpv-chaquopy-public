@@ -246,7 +246,11 @@ def requiere_licencia(f):
 def generar_device_id():
     """Genera un ID único para el dispositivo basado en hardware."""
     import platform
-    info = f"{platform.node()}-{platform.machine()}-{os.getlogin() if hasattr(os,'getlogin') else 'unknown'}"
+    try:
+        login = os.getlogin()
+    except (AttributeError, OSError):
+        login = os.environ.get("USER", "unknown")
+    info = f"{platform.node()}-{platform.machine()}-{login}"
     hash_id = hashlib.sha256(info.encode()).hexdigest()[:12].upper()
     return f"TPV-{hash_id}"
 

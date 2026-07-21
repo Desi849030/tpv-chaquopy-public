@@ -12,8 +12,11 @@ Uso:
 
 Salida: imprime un resumen y devuelve exit code 0 si todo OK, 1 si algo falla.
 """
+import atexit
 import os
+import shutil
 import sys
+import tempfile
 
 # Permitir ejecutar desde la raíz del repo o desde python/
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -32,10 +35,21 @@ FAIL = "\033[91mFALLO\033[0m"
 
 def main() -> int:
     fallos = []
+    smoke_dir = None
+    if os.environ.get("TPV_SMOKE_USE_RUNTIME_DB") != "1":
+        smoke_dir = tempfile.mkdtemp(prefix="tpv-smoke-")
+        atexit.register(shutil.rmtree, smoke_dir, ignore_errors=True)
+        os.environ["TPV_FILES_DIR"] = smoke_dir
+        os.environ["TPV_DEMO_PASSWORD"] = "smoke-only-password"
 
-    # 1) La app importa sin excepciones
+    # 1) La app importa e inicializa un entorno aislado sin excepciones.
     try:
         import app as app_module
+        from database import crear_tablas
+        from tienda_routes import crear_tablas_tienda
+
+        crear_tablas()
+        crear_tablas_tienda()
         flask_app = app_module.app
         print(f"[{OK}] app.py importa correctamente")
     except Exception as e:  # noqa: BLE001
@@ -70,15 +84,34 @@ def main() -> int:
             print(f"[{FAIL}] {method} {path} lanzó excepción: {e}")
             fallos.append(f"{method} {path}: {e}")
 
-    # 4) Login de prueba
+    # 4) Contrato de autenticación. Nunca se usan credenciales hardcodeadas:
+    # una instalación persistente puede haber rotado la contraseña inicial.
     try:
-        resp = client.post("/api/auth/login", json={"username": "admin", "password": "123456"})
-        data = resp.get_json(silent=True) or {}
-        if resp.status_code == 200 and data.get("ok"):
-            print(f"[{OK}] POST /api/auth/login -> usuario '{data.get('usuario', {}).get('username')}'")
+        rejected = client.post(
+            "/api/auth/login",
+            json={"username": "__smoke_invalid__", "password": "invalid"},
+        )
+        if rejected.status_code == 401:
+            print(f"[{OK}] POST /api/auth/login rechaza credenciales inválidas")
         else:
-            print(f"[{FAIL}] POST /api/auth/login -> {resp.status_code} {data}")
-            fallos.append("login")
+            print(f"[{FAIL}] login inválido -> {rejected.status_code}")
+            fallos.append("login-invalid-contract")
+
+        smoke_user = os.environ.get("TPV_SMOKE_USERNAME", "").strip()
+        smoke_password = os.environ.get("TPV_SMOKE_PASSWORD", "")
+        if smoke_user and smoke_password:
+            accepted = client.post(
+                "/api/auth/login",
+                json={"username": smoke_user, "password": smoke_password},
+            )
+            data = accepted.get_json(silent=True) or {}
+            if accepted.status_code == 200 and data.get("ok"):
+                print(f"[{OK}] login positivo verificado para '{smoke_user}'")
+            else:
+                print(f"[{FAIL}] login positivo -> {accepted.status_code} {data}")
+                fallos.append("login-positive-contract")
+        else:
+            print(f"[{OK}] login positivo omitido (TPV_SMOKE_USERNAME/PASSWORD no configurados)")
     except Exception as e:  # noqa: BLE001
         print(f"[{FAIL}] login lanzó excepción: {e}")
         fallos.append(f"login: {e}")

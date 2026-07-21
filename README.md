@@ -1,15 +1,16 @@
 # TPV Ultra Smart
 
 [![Android CI](https://github.com/Desi849030/tpv-chaquopy-public/actions/workflows/android-ci.yml/badge.svg)](https://github.com/Desi849030/tpv-chaquopy-public/actions/workflows/android-ci.yml)
-![Coverage](https://img.shields.io/badge/coverage-54.4%25-brightgreen)
-![Tests](https://img.shields.io/badge/tests-562%20passed-brightgreen)
+![Version](https://img.shields.io/badge/version-6.13.1-blue)
+![Coverage](https://img.shields.io/badge/coverage-54.9%25-brightgreen)
+![Tests](https://img.shields.io/badge/tests-570%20passed-brightgreen)
 ![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.14-blue)
 ![Android](https://img.shields.io/badge/Android-API%2021%2B-3DDC84)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 Aplicación Android de punto de venta **offline-first** con backend Flask embebido mediante Chaquopy, base de datos SQLite y agente IA por roles. Las operaciones esenciales funcionan localmente; Supabase es una capacidad opcional de sincronización.
 
-> Estado de calidad validado: **562 pruebas superadas, 71 omitidas y 54.38% de cobertura**. El workflow bloquea la compilación del APK si los tests fallan o la cobertura baja del 50%.
+> Estado de calidad validado: **570 pruebas superadas, 71 omitidas y 54.88% de cobertura**. El workflow bloquea la compilación del APK si los tests fallan o la cobertura baja del 50%.
 
 ## Capacidades principales
 
@@ -61,7 +62,7 @@ Acceso total no significa seguridad desactivada: autenticación, sesión válida
 
 ## IA y documentación offline
 
-Durante la inicialización, una selección curada de documentos se sincroniza con la tabla SQLite `documentacion`. En Android se incluyen copias mínimas dentro del paquete Python, por lo que la IA conserva contexto técnico sin conexión.
+Durante la inicialización, todos los documentos de texto disponibles en la raíz y en `docs/` se sincronizan con la tabla SQLite `documentacion`. Los nombres relativos evitan colisiones entre evidencias históricas. La tarea Gradle `syncOfflineDocumentation` empaqueta ese mismo corpus dentro del source set Python del APK; también existen resúmenes esenciales como fallback.
 
 Ejemplos para el rol Desarrollador:
 
@@ -104,13 +105,23 @@ cd tpv-chaquopy-public
 python -m pip install --upgrade -r requirements.txt pytest pytest-cov
 ```
 
-Ejecutar backend:
+Preparar y ejecutar en navegador:
 
 ```bash
-PYTHONPATH=app/src/main/python python app/src/main/python/app.py
+bash tools/tpv_termux_setup.sh
+bash tools/tpv_termux_run.sh
 ```
 
-> En una instalación nueva, revisa la consola de inicialización y cambia inmediatamente las credenciales de desarrollo. No publiques contraseñas ni bases de datos.
+Alternativa manual:
+
+```bash
+export PYTHONPATH="$PWD/app/src/main/python"
+export TPV_FRONTEND_DIR="$PWD/app/src/main/assets/frontend"
+export TPV_FILES_DIR="$HOME/.local/share/tpv-ultra-smart"
+python app/src/main/python/app.py
+```
+
+Abre `http://127.0.0.1:5000`. En una instalación nueva, revisa la consola de inicialización y cambia inmediatamente las credenciales de desarrollo. No publiques contraseñas ni bases de datos.
 
 ## Calidad y cobertura
 
@@ -128,8 +139,8 @@ python -m pytest \
 Resultado de referencia:
 
 ```text
-562 passed, 71 skipped
-TOTAL 11928 statements, 5441 missing, 54.38% coverage
+570 passed, 71 skipped
+TOTAL 12084 statements, 5452 missing, 54.88% coverage
 ```
 
 La configuración de cobertura excluye únicamente launchers bloqueantes, scripts de migración y fragmentos sustituidos que no forman parte del runtime registrado. No se excluyen módulos activos para inflar el porcentaje.
@@ -180,6 +191,7 @@ El workflow de GitHub Actions ejecuta primero tests y cobertura; el APK solo se 
 - [Contribuir](docs/CONTRIBUTING.md)
 - [Checklist de release](docs/CHECKLIST_RELEASE.md)
 - [Roadmap APK 10/10](docs/ROADMAP_10_10.md)
+- [Organización del repositorio](docs/REPOSITORY_STRUCTURE.md)
 - [Política de seguridad](SECURITY.md)
 - [Historial de cambios](CHANGELOG.md)
 

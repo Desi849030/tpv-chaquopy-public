@@ -1,11 +1,12 @@
-"""start_server.py v9.0.0 — 5 blindajes + IA Edge v9.0 + MPOC + SSE + Loyalty Omnicanal + IA Aprendizaje
-FIX v9.0:
+"""Android bootstrap — security, IA Edge, MPOC, SSE and Loyalty.
+Historical component fixes:
   - Eliminado doble registro de assistant_bp (ya se registra en app.py)
   - Set TPV_DB_PATH para que ia_assistant.py encuentre la DB rapido
   - IA Assistant se carga DESPUES de crear_tablas para asegurar DB lista
 """
 import sys,os,threading,traceback,time
-print("[TPV] Iniciando start_server.py v9.0.0...",flush=True)
+from version import __version__
+print(f"[TPV] Iniciando TPV Ultra Smart v{__version__}...",flush=True)
 try:
     from java.lang import System
     FILES_DIR=str(System.getProperty("TPV_FILES_DIR"))
@@ -161,4 +162,4 @@ try:
 except Exception as e:
     print(f"[TPV] IA Ping fallo: {e}",flush=True)
 
-print("[TPV] start_server.py v9.0.0 completado con 5 blindajes + IA Edge v9.0 + MPOC + SSE + Loyalty activos",flush=True)
+print(f"[TPV] Bootstrap v{__version__} completado: seguridad, IA Edge, MPOC, SSE y Loyalty activos",flush=True)

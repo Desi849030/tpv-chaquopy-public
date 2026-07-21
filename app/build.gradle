@@ -15,8 +15,8 @@ android {
         // Versionado dinámico para CI/CD (cae a los valores por defecto en local)
         def envVersionCode = System.getenv("VERSION_CODE")
         def envVersionName = System.getenv("VERSION_NAME")
-        versionCode 6000000
-        versionName "6.0.0"
+        versionCode 6013001
+        versionName "6.13.1"
 
         ndk {
             abiFilters "arm64-v8a", "armeabi-v7a"
@@ -39,6 +39,9 @@ android {
     sourceSets {
         main {
             assets.srcDirs = ["src/main/assets"]
+            // The generated source contains repository documentation so the IA
+            // can read the same guides inside the offline APK.
+            python.srcDirs = ["src/main/python", "$buildDir/generated/pythonDocs"]
         }
     }
 
@@ -88,6 +91,25 @@ android {
             excludes += ['META-INF/DEPENDENCIES']
         }
     }
+}
+
+// Package every repository document supported by documentation_loader.py.
+// Keeping the copy under build/ avoids duplicating documentation in Git.
+def generatedPythonDocs = file("$buildDir/generated/pythonDocs/knowledge/repository")
+tasks.register("syncOfflineDocumentation", Sync) {
+    into generatedPythonDocs
+    from(rootProject.projectDir) {
+        include "README.md", "CHANGELOG.md", "SECURITY.md", "LICENSE"
+        include "requirements.txt", "pyproject.toml", "docker-compose.yml"
+    }
+    from(rootProject.file("docs")) {
+        into "docs"
+        include "**/*.md", "**/*.txt", "**/*.yaml", "**/*.yml", "**/*.json", "**/*.toml"
+    }
+}
+
+tasks.named("preBuild").configure {
+    dependsOn tasks.named("syncOfflineDocumentation")
 }
 
 dependencies {

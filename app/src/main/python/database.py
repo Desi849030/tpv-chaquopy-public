@@ -339,7 +339,7 @@ def crear_tablas():
 def _crear_desarrollador_default(cursor, conn):
     cursor.execute("SELECT COUNT(*) AS total FROM usuarios")
     if cursor.fetchone()["total"] == 0:
-        password_default = "dev2024"
+        password_default = os.environ.get("TPV_DEMO_PASSWORD") or secrets.token_urlsafe(14)
         hash_pw, salt    = _hash_password(password_default)
         uid = f"user-{uuid.uuid4().hex[:8]}"
         cursor.execute("""
@@ -349,7 +349,9 @@ def _crear_desarrollador_default(cursor, conn):
         """, (uid, "desarrollador", "Desarrollador Principal",
               "desarrollador", hash_pw, salt, "sistema"))
         conn.commit()
-        print(f"✅ Desarrollador creado — usuario: desarrollador | pass: {password_default}")
+        print("✅ Desarrollador inicial creado")
+        print(f"   usuario: desarrollador | contraseña inicial: {password_default}")
+        print("   Cambia esta contraseña antes de usar el sistema con datos reales.")
 
 # ══════════════════════════════════════════════════════════════
 #  USUARIOS

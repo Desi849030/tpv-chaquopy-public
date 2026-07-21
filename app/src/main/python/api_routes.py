@@ -6,6 +6,7 @@ import json
 from datetime import datetime
 from flask import Blueprint, request, jsonify
 from database import obtener_info_db, obtener_conexion
+from version import __version__
 
 api_bp = Blueprint('api', __name__)
 
@@ -15,7 +16,7 @@ def api_health():
         info = obtener_info_db()
         return jsonify({
             "ok": True,
-            "version": "6.13.1",
+            "version": __version__,
             "timestamp": datetime.now().isoformat(),
             "db_info": {
                 "archivo": info.get("archivo", ""),
@@ -24,7 +25,7 @@ def api_health():
             }
         })
     except Exception as e:
-        return jsonify({"ok": True, "version": "6.13.1", "error": str(e)})
+        return jsonify({"ok": True, "version": __version__, "error": str(e)})
 
 @api_bp.route("/api/config/publica", methods=["GET"])
 def api_config_publica():

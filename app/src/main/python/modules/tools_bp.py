@@ -244,16 +244,19 @@ def tool_inventario_resumen():
 
 @tools_bp.route('/api/tools/lealtad/resumen')
 def tool_lealtad_resumen():
+    conn = None
     try:
         from db_connection import obtener_conexion
         conn = obtener_conexion()
         c = conn.cursor()
         c.execute("SELECT COUNT(*) FROM clientes")
         total_clientes = c.fetchone()[0]
-        conn.close()
         return jsonify({"ok": True, "clientes_inscritos": total_clientes, "puntos_total": 0})
     except Exception:
         return jsonify({"ok": True, "clientes_inscritos": 0, "puntos_total": 0})
+    finally:
+        if conn is not None:
+            conn.close()
 
 
 @tools_bp.route('/api/tools/licencia/info')
@@ -280,6 +283,7 @@ def tool_setting_list():
 
 @tools_bp.route('/api/tools/tienda/resumen')
 def tool_tienda_resumen():
+    conn = None
     try:
         from db_connection import obtener_conexion
         conn = obtener_conexion()
@@ -288,10 +292,12 @@ def tool_tienda_resumen():
         productos = c.fetchone()[0]
         c.execute("SELECT COUNT(*) FROM clientes")
         clientes = c.fetchone()[0]
-        conn.close()
         return jsonify({"ok": True, "productos": productos, "clientes": clientes})
     except Exception:
         return jsonify({"ok": True, "productos": 0, "clientes": 0})
+    finally:
+        if conn is not None:
+            conn.close()
 
 
 @tools_bp.route('/api/tools/validacion/check')

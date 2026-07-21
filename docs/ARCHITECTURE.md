@@ -107,7 +107,7 @@ El Desarrollador tiene capacidad `all`. Los controles técnicos de autenticació
 
 `documentation_loader.py` sincroniza documentos curados con la tabla `documentacion`.
 
-En Termux/desktop se prefieren los archivos completos del repositorio. En APK se usan copias mínimas de `app/src/main/python/knowledge/` cuando los documentos raíz no están empaquetados.
+En Termux/desktop se leen directamente los archivos del checkout. Antes de compilar Android, la tarea Gradle `syncOfflineDocumentation` copia todos los documentos soportados al source set Python generado. El APK conserva además resúmenes esenciales en `app/src/main/python/knowledge/` como fallback.
 
 La sincronización es idempotente y ocurre al crear/inicializar las tablas.
 

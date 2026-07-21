@@ -11,10 +11,13 @@ import database as db
 
 
 def _developer_id() -> str:
-    with db.obtener_conexion() as conn:
+    conn = db.obtener_conexion()
+    try:
         return conn.execute(
             "SELECT usuario_id FROM usuarios WHERE username='desarrollador'"
         ).fetchone()[0]
+    finally:
+        conn.close()
 
 
 def test_user_and_license_lifecycle():

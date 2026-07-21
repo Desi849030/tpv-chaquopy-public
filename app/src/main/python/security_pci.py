@@ -8,11 +8,20 @@ _MASTER_KEY=None
 def _ensure_key():
     global _MASTER_KEY
     if _MASTER_KEY is None:
+        data_dir = os.environ.get("TPV_FILES_DIR", os.getcwd())
+        key_file = os.path.join(data_dir, ".tpv_secret_key")
         try:
-            kf=os.path.join(os.path.dirname(os.path.abspath(__file__)),".tpv_secret_key")
-            secret=open(kf).read().strip() if os.path.exists(kf) else os.urandom(32).hex()
-        except Exception:
-            secret=os.urandom(32).hex()
+            os.makedirs(data_dir, exist_ok=True)
+            if os.path.exists(key_file):
+                with open(key_file, "r", encoding="utf-8") as stream:
+                    secret = stream.read().strip()
+            else:
+                secret = os.urandom(32).hex()
+                with open(key_file, "w", encoding="utf-8") as stream:
+                    stream.write(secret)
+                os.chmod(key_file, 0o600)
+        except OSError:
+            secret = os.urandom(32).hex()
         _MASTER_KEY=hashlib.sha256((secret+"pci_key").encode()).digest()
     return _MASTER_KEY
 def tokenize_pan(pan_text):

@@ -14,6 +14,7 @@ Este directorio es la fuente técnica y operativa de TPV Ultra Smart. Los docume
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Colaboradores | Flujo de cambios y estándares |
 | [CHECKLIST_RELEASE.md](CHECKLIST_RELEASE.md) | Release | Validaciones previas a publicación |
 | [ROADMAP_10_10.md](ROADMAP_10_10.md) | Producto/calidad | Prioridades para una APK de nivel producción |
+| [REPOSITORY_STRUCTURE.md](REPOSITORY_STRUCTURE.md) | Mantenimiento | Fuentes de verdad, organización y política de archivos |
 | [telecom_diagnostico.md](telecom_diagnostico.md) | Desarrollador | Diagnóstico de red y telecomunicaciones |
 
 ## Producto y evaluación
@@ -25,6 +26,7 @@ Este directorio es la fuente técnica y operativa de TPV Ultra Smart. Los docume
 | [DEMO_3_MIN.md](DEMO_3_MIN.md) | Demostración breve |
 | [EVALUACION_ACADEMICA.md](EVALUACION_ACADEMICA.md) | Evidencia de evaluación |
 | [MATRIZ_EVALUACION_APK.md](MATRIZ_EVALUACION_APK.md) | Matriz de calidad APK |
+| [evidencias/README.md](evidencias/README.md) | Alcance y reglas de la evidencia histórica |
 
 ## Reglas documentales
 

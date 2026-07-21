@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import database
 from app import app
-from documentation_loader import available_document_names, sync_documentation
+from documentation_loader import available_document_names, find_document, sync_documentation
 
 
 def test_documentation_sync_is_idempotent_and_contains_developer_policy():
@@ -18,6 +18,9 @@ def test_documentation_sync_is_idempotent_and_contains_developer_policy():
         assert "README.md" in names
         assert "DEVELOPER_GUIDE.md" in names
         assert "ROADMAP_10_10.md" in names
+        assert "docs/DEFENSA.md" in names
+        assert "docs/openapi.yaml" in names
+        assert find_document(conn, "leer documento defensa")[0] == "docs/DEFENSA.md"
         row = conn.execute(
             "SELECT contenido, lineas FROM documentacion WHERE nombre=?",
             ("DEVELOPER_GUIDE.md",),
@@ -49,3 +52,16 @@ def test_developer_can_read_guide_through_agent_endpoint():
     assert payload["ok"] is True
     assert payload["tipo"] == "documento"
     assert "DEVELOPER_GUIDE.md" in payload["respuesta"]
+
+    arbitrary = client.post("/api/agent/chat", json={
+        "mensaje": "leer documento defensa",
+    }).get_json()
+    assert arbitrary["tipo"] == "documento"
+    assert "docs/DEFENSA.md" in arbitrary["respuesta"]
+
+    inventory = client.post("/api/agent/chat", json={
+        "mensaje": "documentación",
+    }).get_json()
+    assert inventory["tipo"] == "docs"
+    assert inventory["data"]["roles"]["desarrollador"]["access"] == ["all"]
+    assert len(inventory["data"]["documentos"]) >= 20

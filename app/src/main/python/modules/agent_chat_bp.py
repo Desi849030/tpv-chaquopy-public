@@ -13,6 +13,7 @@ import os
 from datetime import datetime
 
 from anon_identity import ensure_anon_client_id, ensure_request_id, identity_payload
+from version import __version__
 
 agent_chat_bp = Blueprint('agent_chat', __name__)
 
@@ -88,7 +89,7 @@ def agent_chat():
                     return jsonify({
                             "ok": True, "tipo": "docs",
                             "respuesta": (
-                                "📚 DOCUMENTACIÓN COMPLETA — TPV Ultra Smart v8.14.0\n\n"
+                                f"📚 DOCUMENTACIÓN COMPLETA — TPV Ultra Smart v{__version__}\n\n"
                                 "══════════ ESTADÍSTICAS ══════════\n"
                                 f"🔹 Archivos totales: {d['estadisticas']['total_archivos']}\n"
                                 f"🔹 Líneas de código: {d['estadisticas']['lineas_codigo']}\n"
@@ -147,8 +148,37 @@ def agent_chat():
             session["doc_reader"] = {"file": "", "lines": [], "page": 0}
         
         reader = session["doc_reader"]
+
+        # Generic resolver: any synchronized repository document can be opened,
+        # not only the aliases maintained below for common requests.
+        read_commands = ("leer", "lee", "abrir", "abre", "mostrar", "muestra", "documento")
+        if rol == "desarrollador" and any(command in msg_lower for command in read_commands):
+            from db_connection import obtener_conexion
+            from documentation_loader import find_document
+
+            conn = obtener_conexion()
+            try:
+                matched = find_document(conn, msg_lower)
+            finally:
+                conn.close()
+            if matched:
+                filename, content, _line_count = matched
+                lines = content.splitlines()
+                reader = {"file": filename, "lines": lines, "page": 0}
+                session["doc_reader"] = reader
+                page_size = 20
+                total_pages = max(1, (len(lines) + page_size - 1) // page_size)
+                text = "\n".join(lines[:page_size])
+                return jsonify({
+                    "ok": True,
+                    "tipo": "documento",
+                    "respuesta": (
+                        f"📄 {filename} (página 1/{total_pages} — {len(lines)} líneas)\n\n"
+                        f"{text}\n\nEscribe 'siguiente' para continuar leyendo."
+                    ),
+                })
         
-        # Comando: leer documento X
+        # Common aliases kept for concise natural-language commands.
         doc_map = {
                 "licencia": "LICENSE", "licence": "LICENSE", "license": "LICENSE",
                 "api reference": "docs/API_REFERENCE.md", "api_ref": "docs/API_REFERENCE.md", "endpoints": "docs/API_REFERENCE.md",

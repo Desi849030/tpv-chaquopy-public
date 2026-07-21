@@ -1,6 +1,6 @@
 """
 ╔══════════════════════════════════════════════════════════════╗
-║   app.py  —  TPV ULTRA SMART v6.0                          ║
+║   app.py  —  TPV ULTRA SMART                                        ║
 ║   Sin configuración de entorno expuesta                     ║
 ╚══════════════════════════════════════════════════════════════╝
 """
@@ -42,14 +42,14 @@ except ImportError:
 import json, threading, webbrowser, time, pathlib, secrets as _secrets
 from datetime import datetime
 from functools import wraps
+from version import __version__
 
-# ── Clave secreta segura (generada una vez, persistida) ──────
-try:
-    _KEY_FILE = pathlib.Path(__file__).parent / ".tpv_secret_key"
-except NameError:
-    _KEY_FILE = pathlib.Path(_CARPETA) / ".tpv_secret_key"
+# ── Clave secreta segura (generada una vez en almacenamiento escribible) ──
+_DATA_DIR = pathlib.Path(os.environ.get("TPV_FILES_DIR", os.getcwd()))
+_DATA_DIR.mkdir(parents=True, exist_ok=True)
+_KEY_FILE = _DATA_DIR / ".tpv_secret_key"
 if not _KEY_FILE.exists():
-    _KEY_FILE.write_text(_secrets.token_hex(32))
+    _KEY_FILE.write_text(_secrets.token_hex(32), encoding="utf-8")
     try: _KEY_FILE.chmod(0o600)
     except Exception: pass
 
@@ -122,8 +122,15 @@ try:
     from modules.i18n_bp import i18n_bp
 except ImportError: i18n_bp = None
 
-# ── Carpeta del proyecto — detectada automáticamente ─────────
-_CARPETA = os.environ.get("TPV_FRONTEND_DIR") or _CARPETA_DETECTADA or os.getcwd()
+# ── Frontend: variable explícita, layout Android estándar o fallback legado ──
+_MODULE_DIR = pathlib.Path(__file__).resolve().parent
+_BUNDLED_FRONTEND = _MODULE_DIR.parent / "assets" / "frontend"
+_CARPETA = (
+    os.environ.get("TPV_FRONTEND_DIR")
+    or (str(_BUNDLED_FRONTEND) if _BUNDLED_FRONTEND.is_dir() else None)
+    or _CARPETA_DETECTADA
+    or os.getcwd()
+)
 # Sin static_folder ni template_folder — Flask NO busca carpetas especiales.
 # Los archivos se leen directamente con open() desde _CARPETA.
 app = Flask(__name__, static_folder=None)
@@ -338,14 +345,19 @@ def api_login():
         return jsonify({"error": "Faltan credenciales"}), 400
     resultado = login_usuario(username, password)
     if resultado:
-        session.permanent   = True
-        session["usuario"]  = resultado
+        session_token = _secrets.token_urlsafe(32)
+        resultado = dict(resultado)
+        resultado["session_token"] = session_token
+        session.clear()
+        session.permanent = True
+        session["usuario"] = resultado
+        session["session_token"] = session_token
         return jsonify({"ok": True, "usuario": resultado})
     return jsonify({"error": "Credenciales incorrectas"}), 401
 
 @app.route("/api/auth/logout", methods=["POST"])
 def api_logout():
-    session.pop("usuario", None)
+    session.clear()
     return jsonify({"ok": True})
 
 @app.route("/api/auth/me", methods=["GET"])
@@ -1439,24 +1451,37 @@ def error_500(e):
 # ══════════════════════════════════════════════════════════════
 #  ARRANQUE
 # ══════════════════════════════════════════════════════════════
-def abrir_navegador():
+def _server_settings():
+    host = os.environ.get("TPV_HOST", "0.0.0.0")
+    try:
+        port = int(os.environ.get("TPV_PORT", "5000"))
+    except ValueError:
+        port = 5000
+    return host, port
+
+
+def abrir_navegador(port):
     time.sleep(1.5)
-    try: webbrowser.open("http://localhost:5000")
-    except: pass
+    try:
+        webbrowser.open(f"http://127.0.0.1:{port}")
+    except Exception:
+        pass
+
 
 def main():
     print("\n" + "="*58)
-    print("   TPV ULTRA SMART v6.0")
+    print(f"   TPV ULTRA SMART v{__version__}")
     print("="*58)
     crear_tablas()
     crear_tablas_tienda()
     estado = cargar_estado()
     if estado:
         print(f" {len(estado.get('productos',[]))} productos | {len(estado.get('historialVentas',[]))} ventas")
+    host, port = _server_settings()
     print(f" Supabase: {'✅ Activo' if _sb.SUPABASE_OK else '⚠️  Solo local'}")
-    print(" Servidor: http://localhost:5000")
-    print(" Login:    desarrollador / dev2024\n")
-    threading.Thread(target=abrir_navegador, daemon=True).start()
+    print(f" Servidor: http://127.0.0.1:{port}")
+    print(" Credenciales iniciales: revisa la salida de inicialización y rota la contraseña.\n")
+    threading.Thread(target=abrir_navegador, args=(port,), daemon=True).start()
 
     # Suprimir el WARNING rojo de Werkzeug (servidor de desarrollo)
     import logging
@@ -1471,14 +1496,14 @@ def main():
             if i[4][0].startswith(('192.168.','10.','172.')) and ':' not in i[4][0]
         ]))
         print("\n" + "="*48)
-        print("  TPV ULTRA SMART v6.0 - Servidor activo")
-        print("  Local : http://localhost:5000")
+        print(f"  TPV ULTRA SMART v{__version__} - Servidor activo")
+        print(f"  Local : http://127.0.0.1:{port}")
         for ip in ips:
-            print(f"  WiFi  : http://{ip}:5000")
+            print(f"  WiFi  : http://{ip}:{port}")
         print("="*48 + "\n")
     except Exception:
         pass
-    app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)
+    app.run(host=host, port=port, debug=False, use_reloader=False)
 
 
 

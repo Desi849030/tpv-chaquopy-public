@@ -14,6 +14,14 @@
 - Documentación curada sincronizada a SQLite para lectura offline por la IA.
 - Índice de documentación, política de seguridad y plantillas de colaboración.
 - Workflow actualizado a acciones mantenidas y jobs con permisos mínimos.
+- Indexación recursiva de toda la documentación del repositorio para la IA.
+- Eliminación de claves versionadas, backups, parches de una sola ejecución y tests obsoletos.
+- Frontend de navegador resuelto directamente desde `app/src/main/assets/frontend`.
+- Host y puerto configurables mediante `TPV_HOST` y `TPV_PORT`.
+- Secretos runtime movidos a `TPV_FILES_DIR`, compatible con el filesystem de Android.
+- Versión pública unificada en `6.13.1` para Python, Gradle, health y documentación.
+- Arranque de navegador verificado con frontend real y puerto configurable.
+- Conexiones SQLite pendientes corregidas; suite validada con `ResourceWarning` como error.
 
 
 ## [v8.9] — 2026-06-15

@@ -340,6 +340,7 @@ def cierre_caja():
 @ventas_core_bp.route("/api/ventas/cierres")
 @login_required
 def listar_cierres():
+    conn = None
     try:
         conn = obtener_conexion()
         cur = conn.cursor()
@@ -351,10 +352,12 @@ def listar_cierres():
             "id": r[0], "fecha": r[1], "total": r[2], "transacciones": r[3],
             "efectivo": r[4], "tarjeta": r[5], "transferencia": r[6], "cerrado_por": r[7],
         } for r in cur.fetchall()]
-        conn.close()
         return jsonify({"ok": True, "cierres": cierres})
     except Exception:
         return jsonify({"ok": True, "cierres": []})
+    finally:
+        if conn is not None:
+            conn.close()
 
 
 @ventas_core_bp.route("/api/ventas/totales")

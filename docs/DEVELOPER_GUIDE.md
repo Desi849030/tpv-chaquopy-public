@@ -51,7 +51,7 @@ La IA nunca debe mostrar contraseñas, tokens, claves privadas, hashes reutiliza
 
 ## Documentación offline
 
-Al inicializar la base de datos, el backend sincroniza una selección de documentos con la tabla SQLite `documentacion`. Esto permite que la IA los consulte sin conexión.
+Al inicializar la base de datos, el backend sincroniza con SQLite todos los documentos de texto disponibles en la raíz y en `docs/`. Gradle copia el corpus al source set Python generado para que también esté completo dentro del APK. Además se crean alias estables y resúmenes esenciales de fallback. Esto permite que la IA los consulte sin conexión.
 
 Documentos prioritarios:
 

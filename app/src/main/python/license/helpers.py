@@ -14,20 +14,26 @@ def _get_secret():
         return _SECRET
     with _LK:
         if not _SECRET:
-            # Buscar en .tpv_secret_key o generar una
-            for p in ['.tpv_secret_key', os.path.join(os.path.dirname(os.path.abspath(__file__)), '.tpv_secret_key')]:
+            data_dir = os.environ.get("TPV_FILES_DIR", os.getcwd())
+            key_path = os.path.join(data_dir, ".tpv_secret_key")
+            # The module path is read only in APK; it is read only as a legacy
+            # migration fallback and is never used as a write destination.
+            legacy_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".tpv_secret_key")
+            for path in (key_path, legacy_path):
                 try:
-                    with open(p, 'r') as f:
-                        _SECRET = f.read().strip()
+                    with open(path, "r", encoding="utf-8") as key_file:
+                        _SECRET = key_file.read().strip()
                         break
-                except Exception:  # noqa: broad-except
+                except OSError:
                     pass
             if not _SECRET:
                 _SECRET = os.urandom(32).hex()
                 try:
-                    with open('.tpv_secret_key', 'w') as f:
-                        f.write(_SECRET)
-                except Exception:  # noqa: broad-except
+                    os.makedirs(data_dir, exist_ok=True)
+                    with open(key_path, "w", encoding="utf-8") as key_file:
+                        key_file.write(_SECRET)
+                    os.chmod(key_path, 0o600)
+                except OSError:
                     pass
     return _SECRET
 

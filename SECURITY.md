@@ -44,6 +44,8 @@ Nunca se deben versionar:
 
 Si un secreto se publica, eliminar el archivo no es suficiente: hay que revocar y rotar el secreto inmediatamente.
 
+> Aviso de migración: versiones históricas incluyeron claves runtime generadas dentro del árbol Python. Esas claves fueron retiradas de `main` y no deben reutilizarse. Cada instalación debe generar claves nuevas en `TPV_FILES_DIR`; cualquier integración que hubiera confiado en claves antiguas debe rotarlas.
+
 ## Dependencias
 
 Chaquopy usa Python 3.10 y el stack Flask 2.2 fijado en `app/build.gradle`. Termux con Python 3.14 usa dependencias modernas mediante marcadores en `requirements.txt`. Toda actualización debe probar ambos caminos.

@@ -1,9 +1,20 @@
-#!/bin/bash
-set -e
-cd "$(dirname "$0")/.."
-echo "Validando sintaxis..."
-python3 -m py_compile app/src/main/python/app.py
-python3 -m py_compile app/src/main/python/db_connection.py
-echo "Tests basicos..."
-python3 -m pytest tests/test_basic.py tests/mocks/test_routes.py -q --tb=short 2>/dev/null || { echo "FAIL"; exit 1; }
-echo "OK"
+#!/usr/bin/env bash
+# Local equivalent of the Python quality job in GitHub Actions.
+set -Eeuo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+python -m py_compile \
+  app/src/main/python/app.py \
+  app/src/main/python/database.py \
+  app/src/main/python/documentation_loader.py
+
+python -m pytest \
+  --cov=app/src/main/python \
+  --cov-config=.coveragerc \
+  --cov-report=term-missing \
+  --cov-report=xml:coverage.xml \
+  --cov-fail-under=50
+
+echo "Validation successful"

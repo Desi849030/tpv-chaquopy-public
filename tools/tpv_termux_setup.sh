@@ -1,29 +1,32 @@
-#!/bin/bash
-set -e
-FAILS=0
-RED='\033[0;31m'; GREEN='\033[0;32m'; CYAN='\033[0;36m'; NC='\033[0m'
-ok()   { echo -e "  ${GREEN}[OK]${NC} $1"; }
-fail() { echo -e "  ${RED}[FAIL]${NC} $1"; FAILS=$((FAILS+1)); }
-step() { echo -e "\n${CYAN}--- $1 ---${NC}"; }
+#!/data/data/com.termux/files/usr/bin/bash
+# Preparación reproducible de TPV Ultra Smart en Termux.
+set -Eeuo pipefail
 
-echo -e "\n${CYAN}=== TPV ULTRA SMART v2.5.5 — Tests ===${NC}\n"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+PYTHON_DIR="$ROOT/app/src/main/python"
+DATA_DIR="${TPV_FILES_DIR:-$HOME/.local/share/tpv-ultra-smart}"
 
-PROJ_DIR="$(cd "$(dirname "$0")" && pwd)"
-PYTHON_DIR="$PROJ_DIR/app/src/main/python"
+command -v python >/dev/null 2>&1 || {
+  echo "Python no está instalado. Ejecuta: pkg install python" >&2
+  exit 1
+}
 
-step "1 — Limpiando secrets temporales"
-rm -f "$PYTHON_DIR/.tpv_secret" "$PYTHON_DIR/.tpv_hmac_secret" 2>/dev/null
-export PYTHONPATH="$PYTHON_DIR"
-ok "PYTHONPATH=$PYTHONPATH"
+mkdir -p "$DATA_DIR"
+export PYTHONPATH="$PYTHON_DIR${PYTHONPATH:+:$PYTHONPATH}"
+export TPV_FILES_DIR="$DATA_DIR"
+export TPV_FRONTEND_DIR="$ROOT/app/src/main/assets/frontend"
 
-step "2 — Tests unitarios (142)"
-cd "$PROJ_DIR"
-python -m pytest tests/ -v --tb=short 2>&1 | tail -25
+printf '\n==> Instalando dependencias\n'
+python -m pip install --upgrade -r "$ROOT/requirements.txt" pytest pytest-cov
 
-step "3 — Simulacion APK (38 tests)"
-if [ -f "$PROJ_DIR/test_simulacion_apk_full.py" ]; then
-    python "$PROJ_DIR/test_simulacion_apk_full.py" 2>&1 | tail -10
-fi
+printf '\n==> Ejecutando suite y gate de cobertura\n'
+cd "$ROOT"
+python -m pytest \
+  --cov=app/src/main/python \
+  --cov-config=.coveragerc \
+  --cov-report=term-missing \
+  --cov-report=xml:coverage.xml \
+  --cov-fail-under=50
 
-echo ""
-echo -e "${CYAN}=== Hecho ===${NC}"
+rm -f .coverage coverage.xml
+printf '\nTermux listo. Arranque: bash tools/tpv_termux_run.sh\n'

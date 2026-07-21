@@ -158,6 +158,7 @@ def search(query, session_id=None, category=None, limit=5):
                     conditions.append('(LOWER(key) LIKE ? OR LOWER(value) LIKE ?)')
                     params.extend([f'%{term}%', f'%{term}%'])
             if not conditions:
+                conn.close()
                 return []
             sql = 'SELECT * FROM ia_memory WHERE ' + ' AND '.join(conditions)
             sql += ' AND (expires_at IS NULL OR expires_at > datetime("now","localtime"))'

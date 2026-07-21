@@ -8,6 +8,7 @@ from ia.db_utils import q, fmt_money, pct
 from ia.catalog import P, O
 from ia.metrics import F, M
 from ia.handlers_base import _fm, _follow, _get_sug
+from version import __version__
 
 def _q(sql, params=()):
     """Wrapper seguro: retorna lista de dicts o [].
@@ -586,7 +587,7 @@ def handle_dev(agent, t, m=None):
         tables = _q("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
         table_list = ", ".join(t['name'] for t in tables[:15]) if tables else "N/A"
         
-        msg = (f"Sistema TPV Ultra Smart v8.14\n"
+        msg = (f"Sistema TPV Ultra Smart v{__version__}\n"
                f"===========================\n"
                f"Python: {sys.version.split()[0]}\n"
                f"Productos: {prods}\n"
@@ -678,6 +679,23 @@ def handle_dev(agent, t, m=None):
     if any(k in tl for k in ['lee el', 'leer el', 'abrir el', 'mostrar el',
                               'ver el', 'documento', 'lee la', 'leer la',
                               'dame el', 'quiero ver', 'quiero leer']):
+        try:
+            from db_connection import obtener_conexion
+            from documentation_loader import find_document
+
+            conn = obtener_conexion()
+            try:
+                matched = find_document(conn, tl)
+            finally:
+                conn.close()
+            if matched:
+                name, content, total = matched
+                preview = '\n'.join(content.splitlines()[:25])
+                suffix = f"\n\n... ({total - 25} lineas mas.)" if total > 25 else ""
+                return f"--- {name} ({total} lineas) ---\n\n{preview}{suffix}"
+        except Exception:
+            pass
+
         doc_map = {
             'readme': 'README.md', 'licencia': 'LICENSE', 'license': 'LICENSE',
             'api': 'API_REFERENCE.md', 'endpoints': 'API_REFERENCE.md',

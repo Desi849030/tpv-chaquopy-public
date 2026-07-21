@@ -7,6 +7,8 @@
 .tpv_secret_key
 *.keystore
 *.jks
+supabase_config.json
+.supabase_config.json
 
 # Databases and runtime state
 *.db
@@ -73,6 +75,9 @@ test.puml
 test.svg
 
 # Backup and one-off patch files
+*.backup
+*.bak
+*.old
 *_backup*
 *_backup.py
-patch_v*.py
+patch_*.py

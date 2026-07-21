@@ -21,5 +21,12 @@ collect_ignore = [
 ]
 
 
+def pytest_sessionstart(session):
+    """Create the isolated schema before tests from any testpath are executed."""
+    import database
+
+    database.crear_tablas()
+
+
 def pytest_sessionfinish(session, exitstatus):
     shutil.rmtree(_TEST_DATA_DIR, ignore_errors=True)

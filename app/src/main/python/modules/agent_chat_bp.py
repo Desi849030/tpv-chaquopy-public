@@ -159,6 +159,9 @@ def agent_chat():
                 "contribuir": "docs/CONTRIBUTING.md", "contributing": "docs/CONTRIBUTING.md", "como contribuir": "docs/CONTRIBUTING.md",
                 "checklist": "docs/CHECKLIST_RELEASE.md", "release": "docs/CHECKLIST_RELEASE.md", "lanzamiento": "docs/CHECKLIST_RELEASE.md",
                 "requisitos": "requirements.txt", "requirements": "requirements.txt", "dependencias": "requirements.txt",
+                "desarrollador": "DEVELOPER_GUIDE.md", "developer": "DEVELOPER_GUIDE.md",
+                "acceso total": "DEVELOPER_GUIDE.md", "sin limites": "DEVELOPER_GUIDE.md",
+                "roadmap": "ROADMAP_10_10.md", "10/10": "ROADMAP_10_10.md",
                 "registro cambios": "CHANGELOG.md", "changelog": "CHANGELOG.md", "cambios": "CHANGELOG.md", "historial": "CHANGELOG.md",
             "readme": "README.md", "changelog": "CHANGELOG.md",
             "api": "docs/API_REFERENCE.md", "arquitectura": "docs/ARCHITECTURE.md",
@@ -172,7 +175,7 @@ def agent_chat():
             if rol == "desarrollador" and keyword in msg_lower and ("leer" in msg_lower or "documento" in msg_lower or "abrir" in msg_lower or "mostrar" in msg_lower or keyword == msg_lower.strip()):
                 from db_connection import obtener_conexion
                 conn = obtener_conexion()
-                row = conn.execute("SELECT contenido FROM documentacion WHERE nombre=?", (filename,)).fetchone()
+                row = conn.execute("SELECT contenido FROM documentacion WHERE nombre=?", (os.path.basename(filename),)).fetchone()
                 conn.close()
                 if row:
                     lines = row[0].split('\n')
@@ -184,7 +187,7 @@ def agent_chat():
                     page_size = 20
                     page_lines = lines[:page_size]
                     total_pages = (len(lines) + page_size - 1) // page_size
-                    texto = "".join(page_lines)
+                    texto = "\n".join(page_lines)
                     return jsonify({
                         "ok": True, "tipo": "documento",
                         "respuesta": (
@@ -207,7 +210,7 @@ def agent_chat():
             page_lines = reader["lines"][start:start+page_size]
             total_pages = (len(reader["lines"]) + page_size - 1) // page_size
             session["doc_reader"] = reader
-            texto = "".join(page_lines)
+            texto = "\n".join(page_lines)
             return jsonify({
                 "ok": True, "tipo": "documento",
                 "respuesta": (
@@ -235,6 +238,9 @@ def agent_chat():
                 "contribuir": "docs/CONTRIBUTING.md", "contributing": "docs/CONTRIBUTING.md", "como contribuir": "docs/CONTRIBUTING.md",
                 "checklist": "docs/CHECKLIST_RELEASE.md", "release": "docs/CHECKLIST_RELEASE.md", "lanzamiento": "docs/CHECKLIST_RELEASE.md",
                 "requisitos": "requirements.txt", "requirements": "requirements.txt", "dependencias": "requirements.txt",
+                "desarrollador": "DEVELOPER_GUIDE.md", "developer": "DEVELOPER_GUIDE.md",
+                "acceso total": "DEVELOPER_GUIDE.md", "sin limites": "DEVELOPER_GUIDE.md",
+                "roadmap": "ROADMAP_10_10.md", "10/10": "ROADMAP_10_10.md",
                 "registro cambios": "CHANGELOG.md", "changelog": "CHANGELOG.md", "cambios": "CHANGELOG.md", "historial": "CHANGELOG.md",
                 "readme": "README.md", "changelog": "CHANGELOG.md",
                 "api": "docs/API_REFERENCE.md", "arquitectura": "docs/ARCHITECTURE.md",
@@ -245,11 +251,12 @@ def agent_chat():
             for keyword, filename in doc_map.items():
                 if keyword in msg_lower and any(k in msg_lower for k in ["leer", "abrir", "mostrar", "ver", "documento", "doc", "lee", "abre", "muestra", "dame", "quiero", "enseñame", "mostrame", "consultar", "revisar", "ver el", "ver la", "lee el", "lee la", "abre el", "abre la", "dame el", "dame la", "mostrar el", "mostrar la", "quiero ver", "quiero leer", "quiero el", "necesito ver", "necesito leer", "puedes mostrar", "puedes darme", "podrias mostrar", "podrias darme"]):
                     try:
-                        import sqlite3
-                        import os as _os
-                        db = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'tpv_datos.db')
-                        conn = sqlite3.connect(db)
-                        row = conn.execute("SELECT contenido FROM documentacion WHERE nombre=?", (filename,)).fetchone()
+                        from db_connection import obtener_conexion
+                        conn = obtener_conexion()
+                        row = conn.execute(
+                            "SELECT contenido FROM documentacion WHERE nombre=?",
+                            (os.path.basename(filename),),
+                        ).fetchone()
                         conn.close()
                         if row:
                             lines = row[0].split("\n")

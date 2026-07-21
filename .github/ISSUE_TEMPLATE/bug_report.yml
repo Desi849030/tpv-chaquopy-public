@@ -1,0 +1,53 @@
+name: Reporte de error
+description: Informa un comportamiento reproducible del APK o backend
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: "No publiques contraseñas, tokens, bases de datos ni datos personales. Para vulnerabilidades usa SECURITY.md."
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área
+      options:
+        - Android / WebView
+        - Backend Flask
+        - SQLite / datos
+        - Agente IA
+        - Sincronización Supabase
+        - CI / build
+        - Documentación
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Versión o commit
+      placeholder: "v6.0.0 / abc1234"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Pasos para reproducir
+      placeholder: "1. ...\n2. ...\n3. ..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Resultado esperado
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Resultado actual
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Entorno
+      placeholder: "Android/Termux, versión Python, arquitectura, conexión"

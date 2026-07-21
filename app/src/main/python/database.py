@@ -323,6 +323,15 @@ def crear_tablas():
             pass  # Columna ya existe, ignorar
 
     _crear_desarrollador_default(cursor, conn)
+
+    # Curated documentation is copied into SQLite so the developer IA can read
+    # project guidance without network access. Failure must never block startup.
+    try:
+        from documentation_loader import sync_documentation
+        sync_documentation(conn)
+    except Exception as exc:
+        print(f"⚠️ No se pudo sincronizar documentación offline: {exc}")
+
     conn.close()
     print(f"✅ Base de datos lista: {DB_FILE}")
 

@@ -1,5 +1,21 @@
 # CHANGELOG — TPV Ultra Smart
 
+## [Unreleased]
+
+### Calidad y compatibilidad
+- Gate de cobertura real >= 50% en CI.
+- Suite soportada con más de 500 pruebas aisladas.
+- Compatibilidad de dependencias para Chaquopy Python 3.10 y Termux Python 3.14.
+- Resolución de SQLite mediante `TPV_FILES_DIR` en servicios IA y licencias.
+
+### Documentación y repositorio
+- README reorganizado con estado verificable, arquitectura, roles y comandos actuales.
+- Guía formal del rol Desarrollador con acceso funcional `all`.
+- Documentación curada sincronizada a SQLite para lectura offline por la IA.
+- Índice de documentación, política de seguridad y plantillas de colaboración.
+- Workflow actualizado a acciones mantenidas y jobs con permisos mínimos.
+
+
 ## [v8.9] — 2026-06-15
 
 ### 🎨 UI/UX

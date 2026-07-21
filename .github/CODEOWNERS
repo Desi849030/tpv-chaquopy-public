@@ -1,0 +1,9 @@
+# Default maintainer
+* @Desi849030
+
+# Sensitive areas
+/.github/ @Desi849030
+/app/src/main/python/security/ @Desi849030
+/app/src/main/python/license/ @Desi849030
+/app/src/main/python/database.py @Desi849030
+/app/build.gradle @Desi849030

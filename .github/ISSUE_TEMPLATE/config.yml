@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Reporte privado de seguridad
+    url: https://github.com/Desi849030/tpv-chaquopy-public/security/advisories/new
+    about: No publiques vulnerabilidades o secretos en un issue abierto.

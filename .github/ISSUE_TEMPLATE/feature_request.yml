@@ -1,0 +1,42 @@
+name: Propuesta de mejora
+description: Sugiere una capacidad o mejora técnica
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema
+      description: Describe la necesidad, no solo la solución.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Propuesta
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Impacto
+      options:
+        - Operación crítica
+        - Calidad y seguridad
+        - Experiencia de usuario
+        - Mantenimiento
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Criterios de aceptación
+      placeholder: "- [ ] ..."
+  - type: checkboxes
+    id: compatibility
+    attributes:
+      label: Compatibilidad considerada
+      options:
+        - label: Operación offline
+        - label: Android/Chaquopy Python 3.10
+        - label: Termux Python 3.14
+        - label: Roles y seguridad
+        - label: Pruebas y documentación

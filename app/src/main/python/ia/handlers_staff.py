@@ -685,6 +685,9 @@ def handle_dev(agent, t, m=None):
             'schema': 'DATABASE_SCHEMA.md', 'database': 'DATABASE_SCHEMA.md',
             'base de datos': 'DATABASE_SCHEMA.md', 'changelog': 'CHANGELOG.md',
             'cambios': 'CHANGELOG.md',
+            'desarrollador': 'DEVELOPER_GUIDE.md', 'developer': 'DEVELOPER_GUIDE.md',
+            'acceso total': 'DEVELOPER_GUIDE.md', 'sin limites': 'DEVELOPER_GUIDE.md',
+            'roadmap': 'ROADMAP_10_10.md', '10/10': 'ROADMAP_10_10.md',
         }
         for kw, fname in doc_map.items():
             if kw in tl:
@@ -744,7 +747,9 @@ def handle_dev(agent, t, m=None):
 
     # --- Ayuda ---
     if any(k in tl for k in ['como usar', 'ayuda', 'help', 'manual', 'guia', 'que puedes']):
-        return ("Guia de Desarrollador:\n\n"
+        return ("Guia de Desarrollador — acceso funcional sin limites de rol:\n\n"
+                "  Capacidad: all (todos los modulos y herramientas).\n"
+                "  La autenticacion, auditoria y proteccion de secretos siguen activas.\n\n"
                 "  - 'estado' o 'sistema': Telemetria completa\n"
                 "  - 'integridad': Verificar BD\n"
                 "  - 'ejecutar SELECT ...': SQL executor\n"

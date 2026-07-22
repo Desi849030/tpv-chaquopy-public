@@ -21,6 +21,7 @@ Usa **GitHub Security Advisories** del repositorio cuando esté disponible o con
 - autenticación y autorización por roles;
 - rol Desarrollador con acceso funcional `all`;
 - sesiones con token y validación de desajustes;
+- onboarding local de un solo uso sin contraseña predeterminada;
 - hashing de contraseñas y migración de hashes heredados;
 - sanitización XSS/SQLi;
 - SQLite con integridad y WAL;

@@ -8,6 +8,10 @@ Su capacidad es `all`: puede usar todos los módulos, herramientas y datos de la
 
 El acceso total no desactiva los controles técnicos. Siempre se mantienen autenticación, sesión válida, sanitización, auditoría, integridad transaccional y protección de secretos. La IA nunca revela contraseñas, tokens, claves privadas ni hashes reutilizables.
 
+## Configuración inicial
+
+La primera ejecución muestra un onboarding local de un solo uso para crear la contraseña del Desarrollador. No existe contraseña predeterminada visible y el login queda bloqueado hasta completar la configuración.
+
 ## Consultas sugeridas para la IA
 
 - estado del sistema

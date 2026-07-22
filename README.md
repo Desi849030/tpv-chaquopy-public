@@ -2,15 +2,15 @@
 
 [![Android CI](https://github.com/Desi849030/tpv-chaquopy-public/actions/workflows/android-ci.yml/badge.svg)](https://github.com/Desi849030/tpv-chaquopy-public/actions/workflows/android-ci.yml)
 ![Version](https://img.shields.io/badge/version-6.13.1-blue)
-![Coverage](https://img.shields.io/badge/coverage-55.4%25-brightgreen)
-![Tests](https://img.shields.io/badge/tests-579%20passed-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-55.6%25-brightgreen)
+![Tests](https://img.shields.io/badge/tests-582%20passed-brightgreen)
 ![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.14-blue)
 ![Android](https://img.shields.io/badge/Android-API%2021%2B-3DDC84)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 Aplicación Android de punto de venta **offline-first** con backend Flask embebido mediante Chaquopy, base de datos SQLite y agente IA por roles. Las operaciones esenciales funcionan localmente; Supabase es una capacidad opcional de sincronización.
 
-> Estado de calidad validado: **579 pruebas superadas, 71 omitidas y 55.43% de cobertura**. El workflow bloquea la compilación del APK si los tests fallan o la cobertura baja del 50%.
+> Estado de calidad validado: **582 pruebas superadas, 71 omitidas y 55.61% de cobertura**. El workflow bloquea la compilación del APK si los tests fallan o la cobertura baja del 50%.
 
 ## Capacidades principales
 
@@ -123,7 +123,7 @@ export TPV_FILES_DIR="$HOME/.local/share/tpv-ultra-smart"
 python app/src/main/python/app.py
 ```
 
-Abre `http://127.0.0.1:5000`. En una instalación nueva, revisa la consola de inicialización y cambia inmediatamente las credenciales de desarrollo. No publiques contraseñas ni bases de datos.
+Abre `http://127.0.0.1:5000`. En una instalación nueva, la pantalla **Configuración inicial segura** solicita crear la contraseña del Desarrollador. No existe una contraseña predeterminada visible ni es necesario revisar Logcat. El endpoint solo acepta loopback y se desactiva después del primer uso.
 
 ## Calidad y cobertura
 
@@ -141,8 +141,8 @@ python -m pytest \
 Resultado de referencia:
 
 ```text
-579 passed, 71 skipped
-TOTAL 12377 statements, 5516 missing, 55.43% coverage
+582 passed, 71 skipped
+TOTAL 12435 statements, 5520 missing, 55.61% coverage
 ```
 
 La configuración de cobertura excluye únicamente launchers bloqueantes, scripts de migración y fragmentos sustituidos que no forman parte del runtime registrado. No se excluyen módulos activos para inflar el porcentaje.

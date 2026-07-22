@@ -76,6 +76,7 @@ from database import (
 ,
     guardar_historial_diario_local, obtener_historial_diario_local,
     obtener_historial_detalle_local,
+    desarrollador_requiere_configuracion, configurar_desarrollador_inicial,
 )
 
 from supabase_sync import (
@@ -338,8 +339,47 @@ def serve_static(filename):
     return '', 404
 
 # ══════════════════════════════════════════════════════════════
-#  AUTH
+#  AUTH / CONFIGURACIÓN INICIAL LOCAL
 # ══════════════════════════════════════════════════════════════
+def _request_es_local():
+    return request.remote_addr in {"127.0.0.1", "::1", "localhost"}
+
+
+@app.route("/api/setup/status", methods=["GET"])
+def api_setup_status():
+    return jsonify({
+        "ok": True,
+        "required": desarrollador_requiere_configuracion(),
+        "username": "desarrollador",
+        "local_only": True,
+    })
+
+
+@app.route("/api/setup/developer", methods=["POST"])
+def api_setup_developer():
+    if not _request_es_local():
+        return jsonify({"ok": False, "error": "Configuración permitida solo desde el dispositivo local"}), 403
+    if not desarrollador_requiere_configuracion():
+        return jsonify({"ok": False, "error": "Configuración inicial ya completada"}), 409
+    data = request.get_json(silent=True) or {}
+    password = str(data.get("password", ""))
+    confirmation = str(data.get("confirmacion", ""))
+    if password != confirmation:
+        return jsonify({"ok": False, "error": "Las contraseñas no coinciden"}), 400
+    errors = []
+    if len(password) < 10: errors.append("mínimo 10 caracteres")
+    if not any(char.islower() for char in password): errors.append("una minúscula")
+    if not any(char.isupper() for char in password): errors.append("una mayúscula")
+    if not any(char.isdigit() for char in password): errors.append("un número")
+    if errors:
+        return jsonify({"ok": False, "error": "La contraseña requiere " + ", ".join(errors)}), 400
+    result = configurar_desarrollador_inicial(password)
+    if not result.get("ok"):
+        return jsonify(result), 409
+    agregar_log("Configuración inicial del Desarrollador completada", "security", "desarrollador")
+    return jsonify({"ok": True, "username": "desarrollador", "message": "Acceso inicial configurado"})
+
+
 @app.route("/api/auth/login", methods=["POST"])
 def api_login():
     datos    = request.get_json(force=True, silent=True) or {}
@@ -347,6 +387,11 @@ def api_login():
     password = datos.get("password", "")
     if not username or not password:
         return jsonify({"error": "Faltan credenciales"}), 400
+    if username == "desarrollador" and desarrollador_requiere_configuracion():
+        return jsonify({
+            "error": "Completa la configuración inicial en este dispositivo",
+            "code": "SETUP_REQUIRED",
+        }), 428
     resultado = login_usuario(username, password)
     if resultado:
         session_token = _secrets.token_urlsafe(32)

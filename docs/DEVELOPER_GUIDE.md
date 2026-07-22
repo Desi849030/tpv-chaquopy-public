@@ -74,6 +74,19 @@ abre el schema de base de datos
 qué puede hacer el desarrollador
 ```
 
+## Configuración inicial segura
+
+En la primera ejecución, la interfaz solicita crear la contraseña del usuario `desarrollador`. El backend genera una credencial interna aleatoria inutilizable para acceso normal y bloquea el login hasta completar el onboarding.
+
+Controles:
+
+- `GET /api/setup/status` no revela secretos;
+- `POST /api/setup/developer` solo acepta loopback;
+- mínimo 10 caracteres, mayúscula, minúscula y número;
+- operación atómica en SQLite;
+- endpoint deshabilitado permanentemente después de configurarse;
+- no se imprime la contraseña en consola o Logcat.
+
 ## Flujo recomendado de mantenimiento
 
 ```bash

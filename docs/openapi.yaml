@@ -206,3 +206,29 @@ paths:
       responses:
         "200": {description: Metodología de Ingeniería en Telecomunicaciones}
         "403": {description: Requiere rol Desarrollador}
+
+  /api/setup/status:
+    get:
+      summary: Consultar si la configuración inicial local está pendiente
+      responses:
+        "200": {description: Estado sin información sensible}
+
+  /api/setup/developer:
+    post:
+      summary: Crear contraseña inicial del Desarrollador
+      description: Solo loopback y una única ejecución por instalación.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password, confirmacion]
+              properties:
+                password: {type: string, minLength: 10, format: password}
+                confirmacion: {type: string, minLength: 10, format: password}
+      responses:
+        "200": {description: Configuración completada}
+        "400": {description: Contraseña inválida o no coincide}
+        "403": {description: Solicitud no local}
+        "409": {description: Configuración ya completada}

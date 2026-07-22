@@ -27,6 +27,7 @@
 - Blueprint Telecom activado con endpoints exclusivos del Desarrollador.
 - Métricas telecom corregidas: RTT HTTP, P95, jitter observado, fallos, goodput, DNS, TCP y TLS.
 - Metodología académica añadida con unidades, fórmulas, límites y procedimiento experimental.
+- Onboarding local de un solo uso para crear la contraseña inicial del Desarrollador sin Logcat ni credenciales hardcodeadas.
 
 
 ## [v8.9] — 2026-06-15

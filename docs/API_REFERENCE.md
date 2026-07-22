@@ -1,7 +1,7 @@
 # Referencia de API — TPV Ultra Smart v6.13.1
 
 > Documento autogenerado a partir de decoradores Flask `route/get/post/put/delete/patch`.
-> Total de endpoints declarados: **343** en **47** módulos.
+> Total de endpoints declarados: **345** en **47** módulos.
 > Generado: 2026-07-22
 
 > Los permisos dependen de los decoradores y controles de sesión de cada función.
@@ -10,7 +10,7 @@
 
 - [`ai_routes.py`](#ai-routes) — 12 endpoints
 - [`api_routes.py`](#api-routes) — 2 endpoints
-- [`app.py`](#app) — 75 endpoints
+- [`app.py`](#app) — 77 endpoints
 - [`dictionary/routes.py`](#dictionaryroutes) — 5 endpoints
 - [`ia/proactive_routes.py`](#iaproactive-routes) — 3 endpoints
 - [`ia_assistant_routes.py`](#ia-assistant-routes) — 5 endpoints
@@ -100,6 +100,8 @@ Archivo: `app/src/main/python/app.py`
 | GET | `/api/reportes/exportar` | `api_reportes_exportar` |  |
 | GET | `/` | `index` | Sirve index.html buscando en la carpeta del proyecto y subcarpetas. |
 | GET | `/<path:filename>` | `serve_static` | Sirve archivos .js, .css etc buscando en la carpeta del proyecto y subcarpetas. |
+| GET | `/api/setup/status` | `api_setup_status` |  |
+| POST | `/api/setup/developer` | `api_setup_developer` |  |
 | POST | `/api/auth/login` | `api_login` |  |
 | POST | `/api/auth/logout` | `api_logout` |  |
 | GET | `/api/auth/me` | `api_me` |  |

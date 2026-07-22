@@ -324,6 +324,13 @@ def crear_tablas():
 
     _crear_desarrollador_default(cursor, conn)
 
+    # Existing installations created before onboarding receive the one-time
+    # setup flag. Completed installations keep their persisted value "0".
+    conn.execute(
+        "INSERT OR IGNORE INTO app_state (clave, valor) VALUES ('developer_setup_required', '1')"
+    )
+    conn.commit()
+
     # Curated documentation is copied into SQLite so the developer IA can read
     # project guidance without network access. Failure must never block startup.
     try:
@@ -350,8 +357,54 @@ def _crear_desarrollador_default(cursor, conn):
               "desarrollador", hash_pw, salt, "sistema"))
         conn.commit()
         print("✅ Desarrollador inicial creado")
-        print(f"   usuario: desarrollador | contraseña inicial: {password_default}")
-        print("   Cambia esta contraseña antes de usar el sistema con datos reales.")
+        print("   Completa la configuración inicial desde la pantalla de la aplicación.")
+
+
+def desarrollador_requiere_configuracion():
+    """Return True until the local first-run developer setup is completed."""
+    conn = obtener_conexion()
+    try:
+        row = conn.execute(
+            "SELECT valor FROM app_state WHERE clave='developer_setup_required'"
+        ).fetchone()
+        return row is None or str(row[0]) != "0"
+    finally:
+        conn.close()
+
+
+def configurar_desarrollador_inicial(password):
+    """Atomically replace the generated password during local onboarding."""
+    conn = obtener_conexion()
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        row = conn.execute(
+            "SELECT valor FROM app_state WHERE clave='developer_setup_required'"
+        ).fetchone()
+        if row is not None and str(row[0]) == "0":
+            conn.rollback()
+            return {"ok": False, "error": "Configuración inicial ya completada"}
+        user = conn.execute(
+            "SELECT usuario_id FROM usuarios WHERE username='desarrollador' AND activo=1"
+        ).fetchone()
+        if not user:
+            conn.rollback()
+            return {"ok": False, "error": "Usuario Desarrollador no encontrado"}
+        password_hash, salt = _hash_password(password)
+        conn.execute(
+            "UPDATE usuarios SET password_hash=?, password_salt=? WHERE usuario_id=?",
+            (password_hash, salt, user[0]),
+        )
+        conn.execute(
+            "INSERT OR REPLACE INTO app_state (clave, valor, actualizado) "
+            "VALUES ('developer_setup_required', '0', datetime('now','localtime'))"
+        )
+        conn.commit()
+        return {"ok": True, "username": "desarrollador"}
+    except Exception as exc:
+        conn.rollback()
+        return {"ok": False, "error": str(exc)}
+    finally:
+        conn.close()
 
 # ══════════════════════════════════════════════════════════════
 #  USUARIOS

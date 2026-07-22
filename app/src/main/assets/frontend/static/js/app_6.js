@@ -681,6 +681,90 @@ async function _auth_init(intentos = 0) {
     // la sesión del servidor en diferido. El logout real queda en auth_logout().
     if (AUTH.usuario) return;
     auth_setModo('staff');
+    await auth_checkSetupInicial();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  CONFIGURACIÓN INICIAL DEL DESARROLLADOR
+// ══════════════════════════════════════════════════════════════
+async function auth_checkSetupInicial() {
+    try {
+        const response = await fetch('/api/setup/status', { cache:'no-store', credentials:'same-origin' });
+        const data = await response.json();
+        if (!response.ok || !data.required) return;
+
+        const card = document.querySelector('#login-screen .login-card');
+        const title = card?.querySelector('.login-title');
+        const modeBar = document.getElementById('modo-staff-btn')?.parentElement;
+        const clientPanel = document.getElementById('panel-cliente');
+        const subtitle = document.querySelector('#panel-staff .login-sub');
+        const username = document.getElementById('login-username');
+        const password = document.getElementById('login-password');
+        const button = document.getElementById('login-btn');
+        const footer = document.querySelector('#panel-staff .login-footer');
+
+        if (title) title.textContent = 'Configuración inicial segura';
+        if (modeBar) modeBar.style.display = 'none';
+        if (clientPanel) clientPanel.style.display = 'none';
+        if (subtitle) subtitle.innerHTML = 'Crea la contraseña del <strong>Desarrollador</strong> para este dispositivo.';
+        if (username) { username.value = 'desarrollador'; username.readOnly = true; }
+        if (password) {
+            password.value = '';
+            password.placeholder = 'Mínimo 10 caracteres';
+            password.autocomplete = 'new-password';
+        }
+
+        if (!document.getElementById('login-password-confirm')) {
+            const field = document.createElement('div');
+            field.className = 'login-field';
+            field.innerHTML = `
+                <label><i class="bi bi-shield-check me-1"></i>Confirmar contraseña</label>
+                <div class="pw-wrap">
+                    <input id="login-password-confirm" class="login-input" type="password"
+                           placeholder="Repite la contraseña" autocomplete="new-password" style="padding-right:3rem">
+                    <button type="button" class="pw-eye" onclick="auth_togglePw(this)" tabindex="-1">
+                        <i class="bi bi-eye-slash"></i>
+                    </button>
+                </div>`;
+            button?.parentElement?.insertBefore(field, button);
+        }
+        if (button) button.setAttribute('onclick', 'auth_configurarDeveloper()');
+        const buttonText = document.getElementById('lbtn-txt');
+        if (buttonText) buttonText.innerHTML = '<i class="bi bi-shield-lock-fill me-2"></i>Crear acceso seguro';
+        if (footer) footer.textContent = 'Solo funciona localmente y una sola vez. No se muestra ninguna contraseña predeterminada.';
+        password?.focus();
+    } catch (error) {
+        console.warn('[Setup] No se pudo consultar el estado inicial:', error);
+    }
+}
+
+async function auth_configurarDeveloper() {
+    const password = document.getElementById('login-password')?.value || '';
+    const confirmation = document.getElementById('login-password-confirm')?.value || '';
+    const errorBox = document.getElementById('login-error');
+    if (errorBox) errorBox.style.display = 'none';
+    if (password !== confirmation) { _loginErr('Las contraseñas no coinciden.'); return; }
+    if (password.length < 10 || !/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
+        _loginErr('Usa mínimo 10 caracteres, mayúscula, minúscula y número.');
+        return;
+    }
+    const button = document.getElementById('login-btn');
+    if (button) button.disabled = true;
+    try {
+        const response = await fetch('/api/setup/developer', {
+            method:'POST', headers:{'Content-Type':'application/json'}, credentials:'same-origin',
+            body:JSON.stringify({password, confirmacion:confirmation})
+        });
+        const data = await response.json();
+        if (!response.ok || !data.ok) { _loginErr(data.error || 'No se pudo completar la configuración.'); return; }
+        if (button) button.setAttribute('onclick', 'auth_login()');
+        document.getElementById('login-password-confirm')?.closest('.login-field')?.remove();
+        await auth_login();
+    } catch (error) {
+        _loginErr('No se pudo conectar con el servidor local.');
+    } finally {
+        if (button) button.disabled = false;
+    }
 }
 
 // ══════════════════════════════════════════════════════════════

@@ -26,6 +26,12 @@ def pytest_sessionstart(session):
     import database
 
     database.crear_tablas()
+    if database.desarrollador_requiere_configuracion():
+        result = database.configurar_desarrollador_inicial(
+            os.environ.get("TPV_DEMO_PASSWORD", "dev2024")
+        )
+        if not result.get("ok"):
+            raise RuntimeError(result.get("error", "Could not initialize test developer"))
 
 
 def pytest_sessionfinish(session, exitstatus):

@@ -584,7 +584,7 @@ def handle_dev(agent, t, m=None):
         from project_intelligence import thesis_defense_summary
         return json.dumps(thesis_defense_summary(), ensure_ascii=False, indent=2)
 
-    if any(k in tl for k in ['chaquopy', 'integracion python android', 'integración python android', 'puente android python']):
+    if any(k in tl for k in ['chaquopy', 'chacopy', 'chaquopi', 'integracion python android', 'integración python android', 'puente android python']):
         import json
         from project_intelligence import chaquopy_profile
         return json.dumps(chaquopy_profile(), ensure_ascii=False, indent=2)

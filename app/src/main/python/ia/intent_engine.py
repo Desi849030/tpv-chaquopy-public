@@ -29,12 +29,25 @@ ROLE_ACCESS = {
 }
 
 def detect_intents(text, role="cliente"):
-    from ia.normalizer import contains_any
+    import re
+    from ia.normalizer import contains_any, normalize
     results = []
+    normalized = normalize(text)
     for intent_name, intent_data in INTENTS.items():
         keywords = intent_data["k"]
         if not keywords: continue
-        matched, keyword, score = contains_any(text, keywords, threshold=0.6)
+        # Farewells are security/control-flow intents: require complete words or
+        # phrases. Fuzzy matching previously classified "Chaquopy" as "chao".
+        if intent_name == "FAREWELL":
+            matched = keyword = None
+            score = 0.0
+            for candidate in keywords:
+                normalized_candidate = normalize(candidate)
+                if re.search(r"(?:^|\s)" + re.escape(normalized_candidate) + r"(?:$|\s)", normalized):
+                    matched, keyword, score = True, candidate, 1.0
+                    break
+        else:
+            matched, keyword, score = contains_any(text, keywords, threshold=0.6)
         if matched:
             results.append({"intent": intent_name, "confidence": score, "keyword": keyword, "type": intent_data["t"]})
     results.sort(key=lambda x: x["confidence"], reverse=True)

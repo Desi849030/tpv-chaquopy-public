@@ -3,7 +3,19 @@ from __future__ import annotations
 
 from ia.agent import Agent
 from ia.handlers_staff import handle_dev
+from ia.intent_engine import detect_intents
 from ia.response_budget import BUDGET_CONFIGS, BudgetMode, ResponseBudget
+
+
+def test_chaquopy_is_not_misclassified_as_farewell():
+    intents = detect_intents("Chaquopy", role="desarrollador")
+    assert all(item["intent"] != "FAREWELL" for item in intents)
+    farewell = detect_intents("chao", role="desarrollador")
+    assert farewell[0]["intent"] == "FAREWELL"
+    for query in ("Chaquopy", "chacopy", "chaquopi"):
+        response = Agent().process(query, role="desarrollador")["answer"]
+        assert "com.chaquo.python" in response
+        assert "hasta luego" not in response.lower()
 
 
 def test_exhaustive_budget_is_large_and_explicit():

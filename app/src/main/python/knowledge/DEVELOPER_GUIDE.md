@@ -10,7 +10,7 @@ El acceso total no desactiva los controles técnicos. Siempre se mantienen auten
 
 ## Configuración inicial
 
-La primera ejecución muestra un onboarding local de un solo uso para crear la contraseña del Desarrollador. No existe contraseña predeterminada visible y el login queda bloqueado hasta completar la configuración.
+La primera ejecución muestra un onboarding local de un solo uso para crear la contraseña del Desarrollador. No existe contraseña predeterminada visible y el login queda bloqueado hasta completar la configuración. El usuario y rol `desarrollador` son únicos; staff y clientes no pueden reutilizar su contraseña. La credencial sigue siendo secreta: quien la conozca podría intentar acceder, por lo que debe complementarse con control físico y biometría.
 
 ## Consultas sugeridas para la IA
 

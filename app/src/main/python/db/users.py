@@ -122,8 +122,13 @@ def crear_usuario(datos, creado_por_rol=None, creado_por_id=None):
 
     if not username or not nombre or not password:
         return {"ok": False, "mensaje": "Faltan campos: username, nombre, password"}
+    if username.lower() == "desarrollador" or rol_nuevo == "desarrollador":
+        return {"ok": False, "mensaje": "La identidad Desarrollador es única y reservada"}
     if len(password) < 4:
         return {"ok": False, "mensaje": "Contraseña mínimo 4 caracteres"}
+    from database import password_pertenece_desarrollador
+    if password_pertenece_desarrollador(password):
+        return {"ok": False, "mensaje": "Esa contraseña está reservada para el Desarrollador"}
 
     hash_pw, salt = _hash_password(password)
     uid = f"user-{uuid.uuid4().hex[:8]}"

@@ -22,6 +22,8 @@ Usa **GitHub Security Advisories** del repositorio cuando esté disponible o con
 - rol Desarrollador con acceso funcional `all`;
 - sesiones con token y validación de desajustes;
 - onboarding local de un solo uso sin contraseña predeterminada;
+- identidad y rol Desarrollador reservados;
+- bloqueo de reutilización de la contraseña del Desarrollador en staff y clientes;
 - hashing de contraseñas y migración de hashes heredados;
 - sanitización XSS/SQLi;
 - SQLite con integridad y WAL;
@@ -29,7 +31,7 @@ Usa **GitHub Security Advisories** del repositorio cuando esté disponible o con
 - secretos fuera del repositorio;
 - CI con pruebas y gate de cobertura.
 
-El acceso funcional total del Desarrollador no autoriza a desactivar autenticación, auditoría, protección de secretos ni validación de entradas.
+El acceso funcional total del Desarrollador no autoriza a desactivar autenticación, auditoría, protección de secretos ni validación de entradas. Su contraseña es exclusiva: el backend impide registrarla en otra cuenta y reserva tanto el usuario como el rol `desarrollador`. Aun así, la contraseña no identifica físicamente a una persona; si se comparte, otra persona podría intentar usarla. Debe mantenerse privada y complementarse con biometría y control del dispositivo.
 
 ## Secretos y artefactos prohibidos
 

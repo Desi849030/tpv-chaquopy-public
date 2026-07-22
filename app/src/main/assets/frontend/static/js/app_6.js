@@ -710,7 +710,7 @@ async function auth_checkSetupInicial() {
         if (username) { username.value = 'desarrollador'; username.readOnly = true; }
         if (password) {
             password.value = '';
-            password.placeholder = 'Mínimo 10 caracteres';
+            password.placeholder = 'Mínimo 12 caracteres + símbolo';
             password.autocomplete = 'new-password';
         }
 
@@ -744,8 +744,8 @@ async function auth_configurarDeveloper() {
     const errorBox = document.getElementById('login-error');
     if (errorBox) errorBox.style.display = 'none';
     if (password !== confirmation) { _loginErr('Las contraseñas no coinciden.'); return; }
-    if (password.length < 10 || !/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
-        _loginErr('Usa mínimo 10 caracteres, mayúscula, minúscula y número.');
+    if (password.length < 12 || password.length > 128 || !/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9\s]/.test(password) || /\s/.test(password)) {
+        _loginErr('Usa 12–128 caracteres, mayúscula, minúscula, número, símbolo y sin espacios.');
         return;
     }
     const button = document.getElementById('login-btn');

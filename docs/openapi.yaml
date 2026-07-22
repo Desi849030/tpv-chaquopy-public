@@ -225,8 +225,8 @@ paths:
               type: object
               required: [password, confirmacion]
               properties:
-                password: {type: string, minLength: 10, format: password}
-                confirmacion: {type: string, minLength: 10, format: password}
+                password: {type: string, minLength: 12, format: password}
+                confirmacion: {type: string, minLength: 12, format: password}
       responses:
         "200": {description: Configuración completada}
         "400": {description: Contraseña inválida o no coincide}

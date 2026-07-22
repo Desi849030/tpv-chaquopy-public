@@ -82,10 +82,18 @@ Controles:
 
 - `GET /api/setup/status` no revela secretos;
 - `POST /api/setup/developer` solo acepta loopback;
-- mínimo 10 caracteres, mayúscula, minúscula y número;
+- 12–128 caracteres, mayúscula, minúscula, número, símbolo y sin espacios;
 - operación atómica en SQLite;
 - endpoint deshabilitado permanentemente después de configurarse;
-- no se imprime la contraseña en consola o Logcat.
+- no se imprime la contraseña en consola o Logcat;
+- `desarrollador` y el rol `desarrollador` son identidad y rol reservados;
+- ningún alta de staff o cliente puede reutilizar la contraseña vigente del Desarrollador;
+- cambios y reseteos de contraseña también aplican la reserva;
+- se recomienda activar biometría después del primer acceso.
+
+## Propiedad de la credencial
+
+La contraseña del Desarrollador es personal y exclusiva del responsable del proyecto. El sistema impide usarla para registrar otra cuenta, pero una contraseña por sí sola no puede demostrar identidad física: cualquier persona que la conozca podría intentar autenticar como Desarrollador. Por eso no debe compartirse, fotografiarse, incluirse en la tesis ni almacenarse en texto plano. La biometría y el control físico del dispositivo aportan el segundo control de propiedad.
 
 ## Flujo recomendado de mantenimiento
 

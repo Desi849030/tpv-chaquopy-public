@@ -11,7 +11,7 @@ import uuid, base64, os
 
 from database import (
     obtener_conexion, agregar_log,
-    _hash_password, verificar_password
+    _hash_password, verificar_password, password_pertenece_desarrollador
 )
 
 tienda_bp = Blueprint('tienda', __name__)
@@ -170,6 +170,8 @@ def api_registrar_cliente():
         return jsonify({'error': 'nombre, email y password son obligatorios'}), 400
     if len(password) < 4:
         return jsonify({'error': 'Contraseña mínimo 4 caracteres'}), 400
+    if password_pertenece_desarrollador(password):
+        return jsonify({'error': 'Esa contraseña está reservada y no puede usarse para registrar otra cuenta'}), 400
     if '@' not in email:
         return jsonify({'error': 'Email inválido'}), 400
 

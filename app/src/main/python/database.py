@@ -372,6 +372,41 @@ def desarrollador_requiere_configuracion():
         conn.close()
 
 
+def _password_usado_por_otra_cuenta(conn, password, excluir_username="desarrollador"):
+    rows = conn.execute(
+        "SELECT username, password_hash, password_salt FROM usuarios WHERE activo=1"
+    ).fetchall()
+    for row in rows:
+        if row[0] != excluir_username and verificar_password(password, row[1], row[2]):
+            return True
+    try:
+        clients = conn.execute(
+            "SELECT username, password_hash, password_salt FROM clientes_tienda WHERE activo=1"
+        ).fetchall()
+        for row in clients:
+            if verificar_password(password, row[1], row[2]):
+                return True
+    except sqlite3.Error:
+        pass
+    return False
+
+
+def errores_password_desarrollador(password):
+    """Strict policy for the unique highest-privilege local account."""
+    errors = []
+    if len(password) < 12: errors.append("mínimo 12 caracteres")
+    if len(password) > 128: errors.append("máximo 128 caracteres")
+    if not any(char.islower() for char in password): errors.append("una minúscula")
+    if not any(char.isupper() for char in password): errors.append("una mayúscula")
+    if not any(char.isdigit() for char in password): errors.append("un número")
+    if not any(not char.isalnum() and not char.isspace() for char in password): errors.append("un símbolo")
+    if any(char.isspace() for char in password): errors.append("sin espacios")
+    normalized = password.lower()
+    if normalized in {"desarrollador123!", "password123!", "administrador123!", "tpvultrasmart123!"}:
+        errors.append("no usar una contraseña común")
+    return errors
+
+
 def configurar_desarrollador_inicial(password):
     """Atomically replace the generated password during local onboarding."""
     conn = obtener_conexion()
@@ -389,6 +424,9 @@ def configurar_desarrollador_inicial(password):
         if not user:
             conn.rollback()
             return {"ok": False, "error": "Usuario Desarrollador no encontrado"}
+        if _password_usado_por_otra_cuenta(conn, password):
+            conn.rollback()
+            return {"ok": False, "error": "Elige una contraseña exclusiva que no use otra cuenta"}
         password_hash, salt = _hash_password(password)
         conn.execute(
             "UPDATE usuarios SET password_hash=?, password_salt=? WHERE usuario_id=?",
@@ -462,6 +500,21 @@ def login_usuario(username, password):
         conn.close()
 
 
+def password_pertenece_desarrollador(password):
+    """Detect password reuse without exposing the developer hash or password."""
+    if not password:
+        return False
+    conn = obtener_conexion()
+    try:
+        row = conn.execute(
+            "SELECT password_hash, password_salt FROM usuarios "
+            "WHERE username='desarrollador' AND activo=1"
+        ).fetchone()
+        return bool(row and verificar_password(password, row[0], row[1]))
+    finally:
+        conn.close()
+
+
 def crear_usuario(datos, creado_por_rol, creado_por_id):
     # Desarrollador sin límites, puede crear cualquier rol excepto otro desarrollador
     roles_permitidos = {
@@ -480,8 +533,12 @@ def crear_usuario(datos, creado_por_rol, creado_por_id):
 
     if not username or not nombre or not password:
         return {"ok": False, "mensaje": "Faltan campos: username, nombre, password"}
+    if username.lower() == "desarrollador" or rol_nuevo == "desarrollador":
+        return {"ok": False, "mensaje": "La identidad Desarrollador es única y reservada"}
     if len(password) < 4:
         return {"ok": False, "mensaje": "Contraseña mínimo 4 caracteres"}
+    if password_pertenece_desarrollador(password):
+        return {"ok": False, "mensaje": "Esa contraseña está reservada para el Desarrollador"}
 
     hash_pw, salt = _hash_password(password)
     uid = f"user-{uuid.uuid4().hex[:8]}"
@@ -509,12 +566,18 @@ def cambiar_password(usuario_id, password_actual, password_nueva):
     conn = obtener_conexion()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT password_hash, password_salt FROM usuarios WHERE usuario_id = ? AND activo = 1", (usuario_id,))
+        cursor.execute("SELECT username, password_hash, password_salt FROM usuarios WHERE usuario_id = ? AND activo = 1", (usuario_id,))
         u = cursor.fetchone()
         if not u:
             return {"ok": False, "mensaje": "Usuario no encontrado"}
         if not verificar_password(password_actual, u["password_hash"], u["password_salt"]):
             return {"ok": False, "mensaje": "Contraseña actual incorrecta"}
+        if u["username"] != "desarrollador" and password_pertenece_desarrollador(password_nueva):
+            return {"ok": False, "mensaje": "Esa contraseña está reservada para el Desarrollador"}
+        if u["username"] == "desarrollador" and errores_password_desarrollador(password_nueva):
+            return {"ok": False, "mensaje": "La contraseña del Desarrollador no cumple la política estricta"}
+        if u["username"] == "desarrollador" and _password_usado_por_otra_cuenta(conn, password_nueva):
+            return {"ok": False, "mensaje": "Elige una contraseña exclusiva que no use otra cuenta"}
         nh, ns = _hash_password(password_nueva)
         conn.execute("UPDATE usuarios SET password_hash=?, password_salt=? WHERE usuario_id=?", (nh, ns, usuario_id))
         conn.commit()
@@ -533,6 +596,17 @@ def resetear_password(usuario_id, password_nueva, admin_id):
         admin = cursor.fetchone()
         if not admin or admin["rol"] not in ("desarrollador", "administrador"):
             return {"ok": False, "mensaje": "Sin permisos"}
+        target = cursor.execute(
+            "SELECT username FROM usuarios WHERE usuario_id=? AND activo=1", (usuario_id,)
+        ).fetchone()
+        if not target:
+            return {"ok": False, "mensaje": "Usuario no encontrado"}
+        if target["username"] != "desarrollador" and password_pertenece_desarrollador(password_nueva):
+            return {"ok": False, "mensaje": "Esa contraseña está reservada para el Desarrollador"}
+        if target["username"] == "desarrollador" and errores_password_desarrollador(password_nueva):
+            return {"ok": False, "mensaje": "La contraseña del Desarrollador no cumple la política estricta"}
+        if target["username"] == "desarrollador" and _password_usado_por_otra_cuenta(conn, password_nueva):
+            return {"ok": False, "mensaje": "Elige una contraseña exclusiva que no use otra cuenta"}
         nh, ns = _hash_password(password_nueva)
         cursor.execute("UPDATE usuarios SET password_hash=?, password_salt=? WHERE usuario_id=?", (nh, ns, usuario_id))
         conn.commit()

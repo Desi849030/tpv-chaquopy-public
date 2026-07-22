@@ -77,6 +77,7 @@ from database import (
     guardar_historial_diario_local, obtener_historial_diario_local,
     obtener_historial_detalle_local,
     desarrollador_requiere_configuracion, configurar_desarrollador_inicial,
+    errores_password_desarrollador,
 )
 
 from supabase_sync import (
@@ -366,11 +367,7 @@ def api_setup_developer():
     confirmation = str(data.get("confirmacion", ""))
     if password != confirmation:
         return jsonify({"ok": False, "error": "Las contraseñas no coinciden"}), 400
-    errors = []
-    if len(password) < 10: errors.append("mínimo 10 caracteres")
-    if not any(char.islower() for char in password): errors.append("una minúscula")
-    if not any(char.isupper() for char in password): errors.append("una mayúscula")
-    if not any(char.isdigit() for char in password): errors.append("un número")
+    errors = errores_password_desarrollador(password)
     if errors:
         return jsonify({"ok": False, "error": "La contraseña requiere " + ", ".join(errors)}), 400
     result = configurar_desarrollador_inicial(password)

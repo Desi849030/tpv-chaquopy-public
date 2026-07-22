@@ -96,7 +96,7 @@ android {
 // Package every repository document supported by documentation_loader.py.
 // Keeping the copy under build/ avoids duplicating documentation in Git.
 def generatedPythonDocs = file("$buildDir/generated/pythonDocs/knowledge/repository")
-tasks.register("syncOfflineDocumentation", Sync) {
+def syncOfflineDocumentation = tasks.register("syncOfflineDocumentation", Sync) {
     into generatedPythonDocs
     from(rootProject.projectDir) {
         include "README.md", "CHANGELOG.md", "SECURITY.md", "LICENSE"
@@ -109,7 +109,15 @@ tasks.register("syncOfflineDocumentation", Sync) {
 }
 
 tasks.named("preBuild").configure {
-    dependsOn tasks.named("syncOfflineDocumentation")
+    dependsOn syncOfflineDocumentation
+}
+
+// Chaquopy reads the generated directory in merge<Variant>PythonSources.
+// Gradle 8 requires that consumer task to declare the producer explicitly.
+tasks.configureEach { task ->
+    if (task.name ==~ /merge.*PythonSources/) {
+        task.dependsOn syncOfflineDocumentation
+    }
 }
 
 dependencies {

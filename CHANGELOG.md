@@ -22,6 +22,8 @@
 - Versión pública unificada en `6.13.1` para Python, Gradle, health y documentación.
 - Arranque de navegador verificado con frontend real y puerto configurable.
 - Conexiones SQLite pendientes corregidas; suite validada con `ResourceWarning` como error.
+- Dependencia explícita entre `syncOfflineDocumentation` y `merge<Variant>PythonSources` para Gradle 8.
+- Python 3.10 configurado en el job Android para compilar bytecode Chaquopy compatible.
 
 
 ## [v8.9] — 2026-06-15

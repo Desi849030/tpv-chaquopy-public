@@ -1,69 +1,102 @@
-# -*- coding: utf-8 -*-
-"""telecom_bp.py v8.2 - Endpoints /api/dev/telecom/* (solo desarrollador)."""
+"""Developer-only telecommunications diagnostic API."""
+from __future__ import annotations
 
-from flask import Blueprint, jsonify, request, session
 from functools import wraps
 
-telecom_bp = Blueprint('telecom_dev', __name__)
+from flask import Blueprint, jsonify, request, session
+
+from modules import telecom_diag
+
+telecom_bp = Blueprint("telecom_dev", __name__)
 
 
-def _dev_required(f):
-    """Decorador: solo desarrolladores acceden."""
-    @wraps(f)
+def _dev_required(function):
+    @wraps(function)
     def wrapper(*args, **kwargs):
-        u = session.get('usuario') or {}
-        if u.get('rol') != 'desarrollador':
+        user = session.get("usuario") or {}
+        if user.get("rol") != "desarrollador":
             return jsonify({"ok": False, "error": "Solo desarrollador"}), 403
-        return f(*args, **kwargs)
+        return function(*args, **kwargs)
     return wrapper
 
 
-@telecom_bp.route('/api/dev/telecom/latencia', methods=['GET'])
+def _bounded_int(name: str, default: int, minimum: int, maximum: int) -> int:
+    try:
+        value = int(request.args.get(name, default))
+    except (TypeError, ValueError):
+        value = default
+    return max(minimum, min(value, maximum))
+
+
+@telecom_bp.get("/api/dev/telecom/latencia")
 @_dev_required
 def api_latencia():
-    from modules.telecom_diag import medir_latencia_supabase
-    intentos = int(request.args.get('intentos', 5))
-    return jsonify(medir_latencia_supabase(intentos=intentos))
+    return jsonify(telecom_diag.medir_latencia_supabase(
+        intentos=_bounded_int("intentos", 5, 1, 10)
+    ))
 
 
-@telecom_bp.route('/api/dev/telecom/throughput', methods=['GET'])
+@telecom_bp.get("/api/dev/telecom/throughput")
 @_dev_required
 def api_throughput():
-    from modules.telecom_diag import medir_throughput_supabase
-    return jsonify(medir_throughput_supabase())
+    return jsonify(telecom_diag.medir_throughput_supabase(
+        bytes_objetivo=_bounded_int("bytes", 100_000, 1_024, 1_000_000)
+    ))
 
 
-@telecom_bp.route('/api/dev/telecom/dns', methods=['GET'])
+@telecom_bp.get("/api/dev/telecom/dns")
 @_dev_required
 def api_dns():
-    from modules.telecom_diag import medir_dns
-    host = request.args.get('host')
-    return jsonify(medir_dns(host=host))
+    return jsonify(telecom_diag.medir_dns(host=request.args.get("host")))
 
 
-@telecom_bp.route('/api/dev/telecom/tls', methods=['GET'])
+@telecom_bp.get("/api/dev/telecom/tls")
 @_dev_required
 def api_tls():
-    from modules.telecom_diag import medir_tls_handshake
-    return jsonify(medir_tls_handshake())
+    return jsonify(telecom_diag.medir_tls_handshake())
 
 
-@telecom_bp.route('/api/dev/telecom/red', methods=['GET'])
+@telecom_bp.get("/api/dev/telecom/red")
 @_dev_required
 def api_red():
-    from modules.telecom_diag import info_red_local
-    return jsonify(info_red_local())
+    return jsonify(telecom_diag.info_red_local())
 
 
-@telecom_bp.route('/api/dev/telecom/sqlite', methods=['GET'])
+@telecom_bp.get("/api/dev/telecom/sqlite")
 @_dev_required
 def api_sqlite():
-    from modules.telecom_diag import velocidad_sqlite
-    return jsonify(velocidad_sqlite())
+    return jsonify(telecom_diag.velocidad_sqlite())
 
 
-@telecom_bp.route('/api/dev/telecom/full', methods=['GET'])
+@telecom_bp.get("/api/dev/telecom/full")
 @_dev_required
 def api_full():
-    from modules.telecom_diag import diagnostico_completo
-    return jsonify(diagnostico_completo())
+    return jsonify(telecom_diag.diagnostico_completo())
+
+
+@telecom_bp.get("/api/dev/telecom/metodologia")
+@_dev_required
+def api_metodologia():
+    return jsonify({
+        "ok": True,
+        "disciplina": "Ingeniería en Telecomunicaciones",
+        "capas": {
+            "endpoint": "IP local, hostname y plataforma",
+            "dns": "tiempo de getaddrinfo y direcciones resueltas",
+            "transporte_seguridad": "conexión TCP y negociación TLS",
+            "aplicacion": "RTT HTTP, variación, fallos y goodput HTTP",
+            "plano_local": "rendimiento e integridad SQLite",
+        },
+        "unidades": {
+            "latencia_jitter": "ms",
+            "perdida": "% de solicitudes HTTP fallidas",
+            "goodput": "Mbps y KiB/s",
+            "sqlite": "operaciones/s",
+        },
+        "limitaciones": [
+            "RTT HTTP no equivale a eco ICMP",
+            "fallos HTTP no equivalen exactamente a pérdida física de paquetes",
+            "goodput de muestra no equivale a capacidad física del enlace",
+            "resultados incluyen radio, red, servidor, TLS y carga del dispositivo",
+        ],
+    })

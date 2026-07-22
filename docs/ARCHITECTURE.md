@@ -103,7 +103,11 @@ Roles soportados:
 
 El Desarrollador tiene capacidad `all`. Los controles técnicos de autenticación, auditoría y protección de secretos permanecen activos.
 
-### 5. Documentación offline
+### 5. Diagnóstico de telecomunicaciones
+
+`modules/telecom_bp.py` registra endpoints exclusivos del Desarrollador. `modules/telecom_diag.py` separa observaciones de endpoint, DNS, TCP, TLS, HTTP y plano local SQLite. Las métricas declaran método, unidad y limitación; la continuidad de venta no depende de la WAN.
+
+### 6. Documentación offline
 
 `documentation_loader.py` sincroniza documentos curados con la tabla `documentacion`.
 
@@ -111,7 +115,7 @@ En Termux/desktop se leen directamente los archivos del checkout. Antes de compi
 
 La sincronización es idempotente y ocurre al crear/inicializar las tablas.
 
-### 6. Sincronización remota
+### 7. Sincronización remota
 
 `supabase_sync.py` proporciona integración opcional. La falta de red no debe impedir ventas, inventario, login local ni lectura de documentación empaquetada.
 

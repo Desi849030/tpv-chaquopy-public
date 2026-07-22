@@ -723,27 +723,49 @@ def handle_dev(agent, t, m=None):
         if 'documento' in tl:
             return "Especifica que documento: 'lee el documento README.md', 'lee el documento API_REFERENCE.md'"
 
-    # --- Red / telecom (offline puro, sin dependencias externas) ---
-    if any(k in tl for k in ['red', 'conexion', 'enlace', 'latencia', 'ping', 'telecom']):
-        import time
-        start = time.time()
-        _q("SELECT 1")
-        latency_ms = (time.time() - start) * 1000
-        
-        # Verificar si Supabase esta configurado
-        cloud = "OFFLINE (Edge-node / Air-gapped)"
-        try:
-            from sync.config_supabase import SUPABASE_CONFIG
-            if SUPABASE_CONFIG.get("url"):
-                cloud = "ONLINE (Supabase configurado)"
-        except: pass
-        
-        return (f"Analisis de Red (offline):\n"
-                f"  Latencia BD local: {latency_ms:.2f} ms\n"
-                f"  Estado enlace: {cloud}\n"
-                f"  Modo: OFFLINE-FIRST\n"
-                f"  Packet loss local: 0%\n"
-                f"  Jitter: < 1ms (BD local)")
+    # --- Telecomunicaciones: mediciones reales y metodología explícita ---
+    if any(k in tl for k in ['diagnostico completo', 'diagnóstico completo', 'telecom completo']):
+        from modules.telecom_diag import formato_humano_diagnostico
+        return formato_humano_diagnostico()
+    if any(k in tl for k in ['throughput', 'goodput', 'ancho de banda', 'velocidad red']):
+        from modules.telecom_diag import medir_throughput_supabase
+        result = medir_throughput_supabase()
+        if not result.get('ok'):
+            return f"Goodput HTTP no disponible: {result.get('error', 'error')}"
+        return (f"Goodput HTTP: {result['throughput_mbps']} Mbps "
+                f"({result['throughput_kib_s']} KiB/s)\n"
+                f"Muestra: {result['bytes_recibidos']} bytes en {result['tiempo_s']} s.\n"
+                f"Limitacion: {result['limitacion']}")
+    if any(k in tl for k in ['dns', 'resolucion', 'resolución']):
+        from modules.telecom_diag import medir_dns
+        result = medir_dns()
+        return (f"DNS: {result.get('host', '?')} -> {result.get('ip_principal', result.get('error', '?'))}\n"
+                f"Tiempo getaddrinfo: {result.get('tiempo_ms', 'N/D')} ms")
+    if any(k in tl for k in ['tls', 'certificado', 'cipher', 'handshake']):
+        from modules.telecom_diag import medir_tls_handshake
+        result = medir_tls_handshake()
+        if not result.get('ok'):
+            return f"TLS no disponible: {result.get('error', 'error')}"
+        return (f"TLS: {result['tls_version']} / {result['cipher']} ({result['cipher_bits']} bits)\n"
+                f"TCP: {result['tiempo_tcp_ms']} ms | handshake TLS: {result['tiempo_tls_ms']} ms")
+    if any(k in tl for k in ['latencia', 'jitter', 'perdida', 'pérdida', 'rtt', 'ping']):
+        from modules.telecom_diag import medir_latencia_supabase
+        result = medir_latencia_supabase()
+        if not result.get('ok'):
+            return f"RTT HTTP no disponible: {result.get('error', 'error')}"
+        return (f"RTT HTTP (no ICMP): media {result['latencia_media_ms']} ms, "
+                f"P95 {result['latencia_p95_ms']} ms\n"
+                f"Jitter {result['jitter_ms']} ms | solicitudes fallidas {result['perdida_pct']}%\n"
+                f"Calidad: {result['calidad']['nivel']} ({result['calidad']['score']}/100)")
+    if any(k in tl for k in ['red', 'conexion', 'conexión', 'enlace', 'telecom', 'mi ip']):
+        from modules.telecom_diag import info_red_local, velocidad_sqlite
+        local = info_red_local()
+        sqlite = velocidad_sqlite()
+        return (f"Endpoint local: {local.get('hostname', '?')} / {local.get('ip_local', '?')}\n"
+                f"Plataforma: {local.get('plataforma', '?')}\n"
+                f"Plano local SQLite: {sqlite.get('ops_por_segundo', 0)} ops/s; "
+                f"integridad {str(sqlite.get('quick_check', '?')).upper()}\n"
+                "Use 'diagnostico completo' para medir DNS, HTTP RTT, goodput y TLS.")
 
     # --- Productos / inventario ---
     if any(k in tl for k in ['productos', 'inventario', 'stock']):
@@ -776,7 +798,8 @@ def handle_dev(agent, t, m=None):
                 "  - 'logs': Eventos recientes\n"
                 "  - 'usuarios': Staff registrado\n"
                 "  - 'seguridad': Estado de seguridad\n"
-                "  - 'red': Estado de conexion\n"
+                "  - 'diagnostico completo': KPIs telecom por capas\n"
+                "  - 'latencia', 'jitter', 'throughput', 'dns', 'tls': mediciones de red\n"
                 "  - 'productos': Inventario\n"
                 "  - 'ventas': Resumen de ventas")
 

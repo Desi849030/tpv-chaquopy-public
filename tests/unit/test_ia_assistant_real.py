@@ -18,6 +18,8 @@ def test_session_roles_permissions_and_status():
     assert assistant._time_recommendation("administrador")
     status = assistant.get_status()
     assert isinstance(status, dict)
+    assert status["offline_engine"] == "rules-react-memory"
+    assert status["local_llm"] in {"loaded", "available_not_loaded", "optional_not_installed"}
 
 
 def test_database_helpers_without_database(monkeypatch):

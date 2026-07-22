@@ -1,347 +1,357 @@
-# -*- coding: utf-8 -*-
-"""telecom_diag.py v8.2 - Diagnostico REAL de telecomunicaciones para la APK.
+"""Reproducible telecommunications diagnostics for the developer role.
 
-Herramientas que el desarrollador puede invocar desde el chat:
-- Latencia real al servidor Supabase
-- Throughput real de descarga
-- Jitter (variacion de pings sucesivos)
-- DNS lookup time
-- TLS handshake time
-- Informacion de red local (IP, gateway, DNS)
-- Velocidad de la BD SQLite local (IOPS)
+Measurements are explicitly labelled by layer and method. Network tests use the
+configured Supabase endpoint; they never claim to be ICMP when the sample is an
+HTTP application RTT. All functions degrade safely in offline mode.
 """
+from __future__ import annotations
 
-import time
-import socket
-import statistics
+import math
 import os
+import socket
+import ssl
+import statistics
 import sys
+import time
+import urllib.request
+from datetime import datetime, timezone
 from urllib.parse import urlparse
 
 
-def _supabase_url():
-    """Obtiene la URL de Supabase configurada."""
+def _supabase_config() -> dict:
     try:
         from sync.config_supabase import SUPABASE_CONFIG
-        return SUPABASE_CONFIG.get("url", "")
+
+        return dict(SUPABASE_CONFIG or {})
     except Exception:
-        return ""
+        return {}
 
 
-def medir_latencia_supabase(intentos=5):
-    """Mide latencia HTTP GET al endpoint /rest/v1/ de Supabase con API key."""
+def _supabase_url() -> str:
+    return str(_supabase_config().get("url", "")).strip()
+
+
+def _percentile(values: list[float], percentile: float) -> float:
+    """Linear-interpolated percentile without third-party dependencies."""
+    if not values:
+        return 0.0
+    ordered = sorted(values)
+    if len(ordered) == 1:
+        return ordered[0]
+    position = (len(ordered) - 1) * percentile
+    lower = math.floor(position)
+    upper = math.ceil(position)
+    if lower == upper:
+        return ordered[lower]
+    fraction = position - lower
+    return ordered[lower] + (ordered[upper] - ordered[lower]) * fraction
+
+
+def evaluar_calidad(latencia_ms: float | None, jitter_ms: float | None, perdida_pct: float | None) -> dict:
+    """Classify an interactive data link using documented project thresholds."""
+    if latencia_ms is None or jitter_ms is None or perdida_pct is None:
+        return {"nivel": "sin_datos", "score": 0, "apta_tpv": False}
+    score = 100
+    if latencia_ms > 300:
+        score -= 45
+    elif latencia_ms > 150:
+        score -= 25
+    elif latencia_ms > 80:
+        score -= 10
+    if jitter_ms > 50:
+        score -= 30
+    elif jitter_ms > 25:
+        score -= 15
+    elif jitter_ms > 10:
+        score -= 5
+    if perdida_pct > 5:
+        score -= 40
+    elif perdida_pct > 2:
+        score -= 20
+    elif perdida_pct > 0:
+        score -= 5
+    score = max(0, score)
+    level = "excelente" if score >= 90 else "buena" if score >= 75 else "degradada" if score >= 50 else "critica"
+    return {"nivel": level, "score": score, "apta_tpv": score >= 50}
+
+
+def medir_latencia_supabase(intentos: int = 5, timeout: float = 5.0) -> dict:
+    """Measure application-layer HTTP RTT, variation and failed-sample ratio."""
+    attempts = max(1, min(int(intentos), 10))
     url = _supabase_url()
+    config = _supabase_config()
+    api_key = str(config.get("anon_key", ""))
     if not url:
-        return {"ok": False, "error": "Supabase no configurado", "modo": "offline"}
-
-    try:
-        from sync.config_supabase import SUPABASE_CONFIG
-        api_key = SUPABASE_CONFIG.get("anon_key", "")
-    except Exception:
-        api_key = ""
-
+        return {"ok": False, "error": "Supabase no configurado", "modo": "offline", "metodo": "HTTP RTT"}
     if not api_key:
-        return {"ok": False, "error": "Supabase API key no disponible"}
+        return {"ok": False, "error": "Supabase API key no disponible", "metodo": "HTTP RTT"}
 
-    try:
-        import urllib.request
-        test_url = url.rstrip('/') + "/rest/v1/"
-        latencias = []
-        errores = 0
-        ultimo_error = ""
-        for i in range(intentos):
-            t0 = time.perf_counter()
-            try:
-                req = urllib.request.Request(test_url, method='GET')
-                req.add_header('apikey', api_key)
-                # Solo enviar Bearer si es JWT clasica (empieza con 'eyJ')
-                if api_key.startswith('eyJ'):
-                    req.add_header('Authorization', f'Bearer {api_key}')
-                with urllib.request.urlopen(req, timeout=5) as resp:
-                    resp.read(100)  # leer poquito para medir RTT
-                latencias.append((time.perf_counter() - t0) * 1000)
-            except Exception as e:
-                errores += 1
-                ultimo_error = str(e)[:80]
-            time.sleep(0.15)
-
-        if not latencias:
-            return {"ok": False,
-                    "error": f"Todos los intentos fallaron. Ultimo: {ultimo_error}",
-                    "intentos": intentos}
-
-        return {
-            "ok": True,
-            "url": test_url,
-            "intentos": intentos,
-            "exitosos": len(latencias),
-            "errores": errores,
-            "latencia_min_ms": round(min(latencias), 2),
-            "latencia_max_ms": round(max(latencias), 2),
-            "latencia_media_ms": round(statistics.mean(latencias), 2),
-            "latencia_mediana_ms": round(statistics.median(latencias), 2),
-            "jitter_ms": round(statistics.stdev(latencias), 2) if len(latencias) > 1 else 0,
-        }
-    except Exception as e:
-        return {"ok": False, "error": str(e)}
-
-def medir_throughput_supabase(bytes_objetivo=100000):
-    """Descarga del endpoint con API key y mide bytes/seg."""
-    url = _supabase_url()
-    if not url:
-        return {"ok": False, "error": "Supabase no configurado"}
-
-    try:
-        from sync.config_supabase import SUPABASE_CONFIG
-        api_key = SUPABASE_CONFIG.get("anon_key", "")
-    except Exception:
-        api_key = ""
-
-    if not api_key:
-        return {"ok": False, "error": "API key no disponible"}
-
-    try:
-        import urllib.request
-        # Pedir lista de productos (con limit alto)
-        test_url = url.rstrip('/') + "/rest/v1/productos?limit=1000"
-        t0 = time.perf_counter()
+    test_url = url.rstrip("/") + "/rest/v1/"
+    samples: list[float] = []
+    errors: list[str] = []
+    for index in range(attempts):
+        started = time.perf_counter()
         try:
-            req = urllib.request.Request(test_url, method='GET')
-            req.add_header('apikey', api_key)
-            if api_key.startswith('eyJ'):
-                req.add_header('Authorization', f'Bearer {api_key}')
-            with urllib.request.urlopen(req, timeout=15) as resp:
-                data = resp.read(bytes_objetivo)
-                elapsed = time.perf_counter() - t0
-                bytes_recv = len(data)
-        except Exception as e:
-            return {"ok": False, "error": f"Descarga fallo: {str(e)[:100]}"}
+            request = urllib.request.Request(test_url, method="GET")
+            request.add_header("apikey", api_key)
+            if api_key.startswith("eyJ"):
+                request.add_header("Authorization", f"Bearer {api_key}")
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                response.read(128)
+            samples.append((time.perf_counter() - started) * 1000)
+        except Exception as exc:
+            errors.append(f"{type(exc).__name__}: {exc}"[:120])
+        if index + 1 < attempts:
+            time.sleep(0.05)
 
-        if elapsed <= 0:
-            return {"ok": False, "error": "Tiempo invalido"}
-
-        bps = bytes_recv / elapsed
+    failed = attempts - len(samples)
+    loss = failed / attempts * 100
+    if not samples:
         return {
-            "ok": True,
-            "url": test_url,
-            "bytes_recibidos": bytes_recv,
-            "tiempo_s": round(elapsed, 3),
-            "throughput_bps": round(bps, 0),
-            "throughput_kbps": round(bps / 1024, 2),
-            "throughput_mbps": round(bps * 8 / 1_000_000, 3),
+            "ok": False, "error": "Todos los intentos HTTP fallaron",
+            "ultimo_error": errors[-1] if errors else "desconocido",
+            "intentos": attempts, "exitosos": 0, "perdida_pct": 100.0,
+            "metodo": "HTTP application RTT (no ICMP)",
         }
-    except Exception as e:
-        return {"ok": False, "error": str(e)}
 
-def medir_dns(host=None):
-    """Mide tiempo de resolucion DNS."""
-    if not host:
-        url = _supabase_url()
-        if url:
-            host = urlparse(url).hostname
-        else:
-            host = "google.com"
-
-    try:
-        t0 = time.perf_counter()
-        ip = socket.gethostbyname(host)
-        elapsed_ms = (time.perf_counter() - t0) * 1000
-
-        # Obtener todas las IPs
-        try:
-            ips = list(set(addr[4][0] for addr in socket.getaddrinfo(host, None)))
-        except Exception:
-            ips = [ip]
-
-        return {
-            "ok": True,
-            "host": host,
-            "ip_principal": ip,
-            "ips_resueltas": ips,
-            "tiempo_ms": round(elapsed_ms, 2),
-        }
-    except Exception as e:
-        return {"ok": False, "error": str(e), "host": host}
-
-
-def medir_tls_handshake():
-    """Mide tiempo de handshake TLS al servidor Supabase."""
-    url = _supabase_url()
-    if not url:
-        return {"ok": False, "error": "Supabase no configurado"}
-
-    try:
-        import ssl
-        host = urlparse(url).hostname
-        port = 443
-
-        t0 = time.perf_counter()
-        ctx = ssl.create_default_context()
-        with socket.create_connection((host, port), timeout=5) as sock:
-            t_tcp = (time.perf_counter() - t0) * 1000
-            with ctx.wrap_socket(sock, server_hostname=host) as ssock:
-                t_total = (time.perf_counter() - t0) * 1000
-                cert = ssock.getpeercert()
-                version = ssock.version()
-                cipher = ssock.cipher()
-
-        return {
-            "ok": True,
-            "host": host,
-            "tiempo_tcp_ms": round(t_tcp, 2),
-            "tiempo_total_ms": round(t_total, 2),
-            "tiempo_tls_ms": round(t_total - t_tcp, 2),
-            "tls_version": version,
-            "cipher": cipher[0] if cipher else "?",
-            "cipher_bits": cipher[2] if cipher else 0,
-            "cert_subject": dict(x[0] for x in cert.get('subject', [])).get('commonName', '?'),
-            "cert_issuer": dict(x[0] for x in cert.get('issuer', [])).get('commonName', '?'),
-        }
-    except Exception as e:
-        return {"ok": False, "error": str(e)}
-
-
-def info_red_local():
-    """Obtiene IP local, hostname, interfaces."""
-    try:
-        hostname = socket.gethostname()
-        # IP local (truco: conectar a 8.8.8.8 sin enviar nada)
-        ip_local = "?"
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.settimeout(0.5)
-            s.connect(("8.8.8.8", 80))
-            ip_local = s.getsockname()[0]
-            s.close()
-        except Exception:
-            pass
-
-        return {
-            "ok": True,
-            "hostname": hostname,
-            "ip_local": ip_local,
-            "python": sys.version.split()[0],
-            "plataforma": sys.platform,
-        }
-    except Exception as e:
-        return {"ok": False, "error": str(e)}
-
-
-def velocidad_sqlite():
-    """Mide IOPS de la BD SQLite local."""
-    try:
-        from db_connection import obtener_conexion
-        conn = obtener_conexion()
-
-        # Test de lectura: 100 SELECT 1
-        t0 = time.perf_counter()
-        for _ in range(100):
-            conn.execute("SELECT 1").fetchone()
-        t_read = (time.perf_counter() - t0) * 1000  # ms para 100 ops
-
-        # Test de PRAGMA quick_check
-        t0 = time.perf_counter()
-        quick = conn.execute("PRAGMA quick_check").fetchone()[0]
-        t_check = (time.perf_counter() - t0) * 1000
-
-        # Tamaño BD
-        try:
-            page_count = conn.execute("PRAGMA page_count").fetchone()[0]
-            page_size = conn.execute("PRAGMA page_size").fetchone()[0]
-            size_kb = (page_count * page_size) / 1024
-        except Exception:
-            size_kb = 0
-
-        conn.close()
-
-        return {
-            "ok": True,
-            "lectura_100_ops_ms": round(t_read, 2),
-            "ops_por_segundo": round(100 / (t_read / 1000), 0) if t_read > 0 else 0,
-            "quick_check": quick,
-            "quick_check_ms": round(t_check, 2),
-            "tamano_kb": round(size_kb, 2),
-        }
-    except Exception as e:
-        return {"ok": False, "error": str(e)}
-
-
-def diagnostico_completo():
-    """Ejecuta TODOS los diagnosticos y devuelve resumen."""
+    mean = statistics.mean(samples)
+    jitter = statistics.stdev(samples) if len(samples) > 1 else 0.0
     return {
         "ok": True,
-        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-        "red_local": info_red_local(),
-        "dns": medir_dns(),
-        "latencia": medir_latencia_supabase(intentos=3),
-        "throughput": medir_throughput_supabase(),
-        "tls": medir_tls_handshake(),
-        "sqlite": velocidad_sqlite(),
+        "url": test_url,
+        "metodo": "HTTP application RTT (no ICMP)",
+        "unidad": "ms",
+        "intentos": attempts,
+        "exitosos": len(samples),
+        "errores": failed,
+        "perdida_pct": round(loss, 2),
+        "latencia_min_ms": round(min(samples), 2),
+        "latencia_max_ms": round(max(samples), 2),
+        "latencia_media_ms": round(mean, 2),
+        "latencia_mediana_ms": round(statistics.median(samples), 2),
+        "latencia_p95_ms": round(_percentile(samples, 0.95), 2),
+        "jitter_ms": round(jitter, 2),
+        "muestras_ms": [round(value, 2) for value in samples],
+        "calidad": evaluar_calidad(mean, jitter, loss),
     }
 
 
-def formato_humano_diagnostico():
-    """Devuelve string formateado del diagnostico completo."""
-    d = diagnostico_completo()
+def medir_throughput_supabase(bytes_objetivo: int = 100_000, timeout: float = 15.0) -> dict:
+    """Measure goodput from a bounded HTTP response sample.
 
-    msg = "📡 **DIAGNÓSTICO TELECOM COMPLETO**\n\n"
+    This is application goodput, not physical link capacity. Protocol overhead and
+    server processing are intentionally part of the observed end-to-end service.
+    """
+    target = max(1_024, min(int(bytes_objetivo), 1_000_000))
+    config = _supabase_config()
+    url = str(config.get("url", ""))
+    api_key = str(config.get("anon_key", ""))
+    if not url:
+        return {"ok": False, "error": "Supabase no configurado", "metodo": "HTTP goodput"}
+    if not api_key:
+        return {"ok": False, "error": "API key no disponible", "metodo": "HTTP goodput"}
 
-    # Red local
-    rl = d.get("red_local", {})
-    if rl.get("ok"):
-        msg += f"🖥️ **Dispositivo:**\n"
-        msg += f"  • Hostname: {rl.get('hostname', '?')}\n"
-        msg += f"  • IP local: {rl.get('ip_local', '?')}\n"
-        msg += f"  • Plataforma: {rl.get('plataforma', '?')}\n\n"
+    test_url = url.rstrip("/") + "/rest/v1/productos?limit=1000"
+    request = urllib.request.Request(test_url, method="GET")
+    request.add_header("apikey", api_key)
+    if api_key.startswith("eyJ"):
+        request.add_header("Authorization", f"Bearer {api_key}")
+    started = time.perf_counter()
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            data = response.read(target)
+    except Exception as exc:
+        return {"ok": False, "error": f"Descarga falló: {type(exc).__name__}: {exc}"[:160], "metodo": "HTTP goodput"}
+    elapsed = time.perf_counter() - started
+    if elapsed <= 0:
+        return {"ok": False, "error": "Tiempo inválido", "metodo": "HTTP goodput"}
 
-    # DNS
-    dns = d.get("dns", {})
-    if dns.get("ok"):
-        msg += f"🌐 **DNS:**\n"
-        msg += f"  • Host: {dns.get('host', '?')}\n"
-        msg += f"  • IP: {dns.get('ip_principal', '?')}\n"
-        msg += f"  • Tiempo resolucion: {dns.get('tiempo_ms', 0)} ms\n\n"
+    received = len(data)
+    bytes_per_second = received / elapsed
+    return {
+        "ok": True,
+        "url": test_url,
+        "metodo": "HTTP application goodput",
+        "limitacion": "Muestra acotada; no representa capacidad física del enlace",
+        "bytes_objetivo": target,
+        "bytes_recibidos": received,
+        "tiempo_s": round(elapsed, 4),
+        "bytes_por_segundo": round(bytes_per_second, 2),
+        "throughput_kib_s": round(bytes_per_second / 1024, 2),
+        "throughput_kbps": round(bytes_per_second * 8 / 1000, 2),
+        "throughput_mbps": round(bytes_per_second * 8 / 1_000_000, 3),
+    }
+
+
+def medir_dns(host: str | None = None) -> dict:
+    """Measure resolver time and return unique addresses."""
+    if not host:
+        host = urlparse(_supabase_url()).hostname or "example.com"
+    host = str(host).strip().rstrip(".")
+    if not host or len(host) > 253 or any(character in host for character in "/?#@"):
+        return {"ok": False, "error": "Host DNS inválido", "host": host}
+    started = time.perf_counter()
+    try:
+        addresses = sorted({item[4][0] for item in socket.getaddrinfo(host, None)})
+        elapsed = (time.perf_counter() - started) * 1000
+        if not addresses:
+            raise socket.gaierror("sin direcciones")
+        return {
+            "ok": True, "host": host, "ip_principal": addresses[0],
+            "ips_resueltas": addresses, "tiempo_ms": round(elapsed, 2),
+            "metodo": "getaddrinfo", "unidad": "ms",
+        }
+    except Exception as exc:
+        return {"ok": False, "error": f"{type(exc).__name__}: {exc}", "host": host, "metodo": "getaddrinfo"}
+
+
+def medir_tls_handshake(timeout: float = 5.0) -> dict:
+    """Measure TCP connect plus TLS negotiation to configured Supabase."""
+    host = urlparse(_supabase_url()).hostname
+    if not host:
+        return {"ok": False, "error": "Supabase no configurado", "metodo": "TCP + TLS"}
+    started = time.perf_counter()
+    try:
+        context = ssl.create_default_context()
+        with socket.create_connection((host, 443), timeout=timeout) as raw_socket:
+            tcp_ms = (time.perf_counter() - started) * 1000
+            with context.wrap_socket(raw_socket, server_hostname=host) as tls_socket:
+                total_ms = (time.perf_counter() - started) * 1000
+                certificate = tls_socket.getpeercert()
+                cipher = tls_socket.cipher()
+                version = tls_socket.version()
+        subject = dict(item[0] for item in certificate.get("subject", []))
+        issuer = dict(item[0] for item in certificate.get("issuer", []))
+        return {
+            "ok": True, "host": host, "puerto": 443, "metodo": "TCP connect + TLS handshake",
+            "tiempo_tcp_ms": round(tcp_ms, 2), "tiempo_total_ms": round(total_ms, 2),
+            "tiempo_tls_ms": round(total_ms - tcp_ms, 2), "tls_version": version,
+            "cipher": cipher[0] if cipher else "?", "cipher_bits": cipher[2] if cipher else 0,
+            "cert_subject": subject.get("commonName", "?"),
+            "cert_issuer": issuer.get("commonName", "?"),
+            "cert_not_before": certificate.get("notBefore"), "cert_not_after": certificate.get("notAfter"),
+        }
+    except Exception as exc:
+        return {"ok": False, "error": f"{type(exc).__name__}: {exc}", "host": host, "metodo": "TCP + TLS"}
+
+
+def info_red_local() -> dict:
+    """Return local endpoint information without requiring Internet access."""
+    try:
+        hostname = socket.gethostname()
+        addresses = sorted({item[4][0] for item in socket.getaddrinfo(hostname, None)})
+    except Exception:
+        hostname, addresses = "?", []
+    local_ip = next((address for address in addresses if ":" not in address and not address.startswith("127.")), "?")
+    probe = None
+    try:
+        probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        probe.settimeout(0.5)
+        probe.connect(("8.8.8.8", 80))
+        local_ip = probe.getsockname()[0]
+    except Exception:
+        pass
+    finally:
+        if probe is not None:
+            probe.close()
+    return {
+        "ok": True, "hostname": hostname, "ip_local": local_ip,
+        "direcciones_locales": addresses, "python": sys.version.split()[0],
+        "plataforma": sys.platform, "modo": "información de endpoint local",
+    }
+
+
+def velocidad_sqlite() -> dict:
+    """Measure local SQLite read rate and quick integrity check."""
+    from db_connection import obtener_conexion
+
+    connection = obtener_conexion()
+    try:
+        started = time.perf_counter()
+        for _ in range(100):
+            connection.execute("SELECT 1").fetchone()
+        read_ms = (time.perf_counter() - started) * 1000
+        started = time.perf_counter()
+        quick_check = connection.execute("PRAGMA quick_check").fetchone()[0]
+        check_ms = (time.perf_counter() - started) * 1000
+        page_count = connection.execute("PRAGMA page_count").fetchone()[0]
+        page_size = connection.execute("PRAGMA page_size").fetchone()[0]
+        return {
+            "ok": True, "metodo": "100 x SELECT 1 + PRAGMA quick_check",
+            "lectura_100_ops_ms": round(read_ms, 2),
+            "ops_por_segundo": round(100 / (read_ms / 1000), 0) if read_ms > 0 else 0,
+            "quick_check": quick_check, "quick_check_ms": round(check_ms, 2),
+            "tamano_kb": round(page_count * page_size / 1024, 2),
+        }
+    except Exception as exc:
+        return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+    finally:
+        connection.close()
+
+
+def diagnostico_completo() -> dict:
+    """Run the complete layered telecommunications diagnostic."""
+    local = info_red_local()
+    dns = medir_dns()
+    latency = medir_latencia_supabase(intentos=3)
+    throughput = medir_throughput_supabase()
+    tls = medir_tls_handshake()
+    sqlite = velocidad_sqlite()
+    successful = sum(bool(section.get("ok")) for section in (local, dns, latency, throughput, tls, sqlite))
+    return {
+        "ok": True,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "metodologia": "mediciones end-to-end por capas; sin afirmar ICMP ni capacidad física",
+        "pruebas_exitosas": successful,
+        "pruebas_totales": 6,
+        "modo_offline": not bool(_supabase_url()),
+        "red_local": local, "dns": dns, "latencia": latency,
+        "throughput": throughput, "tls": tls, "sqlite": sqlite,
+    }
+
+
+def formato_humano_diagnostico() -> str:
+    """Format the complete diagnostic for IA chat and academic demonstrations."""
+    result = diagnostico_completo()
+    local, dns, latency = result["red_local"], result["dns"], result["latencia"]
+    throughput, tls, sqlite = result["throughput"], result["tls"], result["sqlite"]
+    lines = [
+        "DIAGNÓSTICO TELECOM POR CAPAS",
+        f"Fecha UTC: {result['timestamp']}",
+        f"Pruebas disponibles: {result['pruebas_exitosas']}/{result['pruebas_totales']}",
+        "",
+        "CAPA DE RED / ENDPOINT",
+        f"  Host: {local.get('hostname', '?')} | IP local: {local.get('ip_local', '?')}",
+        "",
+        "RESOLUCIÓN DNS",
+        f"  {dns.get('host', '?')}: {dns.get('tiempo_ms', 'N/D')} ms | {dns.get('ip_principal', dns.get('error', 'N/D'))}",
+        "",
+        "SERVICIO HTTP (RTT, NO ICMP)",
+    ]
+    if latency.get("ok"):
+        lines.extend([
+            f"  Media: {latency['latencia_media_ms']} ms | P95: {latency['latencia_p95_ms']} ms",
+            f"  Jitter: {latency['jitter_ms']} ms | Fallos: {latency['perdida_pct']}%",
+            f"  Calidad: {latency['calidad']['nivel']} ({latency['calidad']['score']}/100)",
+        ])
     else:
-        msg += f"🌐 **DNS:** ❌ {dns.get('error', 'error')}\n\n"
-
-    # Latencia
-    lat = d.get("latencia", {})
-    if lat.get("ok"):
-        msg += f"⚡ **Latencia Supabase:**\n"
-        msg += f"  • Media: {lat.get('latencia_media_ms', 0)} ms\n"
-        msg += f"  • Min/Max: {lat.get('latencia_min_ms', 0)} / {lat.get('latencia_max_ms', 0)} ms\n"
-        msg += f"  • Jitter: {lat.get('jitter_ms', 0)} ms\n"
-        msg += f"  • Exitosos: {lat.get('exitosos', 0)}/{lat.get('intentos', 0)}\n\n"
+        lines.append(f"  No disponible: {latency.get('error', 'error')}")
+    lines.extend(["", "GOODPUT HTTP"])
+    if throughput.get("ok"):
+        lines.append(f"  {throughput['throughput_mbps']} Mbps ({throughput['throughput_kib_s']} KiB/s)")
+        lines.append(f"  Nota: {throughput['limitacion']}")
     else:
-        msg += f"⚡ **Latencia:** ❌ {lat.get('error', 'error')}\n\n"
-
-    # Throughput
-    th = d.get("throughput", {})
-    if th.get("ok"):
-        msg += f"📥 **Throughput:**\n"
-        msg += f"  • {th.get('throughput_kbps', 0)} KB/s\n"
-        msg += f"  • {th.get('throughput_mbps', 0)} Mbps\n\n"
-    else:
-        msg += f"📥 **Throughput:** ❌ {th.get('error', 'error')}\n\n"
-
-    # TLS
-    tls = d.get("tls", {})
+        lines.append(f"  No disponible: {throughput.get('error', 'error')}")
+    lines.extend(["", "SEGURIDAD TLS"])
     if tls.get("ok"):
-        msg += f"🔒 **TLS Handshake:**\n"
-        msg += f"  • Version: {tls.get('tls_version', '?')}\n"
-        msg += f"  • Cipher: {tls.get('cipher', '?')} ({tls.get('cipher_bits', 0)} bits)\n"
-        msg += f"  • TCP: {tls.get('tiempo_tcp_ms', 0)} ms | TLS: {tls.get('tiempo_tls_ms', 0)} ms\n"
-        msg += f"  • Cert: {tls.get('cert_subject', '?')} (CA: {tls.get('cert_issuer', '?')})\n\n"
+        lines.append(f"  {tls['tls_version']} | {tls['cipher']} ({tls['cipher_bits']} bits)")
+        lines.append(f"  TCP: {tls['tiempo_tcp_ms']} ms | TLS: {tls['tiempo_tls_ms']} ms")
     else:
-        msg += f"🔒 **TLS:** ❌ {tls.get('error', 'error')}\n\n"
-
-    # SQLite
-    sq = d.get("sqlite", {})
-    if sq.get("ok"):
-        msg += f"💾 **SQLite Local:**\n"
-        msg += f"  • Integridad: {sq.get('quick_check', '?').upper()}\n"
-        msg += f"  • Lectura: {sq.get('ops_por_segundo', 0)} ops/s\n"
-        msg += f"  • Tamaño: {sq.get('tamano_kb', 0)} KB\n\n"
-
-    msg += f"⏱️ {d.get('timestamp', '?')}"
-    return msg
+        lines.append(f"  No disponible: {tls.get('error', 'error')}")
+    lines.extend([
+        "", "PLANO LOCAL SQLITE",
+        f"  Integridad: {str(sqlite.get('quick_check', sqlite.get('error', '?'))).upper()}",
+        f"  Lecturas: {sqlite.get('ops_por_segundo', 0)} ops/s | Tamaño: {sqlite.get('tamano_kb', 0)} KiB",
+        "", "Metodología: medición end-to-end reproducible; los resultados dependen del servidor, radio, red y carga.",
+    ])
+    return "\n".join(lines)

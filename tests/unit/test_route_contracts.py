@@ -33,6 +33,10 @@ def test_all_concrete_route_contracts():
         path = rule.rule
         if "<" in path or path in SKIP or path.startswith("/static/"):
             continue
+        if path.startswith("/api/dev/telecom/") and path not in {
+            "/api/dev/telecom/red", "/api/dev/telecom/sqlite", "/api/dev/telecom/metodologia"
+        }:
+            continue
         methods = set(rule.methods) & {"GET", "POST", "PUT", "DELETE"}
         for method in sorted(methods):
             key = (method, path)

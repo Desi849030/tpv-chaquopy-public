@@ -12,6 +12,7 @@ Este documento prioriza mejoras verificables. “10/10” significa una APK segu
 - [x] Gate de cobertura >= 50%.
 - [x] CI que bloquea el APK cuando Python falla.
 - [x] Documentación offline para IA.
+- [x] Diagnóstico telecom por capas con metodología, unidades y limitaciones explícitas.
 - [x] Cero `ResourceWarning` de SQLite en la suite soportada.
 - [ ] Release firmado y reproducible en CI.
 - [ ] Cobertura >= 60% en módulos activos.

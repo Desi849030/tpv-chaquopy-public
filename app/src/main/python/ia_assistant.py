@@ -1,29 +1,48 @@
-# === MODULO LLM OFFLINE INYECTADO ===
+# Optional local LLM. The rule/ReAct/memory engine remains fully operational
+# when llama-cpp or a GGUF model is not packaged.
 import os, threading
 try:
     from llama_cpp import Llama
-    _LLM_MODEL = None
-    _LLM_LOCK = threading.Lock()
-    def init_llm():
-        global _LLM_MODEL
-        if not _LLM_MODEL:
-            ruta = os.path.expanduser("~/tpv-chaquopy-public/models/qwen-coder.gguf")
-            if os.path.exists(ruta):
-                _LLM_MODEL = Llama(model_path=ruta, n_ctx=256, n_threads=4, use_mmap=False, use_mlock=False, verbose=False)
-                print("[LLM] Cerebro offline cargado en ia_assistant.py")
-    def ask_llm(pregunta):
-        global _LLM_MODEL
-        if not _LLM_MODEL: init_llm()
-        if _LLM_MODEL:
-            with _LLM_LOCK:
-                try:
-                    r = _LLM_MODEL.create_chat_completion(messages=[{"role":"system","content":"Responde muy breve."},{"role":"user","content":pregunta}], max_tokens=32, temperature=0.7)
-                    return r["choices"][0]["message"]["content"].strip()
-                except Exception as e: return str(e)
-        return "IA local no disponible."
-except Exception as e:
-    print(f"[LLM] Error importando: {e}")
-# === FIN MODULO INYECTADO ===
+    _LLM_AVAILABLE = True
+except ImportError:
+    Llama = None
+    _LLM_AVAILABLE = False
+
+_LLM_MODEL = None
+_LLM_LOCK = threading.Lock()
+
+
+def init_llm():
+    global _LLM_MODEL
+    if _LLM_MODEL is not None or not _LLM_AVAILABLE:
+        return _LLM_MODEL
+    model_path = os.environ.get("TPV_LLM_MODEL", "").strip()
+    if not model_path or not os.path.isfile(model_path):
+        return None
+    _LLM_MODEL = Llama(
+        model_path=model_path, n_ctx=256, n_threads=4,
+        use_mmap=False, use_mlock=False, verbose=False,
+    )
+    print("[IA] LLM local opcional cargado")
+    return _LLM_MODEL
+
+
+def ask_llm(question):
+    model = _LLM_MODEL or init_llm()
+    if model is None:
+        return "Motor IA offline modular activo; LLM local opcional no configurado."
+    with _LLM_LOCK:
+        try:
+            response = model.create_chat_completion(
+                messages=[
+                    {"role": "system", "content": "Responde muy breve."},
+                    {"role": "user", "content": question},
+                ],
+                max_tokens=32, temperature=0.7,
+            )
+            return response["choices"][0]["message"]["content"].strip()
+        except Exception:
+            return "LLM local temporalmente no disponible; motor modular activo."
 
 # -*- coding: utf-8 -*-
 """
@@ -1304,7 +1323,11 @@ def get_status():
             "roles": list(ROLES.keys()), "learning": learning,
             "db_connected": _db() is not None,
             "db_path": _db_path or "not found",
-            "sessions": len(_sessions)
+            "sessions": len(_sessions),
+            "local_llm": "loaded" if _LLM_MODEL is not None else (
+                "available_not_loaded" if _LLM_AVAILABLE else "optional_not_installed"
+            ),
+            "offline_engine": "rules-react-memory",
         }
     except:
         return {"version": "12.0.0", "error": True}

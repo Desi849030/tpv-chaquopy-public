@@ -1,0 +1,37 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam componentStyle rectangle
+title TPV Ultra Smart — Puntos de medición Telecom
+
+node "Android / APK" as phone {
+  component "WebView" as web
+  component "Flask local\n127.0.0.1" as flask
+  database "SQLite WAL" as db
+  component "Módulo Telecom" as telecom
+}
+
+cloud "Red Wi-Fi / Celular" as access
+node "Resolver DNS" as dns
+cloud "Internet" as internet
+node "Supabase HTTPS" as cloud
+
+web --> flask : HTTP loopback\nRTT local
+flask --> db : SQL\nops/s + quick_check
+telecom --> db : plano local
+telecom --> dns : getaddrinfo\ntiempo DNS
+telecom --> access : socket IP local
+access --> internet
+internet --> cloud : TCP 443 + TLS + HTTP
+telecom --> cloud : RTT HTTP\nP95 + variación + fallos\ngoodput
+
+note right of telecom
+No afirma ICMP.
+No confunde goodput
+con capacidad física.
+end note
+
+note bottom of db
+La venta continúa offline
+aunque falle la WAN.
+end note
+@enduml

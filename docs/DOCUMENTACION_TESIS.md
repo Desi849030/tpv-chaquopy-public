@@ -275,3 +275,16 @@ El sistema TPV Ultra Smart v8.0 Rev. 14 es un Punto de Venta híbrido production
 5. Honestidad: Cobertura medida real, bugs documentados, limitaciones reconocidas
 
 El sistema está listo para defensa de tesis con demo en vivo funcional.
+
+## Aporte específico de Ingeniería en Telecomunicaciones
+
+La versión 6.13.1 incorpora un módulo de diagnóstico end-to-end exclusivo del rol Desarrollador. El aporte no se limita a comprobar conectividad: separa resolución DNS, conexión TCP, negociación TLS, RTT HTTP, percentil 95, variación temporal, solicitudes fallidas, goodput de aplicación y rendimiento del plano local SQLite.
+
+La terminología distingue explícitamente:
+
+- RTT HTTP frente a eco ICMP;
+- variación de RTT HTTP frente a jitter RTP;
+- solicitudes fallidas frente a pérdida física de paquetes;
+- goodput útil frente a capacidad nominal del enlace.
+
+La hipótesis de continuidad es que la operación crítica de venta permanece disponible sobre SQLite aunque falle la WAN. La conectividad se utiliza para sincronización y servicios remotos, pero no bloquea el plano transaccional local. El procedimiento experimental, variables y criterios se encuentran en `docs/TELECOM_ENGINEERING.md`; las fórmulas, endpoints y limitaciones están en `docs/telecom_diagnostico.md`.

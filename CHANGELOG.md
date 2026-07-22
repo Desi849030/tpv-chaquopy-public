@@ -24,6 +24,9 @@
 - Conexiones SQLite pendientes corregidas; suite validada con `ResourceWarning` como error.
 - Dependencia explícita entre `syncOfflineDocumentation` y `merge<Variant>PythonSources` para Gradle 8.
 - Python 3.10 configurado en el job Android para compilar bytecode Chaquopy compatible.
+- Blueprint Telecom activado con endpoints exclusivos del Desarrollador.
+- Métricas telecom corregidas: RTT HTTP, P95, jitter observado, fallos, goodput, DNS, TCP y TLS.
+- Metodología académica añadida con unidades, fórmulas, límites y procedimiento experimental.
 
 
 ## [v8.9] — 2026-06-15

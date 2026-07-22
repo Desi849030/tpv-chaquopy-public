@@ -2,15 +2,15 @@
 
 [![Android CI](https://github.com/Desi849030/tpv-chaquopy-public/actions/workflows/android-ci.yml/badge.svg)](https://github.com/Desi849030/tpv-chaquopy-public/actions/workflows/android-ci.yml)
 ![Version](https://img.shields.io/badge/version-6.13.1-blue)
-![Coverage](https://img.shields.io/badge/coverage-54.9%25-brightgreen)
-![Tests](https://img.shields.io/badge/tests-570%20passed-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-55.4%25-brightgreen)
+![Tests](https://img.shields.io/badge/tests-579%20passed-brightgreen)
 ![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.14-blue)
 ![Android](https://img.shields.io/badge/Android-API%2021%2B-3DDC84)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 Aplicación Android de punto de venta **offline-first** con backend Flask embebido mediante Chaquopy, base de datos SQLite y agente IA por roles. Las operaciones esenciales funcionan localmente; Supabase es una capacidad opcional de sincronización.
 
-> Estado de calidad validado: **570 pruebas superadas, 71 omitidas y 54.88% de cobertura**. El workflow bloquea la compilación del APK si los tests fallan o la cobertura baja del 50%.
+> Estado de calidad validado: **579 pruebas superadas, 71 omitidas y 55.43% de cobertura**. El workflow bloquea la compilación del APK si los tests fallan o la cobertura baja del 50%.
 
 ## Capacidades principales
 
@@ -22,8 +22,10 @@ Aplicación Android de punto de venta **offline-first** con backend Flask embebi
 - Operación local con SQLite WAL.
 - Sincronización Supabase opcional.
 - Agente IA offline con intents, handlers por rol, memoria, ReAct, skills, caché y guardrails.
+- LLM GGUF opcional mediante `TPV_LLM_MODEL`; no es requisito para el motor modular.
 - Documentación técnica sincronizada a SQLite para consulta offline por la IA.
-- Diagnóstico, telemetría, logs y auditoría para mantenimiento.
+- Diagnóstico telecom por capas: DNS, TCP, TLS, RTT HTTP, variación, fallos, goodput y plano local SQLite.
+- Telemetría, logs y auditoría para mantenimiento.
 
 ## Arquitectura
 
@@ -139,8 +141,8 @@ python -m pytest \
 Resultado de referencia:
 
 ```text
-570 passed, 71 skipped
-TOTAL 12084 statements, 5452 missing, 54.88% coverage
+579 passed, 71 skipped
+TOTAL 12377 statements, 5516 missing, 55.43% coverage
 ```
 
 La configuración de cobertura excluye únicamente launchers bloqueantes, scripts de migración y fragmentos sustituidos que no forman parte del runtime registrado. No se excluyen módulos activos para inflar el porcentaje.
@@ -191,6 +193,8 @@ El workflow de GitHub Actions ejecuta primero tests y cobertura; el APK solo se 
 - [Contribuir](docs/CONTRIBUTING.md)
 - [Checklist de release](docs/CHECKLIST_RELEASE.md)
 - [Roadmap APK 10/10](docs/ROADMAP_10_10.md)
+- [Ingeniería en Telecomunicaciones](docs/TELECOM_ENGINEERING.md)
+- [Diagnóstico Telecom](docs/telecom_diagnostico.md)
 - [Organización del repositorio](docs/REPOSITORY_STRUCTURE.md)
 - [Política de seguridad](SECURITY.md)
 - [Historial de cambios](CHANGELOG.md)

@@ -121,6 +121,9 @@ except ImportError: usuarios_bp = None
 try:
     from modules.i18n_bp import i18n_bp
 except ImportError: i18n_bp = None
+try:
+    from modules.telecom_bp import telecom_bp
+except ImportError: telecom_bp = None
 
 # ── Frontend: variable explícita, layout Android estándar o fallback legado ──
 _MODULE_DIR = pathlib.Path(__file__).resolve().parent
@@ -156,7 +159,8 @@ if ventas_core_bp: app.register_blueprint(ventas_core_bp)
 if tools_bp: app.register_blueprint(tools_bp)
 if usuarios_bp: app.register_blueprint(usuarios_bp)
 if i18n_bp: app.register_blueprint(i18n_bp)
-print(f"Blueprints (11): tienda_bp, api_bp, assistant_bp, ai_bp, analytics_bp, publico_bp, agent_chat_bp, ventas_core_bp, tools_bp, usuarios_bp, i18n_bp")
+if telecom_bp: app.register_blueprint(telecom_bp)
+print(f"Blueprints ({len(app.blueprints)}): {', '.join(sorted(app.blueprints))}")
 
 # ══════════════════════════════════════════════════════════════
 #  DECORADORES

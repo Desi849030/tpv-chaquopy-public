@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
   title: TPV Ultra Smart API
-  version: "8.0"
-  description: API principal del TPV Ultra Smart orientada a operación local/offline-first.
+  version: "6.13.1"
+  description: API principal del TPV Ultra Smart orientada a operación local/offline-first y diagnóstico de telecomunicaciones.
 
 servers:
   - url: http://127.0.0.1:5000
@@ -152,3 +152,57 @@ paths:
           description: Requiere autenticación
         "500":
           description: Error interno
+
+  /api/dev/telecom/latencia:
+    get:
+      summary: Medir RTT HTTP, P95, variación y solicitudes fallidas
+      parameters:
+        - in: query
+          name: intentos
+          schema: {type: integer, minimum: 1, maximum: 10, default: 5}
+      responses:
+        "200": {description: Medición o estado offline}
+        "403": {description: Requiere rol Desarrollador}
+
+  /api/dev/telecom/throughput:
+    get:
+      summary: Medir goodput HTTP de una muestra acotada
+      parameters:
+        - in: query
+          name: bytes
+          schema: {type: integer, minimum: 1024, maximum: 1000000, default: 100000}
+      responses:
+        "200": {description: Goodput o estado offline}
+        "403": {description: Requiere rol Desarrollador}
+
+  /api/dev/telecom/dns:
+    get:
+      summary: Medir resolución DNS
+      parameters:
+        - in: query
+          name: host
+          schema: {type: string, maxLength: 253}
+      responses:
+        "200": {description: Direcciones y tiempo getaddrinfo}
+        "403": {description: Requiere rol Desarrollador}
+
+  /api/dev/telecom/tls:
+    get:
+      summary: Medir conexión TCP y negociación TLS
+      responses:
+        "200": {description: Tiempos, cipher y certificado}
+        "403": {description: Requiere rol Desarrollador}
+
+  /api/dev/telecom/full:
+    get:
+      summary: Ejecutar diagnóstico por capas
+      responses:
+        "200": {description: Diagnóstico agregado online/offline}
+        "403": {description: Requiere rol Desarrollador}
+
+  /api/dev/telecom/metodologia:
+    get:
+      summary: Obtener unidades, capas y limitaciones de las métricas
+      responses:
+        "200": {description: Metodología de Ingeniería en Telecomunicaciones}
+        "403": {description: Requiere rol Desarrollador}

@@ -1,73 +1,83 @@
 #!/usr/bin/env python3
-"""Autogenera docs/API_REFERENCE.md a partir de los decoradores @bp.route del código.
-Uso:  python3 scripts/gen_api_reference.py
-"""
-import re, glob, datetime, os
+"""Generate docs/API_REFERENCE.md from Flask route decorators."""
+from __future__ import annotations
+
+import datetime
+import glob
+import os
+import re
 from collections import defaultdict
 
-BASE = os.path.join(os.path.dirname(__file__), "..", "app", "src", "main", "python")
-BASE = os.path.abspath(BASE)
+BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "app", "src", "main", "python"))
 OUT = os.path.join(os.path.dirname(__file__), "..", "docs", "API_REFERENCE.md")
 
-ruta_re = re.compile(r'@(\w+)\.route\(\s*[\'"]([^\'"]+)[\'"]\s*(?:,\s*methods\s*=\s*(\[[^\]]*\]))?')
+ROUTE_RE = re.compile(
+    r'@(\w+)\.(route|get|post|put|delete|patch)\(\s*[\'"]([^\'"]+)[\'"]'
+    r'\s*(?:,\s*methods\s*=\s*(\[[^\]]*\]))?'
+)
 data = defaultdict(list)
 total = 0
-for f in sorted(glob.glob(os.path.join(BASE, "**", "*.py"), recursive=True)):
-    rel = os.path.relpath(f, BASE)
+for filename in sorted(glob.glob(os.path.join(BASE, "**", "*.py"), recursive=True)):
+    relative = os.path.relpath(filename, BASE)
     try:
-        lines = open(f, encoding="utf-8").read().splitlines()
-    except Exception:
+        lines = open(filename, encoding="utf-8").read().splitlines()
+    except OSError:
         continue
-    for i, ln in enumerate(lines):
-        m = ruta_re.search(ln)
-        if m:
-            methods = m.group(3)
-            ms = re.findall(r"[A-Z]+", methods) if methods else ["GET"]
-            fn, doc = "", ""
-            for j in range(i+1, min(i+5, len(lines))):
-                dm = re.search(r'def\s+(\w+)', lines[j])
-                if dm:
-                    fn = dm.group(1)
-                    for k in range(j+1, min(j+3, len(lines))):
-                        ds = re.search(r'"""(.+?)"""', lines[k]) or re.search(r'"""(.+)', lines[k])
-                        if ds:
-                            doc = ds.group(1).strip().strip('"').strip()
-                            break
+    for index, line in enumerate(lines):
+        match = ROUTE_RE.search(line)
+        if not match:
+            continue
+        shortcut = match.group(2)
+        methods_literal = match.group(4)
+        methods = re.findall(r"[A-Z]+", methods_literal) if methods_literal else [
+            "GET" if shortcut == "route" else shortcut.upper()
+        ]
+        function, docstring = "", ""
+        for next_index in range(index + 1, min(index + 7, len(lines))):
+            definition = re.search(r"def\s+(\w+)", lines[next_index])
+            if not definition:
+                continue
+            function = definition.group(1)
+            for doc_index in range(next_index + 1, min(next_index + 4, len(lines))):
+                doc = re.search(r'"""(.+?)"""', lines[doc_index]) or re.search(r'"""(.+)', lines[doc_index])
+                if doc:
+                    docstring = doc.group(1).strip().strip('"').strip()
                     break
-            data[rel].append((", ".join(ms), m.group(2), fn, doc))
-            total += 1
+            break
+        data[relative].append((", ".join(methods), match.group(3), function, docstring))
+        total += 1
 
-out = []
-out.append("# 📡 Referencia de API — TPV Ultra Smart v8.0")
-out.append("")
-out.append("> **Documento autogenerado** a partir del código fuente.  ")
-out.append(f"> Total de endpoints: **{total}** en **{len(data)}** módulos.  ")
-out.append(f"> Generado: {datetime.date.today().isoformat()}")
-out.append("")
-out.append("> ⚠️ Las rutas se extraen de los decoradores `@bp.route(...)`. Los permisos por")
-out.append("> rol dependen de `@login_required` / `@requiere_rol` de cada función.")
-out.append("")
-out.append("## Índice de módulos")
-out.append("")
-for f in sorted(data.keys()):
-    nombre = f.replace("modules/", "").replace(".py", "")
-    ancla = nombre.lower().replace("/", "").replace("_", "-").replace(".", "")
-    out.append(f"- [`{f}`](#{ancla}) — {len(data[f])} endpoints")
-out.append("")
-out.append("---")
-out.append("")
-for f in sorted(data.keys()):
-    nombre = f.replace("modules/", "").replace(".py", "")
-    ancla = nombre.lower().replace("/", "").replace("_", "-").replace(".", "")
-    out.append(f"## {nombre}")
-    out.append(f'<a name="{ancla}"></a>')
-    out.append(f"Archivo: `app/src/main/python/{f}`")
-    out.append("")
-    out.append("| Método | Ruta | Función | Descripción |")
-    out.append("|--------|------|---------|-------------|")
-    for ms, path, fn, doc in data[f]:
-        doc = (doc or "").replace("|", "\\|")[:80]
-        out.append(f"| {ms} | `{path}` | `{fn}` | {doc} |")
-    out.append("")
-open(OUT, "w", encoding="utf-8").write("\n".join(out))
+output = [
+    "# Referencia de API — TPV Ultra Smart v6.13.1",
+    "",
+    "> Documento autogenerado a partir de decoradores Flask `route/get/post/put/delete/patch`.",
+    f"> Total de endpoints declarados: **{total}** en **{len(data)}** módulos.",
+    f"> Generado: {datetime.date.today().isoformat()}",
+    "",
+    "> Los permisos dependen de los decoradores y controles de sesión de cada función.",
+    "",
+    "## Índice de módulos",
+    "",
+]
+for relative in sorted(data):
+    name = relative.replace("modules/", "").replace(".py", "")
+    anchor = name.lower().replace("/", "").replace("_", "-").replace(".", "")
+    output.append(f"- [`{relative}`](#{anchor}) — {len(data[relative])} endpoints")
+output.extend(["", "---", ""])
+for relative in sorted(data):
+    name = relative.replace("modules/", "").replace(".py", "")
+    anchor = name.lower().replace("/", "").replace("_", "-").replace(".", "")
+    output.extend([
+        f"## {name}", f'<a name="{anchor}"></a>',
+        f"Archivo: `app/src/main/python/{relative}`", "",
+        "| Método | Ruta | Función | Descripción |",
+        "|---|---|---|---|",
+    ])
+    for methods, path, function, docstring in data[relative]:
+        description = (docstring or "").replace("|", "\\|")[:100]
+        output.append(f"| {methods} | `{path}` | `{function}` | {description} |")
+    output.append("")
+
+with open(OUT, "w", encoding="utf-8") as stream:
+    stream.write("\n".join(output))
 print(f"OK: {total} endpoints -> docs/API_REFERENCE.md")

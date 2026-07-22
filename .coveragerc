@@ -27,7 +27,6 @@ omit =
     */modules/reportes_bp.py
     */modules/settings*.py
     */modules/system.py
-    */modules/telecom*.py
     */modules/tests_info_bp.py
     */modules/tienda*.py
     */modules/ventas*.py

@@ -15,7 +15,8 @@ Este directorio es la fuente técnica y operativa de TPV Ultra Smart. Los docume
 | [CHECKLIST_RELEASE.md](CHECKLIST_RELEASE.md) | Release | Validaciones previas a publicación |
 | [ROADMAP_10_10.md](ROADMAP_10_10.md) | Producto/calidad | Prioridades para una APK de nivel producción |
 | [REPOSITORY_STRUCTURE.md](REPOSITORY_STRUCTURE.md) | Mantenimiento | Fuentes de verdad, organización y política de archivos |
-| [telecom_diagnostico.md](telecom_diagnostico.md) | Desarrollador | Diagnóstico de red y telecomunicaciones |
+| [telecom_diagnostico.md](telecom_diagnostico.md) | Desarrollador | Métricas, API, unidades y limitaciones del diagnóstico |
+| [TELECOM_ENGINEERING.md](TELECOM_ENGINEERING.md) | Universidad | Marco experimental y defensa de Ingeniería en Telecomunicaciones |
 
 ## Producto y evaluación
 

@@ -724,15 +724,22 @@ def handle_dev(agent, t, m=None):
     if any(k in tl for k in ['documentacion', 'docs', 'estructura', 'endpoints',
                               'arquitectura', 'rutas', 'api docs', 'manual',
                               'readme', 'changelog', 'schema', 'licencia']):
-        docs = _q("SELECT nombre FROM documentacion ORDER BY nombre")
+        docs = _q("SELECT nombre, lineas, actualizado FROM documentacion ORDER BY nombre")
         if not docs:
             return "No hay documentos en la base local. Usa 'ejecutar SELECT * FROM documentacion' para verificar."
-        msg = "Documentos disponibles (lectura offline):\n\n"
-        for d in docs:
-            msg += f"  - {d['nombre']}\n"
-        msg += "\nPara leer un documento: 'lee el documento README.md'\n"
-        msg += "O usa SQL: 'ejecutar SELECT contenido FROM documentacion WHERE nombre=\"README.md\"'"
-        return msg
+        total_lines = sum(int(document.get('lineas', 0) or 0) for document in docs)
+        lines = [
+            "CATÁLOGO DOCUMENTAL COMPLETO (offline)",
+            f"Total: {len(docs)} documentos | {total_lines} líneas",
+            "",
+        ]
+        for index, document in enumerate(docs, 1):
+            lines.append(f"{index:02d}. {document['nombre']} — {int(document.get('lineas', 0) or 0)} líneas")
+        lines.extend([
+            "", "Para leer: 'lee el documento <nombre>'.",
+            "Usa 'siguiente' hasta llegar a la última página.",
+        ])
+        return "\n".join(lines)
 
     # --- Leer documento especifico ---
     if any(k in tl for k in ['lee el', 'leer el', 'abrir el', 'mostrar el',

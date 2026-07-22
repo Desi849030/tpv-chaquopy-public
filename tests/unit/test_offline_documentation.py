@@ -34,6 +34,12 @@ def test_documentation_sync_is_idempotent_and_contains_developer_policy():
         conn.close()
 
 
+def test_docs_catalog_api_is_developer_only():
+    database.crear_tablas()
+    app.config.update(TESTING=True, SECRET_KEY="docs-test-secret")
+    assert app.test_client().get("/api/dev/docs/catalog").status_code in (401, 403)
+
+
 def test_developer_can_read_guide_through_agent_endpoint():
     database.crear_tablas()
     app.config.update(TESTING=True, SECRET_KEY="docs-test-secret")
@@ -63,8 +69,18 @@ def test_developer_can_read_guide_through_agent_endpoint():
     assert "docs/DEFENSA.md" in arbitrary["respuesta"]
 
     inventory = client.post("/api/agent/chat", json={
-        "mensaje": "documentación",
+        "mensaje": "todos los documentos",
     }).get_json()
-    assert inventory["tipo"] == "docs"
-    assert inventory["data"]["roles"]["desarrollador"]["access"] == ["all"]
-    assert len(inventory["data"]["documentos"]) >= 20
+    assert inventory["tipo"] == "docs_catalog"
+    assert inventory["rol"] == "desarrollador"
+    assert inventory["total_documentos"] >= 20
+    names = [item["nombre"] for item in inventory["documentos"]]
+    assert len(names) == len(set(names)) == inventory["total_documentos"]
+    assert "DEVELOPER_GUIDE.md" in names
+    assert "docs/TELECOM_ENGINEERING.md" in names
+    assert "docs/STATE_OF_THE_ART.md" in names
+    assert all("lineas" in item and "categoria" in item for item in inventory["documentos"])
+
+    api_catalog = client.get("/api/dev/docs/catalog")
+    assert api_catalog.status_code == 200
+    assert api_catalog.get_json()["total_documentos"] == inventory["total_documentos"]

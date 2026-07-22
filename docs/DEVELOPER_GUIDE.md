@@ -57,6 +57,8 @@ Un documento puede superar el tamaño razonable de una respuesta móvil. En ese 
 
 “Acceso total” no permite revelar secretos. La exhaustividad cubre información técnica autorizada, no contraseñas, tokens, claves ni datos personales protegidos.
 
+`todos los documentos` devuelve el catálogo completo con número, ruta, líneas, fecha y categoría. La API `/api/dev/docs/catalog` entrega el mismo catálogo estructurado. Ningún documento se omite; los contenidos se abren individualmente y se recorren con `siguiente`.
+
 Comandos para la discusión académica:
 
 ```text
@@ -88,8 +90,10 @@ Documentos prioritarios:
 Comandos de ejemplo:
 
 ```text
+todos los documentos
 documentación
 lee el documento DEVELOPER_GUIDE.md
+siguiente
 muéstrame la arquitectura
 abre el schema de base de datos
 qué puede hacer el desarrollador

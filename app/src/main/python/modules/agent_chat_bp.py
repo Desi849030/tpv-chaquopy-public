@@ -79,42 +79,54 @@ def agent_chat():
         msg_lower = msg.lower()
         if rol == "desarrollador":
             
-            # Documentación completa
-            if any(k in msg_lower for k in ["documentacion", "docs", "documentación", "estructura", "endpoints", "rutas", "api docs", "arquitectura"]):
+            # Catálogo documental completo, sin cargar contenidos en la cookie.
+            catalog_terms = [
+                "documentacion", "documentación", "docs", "todos los documentos",
+                "lista de documentos", "listar documentos", "catalogo documental",
+                "catálogo documental", "indice documental", "índice documental",
+            ]
+            if any(term in msg_lower for term in catalog_terms):
+                from db_connection import obtener_conexion
+
+                conn = obtener_conexion()
                 try:
-                    from modules.docs_dev_bp import api_dev_docs as _docs_func
-                    import json as _json
-                    r = _docs_func()
-                    d = r.get_json() if hasattr(r, 'get_json') else _json.loads(r[0].get_data())
-                    return jsonify({
-                            "ok": True, "tipo": "docs",
-                            "respuesta": (
-                                f"📚 DOCUMENTACIÓN COMPLETA — TPV Ultra Smart v{__version__}\n\n"
-                                "══════════ ESTADÍSTICAS ══════════\n"
-                                f"🔹 Archivos totales: {d['estadisticas']['total_archivos']}\n"
-                                f"🔹 Líneas de código: {d['estadisticas']['lineas_codigo']}\n"
-                                f"🔹 Tests: {d['estadisticas']['total_tests']} ({d['estadisticas']['tests_pasan']} pasan)\n"
-                                f"🔹 Cobertura backend: {d['estadisticas']['cobertura_backend']}\n"
-                                f"🔹 Cobertura E2E: {d['estadisticas']['cobertura_e2e']}\n"
-                                f"🔹 Endpoints: {d['endpoints_total']}\n"
-                                f"🔹 Blueprints: {len(d['blueprints'])}\n\n"
-                                "══════════ MÓDULOS ══════════\n"
-                                + "\n".join(f"  📁 {m}: {len(files)} archivos" for m, files in d['modulos'].items()) + "\n\n"
-                                "══════════ SEGURIDAD ══════════\n"
-                                + "\n".join(f"  🔒 {k}: {v}" for k, v in d['seguridad'].items()) + "\n\n"
-                                "══════════ ARREGLOS RECIENTES ══════════\n"
-                                + "\n".join(f"  ✅ {a}" for a in d['arreglos_recientes']) + "\n\n"
-                                f"📄 Documentos disponibles: {', '.join(d['contenido_documentos'].keys())}\n\n"
-                                "Escribe: 'tests' para resultados de pruebas\n"
-                                "Escribe: 'documento README' para ver un documento específico"
-                            ),
-                            "data": d
-                        })
-                except Exception as _e:
-                    import traceback
-                    print('DEBUG DOCS ERROR:', str(_e))
-                    traceback.print_exc()
-            
+                    rows = conn.execute(
+                        "SELECT nombre, lineas, actualizado FROM documentacion ORDER BY nombre"
+                    ).fetchall()
+                finally:
+                    conn.close()
+                catalog = []
+                response_lines = [
+                    f"CATÁLOGO DOCUMENTAL COMPLETO — TPV Ultra Smart v{__version__}",
+                    f"Total: {len(rows)} documentos | {sum(int(row[1] or 0) for row in rows)} líneas",
+                    "",
+                ]
+                for index, row in enumerate(rows, 1):
+                    document_name = str(row[0])
+                    category = (
+                        "evidencia histórica" if document_name.startswith("docs/evidencias/")
+                        else "documentación técnica" if document_name.startswith("docs/")
+                        else "raíz/configuración"
+                    )
+                    item = {
+                        "numero": index, "nombre": document_name,
+                        "lineas": int(row[1] or 0), "actualizado": row[2],
+                        "categoria": category,
+                    }
+                    catalog.append(item)
+                    response_lines.append(
+                        f"{index:02d}. {document_name} — {item['lineas']} líneas — {category}"
+                    )
+                response_lines.extend([
+                    "", "Para leer: 'lee el documento <nombre>'.",
+                    "Para continuar: 'siguiente'. Para cerrar: 'cerrar documento'.",
+                ])
+                return jsonify({
+                    "ok": True, "tipo": "docs_catalog", "rol": rol,
+                    "respuesta": "\n".join(response_lines),
+                    "total_documentos": len(catalog), "documentos": catalog,
+                })
+
             # Tests
             if any(k in msg_lower for k in ["test", "tests", "cobertura", "coverage", "pytest", "pruebas"]):
                 try:

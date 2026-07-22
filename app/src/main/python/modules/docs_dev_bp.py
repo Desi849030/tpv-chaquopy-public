@@ -69,6 +69,22 @@ def _module_inventory() -> dict[str, list[str]]:
     return result
 
 
+@docs_bp.get("/api/dev/docs/catalog")
+@login_required
+@requiere_rol("desarrollador")
+def api_docs_catalog():
+    documents = _database_documents()
+    return jsonify({
+        "ok": True,
+        "total_documentos": len(documents),
+        "total_lineas": sum(int(item.get("lineas", 0) or 0) for item in documents),
+        "documentos": [
+            {key: item[key] for key in ("nombre", "lineas", "actualizado")}
+            for item in documents
+        ],
+    })
+
+
 @docs_bp.route("/api/dev/docs")
 @login_required
 @requiere_rol("desarrollador")

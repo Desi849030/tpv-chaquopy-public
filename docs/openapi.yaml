@@ -309,3 +309,11 @@ paths:
       responses:
         "200": {description: Comparación técnica y limitación bibliográfica}
         "403": {description: Requiere rol Desarrollador}
+
+  /api/dev/docs/catalog:
+    get:
+      summary: Catálogo completo de documentos indexados en SQLite
+      responses:
+        "200": {description: Rutas, líneas y fechas de todos los documentos}
+        "401": {description: Requiere autenticación}
+        "403": {description: Requiere rol Desarrollador}

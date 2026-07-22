@@ -129,6 +129,9 @@ except ImportError: telecom_bp = None
 try:
     from modules.project_intelligence_bp import project_intelligence_bp
 except ImportError: project_intelligence_bp = None
+try:
+    from modules.docs_dev_bp import docs_bp
+except ImportError: docs_bp = None
 
 # ── Frontend: variable explícita, layout Android estándar o fallback legado ──
 _MODULE_DIR = pathlib.Path(__file__).resolve().parent
@@ -166,6 +169,7 @@ if usuarios_bp: app.register_blueprint(usuarios_bp)
 if i18n_bp: app.register_blueprint(i18n_bp)
 if telecom_bp: app.register_blueprint(telecom_bp)
 if project_intelligence_bp: app.register_blueprint(project_intelligence_bp)
+if docs_bp: app.register_blueprint(docs_bp)
 print(f"Blueprints ({len(app.blueprints)}): {', '.join(sorted(app.blueprints))}")
 
 # ══════════════════════════════════════════════════════════════

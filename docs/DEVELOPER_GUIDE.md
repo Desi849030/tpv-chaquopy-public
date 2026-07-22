@@ -49,6 +49,27 @@ La IA debe reconocer al Desarrollador como rol de acceso total y puede ayudar co
 
 La IA nunca debe mostrar contraseñas, tokens, claves privadas, hashes reutilizables ni secretos aunque el usuario tenga rol Desarrollador.
 
+## Respuestas exhaustivas y sin omisiones engañosas
+
+El Desarrollador usa un presupuesto de respuesta `EXHAUSTIVE` de hasta 12 000 caracteres y 300 líneas. Las consultas de sistema, Telecom, negocio y seguridad deben devolver todos los campos disponibles del tema solicitado.
+
+Un documento puede superar el tamaño razonable de una respuesta móvil. En ese caso no se elimina contenido: se presenta paginado. Los comandos `siguiente` y `continuar` recorren las páginas hasta la última línea. La IA debe indicar fuente, nombre del documento, página y limitaciones de la medición.
+
+“Acceso total” no permite revelar secretos. La exhaustividad cubre información técnica autorizada, no contraseñas, tokens, claves ni datos personales protegidos.
+
+Comandos para la discusión académica:
+
+```text
+defensa completa
+estructura de carpetas
+módulos y funciones telecom
+módulos y funciones seguridad
+inventario proyecto sin omitir
+telecom sin omitir
+```
+
+El inventario se genera con AST directamente desde el código: informa archivos, líneas, funciones, firmas, clases, métodos y decoradores de rutas sin ejecutar módulos ni inventar estadísticas.
+
 ## Documentación offline
 
 Al inicializar la base de datos, el backend sincroniza con SQLite todos los documentos de texto disponibles en la raíz y en `docs/`. Gradle copia el corpus al source set Python generado para que también esté completo dentro del APK. Además se crean alias estables y resúmenes esenciales de fallback. Esto permite que la IA los consulte sin conexión.

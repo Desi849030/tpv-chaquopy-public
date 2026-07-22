@@ -52,6 +52,9 @@ def test_developer_can_read_guide_through_agent_endpoint():
     assert payload["ok"] is True
     assert payload["tipo"] == "documento"
     assert "DEVELOPER_GUIDE.md" in payload["respuesta"]
+    continuation = client.post("/api/agent/chat", json={"mensaje": "siguiente"}).get_json()
+    assert continuation["tipo"] == "documento"
+    assert "página 2/" in continuation["respuesta"]
 
     arbitrary = client.post("/api/agent/chat", json={
         "mensaje": "leer documento defensa",

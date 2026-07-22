@@ -6,7 +6,7 @@ El rol `desarrollador` es la máxima autoridad funcional de TPV Ultra Smart.
 
 Su capacidad es `all`: puede usar todos los módulos, herramientas y datos de la instalación, incluyendo ventas, caja, reportes, inventario, catálogo, usuarios, privilegios, licencias, configuración, Supabase, telemetría, logs, auditoría, seguridad, diagnóstico de red, SQL de diagnóstico, motor IA y documentación.
 
-El acceso total no desactiva los controles técnicos. Siempre se mantienen autenticación, sesión válida, sanitización, auditoría, integridad transaccional y protección de secretos. La IA nunca revela contraseñas, tokens, claves privadas ni hashes reutilizables.
+El acceso total no desactiva los controles técnicos. Siempre se mantienen autenticación, sesión válida, sanitización, auditoría, integridad transaccional y protección de secretos. La IA nunca revela contraseñas, tokens, claves privadas ni hashes reutilizables. Para el Desarrollador utiliza respuestas exhaustivas; los documentos largos se entregan por páginas y `siguiente` continúa sin eliminar contenido autorizado.
 
 ## Configuración inicial
 

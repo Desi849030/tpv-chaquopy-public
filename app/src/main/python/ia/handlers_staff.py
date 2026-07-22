@@ -573,6 +573,30 @@ def handle_dev(agent, t, m=None):
         except Exception as e:
             return f"Error SQL: {e}"
 
+    # --- Inteligencia del proyecto para discusión de tesis ---
+    if any(k in tl for k in ['inventario proyecto sin omitir', 'json proyecto completo', 'codigo sin omitir']):
+        from project_intelligence import json_inventory
+        return json_inventory()
+
+    if any(k in tl for k in ['defensa completa', 'discusion tesis', 'discusión tesis',
+                              'explica proyecto completo', 'informe tesis']):
+        import json
+        from project_intelligence import thesis_defense_summary
+        return json.dumps(thesis_defense_summary(), ensure_ascii=False, indent=2)
+
+    if any(k in tl for k in ['estructura de carpetas', 'estructura carpetas',
+                              'organizacion repositorio', 'organización repositorio']):
+        import json
+        from project_intelligence import folder_structure
+        return json.dumps(folder_structure(), ensure_ascii=False, indent=2)
+
+    if any(k in tl for k in ['modulos y funciones', 'módulos y funciones',
+                              'funciones del modulo', 'funciones del módulo',
+                              'explica modulo', 'explica módulo']):
+        from project_intelligence import find_modules, format_module_report
+        modules = find_modules(tl, limit=5)
+        return format_module_report(modules) if modules else "No encontré un módulo coincidente. Indica el nombre del archivo o función."
+
     # --- Estado del sistema / telemetria (OFFLINE PURO) ---
     if any(k in tl for k in ['estado', 'sistema', 'db', 'tablas', 'base de datos',
                               'telemetria', 'info sistema', 'version', 'version apk']):
@@ -724,6 +748,10 @@ def handle_dev(agent, t, m=None):
             return "Especifica que documento: 'lee el documento README.md', 'lee el documento API_REFERENCE.md'"
 
     # --- Telecomunicaciones: mediciones reales y metodología explícita ---
+    if any(k in tl for k in ['json telecom completo', 'datos telecom crudos', 'telecom sin omitir']):
+        import json
+        from modules.telecom_diag import diagnostico_completo
+        return json.dumps(diagnostico_completo(), ensure_ascii=False, indent=2)
     if any(k in tl for k in ['diagnostico completo', 'diagnóstico completo', 'telecom completo']):
         from modules.telecom_diag import formato_humano_diagnostico
         return formato_humano_diagnostico()
@@ -787,21 +815,41 @@ def handle_dev(agent, t, m=None):
 
     # --- Ayuda ---
     if any(k in tl for k in ['como usar', 'ayuda', 'help', 'manual', 'guia', 'que puedes']):
-        return ("Guia de Desarrollador — acceso funcional sin limites de rol:\n\n"
-                "  Capacidad: all (todos los modulos y herramientas).\n"
-                "  La autenticacion, auditoria y proteccion de secretos siguen activas.\n\n"
-                "  - 'estado' o 'sistema': Telemetria completa\n"
-                "  - 'integridad': Verificar BD\n"
-                "  - 'ejecutar SELECT ...': SQL executor\n"
-                "  - 'documentacion': Ver docs disponibles\n"
-                "  - 'lee el documento X': Leer un doc\n"
-                "  - 'logs': Eventos recientes\n"
-                "  - 'usuarios': Staff registrado\n"
-                "  - 'seguridad': Estado de seguridad\n"
-                "  - 'diagnostico completo': KPIs telecom por capas\n"
-                "  - 'latencia', 'jitter', 'throughput', 'dns', 'tls': mediciones de red\n"
-                "  - 'productos': Inventario\n"
-                "  - 'ventas': Resumen de ventas")
+        return ("GUIA EXHAUSTIVA DEL DESARROLLADOR\n"
+                "=================================\n"
+                "Identidad: usuario y rol desarrollador únicos.\n"
+                "Capacidad: all; sin límites funcionales de negocio.\n"
+                "Controles activos: autenticación, sesión, auditoría, validación y secretos.\n\n"
+                "SISTEMA Y DATOS\n"
+                "  - 'estado' / 'sistema': versión, Python, tablas, productos y ventas.\n"
+                "  - 'integridad': PRAGMA quick_check, tamaño y conteos de tablas.\n"
+                "  - 'ejecutar SELECT ...': SQL de solo lectura (SELECT/PRAGMA/EXPLAIN/WITH).\n"
+                "  - 'logs': eventos recientes y auditoría.\n"
+                "  - 'usuarios': cuentas activas por rol.\n"
+                "  - 'seguridad': hashing, rate limit, SQLi, XSS y auditoría.\n\n"
+                "TELECOMUNICACIONES\n"
+                "  - 'diagnóstico completo': endpoint, DNS, TCP, TLS, RTT HTTP, P95, jitter, fallos, goodput y SQLite.\n"
+                "  - 'telecom sin omitir': JSON completo con todos los campos medidos.\n"
+                "  - 'latencia' / 'jitter' / 'rtt': medición HTTP (no ICMP).\n"
+                "  - 'throughput' / 'goodput': muestra útil Mbps y KiB/s.\n"
+                "  - 'dns': resolución y tiempo getaddrinfo.\n"
+                "  - 'tls': versión, cipher, certificado y tiempos TCP/TLS.\n"
+                "  - 'mi ip' / 'red': endpoint local y plano SQLite.\n\n"
+                "NEGOCIO\n"
+                "  - 'productos' / 'inventario' / 'stock': activos y agotados.\n"
+                "  - 'ventas' / 'balance' / 'ganancias': día y semana.\n"
+                "  - Puede acceder además a caja, cierres, gastos, reportes, licencias, configuración y Supabase.\n\n"
+                "TESIS Y CÓDIGO\n"
+                "  - 'defensa completa': problema, hipótesis, arquitectura, IA, Telecom, seguridad, calidad y limitaciones.\n"
+                "  - 'estructura de carpetas': organización real del repositorio.\n"
+                "  - 'módulos y funciones <nombre>': clases, métodos, firmas, líneas, docstrings y rutas.\n"
+                "  - 'inventario proyecto sin omitir': JSON AST; descarga íntegra en /api/dev/project/inventory.\n\n"
+                "DOCUMENTACIÓN\n"
+                "  - 'documentación': índice completo offline.\n"
+                "  - 'lee el documento X': lectura paginada sin omitir contenido.\n"
+                "  - 'siguiente': continúa hasta la última línea.\n"
+                "  - Documentos clave: DEVELOPER_GUIDE, TELECOM_ENGINEERING, ARCHITECTURE, API_REFERENCE y DATABASE_SCHEMA.\n\n"
+                "Use 'ayuda' para este índice, un comando específico para datos actuales y 'siguiente' para documentos largos.")
 
     # --- Hola ---
     if _fm(agent, t, ['hola', 'hey', 'buenas']):

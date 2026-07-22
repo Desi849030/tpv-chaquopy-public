@@ -145,7 +145,7 @@ def agent_chat():
         # ─── LECTURA DE DOCUMENTOS MARKDOWN (paginado) ───
         # Estado de lectura por sesión
         if "doc_reader" not in session:
-            session["doc_reader"] = {"file": "", "lines": [], "page": 0}
+            session["doc_reader"] = {"file": "", "page": 0}
         
         reader = session["doc_reader"]
 
@@ -164,7 +164,7 @@ def agent_chat():
             if matched:
                 filename, content, _line_count = matched
                 lines = content.splitlines()
-                reader = {"file": filename, "lines": lines, "page": 0}
+                reader = {"file": filename, "page": 0}
                 session["doc_reader"] = reader
                 page_size = 20
                 total_pages = max(1, (len(lines) + page_size - 1) // page_size)
@@ -209,9 +209,7 @@ def agent_chat():
                 conn.close()
                 if row:
                     lines = row[0].split('\n')
-                    reader["file"] = filename
-                    reader["lines"] = lines
-                    reader["page"] = 0
+                    reader = {"file": os.path.basename(filename), "page": 0}
                     session["doc_reader"] = reader
                     # Mostrar primera página
                     page_size = 20
@@ -229,26 +227,38 @@ def agent_chat():
                 else:
                     return jsonify({"ok": True, "tipo": "error", "respuesta": f"Documento no encontrado: {filename}"})
         
-        # Comando: siguiente página
-        if rol == "desarrollador" and msg_lower.strip() in ["siguiente", "next", "continuar"] and reader["lines"]:
-            page_size = 20
-            reader["page"] += 1
-            start = reader["page"] * page_size
-            if start >= len(reader["lines"]):
-                reader["page"] = 0
-                start = 0
-            page_lines = reader["lines"][start:start+page_size]
-            total_pages = (len(reader["lines"]) + page_size - 1) // page_size
-            session["doc_reader"] = reader
-            texto = "\n".join(page_lines)
-            return jsonify({
-                "ok": True, "tipo": "documento",
-                "respuesta": (
-                    f"📄 {reader['file']} (página {reader['page']+1}/{total_pages})\n\n"
-                    f"{texto}\n\n"
-                    "Escribe 'siguiente' para continuar, 'cerrar documento' para salir."
+        # Comando: siguiente página. El contenido se recarga desde SQLite para
+        # mantener la cookie de sesión pequeña y no perder páginas en WebView.
+        if rol == "desarrollador" and msg_lower.strip() in ["siguiente", "next", "continuar"] and reader.get("file"):
+            from db_connection import obtener_conexion
+            conn = obtener_conexion()
+            try:
+                row = conn.execute(
+                    "SELECT contenido FROM documentacion WHERE nombre=?", (reader["file"],)
+                ).fetchone()
+            finally:
+                conn.close()
+            if row:
+                lines = row[0].splitlines()
+                page_size = 20
+                total_pages = max(1, (len(lines) + page_size - 1) // page_size)
+                reader["page"] = min(reader.get("page", 0) + 1, total_pages - 1)
+                start = reader["page"] * page_size
+                page_lines = lines[start:start + page_size]
+                session["doc_reader"] = reader
+                texto = "\n".join(page_lines)
+                final_note = (
+                    "Última página. Escribe 'cerrar documento'."
+                    if reader["page"] + 1 >= total_pages
+                    else "Escribe 'siguiente' para continuar, 'cerrar documento' para salir."
                 )
-            })
+                return jsonify({
+                    "ok": True, "tipo": "documento",
+                    "respuesta": (
+                        f"📄 {reader['file']} (página {reader['page']+1}/{total_pages})\n\n"
+                        f"{texto}\n\n{final_note}"
+                    )
+                })
         
         # Comando: cerrar documento
         if rol == "desarrollador" and msg_lower.strip() in ["cerrar documento", "cerrar", "salir documento"]:

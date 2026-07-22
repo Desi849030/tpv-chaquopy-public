@@ -232,3 +232,45 @@ paths:
         "400": {description: Contraseña inválida o no coincide}
         "403": {description: Solicitud no local}
         "409": {description: Configuración ya completada}
+
+  /api/dev/project/summary:
+    get:
+      summary: Resumen dinámico de módulos, funciones, clases y rutas
+      responses:
+        "200": {description: Inventario AST resumido}
+        "403": {description: Requiere rol Desarrollador}
+
+  /api/dev/project/modules:
+    get:
+      summary: Buscar módulos y explicar funciones, clases y rutas
+      parameters:
+        - in: query
+          name: q
+          schema: {type: string}
+        - in: query
+          name: limit
+          schema: {type: integer, minimum: 1, maximum: 50, default: 10}
+      responses:
+        "200": {description: Módulos coincidentes}
+        "403": {description: Requiere rol Desarrollador}
+
+  /api/dev/project/structure:
+    get:
+      summary: Estructura real de carpetas del repositorio
+      responses:
+        "200": {description: Directorios y entradas}
+        "403": {description: Requiere rol Desarrollador}
+
+  /api/dev/project/thesis:
+    get:
+      summary: Resumen estructurado para discusión de tesis
+      responses:
+        "200": {description: Problema, hipótesis, arquitectura, Telecom, IA, seguridad, calidad y mejoras}
+        "403": {description: Requiere rol Desarrollador}
+
+  /api/dev/project/inventory:
+    get:
+      summary: Inventario AST completo sin truncamiento conversacional
+      responses:
+        "200": {description: Todos los módulos, funciones, clases, métodos, firmas y rutas}
+        "403": {description: Requiere rol Desarrollador}

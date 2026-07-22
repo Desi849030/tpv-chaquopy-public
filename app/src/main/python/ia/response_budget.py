@@ -18,6 +18,7 @@ class BudgetMode(Enum):
     CONCISE = "concise"        # Respuestas breves y directas
     NORMAL = "normal"          # Balance entre detalle y brevedad
     DETAILED = "detailed"      # Respuestas con máximo detalle
+    EXHAUSTIVE = "exhaustive"  # Desarrollador: informes extensos y verificables
 
 
 @dataclass
@@ -53,6 +54,13 @@ BUDGET_CONFIGS = {
         max_lines=40,
         min_chars=50,
         truncation_suffix="\n[respuesta truncada]",
+    ),
+    BudgetMode.EXHAUSTIVE: BudgetConfig(
+        mode=BudgetMode.EXHAUSTIVE,
+        max_chars=12000,
+        max_lines=300,
+        min_chars=50,
+        truncation_suffix="\n[continúa con: siguiente]",
     ),
 }
 

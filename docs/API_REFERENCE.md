@@ -1,7 +1,7 @@
 # Referencia de API — TPV Ultra Smart v6.13.1
 
 > Documento autogenerado a partir de decoradores Flask `route/get/post/put/delete/patch`.
-> Total de endpoints declarados: **345** en **47** módulos.
+> Total de endpoints declarados: **350** en **48** módulos.
 > Generado: 2026-07-22
 
 > Los permisos dependen de los decoradores y controles de sesión de cada función.
@@ -35,6 +35,7 @@
 - [`modules/i18n_bp.py`](#i18n-bp) — 2 endpoints
 - [`modules/inventory.py`](#inventory) — 17 endpoints
 - [`modules/metrics.py`](#metrics) — 1 endpoints
+- [`modules/project_intelligence_bp.py`](#project-intelligence-bp) — 5 endpoints
 - [`modules/publico_bp.py`](#publico-bp) — 8 endpoints
 - [`modules/reportes_bp.py`](#reportes-bp) — 5 endpoints
 - [`modules/settings_other.py`](#settings-other) — 7 endpoints
@@ -460,6 +461,18 @@ Archivo: `app/src/main/python/modules/metrics.py`
 | Método | Ruta | Función | Descripción |
 |---|---|---|---|
 | GET | `/dashboard/kpis` | `api_kpis_dashboard` |  |
+
+## project_intelligence_bp
+<a name="project-intelligence-bp"></a>
+Archivo: `app/src/main/python/modules/project_intelligence_bp.py`
+
+| Método | Ruta | Función | Descripción |
+|---|---|---|---|
+| GET | `/api/dev/project/summary` | `project_summary` |  |
+| GET | `/api/dev/project/inventory` | `project_full_inventory` | Return the complete AST inventory without conversational truncation. |
+| GET | `/api/dev/project/modules` | `project_modules` |  |
+| GET | `/api/dev/project/structure` | `project_structure` |  |
+| GET | `/api/dev/project/thesis` | `project_thesis` |  |
 
 ## publico_bp
 <a name="publico-bp"></a>

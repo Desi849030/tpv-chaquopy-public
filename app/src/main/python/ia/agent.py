@@ -273,7 +273,8 @@ class Agent:
         # v13: Apply response budget
         if self._v13_ok:
             try:
-                msg = self._v13_budget.apply(msg, mode=_v13_bm.NORMAL)
+                mode = _v13_bm.EXHAUSTIVE if role == 'desarrollador' else _v13_bm.NORMAL
+                msg = self._v13_budget.apply(msg, mode=mode)
             except Exception:
                 pass
         return {

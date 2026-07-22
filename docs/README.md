@@ -17,6 +17,8 @@ Este directorio es la fuente técnica y operativa de TPV Ultra Smart. Los docume
 | [REPOSITORY_STRUCTURE.md](REPOSITORY_STRUCTURE.md) | Mantenimiento | Fuentes de verdad, organización y política de archivos |
 | [telecom_diagnostico.md](telecom_diagnostico.md) | Desarrollador | Métricas, API, unidades y limitaciones del diagnóstico |
 | [TELECOM_ENGINEERING.md](TELECOM_ENGINEERING.md) | Universidad | Marco experimental y defensa de Ingeniería en Telecomunicaciones |
+| [SYSTEM_LAYERS_AND_OSI.md](SYSTEM_LAYERS_AND_OSI.md) | Universidad | Capas de arquitectura, tecnologías, frontend y modelo OSI |
+| [THESIS_DEFENSE_GUIDE.md](THESIS_DEFENSE_GUIDE.md) | Universidad | Guion integral para discusión, limitaciones y trabajo futuro |
 
 ## Producto y evaluación
 

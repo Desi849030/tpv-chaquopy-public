@@ -584,6 +584,26 @@ def handle_dev(agent, t, m=None):
         from project_intelligence import thesis_defense_summary
         return json.dumps(thesis_defense_summary(), ensure_ascii=False, indent=2)
 
+    if any(k in tl for k in ['capas osi', 'modelo osi', 'mapa de capas', 'capas del sistema']):
+        import json
+        from project_intelligence import architecture_layers, osi_model
+        return json.dumps({"capas_arquitectura": architecture_layers(), "modelo_osi": osi_model()}, ensure_ascii=False, indent=2)
+
+    if any(k in tl for k in ['frontend css', 'modulos javascript', 'módulos javascript',
+                              'archivos html', 'android java', 'dependencias gradle',
+                              'tecnologias proyecto', 'tecnologías proyecto']):
+        import json
+        from project_intelligence import technology_inventory
+        inventory = technology_inventory()
+        requested = (
+            'css' if 'css' in tl else 'js' if 'javascript' in tl else
+            'html' if 'html' in tl else 'java' if 'java' in tl else
+            'gradle' if 'gradle' in tl else None
+        )
+        if requested:
+            inventory["files"] = [item for item in inventory["files"] if item["type"] == requested]
+        return json.dumps(inventory, ensure_ascii=False, indent=2)
+
     if any(k in tl for k in ['estructura de carpetas', 'estructura carpetas',
                               'organizacion repositorio', 'organización repositorio']):
         import json
@@ -842,6 +862,9 @@ def handle_dev(agent, t, m=None):
                 "TESIS Y CÓDIGO\n"
                 "  - 'defensa completa': problema, hipótesis, arquitectura, IA, Telecom, seguridad, calidad y limitaciones.\n"
                 "  - 'estructura de carpetas': organización real del repositorio.\n"
+                "  - 'capas OSI': siete capas, componentes, métricas y limitaciones.\n"
+                "  - 'frontend CSS' / 'módulos JavaScript' / 'archivos HTML': inventario visual.\n"
+                "  - 'Android Java' / 'dependencias Gradle': capa nativa y build.\n"
                 "  - 'módulos y funciones <nombre>': clases, métodos, firmas, líneas, docstrings y rutas.\n"
                 "  - 'inventario proyecto sin omitir': JSON AST; descarga íntegra en /api/dev/project/inventory.\n\n"
                 "DOCUMENTACIÓN\n"

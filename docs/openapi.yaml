@@ -274,3 +274,17 @@ paths:
       responses:
         "200": {description: Todos los módulos, funciones, clases, métodos, firmas y rutas}
         "403": {description: Requiere rol Desarrollador}
+
+  /api/dev/project/layers:
+    get:
+      summary: Capas de arquitectura y modelo OSI aplicado
+      responses:
+        "200": {description: Nueve capas de sistema y siete capas OSI con métricas y limitaciones}
+        "403": {description: Requiere rol Desarrollador}
+
+  /api/dev/project/technology:
+    get:
+      summary: Inventario de Python, JavaScript, CSS, HTML, Java, XML, Gradle y documentación
+      responses:
+        "200": {description: Archivos, líneas y análisis por tecnología}
+        "403": {description: Requiere rol Desarrollador}

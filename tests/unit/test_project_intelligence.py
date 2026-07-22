@@ -5,11 +5,8 @@ import json
 
 from ia.handlers_staff import handle_dev
 from project_intelligence import (
-    find_modules,
-    folder_structure,
-    format_module_report,
-    inspect_module,
-    project_inventory,
+    architecture_layers, find_modules, folder_structure, format_module_report,
+    inspect_module, osi_model, project_inventory, technology_inventory,
     thesis_defense_summary,
 )
 
@@ -32,6 +29,20 @@ def test_module_search_and_report_include_signatures_and_lines():
     assert "función L" in report
     assert "medir_latencia_supabase" in report
     assert "MÓDULO" in report
+
+
+def test_multilanguage_inventory_and_osi_cover_every_layer():
+    technology = technology_inventory()
+    for file_type in ("js", "css", "html", "java", "xml", "md", "yaml"):
+        assert technology["by_type"][file_type]["files"] > 0
+    assert technology["frontend_analysis"]["javascript_functions"] > 20
+    assert technology["frontend_analysis"]["html_ids"] > 20
+    assert technology["android_analysis"]["classes"]
+    layers = architecture_layers()
+    assert len(layers) >= 9
+    osi = osi_model()
+    assert [item["layer"] for item in osi] == [7, 6, 5, 4, 3, 2, 1]
+    assert "no medidas" in osi[-1]["measurements"]
 
 
 def test_structure_and_thesis_cover_discussion_without_fake_metrics():
@@ -61,6 +72,10 @@ def test_project_intelligence_api_is_developer_only():
     full = client.get("/api/dev/project/inventory").get_json()
     assert full["inventory"]["functions_total"] > 200
     assert client.get("/api/dev/project/structure").status_code == 200
+    layers = client.get("/api/dev/project/layers").get_json()
+    assert len(layers["osi"]) == 7
+    technology = client.get("/api/dev/project/technology").get_json()
+    assert technology["technology"]["by_type"]["css"]["files"] > 0
     assert client.get("/api/dev/project/thesis").status_code == 200
 
 
@@ -72,3 +87,8 @@ def test_developer_commands_expose_thesis_structure_and_modules():
     modules = handle_dev(None, "módulos y funciones telecom", "Developer")
     assert "telecom_diag.py" in modules
     assert "medir_tls_handshake" in modules
+    osi = json.loads(handle_dev(None, "capas OSI", "Developer"))
+    assert len(osi["modelo_osi"]) == 7
+    css = json.loads(handle_dev(None, "frontend CSS", "Developer"))
+    assert css["by_type"]["css"]["files"] > 0
+    assert all(item["type"] == "css" for item in css["files"])

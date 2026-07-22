@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import ast
 import json
+import re
 from pathlib import Path
 
 SOURCE_ROOT = Path(__file__).resolve().parent
@@ -121,7 +122,7 @@ def find_modules(query: str, limit: int = 10) -> list[dict]:
 
 def folder_structure() -> dict:
     result = {}
-    for relative in ("app/src/main/python", "app/src/main/assets/frontend", "docs", "tests", "tools", "scripts", "diagramas"):
+    for relative in ("app/src/main/python", "app/src/main/java", "app/src/main/assets/frontend", "docs", "tests", "tools", "scripts", "diagramas", ".github"):
         directory = REPOSITORY_ROOT / relative
         if not directory.is_dir():
             continue
@@ -130,15 +131,127 @@ def folder_structure() -> dict:
     return result
 
 
+def _text_files(root: Path, suffixes: set[str]):
+    if not root.is_dir():
+        return []
+    return [
+        path for path in root.rglob("*")
+        if path.is_file() and path.suffix.lower() in suffixes
+        and "build" not in path.parts and "node_modules" not in path.parts
+    ]
+
+
+def technology_inventory() -> dict:
+    """Inspect frontend, Android, configuration and documentation assets."""
+    roots = {
+        "frontend": REPOSITORY_ROOT / "app/src/main/assets/frontend",
+        "android": REPOSITORY_ROOT / "app/src/main/java",
+        "android_resources": REPOSITORY_ROOT / "app/src/main/res",
+        "documentation": REPOSITORY_ROOT / "docs",
+        "automation": REPOSITORY_ROOT / ".github",
+    }
+    suffixes = {".js", ".css", ".html", ".java", ".kt", ".xml", ".gradle", ".md", ".yaml", ".yml", ".json", ".sh", ".toml"}
+    files = []
+    for area, root in roots.items():
+        for path in _text_files(root, suffixes):
+            try:
+                text = path.read_text(encoding="utf-8", errors="ignore")
+            except OSError:
+                continue
+            files.append({
+                "area": area,
+                "path": path.relative_to(REPOSITORY_ROOT).as_posix(),
+                "type": path.suffix.lower().lstrip("."),
+                "lines": len(text.splitlines()),
+            })
+    special_files = [
+        REPOSITORY_ROOT / "app/src/main/AndroidManifest.xml",
+        REPOSITORY_ROOT / "app/build.gradle",
+        REPOSITORY_ROOT / "build.gradle",
+        REPOSITORY_ROOT / "settings.gradle",
+        REPOSITORY_ROOT / "pyproject.toml",
+    ]
+    known_paths = {item["path"] for item in files}
+    for path in special_files:
+        relative = path.relative_to(REPOSITORY_ROOT).as_posix()
+        if not path.is_file() or relative in known_paths:
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        files.append({
+            "area": "configuration", "path": relative,
+            "type": path.suffix.lower().lstrip("."), "lines": len(text.splitlines()),
+        })
+    by_type = {}
+    for item in files:
+        stats = by_type.setdefault(item["type"], {"files": 0, "lines": 0})
+        stats["files"] += 1
+        stats["lines"] += item["lines"]
+
+    css_files = [REPOSITORY_ROOT / item["path"] for item in files if item["type"] == "css"]
+    js_files = [REPOSITORY_ROOT / item["path"] for item in files if item["type"] == "js"]
+    html_files = [REPOSITORY_ROOT / item["path"] for item in files if item["type"] == "html"]
+    java_files = [REPOSITORY_ROOT / item["path"] for item in files if item["type"] in {"java", "kt"}]
+    css_text = "\n".join(path.read_text(encoding="utf-8", errors="ignore") for path in css_files)
+    js_text = "\n".join(path.read_text(encoding="utf-8", errors="ignore") for path in js_files)
+    html_text = "\n".join(path.read_text(encoding="utf-8", errors="ignore") for path in html_files)
+    java_text = "\n".join(path.read_text(encoding="utf-8", errors="ignore") for path in java_files)
+    return {
+        "files_total": len(files),
+        "lines_total": sum(item["lines"] for item in files),
+        "by_type": by_type,
+        "files": files,
+        "frontend_analysis": {
+            "css_custom_properties": len(set(re.findall(r"--[a-zA-Z0-9_-]+\s*:", css_text))),
+            "css_media_queries": len(re.findall(r"@media\b", css_text)),
+            "javascript_functions": len(re.findall(r"(?:function\s+[\w$]+|(?:const|let|var)\s+[\w$]+\s*=\s*(?:async\s*)?\([^)]*\)\s*=>)", js_text)),
+            "html_ids": len(set(re.findall(r"\bid=[\"']([^\"']+)", html_text))),
+        },
+        "android_analysis": {
+            "classes": sorted(set(re.findall(r"\bclass\s+(\w+)", java_text))),
+            "methods_approx": len(re.findall(r"\b(?:public|private|protected)\s+[\w<>\[\]]+\s+\w+\s*\(", java_text)),
+        },
+    }
+
+
+def architecture_layers() -> list[dict]:
+    return [
+        {"layer": "Android nativo", "paths": ["app/src/main/java", "AndroidManifest.xml"], "responsibility": "ciclo de vida, WebView, biometría, permisos y Chaquopy"},
+        {"layer": "Presentación Web", "paths": ["app/src/main/assets/frontend/templates", "static/css", "static/js"], "responsibility": "HTML, CSS, interacción, accesibilidad y estado visual"},
+        {"layer": "API local", "paths": ["app/src/main/python/app.py", "modules/*_bp.py"], "responsibility": "Flask, rutas, sesiones, contratos JSON y blueprints"},
+        {"layer": "Dominio", "paths": ["database.py", "db/", "models/", "license/"], "responsibility": "ventas, inventario, usuarios, licencias y reglas"},
+        {"layer": "IA", "paths": ["ia/", "ia_assistant.py"], "responsibility": "intents, roles, ReAct, memoria, tools, guardrails y documentación"},
+        {"layer": "Telecom", "paths": ["modules/telecom_diag.py", "modules/telecom_bp.py"], "responsibility": "DNS, TCP, TLS, RTT HTTP, P95, jitter, fallos y goodput"},
+        {"layer": "Persistencia Edge", "paths": ["SQLite", "TPV_FILES_DIR"], "responsibility": "transacciones locales, WAL, auditoría y documentación offline"},
+        {"layer": "Sincronización", "paths": ["supabase_sync.py", "sync/"], "responsibility": "réplica remota opcional sin bloquear la venta"},
+        {"layer": "Calidad y entrega", "paths": ["tests/", ".github/", "docs/", "diagramas/"], "responsibility": "pruebas, cobertura, CI, APK y evidencia académica"},
+    ]
+
+
+def osi_model() -> list[dict]:
+    return [
+        {"layer": 7, "name": "Aplicación", "project": "HTTP/REST Flask, Supabase, IA, JSON API", "measurements": "RTT HTTP, P95, solicitudes fallidas, goodput", "limitation": "incluye servidor y procesamiento"},
+        {"layer": 6, "name": "Presentación", "project": "TLS, JSON, UTF-8, serialización", "measurements": "versión TLS, cipher, certificado", "limitation": "TLS suele ubicarse entre aplicación y transporte en TCP/IP"},
+        {"layer": 5, "name": "Sesión", "project": "cookie Flask, token de sesión, SSE y onboarding", "measurements": "estado de autenticación y continuidad", "limitation": "capa conceptual en la pila TCP/IP moderna"},
+        {"layer": 4, "name": "Transporte", "project": "TCP 443 y loopback local", "measurements": "tiempo de conexión TCP", "limitation": "no captura retransmisiones sin instrumentación adicional"},
+        {"layer": 3, "name": "Red", "project": "IPv4/IPv6, DNS resuelto y direccionamiento", "measurements": "IPs local/remota", "limitation": "no ejecuta ICMP raw ni captura rutas"},
+        {"layer": 2, "name": "Enlace", "project": "Wi-Fi o red celular administrada por Android", "measurements": "tipo de enlace futuro", "limitation": "sin acceso Python directo a tramas, RSRP o RSRQ"},
+        {"layer": 1, "name": "Física", "project": "radio, antena, canal y dispositivo", "measurements": "no medidas actualmente", "limitation": "requiere TelephonyManager/WifiManager y permisos con consentimiento"},
+    ]
+
+
 def thesis_defense_summary() -> dict:
     inventory = project_inventory()
+    technology = technology_inventory()
     return {
         "project": "TPV Ultra Smart",
         "version": "6.13.1",
         "degree": "Ingeniería en Telecomunicaciones",
         "problem": "Continuidad de ventas sobre conectividad WAN variable",
         "hypothesis": "El plano transaccional SQLite mantiene la operación y sincroniza cuando vuelve la WAN",
-        "architecture": ["Android/WebView", "Flask local", "SQLite WAL", "IA por roles", "Supabase opcional"],
+        "architecture": ["Android/WebView", "HTML/CSS/JavaScript", "Flask local", "SQLite WAL", "IA por roles", "Supabase opcional"],
+        "architecture_layers": architecture_layers(),
+        "osi_model": osi_model(),
+        "technology_summary": {key: technology[key] for key in ("files_total", "lines_total", "by_type", "frontend_analysis", "android_analysis")},
         "telecom": ["DNS", "TCP", "TLS", "RTT HTTP", "P95", "jitter observado", "solicitudes fallidas", "goodput", "SQLite ops/s"],
         "ia": ["intents", "handlers por rol", "ReAct", "memoria", "skills", "cache", "guardrails", "documentación offline"],
         "security": ["onboarding local", "identidad Desarrollador única", "contraseña exclusiva", "sesión con token", "auditoría", "SQLi/XSS"],

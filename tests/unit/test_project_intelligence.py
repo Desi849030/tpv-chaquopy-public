@@ -5,8 +5,9 @@ import json
 
 from ia.handlers_staff import handle_dev
 from project_intelligence import (
-    architecture_layers, find_modules, folder_structure, format_module_report,
-    inspect_module, osi_model, project_inventory, technology_inventory,
+    architecture_layers, chaquopy_profile, diagram_inventory, find_modules,
+    folder_structure, format_module_report, inspect_module, osi_model,
+    project_inventory, state_of_the_art, technology_inventory,
     thesis_defense_summary,
 )
 
@@ -45,6 +46,22 @@ def test_multilanguage_inventory_and_osi_cover_every_layer():
     assert "no medidas" in osi[-1]["measurements"]
 
 
+def test_chaquopy_diagrams_and_state_of_art_are_traceable():
+    chaquopy = chaquopy_profile()
+    assert chaquopy["plugin"] == "com.chaquo.python"
+    assert chaquopy["python_version"] == "3.10"
+    assert "arm64-v8a" in chaquopy["abis"]
+    assert any(package.startswith("flask") for package in chaquopy["pip_packages"])
+    diagrams = diagram_inventory()
+    assert diagrams["total"] >= 10
+    assert diagrams["formats"][".puml"] >= 1
+    assert "trabajo4" in diagrams["groups"]
+    art = state_of_the_art()
+    assert len(art["approaches"]) >= 5
+    assert art["research_gap"]
+    assert "bibliográfica" in art["caveat"]
+
+
 def test_structure_and_thesis_cover_discussion_without_fake_metrics():
     structure = folder_structure()
     assert "app/src/main/python" in structure
@@ -76,6 +93,9 @@ def test_project_intelligence_api_is_developer_only():
     assert len(layers["osi"]) == 7
     technology = client.get("/api/dev/project/technology").get_json()
     assert technology["technology"]["by_type"]["css"]["files"] > 0
+    assert client.get("/api/dev/project/chaquopy").get_json()["chaquopy"]["python_version"] == "3.10"
+    assert client.get("/api/dev/project/diagrams").get_json()["diagrams"]["total"] >= 10
+    assert client.get("/api/dev/project/state-of-art").status_code == 200
     assert client.get("/api/dev/project/thesis").status_code == 200
 
 
@@ -92,3 +112,6 @@ def test_developer_commands_expose_thesis_structure_and_modules():
     css = json.loads(handle_dev(None, "frontend CSS", "Developer"))
     assert css["by_type"]["css"]["files"] > 0
     assert all(item["type"] == "css" for item in css["files"])
+    assert json.loads(handle_dev(None, "Chaquopy", "Developer"))["python_version"] == "3.10"
+    assert json.loads(handle_dev(None, "diagramas", "Developer"))["total"] >= 10
+    assert json.loads(handle_dev(None, "estado del arte", "Developer"))["research_gap"]

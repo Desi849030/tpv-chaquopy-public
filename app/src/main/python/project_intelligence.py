@@ -239,6 +239,95 @@ def osi_model() -> list[dict]:
     ]
 
 
+def chaquopy_profile() -> dict:
+    """Describe the Android/Python bridge from the real Gradle configuration."""
+    gradle_path = REPOSITORY_ROOT / "app/build.gradle"
+    gradle = gradle_path.read_text(encoding="utf-8", errors="ignore") if gradle_path.is_file() else ""
+    python_version = (re.search(r'python\s*\{[\s\S]*?version\s+[\"\']([^\"\']+)', gradle) or [None, "unknown"])[1]
+    abi_match = re.search(r'abiFilters\s+([^\n]+)', gradle)
+    abis = re.findall(r'[\"\']([^\"\']+)[\"\']', abi_match.group(1)) if abi_match else []
+    pip_packages = re.findall(r'install\s+[\"\']([^\"\']+)[\"\']', gradle)
+    return {
+        "plugin": "com.chaquo.python",
+        "python_version": python_version,
+        "abis": abis,
+        "pip_packages": pip_packages,
+        "android_entry": "MainApplication/MainActivity",
+        "python_entry": "app/src/main/python/start_server.py",
+        "flask_binding": "127.0.0.1:5050 dentro de la APK",
+        "data_bridge": {
+            "TPV_FILES_DIR": "directorio Android escribible para SQLite y secretos",
+            "TPV_FRONTEND_DIR": "assets frontend expuestos al backend local",
+            "TPV_DB_PATH": "ruta SQLite compartida por motores IA",
+        },
+        "startup_flow": [
+            "Android crea el runtime Chaquopy", "Java publica directorios mediante System properties",
+            "start_server.py configura variables", "Flask y SQLite se inicializan",
+            "WebView consume HTTP loopback",
+        ],
+        "advantages": [
+            "reutilización del backend Python", "operación offline", "ecosistema Flask/SQLite",
+            "misma lógica en Termux, CI y Android",
+        ],
+        "limitations": [
+            "compatibilidad Python fijada por Chaquopy", "wheels deben soportar ABI Android",
+            "no escribir dentro del source empaquetado", "tamaño APK aumenta con dependencias/modelos",
+        ],
+    }
+
+
+def diagram_inventory() -> dict:
+    root = REPOSITORY_ROOT / "diagramas"
+    diagrams = []
+    if root.is_dir():
+        stems = {}
+        for path in sorted(root.rglob("*")):
+            if not path.is_file() or path.suffix.lower() not in {".puml", ".svg", ".png"}:
+                continue
+            relative = path.relative_to(REPOSITORY_ROOT).as_posix()
+            key = path.with_suffix("").relative_to(root).as_posix()
+            item = stems.setdefault(key, {"name": key, "sources": [], "title": ""})
+            item["sources"].append(relative)
+            if path.suffix.lower() == ".puml":
+                text = path.read_text(encoding="utf-8", errors="ignore")
+                title = re.search(r"^title\s+(.+)$", text, re.MULTILINE)
+                item["title"] = title.group(1).strip() if title else path.stem.replace("_", " ")
+        diagrams = list(stems.values())
+    return {
+        "total": len(diagrams),
+        "formats": {
+            extension: sum(any(source.endswith(extension) for source in item["sources"]) for item in diagrams)
+            for extension in (".puml", ".svg", ".png")
+        },
+        "groups": sorted({item["name"].split("/")[0] for item in diagrams}),
+        "diagrams": diagrams,
+    }
+
+
+def state_of_the_art() -> dict:
+    """Structured comparison used by IA; full rationale lives in docs."""
+    return {
+        "scope": "TPV móvil offline-first, IA edge y observabilidad Telecom",
+        "approaches": [
+            {"approach": "POS cloud puro", "strength": "gestión central", "gap": "dependencia WAN", "project_response": "SQLite local + sync opcional"},
+            {"approach": "POS Android local", "strength": "continuidad", "gap": "poca inteligencia/telemetría", "project_response": "IA por roles + diagnóstico por capas"},
+            {"approach": "chatbot cloud", "strength": "lenguaje flexible", "gap": "costo, privacidad, offline", "project_response": "motor intents/ReAct/memoria local; LLM opcional"},
+            {"approach": "monitor de red aislado", "strength": "KPIs técnicos", "gap": "no correlaciona operación", "project_response": "Telecom integrado al flujo TPV"},
+            {"approach": "PWA", "strength": "portabilidad", "gap": "acceso nativo limitado", "project_response": "WebView + Chaquopy + biometría Android"},
+        ],
+        "differentiators": [
+            "venta local independiente de WAN", "IA explicable por rol", "documentación consultable offline",
+            "mediciones Telecom con método/unidad/limitación", "mismo backend en Android, Termux y CI",
+        ],
+        "research_gap": "Integrar continuidad transaccional, IA edge y diagnóstico Telecom verificable en una APK educativa reproducible",
+        "evidence": [
+            "tests y cobertura", "CI y APK", "experimentos Wi-Fi/celular/offline",
+            "diagramas de despliegue, datos, IA, CI y Telecom",
+        ],
+        "caveat": "La comparación es técnica y conceptual; una revisión bibliográfica formal debe citar fuentes académicas externas según la norma de la universidad",
+    }
+
+
 def thesis_defense_summary() -> dict:
     inventory = project_inventory()
     technology = technology_inventory()
@@ -251,6 +340,9 @@ def thesis_defense_summary() -> dict:
         "architecture": ["Android/WebView", "HTML/CSS/JavaScript", "Flask local", "SQLite WAL", "IA por roles", "Supabase opcional"],
         "architecture_layers": architecture_layers(),
         "osi_model": osi_model(),
+        "chaquopy": chaquopy_profile(),
+        "diagrams": diagram_inventory(),
+        "state_of_the_art": state_of_the_art(),
         "technology_summary": {key: technology[key] for key in ("files_total", "lines_total", "by_type", "frontend_analysis", "android_analysis")},
         "telecom": ["DNS", "TCP", "TLS", "RTT HTTP", "P95", "jitter observado", "solicitudes fallidas", "goodput", "SQLite ops/s"],
         "ia": ["intents", "handlers por rol", "ReAct", "memoria", "skills", "cache", "guardrails", "documentación offline"],

@@ -6,8 +6,9 @@ from functools import wraps
 from flask import Blueprint, jsonify, request, session
 
 from project_intelligence import (
-    architecture_layers, find_modules, folder_structure, osi_model,
-    project_inventory, technology_inventory, thesis_defense_summary,
+    architecture_layers, chaquopy_profile, diagram_inventory, find_modules,
+    folder_structure, osi_model, project_inventory, state_of_the_art,
+    technology_inventory, thesis_defense_summary,
 )
 
 project_intelligence_bp = Blueprint("project_intelligence", __name__)
@@ -67,6 +68,24 @@ def project_layers():
 @_developer_required
 def project_technology():
     return jsonify({"ok": True, "technology": technology_inventory()})
+
+
+@project_intelligence_bp.get("/api/dev/project/chaquopy")
+@_developer_required
+def project_chaquopy():
+    return jsonify({"ok": True, "chaquopy": chaquopy_profile()})
+
+
+@project_intelligence_bp.get("/api/dev/project/diagrams")
+@_developer_required
+def project_diagrams():
+    return jsonify({"ok": True, "diagrams": diagram_inventory()})
+
+
+@project_intelligence_bp.get("/api/dev/project/state-of-art")
+@_developer_required
+def project_state_of_art():
+    return jsonify({"ok": True, "state_of_the_art": state_of_the_art()})
 
 
 @project_intelligence_bp.get("/api/dev/project/thesis")

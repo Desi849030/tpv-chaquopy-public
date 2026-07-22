@@ -288,3 +288,24 @@ paths:
       responses:
         "200": {description: Archivos, líneas y análisis por tecnología}
         "403": {description: Requiere rol Desarrollador}
+
+  /api/dev/project/chaquopy:
+    get:
+      summary: Integración Android-Python, ABI, paquetes, arranque y limitaciones
+      responses:
+        "200": {description: Perfil Chaquopy extraído de Gradle}
+        "403": {description: Requiere rol Desarrollador}
+
+  /api/dev/project/diagrams:
+    get:
+      summary: Catálogo real de diagramas PlantUML, SVG y PNG
+      responses:
+        "200": {description: Diagramas agrupados con fuentes y títulos}
+        "403": {description: Requiere rol Desarrollador}
+
+  /api/dev/project/state-of-art:
+    get:
+      summary: Estado del arte conceptual, brecha y diferenciadores
+      responses:
+        "200": {description: Comparación técnica y limitación bibliográfica}
+        "403": {description: Requiere rol Desarrollador}

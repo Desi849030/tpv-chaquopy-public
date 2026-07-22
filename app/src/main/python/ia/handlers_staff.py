@@ -584,6 +584,21 @@ def handle_dev(agent, t, m=None):
         from project_intelligence import thesis_defense_summary
         return json.dumps(thesis_defense_summary(), ensure_ascii=False, indent=2)
 
+    if any(k in tl for k in ['chaquopy', 'integracion python android', 'integración python android', 'puente android python']):
+        import json
+        from project_intelligence import chaquopy_profile
+        return json.dumps(chaquopy_profile(), ensure_ascii=False, indent=2)
+
+    if any(k in tl for k in ['diagramas', 'catalogo diagramas', 'catálogo diagramas', 'plantuml']):
+        import json
+        from project_intelligence import diagram_inventory
+        return json.dumps(diagram_inventory(), ensure_ascii=False, indent=2)
+
+    if any(k in tl for k in ['estado del arte', 'state of the art', 'comparativa tecnologica', 'comparativa tecnológica']):
+        import json
+        from project_intelligence import state_of_the_art
+        return json.dumps(state_of_the_art(), ensure_ascii=False, indent=2)
+
     if any(k in tl for k in ['capas osi', 'modelo osi', 'mapa de capas', 'capas del sistema']):
         import json
         from project_intelligence import architecture_layers, osi_model
@@ -863,6 +878,9 @@ def handle_dev(agent, t, m=None):
                 "  - 'defensa completa': problema, hipótesis, arquitectura, IA, Telecom, seguridad, calidad y limitaciones.\n"
                 "  - 'estructura de carpetas': organización real del repositorio.\n"
                 "  - 'capas OSI': siete capas, componentes, métricas y limitaciones.\n"
+                "  - 'Chaquopy': puente Android/Python, arranque, ABI, paquetes, ventajas y límites.\n"
+                "  - 'diagramas': catálogo PlantUML/SVG/PNG por grupo y propósito.\n"
+                "  - 'estado del arte': comparativa, brecha, diferenciadores y evidencia.\n"
                 "  - 'frontend CSS' / 'módulos JavaScript' / 'archivos HTML': inventario visual.\n"
                 "  - 'Android Java' / 'dependencias Gradle': capa nativa y build.\n"
                 "  - 'módulos y funciones <nombre>': clases, métodos, firmas, líneas, docstrings y rutas.\n"

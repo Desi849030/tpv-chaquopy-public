@@ -89,9 +89,13 @@ def agent_chat():
                 from db_connection import obtener_conexion
                 from documentation_loader import canonical_document_catalog
 
+                from documentation_explainer import document_overview
                 conn = obtener_conexion()
                 try:
                     catalog = canonical_document_catalog(conn)
+                    for item in catalog:
+                        overview = document_overview(conn, item["nombre"])
+                        item["proposito"] = overview["proposito"] if overview else "Documento técnico indexado."
                 finally:
                     conn.close()
                 response_lines = [
@@ -108,6 +112,7 @@ def agent_chat():
                     response_lines.append(
                         f"  {index:02d}. {item['nombre']} ({item['lineas']} líneas)"
                     )
+                    response_lines.append(f"      {item['proposito']}")
                 response_lines.extend([
                     "", "¿Qué deseas consultar? Escribe: lee el documento <nombre>.",
                     "Si es largo, usa 'siguiente' hasta llegar a la última página.",
@@ -151,6 +156,24 @@ def agent_chat():
             session["doc_reader"] = {"file": "", "page": 0}
         
         reader = session["doc_reader"]
+
+        # Explicación previa: propósito y estructura antes de mostrar contenido.
+        explain_commands = ("explica el documento", "explica documento", "resume el documento", "resumen del documento")
+        if rol == "desarrollador" and any(command in msg_lower for command in explain_commands):
+            from db_connection import obtener_conexion
+            from documentation_explainer import document_overview, format_document_overview
+
+            conn = obtener_conexion()
+            try:
+                overview = document_overview(conn, msg_lower)
+            finally:
+                conn.close()
+            if overview:
+                return jsonify({
+                    "ok": True, "tipo": "doc_overview", "rol": rol,
+                    "respuesta": format_document_overview(overview),
+                    "documento": overview,
+                })
 
         # Generic resolver: any synchronized repository document can be opened,
         # not only the aliases maintained below for common requests.

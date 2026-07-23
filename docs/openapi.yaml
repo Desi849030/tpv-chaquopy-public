@@ -317,3 +317,23 @@ paths:
         "200": {description: Rutas, líneas y fechas de todos los documentos}
         "401": {description: Requiere autenticación}
         "403": {description: Requiere rol Desarrollador}
+
+  /api/dev/docs/overview:
+    get:
+      summary: Explicar propósito y secciones de un documento
+      parameters:
+        - in: query
+          name: name
+          required: true
+          schema: {type: string}
+      responses:
+        "200": {description: Vista clara del documento}
+        "403": {description: Requiere rol Desarrollador}
+        "404": {description: Documento no encontrado}
+
+  /api/dev/docs/quality:
+    get:
+      summary: Auditar duplicados, títulos y claridad documental
+      responses:
+        "200": {description: Calidad del catálogo canónico}
+        "403": {description: Requiere rol Desarrollador}

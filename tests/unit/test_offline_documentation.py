@@ -3,7 +3,10 @@ from __future__ import annotations
 
 import database
 from app import app
-from documentation_loader import available_document_names, find_document, sync_documentation
+from documentation_loader import (
+    available_document_names, canonical_document_catalog, find_document,
+    sync_documentation,
+)
 
 
 def test_documentation_sync_is_idempotent_and_contains_developer_policy():
@@ -22,6 +25,10 @@ def test_documentation_sync_is_idempotent_and_contains_developer_policy():
         assert "docs/DEFENSA.md" in names
         assert "docs/openapi.yaml" in names
         assert find_document(conn, "leer documento defensa")[0] == "docs/DEFENSA.md"
+        catalog = canonical_document_catalog(conn)
+        hashes = [item["sha256"] for item in catalog]
+        assert len(hashes) == len(set(hashes))
+        assert all(item["nombre"] not in item["aliases"] for item in catalog)
         row = conn.execute(
             "SELECT contenido, lineas FROM documentacion WHERE nombre=?",
             ("DEVELOPER_GUIDE.md",),
@@ -50,6 +57,13 @@ def test_developer_can_read_guide_through_agent_endpoint():
         "password": "dev2024",
     })
     assert login.status_code == 200
+
+    overview_response = client.post("/api/agent/chat", json={
+        "mensaje": "explica el documento PROJECT_MASTER_GUIDE.md",
+    }).get_json()
+    assert overview_response["tipo"] == "doc_overview"
+    assert "¿Para qué sirve?" in overview_response["respuesta"]
+    assert "Contenido principal" in overview_response["respuesta"]
 
     response = client.post("/api/agent/chat", json={
         "mensaje": "leer documento desarrollador",
@@ -88,3 +102,8 @@ def test_developer_can_read_guide_through_agent_endpoint():
     api_catalog = client.get("/api/dev/docs/catalog")
     assert api_catalog.status_code == 200
     assert api_catalog.get_json()["total_documentos"] == inventory["total_documentos"]
+    quality = client.get("/api/dev/docs/quality").get_json()["calidad_documental"]
+    assert quality["duplicados_visibles"] == 0
+    overview = client.get("/api/dev/docs/overview?name=PROJECT_MASTER_GUIDE.md")
+    assert overview.status_code == 200
+    assert overview.get_json()["documento"]["secciones"]

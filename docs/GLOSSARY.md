@@ -1,0 +1,29 @@
+# Glosario técnico
+
+- **APK**: paquete instalable de Android.
+- **Chaquopy**: plugin que integra Python dentro de una aplicación Android.
+- **WebView**: componente Android que renderiza la interfaz HTML/CSS/JavaScript.
+- **Loopback**: comunicación local mediante `127.0.0.1`, sin salir a la red física.
+- **Offline-first**: diseño donde la operación local es prioritaria y la sincronización es secundaria.
+- **Edge computing**: procesamiento cerca del usuario y la fuente de datos.
+- **SQLite WAL**: modo Write-Ahead Logging para concurrencia y recuperación local.
+- **RTT HTTP**: tiempo total de ida y vuelta de una petición HTTP; no equivale a ping ICMP.
+- **P95**: valor por debajo del cual cae el 95% de las muestras.
+- **Jitter observado**: variación estadística de las muestras RTT utilizadas por el proyecto.
+- **Goodput**: datos útiles entregados por unidad de tiempo, excluyendo parte del overhead.
+- **Throughput**: tasa total de transferencia observada; según capa puede incluir overhead.
+- **QoS**: Quality of Service, propiedades medibles del servicio de red.
+- **QoE**: Quality of Experience, percepción del usuario sobre el servicio.
+- **DNS**: resolución de nombres a direcciones IP.
+- **TCP**: protocolo de transporte orientado a conexión.
+- **TLS**: seguridad criptográfica aplicada sobre el transporte.
+- **OSI**: modelo conceptual de siete capas para describir comunicaciones.
+- **ReAct**: patrón de razonamiento y acción mediante pasos y herramientas.
+- **Intent**: propósito detectado en una consulta de usuario.
+- **Guardrail**: control que restringe o valida el comportamiento de la IA.
+- **Blueprint**: agrupación modular de rutas Flask.
+- **AST**: árbol sintáctico abstracto usado para inspeccionar código sin ejecutarlo.
+- **CI/CD**: automatización de pruebas, build y entrega.
+- **Coverage**: porcentaje de sentencias ejecutadas por las pruebas.
+- **Handover**: cambio de una red/celda/interfaz a otra durante una sesión.
+- **RSRP/RSRQ/SINR**: métricas radio que requieren APIs Android nativas adicionales.

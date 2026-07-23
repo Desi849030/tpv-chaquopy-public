@@ -1,8 +1,8 @@
 # Referencia de API — TPV Ultra Smart v6.13.1
 
 > Documento autogenerado a partir de decoradores Flask `route/get/post/put/delete/patch`.
-> Total de endpoints declarados: **356** en **48** módulos.
-> Generado: 2026-07-22
+> Total de endpoints declarados: **358** en **48** módulos.
+> Generado: 2026-07-23
 
 > Los permisos dependen de los decoradores y controles de sesión de cada función.
 
@@ -31,7 +31,7 @@
 - [`modules/catalogo_bp.py`](#catalogo-bp) — 8 endpoints
 - [`modules/clientes_bp.py`](#clientes-bp) — 2 endpoints
 - [`modules/diag_bp.py`](#diag-bp) — 13 endpoints
-- [`modules/docs_dev_bp.py`](#docs-dev-bp) — 2 endpoints
+- [`modules/docs_dev_bp.py`](#docs-dev-bp) — 4 endpoints
 - [`modules/i18n_bp.py`](#i18n-bp) — 2 endpoints
 - [`modules/inventory.py`](#inventory) — 17 endpoints
 - [`modules/metrics.py`](#metrics) — 1 endpoints
@@ -420,6 +420,8 @@ Archivo: `app/src/main/python/modules/docs_dev_bp.py`
 | Método | Ruta | Función | Descripción |
 |---|---|---|---|
 | GET | `/api/dev/docs/catalog` | `api_docs_catalog` |  |
+| GET | `/api/dev/docs/overview` | `api_docs_overview` |  |
+| GET | `/api/dev/docs/quality` | `api_docs_quality` |  |
 | GET | `/api/dev/docs` | `api_dev_docs` | Return live structure and SQLite-indexed docs without stale hardcoded counts. |
 
 ## i18n_bp

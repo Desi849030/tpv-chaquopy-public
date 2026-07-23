@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 
 from decorators import login_required, requiere_rol
 from version import __version__
@@ -79,6 +79,39 @@ def api_docs_catalog():
             for item in documents
         ],
     })
+
+
+@docs_bp.get("/api/dev/docs/overview")
+@login_required
+@requiere_rol("desarrollador")
+def api_docs_overview():
+    from db_connection import obtener_conexion
+    from documentation_explainer import document_overview
+
+    query = request.args.get("name", "")
+    connection = obtener_conexion()
+    try:
+        overview = document_overview(connection, query)
+    finally:
+        connection.close()
+    if not overview:
+        return jsonify({"ok": False, "error": "Documento no encontrado"}), 404
+    return jsonify({"ok": True, "documento": overview})
+
+
+@docs_bp.get("/api/dev/docs/quality")
+@login_required
+@requiere_rol("desarrollador")
+def api_docs_quality():
+    from db_connection import obtener_conexion
+    from documentation_explainer import catalog_quality
+
+    connection = obtener_conexion()
+    try:
+        quality = catalog_quality(connection)
+    finally:
+        connection.close()
+    return jsonify({"ok": True, "calidad_documental": quality})
 
 
 @docs_bp.route("/api/dev/docs")

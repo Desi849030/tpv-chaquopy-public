@@ -2,7 +2,7 @@ import os,re,time,threading,json
 from datetime import datetime
 from collections import deque
 _HET_CONFIG={"max_rpm":120,"max_login":5,"lockout_min":15,"max_alerts":200}
-_LOCK=threading.Lock()
+_LOCK=threading.RLock()
 _request_log=deque(maxlen=1000)
 _login_attempts={}
 _login_lockouts={}
@@ -37,8 +37,7 @@ def detect_sql_injection(s,ip=None):
     if not s: return True,"OK"
     m=_SQL.findall(str(s))
     if m:
-        with _LOCK: c=_SQL.count
-        add_alert("WARN","SQL_SUSPICIOUS",ip,f"Patron: {m[0]}")
+        add_alert("WARN","SQL_SUSPICIOUS",ip or "unknown",f"Patron: {m[0]}")
         return False,"WARN"
     return True,"OK"
 def detect_xss(s,ip=None):

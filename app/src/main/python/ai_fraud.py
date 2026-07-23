@@ -11,7 +11,10 @@ def get_fraud_dashboard():
     try:
         today = datetime.now().strftime("%Y-%m-%d")
         total = conn.execute("SELECT COUNT(*) FROM historial_ventas WHERE DATE(fecha)=?",(today,)).fetchone()[0]
-        refunds = conn.execute("SELECT COUNT(*) FROM historial_ventas WHERE DATE(fecha)=? AND tipo LIKE '%devolucion%'",(today,)).fetchone()[0]
+        refunds = conn.execute(
+            "SELECT COUNT(*) FROM historial_ventas WHERE DATE(fecha)=? "
+            "AND (total < 0 OR LOWER(nombre) LIKE '%devol%')", (today,)
+        ).fetchone()[0]
         amounts = conn.execute("SELECT total FROM historial_ventas WHERE DATE(fecha)=?",(today,)).fetchall()
         prices = conn.execute("SELECT precio FROM productos WHERE precio>0").fetchall()
     finally: conn.close()

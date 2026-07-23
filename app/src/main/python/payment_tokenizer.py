@@ -39,12 +39,13 @@ def tokenize(card_data: str) -> dict:
     # Crear token único
     raw = f"{card_data}:{timestamp}:{salt.hex()}"
     token = hashlib.blake2b(raw.encode(), digest_size=32).hexdigest()
+    public_token = token[:16]
     
-    # HMAC para verificación
-    signature = hmac.new(_SECRET, token.encode(), hashlib.sha256).hexdigest()
+    # Firmar exactamente el valor público que se entrega al consumidor.
+    signature = hmac.new(_SECRET, public_token.encode(), hashlib.sha256).hexdigest()
     
     return {
-        "token": token[:16],
+        "token": public_token,
         "signature": signature[:16],
         "timestamp": timestamp,
         "type": "one_time"

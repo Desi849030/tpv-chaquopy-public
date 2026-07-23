@@ -13,11 +13,24 @@ def _safe_avg(series):
 def get_inventory_predictions_summary():
     conn = _get_db()
     try:
-        rows = conn.execute("SELECT nombre, stock, precio, cantidad_vendida FROM productos ORDER BY stock ASC").fetchall()
+        rows = conn.execute(
+            "SELECT p.nombre, COALESCE(ig.stock_actual,0) AS stock, p.precio, "
+            "COALESCE(SUM(h.cantidad),0) AS cantidad_vendida "
+            "FROM productos p "
+            "LEFT JOIN inventario_general ig ON ig.producto_id=p.producto_id "
+            "LEFT JOIN historial_ventas h ON h.producto_id=p.producto_id "
+            "WHERE p.activo=1 GROUP BY p.producto_id ORDER BY stock ASC"
+        ).fetchall()
         today = datetime.now().strftime("%Y-%m-%d")
-        sold = conn.execute("SELECT nombre, SUM(cantidad) as q FROM historial_ventas WHERE DATE(fecha)=? GROUP BY nombre",(today,)).fetchall()
+        sold = conn.execute(
+            "SELECT nombre, SUM(cantidad) AS q FROM historial_ventas "
+            "WHERE DATE(fecha)=? GROUP BY nombre", (today,)
+        ).fetchall()
         sold_map = {r[0]: r[1] for r in sold}
-        week_sold = conn.execute("SELECT nombre, SUM(cantidad) as q FROM historial_ventas WHERE fecha>=date('now','-7 days') GROUP BY nombre",(today,)).fetchall()
+        week_sold = conn.execute(
+            "SELECT nombre, SUM(cantidad) AS q FROM historial_ventas "
+            "WHERE fecha>=date('now','-7 days') GROUP BY nombre"
+        ).fetchall()
         week_map = {r[0]: r[1] for r in week_sold}
     finally: conn.close()
     critical, high, medium, low = [], [], [], []
@@ -43,7 +56,8 @@ def get_inventory_predictions_summary():
             low.append(item)
         if daily > 3 and stock > 100:
             recommendations.append({"type":"ESTRATEGIA","product":name,"message":f"Producto con alta rotacion. Considera oferta para impulsar ventas."})
-    est_rev = sum(r[2] or 0 for r in rows) * 0.3
+    price_map = {r[0]: float(r[2] or 0) for r in rows}
+    est_rev = sum(float(quantity or 0) * price_map.get(name, 0) for name, quantity in week_map.items())
     est_profit = est_rev * 0.35
     total = len(rows)
     return {

@@ -16,21 +16,17 @@ _REPOSITORY_ROOT = _PYTHON_ROOT.parents[3]
 
 def _database_documents() -> list[dict]:
     from db_connection import obtener_conexion
+    from documentation_loader import canonical_document_catalog
 
     connection = obtener_conexion()
     try:
-        rows = connection.execute(
-            "SELECT nombre, lineas, actualizado, contenido FROM documentacion ORDER BY nombre"
-        ).fetchall()
-        return [
-            {
-                "nombre": row[0],
-                "lineas": row[1],
-                "actualizado": row[2],
-                "preview": row[3][:400],
-            }
-            for row in rows
-        ]
+        catalog = canonical_document_catalog(connection)
+        for item in catalog:
+            row = connection.execute(
+                "SELECT contenido FROM documentacion WHERE nombre=?", (item["nombre"],)
+            ).fetchone()
+            item["preview"] = (row[0] if row else "")[:400]
+        return catalog
     finally:
         connection.close()
 

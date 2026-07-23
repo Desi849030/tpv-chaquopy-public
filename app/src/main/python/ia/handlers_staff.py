@@ -585,24 +585,24 @@ def handle_dev(agent, t, m=None):
         return json.dumps(thesis_defense_summary(), ensure_ascii=False, indent=2)
 
     if any(k in tl for k in ['chaquopy', 'chacopy', 'chaquopi', 'integracion python android', 'integración python android', 'puente android python']):
-        import json
+        from humanized_project_reports import chaquopy_report
         from project_intelligence import chaquopy_profile
-        return json.dumps(chaquopy_profile(), ensure_ascii=False, indent=2)
+        return chaquopy_report(chaquopy_profile())
 
     if any(k in tl for k in ['diagramas', 'catalogo diagramas', 'catálogo diagramas', 'plantuml']):
-        import json
+        from humanized_project_reports import diagrams_report
         from project_intelligence import diagram_inventory
-        return json.dumps(diagram_inventory(), ensure_ascii=False, indent=2)
+        return diagrams_report(diagram_inventory())
 
     if any(k in tl for k in ['estado del arte', 'state of the art', 'comparativa tecnologica', 'comparativa tecnológica']):
-        import json
+        from humanized_project_reports import state_of_art_report
         from project_intelligence import state_of_the_art
-        return json.dumps(state_of_the_art(), ensure_ascii=False, indent=2)
+        return state_of_art_report(state_of_the_art())
 
     if any(k in tl for k in ['capas osi', 'modelo osi', 'mapa de capas', 'capas del sistema']):
-        import json
+        from humanized_project_reports import layers_report
         from project_intelligence import architecture_layers, osi_model
-        return json.dumps({"capas_arquitectura": architecture_layers(), "modelo_osi": osi_model()}, ensure_ascii=False, indent=2)
+        return layers_report(architecture_layers(), osi_model())
 
     if any(k in tl for k in ['frontend css', 'modulos javascript', 'módulos javascript',
                               'archivos html', 'android java', 'dependencias gradle',
@@ -724,20 +724,31 @@ def handle_dev(agent, t, m=None):
     if any(k in tl for k in ['documentacion', 'docs', 'estructura', 'endpoints',
                               'arquitectura', 'rutas', 'api docs', 'manual',
                               'readme', 'changelog', 'schema', 'licencia']):
-        docs = _q("SELECT nombre, lineas, actualizado FROM documentacion ORDER BY nombre")
+        try:
+            from db_connection import obtener_conexion
+            from documentation_loader import canonical_document_catalog
+            connection = obtener_conexion()
+            try:
+                docs = canonical_document_catalog(connection)
+            finally:
+                connection.close()
+        except Exception:
+            docs = []
         if not docs:
-            return "No hay documentos en la base local. Usa 'ejecutar SELECT * FROM documentacion' para verificar."
-        total_lines = sum(int(document.get('lineas', 0) or 0) for document in docs)
+            return "Aún no hay documentos indexados. Reinicia el backend para sincronizar la documentación offline."
         lines = [
-            "CATÁLOGO DOCUMENTAL COMPLETO (offline)",
-            f"Total: {len(docs)} documentos | {total_lines} líneas",
-            "",
+            "Centro documental offline",
+            f"Encontré {len(docs)} documentos únicos, agrupados para evitar duplicados.",
         ]
+        category = None
         for index, document in enumerate(docs, 1):
-            lines.append(f"{index:02d}. {document['nombre']} — {int(document.get('lineas', 0) or 0)} líneas")
+            if document["categoria"] != category:
+                category = document["categoria"]
+                lines.extend(["", category.upper()])
+            lines.append(f"  {index:02d}. {document['nombre']} ({document['lineas']} líneas)")
         lines.extend([
-            "", "Para leer: 'lee el documento <nombre>'.",
-            "Usa 'siguiente' hasta llegar a la última página.",
+            "", "Dime: lee el documento <nombre>.",
+            "Para documentos largos, usa 'siguiente' hasta la última página.",
         ])
         return "\n".join(lines)
 

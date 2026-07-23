@@ -25,6 +25,9 @@ window._DBG = {
     ultimoSync: null,
     intervalId: null,
     expanded:   false,
+    dedupe:     new Map(),   // Firma -> última aparición y repeticiones
+    suprimidos: 0,
+    maxBuffer:  200,
 };
 
 // ══════════════════════════════════════════════════════════════
@@ -169,7 +172,11 @@ function _dbgInit() {
             return res;
         }).catch(err => {
             window._DBG.stats.err++;
-            _dbgLog(`❌ [FETCH] ${err.message} → ${url}`, 'error', err.message);
+            if (!navigator.onLine) {
+                _dbgLog('📴 Modo offline: se agrupan los fallos de red; SQLite local continúa disponible.', 'warning', 'OFFLINE_NETWORK');
+            } else {
+                _dbgLog(`❌ [FETCH] ${err.message} → ${url}`, 'error', err.message);
+            }
             throw err;
         });
     };
@@ -197,17 +204,42 @@ function _dbgInit() {
 //  LOGGING CENTRAL
 // ══════════════════════════════════════════════════════════════
 function _dbgLog(mensaje, tipo = 'info', rawMsg = '') {
-    const ts   = new Date().toLocaleTimeString('es', { hour12: false });
-    const cat  = _dbgCategorizar(rawMsg || mensaje);
-    const entry = { ts, mensaje, tipo, cat };
+    if (!window._DBG) return;
+    window._DBG.dedupe = window._DBG.dedupe || new Map();
+    const normalized = String(rawMsg || mensaje)
+        .replace(/\b\d{1,6}ms\b/g, '<ms>')
+        .replace(/\?t=\d+/g, '?t=<ts>')
+        .trim();
+    const signature = `${tipo}|${normalized}`;
+    const now = Date.now();
+    const previous = window._DBG.dedupe.get(signature);
+    const isConnectivity = /fetch|network|offline|supabase|failed to fetch|api/i.test(normalized);
+    const windowMs = isConnectivity ? 120000 : 10000;
+
+    if (previous && now - previous.last < windowMs) {
+        previous.last = now;
+        previous.count += 1;
+        window._DBG.suprimidos = (window._DBG.suprimidos || 0) + 1;
+        return;
+    }
+
+    let groupedMessage = mensaje;
+    if (previous && previous.count > 1) {
+        groupedMessage += ` (se agruparon ${previous.count - 1} repeticiones)`;
+    }
+    window._DBG.dedupe.set(signature, { last: now, count: 1 });
+
+    const ts = new Date().toLocaleTimeString('es', { hour12: false });
+    const cat = _dbgCategorizar(rawMsg || mensaje);
+    const entry = { ts, mensaje: groupedMessage, tipo, cat };
 
     window._DBG.buffer.push(entry);
-    if (window._DBG.buffer.length > 500) window._DBG.buffer.shift();
+    const maxBuffer = window._DBG.maxBuffer || 200;
+    while (window._DBG.buffer.length > maxBuffer) window._DBG.buffer.shift();
 
-    if (tipo === 'error')   window._DBG.errores++;
+    if (tipo === 'error') window._DBG.errores++;
     if (tipo === 'warning') window._DBG.advertencias++;
 
-    // Solo renderizar si el panel está visible
     if (document.getElementById('dbg-v2')) {
         _dbgRenderEntry(entry);
         _dbgActualizarContadores();
@@ -422,12 +454,15 @@ function _dbgCerrar() {
     const p = document.getElementById('dbg-v2');
     if (p) p.remove();
     if (window._DBG.intervalId) clearInterval(window._DBG.intervalId);
+    if (_dbgRedTimer) { clearInterval(_dbgRedTimer); _dbgRedTimer = null; }
 }
 
 function _dbgLimpiar() {
     window._DBG.buffer = [];
     window._DBG.errores = 0;
     window._DBG.advertencias = 0;
+    window._DBG.suprimidos = 0;
+    window._DBG.dedupe?.clear();
     const c = document.getElementById('dbg-log-entries');
     if (c) c.innerHTML = '';
     _dbgActualizarContadores();
@@ -450,7 +485,8 @@ function _dbgTab(nombre) {
     if (_dbgRedTimer) { clearInterval(_dbgRedTimer); _dbgRedTimer = null; }
     if (nombre === 'red') {
         _dbgRenderRed();
-        _dbgRedTimer = setInterval(_dbgRenderRed, 3000); // dinámico cada 3s
+        const refreshMs = navigator.onLine ? 6000 : 15000;
+        _dbgRedTimer = setInterval(_dbgRenderRed, refreshMs);
     }
     if (nombre === 'health')   _dbgRenderSalud();
     if (nombre === 'supabase') _dbgRenderSupabase();
@@ -682,6 +718,11 @@ function _dbgRenderResultadosDiagnostico(resultados) {
 // ══════════════════════════════════════════════════════════════
 async function _dbgChequeoSupabase() {
     const badge = document.getElementById('dbg-sup-status');
+    if (!navigator.onLine) {
+        if (badge) { badge.textContent = '☁️ Offline'; badge.style.background = '#374151'; }
+        _dbgLog('📴 Supabase en pausa: sin conexión. No se repetirán intentos hasta recuperar la red.', 'info', 'SUPABASE_OFFLINE_PAUSED');
+        return;
+    }
     try {
         const res = await fetch('/api/supabase/estado', { credentials: 'same-origin' });
         if (!res.ok) {

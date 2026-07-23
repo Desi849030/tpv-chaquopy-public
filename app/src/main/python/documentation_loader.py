@@ -1,6 +1,7 @@
 """Synchronize curated project documentation into SQLite for offline IA use."""
 from __future__ import annotations
 
+import hashlib
 import logging
 from pathlib import Path
 from typing import Iterable
@@ -151,9 +152,54 @@ def find_document(connection, query: str):
     return (exact_candidates or fuzzy_candidates or [None])[0]
 
 
-def available_document_names(connection) -> list[str]:
-    """Return synchronized document names in display order."""
+def _document_priority(name: str) -> tuple:
+    """Prefer user-facing canonical paths over compatibility aliases."""
+    root_documents = {"README.md", "CHANGELOG.md", "SECURITY.md", "LICENSE"}
+    if name in root_documents:
+        return (0, len(name), name)
+    if name.startswith("docs/") and not name.startswith("docs/evidencias/"):
+        return (1, len(name), name)
+    if name.startswith("docs/evidencias/"):
+        return (3, len(name), name)
+    return (2, len(name), name)
+
+
+def canonical_document_catalog(connection) -> list[dict]:
+    """Return one catalog entry per unique content, preserving aliases metadata."""
     rows = connection.execute(
-        "SELECT nombre FROM documentacion ORDER BY nombre"
+        "SELECT nombre, lineas, actualizado, contenido FROM documentacion ORDER BY nombre"
     ).fetchall()
+    groups: dict[str, list] = {}
+    for row in rows:
+        digest = hashlib.sha256(str(row[3]).encode("utf-8")).hexdigest()
+        groups.setdefault(digest, []).append(row)
+
+    catalog = []
+    for digest, copies in groups.items():
+        ordered = sorted(copies, key=lambda row: _document_priority(str(row[0])))
+        canonical = ordered[0]
+        name = str(canonical[0])
+        category = (
+            "Evidencia histórica" if name.startswith("docs/evidencias/")
+            else "Tesis y Telecom" if any(term in name.upper() for term in ("TESIS", "TELECOM", "OSI", "STATE_OF_THE_ART", "DEFENSA"))
+            else "Arquitectura y API" if any(term in name.upper() for term in ("ARCHITECTURE", "API", "BACKEND", "DATABASE", "OPENAPI"))
+            else "Guías del proyecto" if name.endswith(".md") or name in {"README.md", "LICENSE"}
+            else "Configuración técnica"
+        )
+        catalog.append({
+            "nombre": name,
+            "lineas": int(canonical[1] or 0),
+            "actualizado": canonical[2],
+            "categoria": category,
+            "sha256": digest,
+            "aliases": [str(row[0]) for row in ordered[1:]],
+        })
+    return sorted(catalog, key=lambda item: (item["categoria"], item["nombre"].lower()))
+
+
+def available_document_names(connection, canonical: bool = True) -> list[str]:
+    """Return synchronized document names, deduplicated by default."""
+    if canonical:
+        return [item["nombre"] for item in canonical_document_catalog(connection)]
+    rows = connection.execute("SELECT nombre FROM documentacion ORDER BY nombre").fetchall()
     return [row[0] for row in rows]

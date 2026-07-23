@@ -107,11 +107,15 @@ def test_developer_commands_expose_thesis_structure_and_modules():
     modules = handle_dev(None, "módulos y funciones telecom", "Developer")
     assert "telecom_diag.py" in modules
     assert "medir_tls_handshake" in modules
-    osi = json.loads(handle_dev(None, "capas OSI", "Developer"))
-    assert len(osi["modelo_osi"]) == 7
+    osi = handle_dev(None, "capas OSI", "Developer")
+    assert "Capa 7" in osi and "Capa 1" in osi
     css = json.loads(handle_dev(None, "frontend CSS", "Developer"))
     assert css["by_type"]["css"]["files"] > 0
     assert all(item["type"] == "css" for item in css["files"])
-    assert json.loads(handle_dev(None, "Chaquopy", "Developer"))["python_version"] == "3.10"
-    assert json.loads(handle_dev(None, "diagramas", "Developer"))["total"] >= 10
-    assert json.loads(handle_dev(None, "estado del arte", "Developer"))["research_gap"]
+    chaquopy = handle_dev(None, "Chaquopy", "Developer")
+    assert "Python embebido: 3.10" in chaquopy
+    assert "Ventajas" in chaquopy and "Limitaciones" in chaquopy
+    diagrams = handle_dev(None, "diagramas", "Developer")
+    assert "Catálogo de diagramas" in diagrams
+    art = handle_dev(None, "estado del arte", "Developer")
+    assert "Brecha:" in art and "Diferenciadores" in art

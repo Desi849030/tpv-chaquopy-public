@@ -16,8 +16,9 @@ def test_documentation_sync_is_idempotent_and_contains_developer_policy():
         assert second == first
         names = available_document_names(conn)
         assert "README.md" in names
-        assert "DEVELOPER_GUIDE.md" in names
-        assert "ROADMAP_10_10.md" in names
+        assert "docs/DEVELOPER_GUIDE.md" in names
+        assert "docs/ROADMAP_10_10.md" in names
+        assert "DEVELOPER_GUIDE.md" not in names
         assert "docs/DEFENSA.md" in names
         assert "docs/openapi.yaml" in names
         assert find_document(conn, "leer documento defensa")[0] == "docs/DEFENSA.md"
@@ -76,9 +77,12 @@ def test_developer_can_read_guide_through_agent_endpoint():
     assert inventory["total_documentos"] >= 20
     names = [item["nombre"] for item in inventory["documentos"]]
     assert len(names) == len(set(names)) == inventory["total_documentos"]
-    assert "DEVELOPER_GUIDE.md" in names
+    assert "docs/DEVELOPER_GUIDE.md" in names
+    assert "DEVELOPER_GUIDE.md" not in names
     assert "docs/TELECOM_ENGINEERING.md" in names
     assert "docs/STATE_OF_THE_ART.md" in names
+    hashes = [item["sha256"] for item in inventory["documentos"]]
+    assert len(hashes) == len(set(hashes))
     assert all("lineas" in item and "categoria" in item for item in inventory["documentos"])
 
     api_catalog = client.get("/api/dev/docs/catalog")

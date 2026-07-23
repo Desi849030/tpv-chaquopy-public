@@ -87,39 +87,30 @@ def agent_chat():
             ]
             if any(term in msg_lower for term in catalog_terms):
                 from db_connection import obtener_conexion
+                from documentation_loader import canonical_document_catalog
 
                 conn = obtener_conexion()
                 try:
-                    rows = conn.execute(
-                        "SELECT nombre, lineas, actualizado FROM documentacion ORDER BY nombre"
-                    ).fetchall()
+                    catalog = canonical_document_catalog(conn)
                 finally:
                     conn.close()
-                catalog = []
                 response_lines = [
-                    f"CATÁLOGO DOCUMENTAL COMPLETO — TPV Ultra Smart v{__version__}",
-                    f"Total: {len(rows)} documentos | {sum(int(row[1] or 0) for row in rows)} líneas",
+                    f"Centro documental de TPV Ultra Smart v{__version__}",
+                    f"He encontrado {len(catalog)} documentos únicos, organizados por tema.",
                     "",
                 ]
-                for index, row in enumerate(rows, 1):
-                    document_name = str(row[0])
-                    category = (
-                        "evidencia histórica" if document_name.startswith("docs/evidencias/")
-                        else "documentación técnica" if document_name.startswith("docs/")
-                        else "raíz/configuración"
-                    )
-                    item = {
-                        "numero": index, "nombre": document_name,
-                        "lineas": int(row[1] or 0), "actualizado": row[2],
-                        "categoria": category,
-                    }
-                    catalog.append(item)
+                current_category = None
+                for index, item in enumerate(catalog, 1):
+                    item["numero"] = index
+                    if item["categoria"] != current_category:
+                        current_category = item["categoria"]
+                        response_lines.extend(["", current_category.upper()])
                     response_lines.append(
-                        f"{index:02d}. {document_name} — {item['lineas']} líneas — {category}"
+                        f"  {index:02d}. {item['nombre']} ({item['lineas']} líneas)"
                     )
                 response_lines.extend([
-                    "", "Para leer: 'lee el documento <nombre>'.",
-                    "Para continuar: 'siguiente'. Para cerrar: 'cerrar documento'.",
+                    "", "¿Qué deseas consultar? Escribe: lee el documento <nombre>.",
+                    "Si es largo, usa 'siguiente' hasta llegar a la última página.",
                 ])
                 return jsonify({
                     "ok": True, "tipo": "docs_catalog", "rol": rol,

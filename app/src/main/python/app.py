@@ -147,12 +147,36 @@ _CARPETA = (
 app = Flask(__name__, static_folder=None)
 app.config["JSON_ENSURE_ASCII"]         = False
 app.config["SESSION_COOKIE_SAMESITE"]   = "Lax"
-app.config["SESSION_COOKIE_SECURE"]     = False
+app.config["SESSION_COOKIE_SECURE"]     = os.environ.get("TPV_HTTPS", "0") == "1"
 app.config["SESSION_COOKIE_HTTPONLY"]   = True
+app.config["MAX_CONTENT_LENGTH"]        = 16 * 1024 * 1024
 # Permitir cookies en acceso por IP local (WiFi desde otros dispositivos)
 app.config["SESSION_COOKIE_DOMAIN"]     = None  # acepta cualquier host
 app.config["PERMANENT_SESSION_LIFETIME"] = 86400 * 7
 app.secret_key = _KEY_FILE.read_text().strip()
+
+
+@app.after_request
+def _security_and_cache_headers(response):
+    """Safe defaults compatible with the offline WebView and local APIs."""
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "no-referrer")
+    response.headers.setdefault(
+        "Permissions-Policy",
+        "camera=(self), microphone=(), geolocation=(), payment=()",
+    )
+    response.headers.setdefault("X-Permitted-Cross-Domain-Policies", "none")
+    if request.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-store, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+    if app.config.get("SESSION_COOKIE_SECURE"):
+        response.headers.setdefault(
+            "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+        )
+    return response
+
+
 app.register_blueprint(tienda_bp)
 app.register_blueprint(api_bp)
 if assistant_bp:
@@ -1500,7 +1524,11 @@ def error_404(e):
 
 @app.errorhandler(500)
 def error_500(e):
-    return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
+    app.logger.exception("Unhandled server error", exc_info=e)
+    payload = {"error": "Error interno del servidor"}
+    if app.config.get("TESTING"):
+        payload["detalle"] = str(e)
+    return jsonify(payload), 500
 
 # ══════════════════════════════════════════════════════════════
 #  ARRANQUE

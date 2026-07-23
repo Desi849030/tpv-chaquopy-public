@@ -20,7 +20,7 @@ def api_health():
             "timestamp": datetime.now().isoformat(),
             "db_info": {
                 "archivo": info.get("archivo", ""),
-                "tamano_kb": info.get("tamano_kb", 0),
+                "tamano_kb": info.get("tamano_kb", info.get("tamaño_kb", 0)),
                 "tablas": info.get("tablas", {}),
             }
         })

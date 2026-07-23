@@ -17,7 +17,7 @@
   --tpv-safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-html { color-scheme: light; scroll-behavior: smooth; }
+html { color-scheme: light; scroll-behavior: smooth; min-height: 100%; }
 body {
   min-height: 100vh;
   min-height: 100dvh;
@@ -25,7 +25,9 @@ body {
   background: #eef3f9;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  overscroll-behavior-y: none;
+  overflow-y: auto;
+  overscroll-behavior-y: auto;
+  touch-action: pan-x pan-y;
 }
 
 #tpv-app.container {
@@ -117,10 +119,69 @@ button,
 }
 .dropdown-item { display: flex; align-items: center; gap: .5rem; }
 
-.modal-dialog { margin: max(.5rem, env(safe-area-inset-top)) auto; }
+/* Bootstrap bloquea body mientras un modal está abierto: el scroll debe vivir
+   dentro de modal-body. Estas reglas se cargan después de los CSS heredados. */
+.modal {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y !important;
+  overscroll-behavior: contain;
+  padding-block: max(.35rem, env(safe-area-inset-top)) max(.35rem, env(safe-area-inset-bottom));
+}
+.modal-dialog {
+  width: auto;
+  margin: .35rem auto !important;
+  min-height: calc(100dvh - .7rem);
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+.modal-dialog > .modal-content { pointer-events: auto; }
+.modal-content {
+  display: flex !important;
+  flex-direction: column;
+  width: min(96vw, var(--bs-modal-width, 500px)) !important;
+  max-width: 100% !important;
+  max-height: calc(100dvh - .7rem) !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
 .modal-header,
-.modal-footer { padding: .85rem 1rem; }
-.modal-body { max-height: min(74vh, 760px); overflow-y: auto; }
+.modal-footer {
+  flex: 0 0 auto;
+  padding: .85rem 1rem;
+  background-clip: padding-box;
+}
+.modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y !important;
+  overscroll-behavior: contain;
+  padding: 1rem;
+}
+.modal-footer { position: sticky; bottom: 0; z-index: 2; }
+
+/* Modales personalizados no Bootstrap. */
+.stock-modal,
+.modal-overlay {
+  align-items: flex-start !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y !important;
+  padding: max(.5rem, env(safe-area-inset-top)) .5rem max(.5rem, env(safe-area-inset-bottom));
+}
+.stock-modal-content,
+.modal-overlay > div {
+  margin: auto !important;
+  max-height: calc(100dvh - 1rem) !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
 
 #user-bar {
   padding-top: max(.45rem, env(safe-area-inset-top));
@@ -187,6 +248,7 @@ button,
   .glass-card,
   .card { border-radius: 11px !important; }
   .card-body { padding: .85rem; }
+  .form-control, .form-select, textarea { font-size: 16px !important; }
   .btn { padding-inline: .75rem; }
   .btn-group-responsive {
     display: grid !important;

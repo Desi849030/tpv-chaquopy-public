@@ -13,16 +13,19 @@ def test_final_assets_are_linked_and_syntactically_present():
     index = (FRONTEND / "templates/index.html").read_text(encoding="utf-8")
     assert '/static/css/final-polish.css' in index
     assert '/static/js/final-polish.js' in index
+    assert index.index('/static/css/final-polish.css') > index.index('/static/css/tpv_modals.css')
     css = (FRONTEND / "static/css/final-polish.css").read_text(encoding="utf-8")
     for requirement in (
         "focus-visible", "prefers-reduced-motion", "prefers-contrast",
         "safe-area-inset-bottom", "min-height: 44px", "@media (max-width: 767.98px)",
+        "max-height: calc(100dvh - .7rem)", "touch-action: pan-y", ".modal-body",
     ):
         assert requirement in css
     javascript = (FRONTEND / "static/js/final-polish.js").read_text(encoding="utf-8")
     for requirement in (
         "aria-live", "MutationObserver", "navigator.onLine",
         "visibilitychange", "localBackendAvailable", "TPV_UX",
+        "shown.bs.modal", "hidden.bs.modal", "enableModalScrolling",
     ):
         assert requirement in javascript
 

@@ -68,6 +68,21 @@ Debe complementarse con prueba manual TalkBack; la automatización no sustituye 
 
 Esto conserva estadísticas de peticiones sin desbordar la interfaz con el mismo error.
 
+## Scroll de ventanas y modales
+
+- `final-polish.css` se carga después de todos los estilos heredados;
+- `.modal` acepta desplazamiento vertical y gestos táctiles;
+- `.modal-content` se limita a la altura visible del dispositivo;
+- `.modal-body` es el área desplazable con momentum en WebView;
+- header y footer permanecen accesibles;
+- modales personalizados también usan `pan-y`;
+- al cerrar se eliminan backdrops huérfanos y se restaura el scroll del body;
+- inputs usan 16 px en móvil para evitar zoom involuntario.
+
+## Explicaciones para público no técnico
+
+La IA ofrece un modo de lenguaje sencillo con cuatro partes: qué es, analogía, evidencia y opción de detalle técnico. Consulta `docs/NON_TECHNICAL_JURY_GUIDE.md`.
+
 ## Seguridad backend
 
 - `X-Content-Type-Options: nosniff`;

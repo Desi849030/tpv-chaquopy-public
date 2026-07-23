@@ -573,6 +573,12 @@ def handle_dev(agent, t, m=None):
         except Exception as e:
             return f"Error SQL: {e}"
 
+    # --- Explicación para jurado no técnico ---
+    if any(k in tl for k in ['explica facil', 'explica fácil', 'sin tecnicismos',
+                              'para el jurado', 'para no ingenieros', 'en palabras sencillas']):
+        from plain_language_explainer import explain_for_general_audience
+        return explain_for_general_audience(tl)
+
     # --- Inteligencia del proyecto para discusión de tesis ---
     if any(k in tl for k in ['inventario proyecto sin omitir', 'json proyecto completo', 'codigo sin omitir']):
         from project_intelligence import json_inventory

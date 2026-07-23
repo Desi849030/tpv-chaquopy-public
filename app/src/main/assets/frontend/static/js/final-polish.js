@@ -120,11 +120,36 @@
     }, true);
   }
 
+  function enableModalScrolling() {
+    document.addEventListener('shown.bs.modal', event => {
+      const modal = event.target;
+      modal.scrollTop = 0;
+      const body = modal.querySelector('.modal-body');
+      if (body) {
+        body.scrollTop = 0;
+        body.style.touchAction = 'pan-y';
+        body.setAttribute('tabindex', '0');
+      }
+      requestAnimationFrame(() => body?.focus({ preventScroll: true }));
+    });
+
+    document.addEventListener('hidden.bs.modal', () => {
+      // Bootstrap may leave body locked if a modal is removed dynamically.
+      if (!document.querySelector('.modal.show')) {
+        document.body.classList.remove('modal-open');
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('padding-right');
+        document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+      }
+    });
+  }
+
   function initialize() {
     ensureLiveRegion();
     ensureNetworkBanner();
     enhanceElement(document.body);
     guardRapidClicks();
+    enableModalScrolling();
     updateConnectivity();
 
     window.addEventListener('online', updateConnectivity);

@@ -85,7 +85,8 @@ def _seed_edge_ai_data():
     today = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     conn = database.obtener_conexion()
     try:
-        conn.execute("DELETE FROM historial_ventas WHERE venta_id LIKE ?", (prefix + "%",))
+        # Limpiar TODOS los registros de hoy para evitar contaminacion de otros tests
+        conn.execute("DELETE FROM historial_ventas WHERE DATE(fecha) = DATE('now')")
         conn.execute("DELETE FROM inventario_general WHERE producto_id LIKE ?", (prefix + "%",))
         conn.execute("DELETE FROM productos WHERE producto_id LIKE ?", (prefix + "%",))
         products = [
@@ -134,7 +135,8 @@ def _seed_edge_ai_data():
 def _cleanup_edge_ai_data(prefix):
     conn = database.obtener_conexion()
     try:
-        conn.execute("DELETE FROM historial_ventas WHERE venta_id LIKE ?", (prefix + "%",))
+        # Limpiar TODOS los registros de hoy para evitar contaminacion de otros tests
+        conn.execute("DELETE FROM historial_ventas WHERE DATE(fecha) = DATE('now')")
         conn.execute("DELETE FROM inventario_general WHERE producto_id LIKE ?", (prefix + "%",))
         conn.execute("DELETE FROM productos WHERE producto_id LIKE ?", (prefix + "%",))
         conn.commit()

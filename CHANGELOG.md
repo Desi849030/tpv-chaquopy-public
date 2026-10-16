@@ -2,33 +2,27 @@
 
 ## [Unreleased]
 
-### Calidad y compatibilidad
-- Gate de cobertura real >= 50% en CI.
-- Suite soportada con más de 500 pruebas aisladas.
-- Compatibilidad de dependencias para Chaquopy Python 3.10 y Termux Python 3.14.
-- Resolución de SQLite mediante `TPV_FILES_DIR` en servicios IA y licencias.
+### Correcciones de base de datos
+- Fix de backtick en database.py L138 que causaba 56 strings desplazados
+- Reemplazo de 1971 caracteres non-ASCII (em dash, flechas, box drawing, acentos)
+- CHECK de roles con 6 roles: desarrollador, administrador, supervisor, vendedor, cajero, cliente
+- 4 Foreign Keys a usuarios(usuario_id) en historial_ventas, inventario_diario, cierres_diario, auditoria
+- PRAGMA foreign_keys = ON, journal_mode = WAL, synchronous = NORMAL
 
-### Documentación y repositorio
-- README reorganizado con estado verificable, arquitectura, roles y comandos actuales.
-- Guía formal del rol Desarrollador con acceso funcional `all`.
-- Documentación curada sincronizada a SQLite para lectura offline por la IA.
-- Índice de documentación, política de seguridad y plantillas de colaboración.
-- Workflow actualizado a acciones mantenidas y jobs con permisos mínimos.
-- Indexación recursiva de toda la documentación del repositorio para la IA.
-- Eliminación de claves versionadas, backups, parches de una sola ejecución y tests obsoletos.
-- Frontend de navegador resuelto directamente desde `app/src/main/assets/frontend`.
-- Host y puerto configurables mediante `TPV_HOST` y `TPV_PORT`.
-- Secretos runtime movidos a `TPV_FILES_DIR`, compatible con el filesystem de Android.
-- Versión pública unificada en `6.13.1` para Python, Gradle, health y documentación.
-- Arranque de navegador verificado con frontend real y puerto configurable.
-- Conexiones SQLite pendientes corregidas; suite validada con `ResourceWarning` como error.
-- Dependencia explícita entre `syncOfflineDocumentation` y `merge<Variant>PythonSources` para Gradle 8.
-- Python 3.10 configurado en el job Android para compilar bytecode Chaquopy compatible.
-- Blueprint Telecom activado con endpoints exclusivos del Desarrollador.
-- Métricas telecom corregidas: RTT HTTP, P95, jitter observado, fallos, goodput, DNS, TCP y TLS.
-- Metodología académica añadida con unidades, fórmulas, límites y procedimiento experimental.
-- Onboarding local de un solo uso para crear la contraseña inicial del Desarrollador sin Logcat ni credenciales hardcodeadas.
-- Usuario, rol y contraseña del Desarrollador reservados; se bloquea su reutilización en staff y clientes.
+### Tests de concurrencia (5 tests en tests/unit/test_concurrency_security.py)
+1. test_concurrent_sale: 2 threads, 1 exito + 1 fallo limpio con BEGIN IMMEDIATE
+2. test_rollback: no registros huerfanos tras rollback
+3. test_six_roles: 6 roles aceptados por CHECK constraint
+4. test_5_thread_serialization: 5 threads, 3 exitos + 2 fallos limpios
+5. test_fk_constraint: FK bloquea insercion con producto_id inexistente
+
+### Fixes de compatibilidad de tests
+- test_concurrency_security: TPV_FILES_DIR usa tempfile.mkdtemp() con save/restore
+- test_security_and_edge_ai: seed fraud test limpia historial_ventas de hoy
+
+### Metricas finales
+- 620 tests pasan, 71 omitidos, 61% cobertura
+- 17 tablas, 4 FKs, 6 roles
 
 
 ## [v8.9] — 2026-06-15

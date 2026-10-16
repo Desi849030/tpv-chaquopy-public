@@ -1,21 +1,21 @@
 """
-╔══════════════════════════════════════════════════════════════╗
-║   database.py  —  TPV ULTRA SMART  v5.0                     ║
-╚══════════════════════════════════════════════════════════════╝
-JERARQUÍA DE ROLES:
-  DESARROLLADOR  → sin límites, genera licencias por ID/móvil
-  ADMINISTRADOR  → gestiona su tienda, crea supervisores/vendedores
-  SUPERVISOR     → consulta reportes
-  VENDEDOR       → trabaja con su inventario diario
++==============================================================+
+|   database.py  -  TPV ULTRA SMART  v5.0                     |
++==============================================================+
+JERARQUIA DE ROLES:
+  DESARROLLADOR  -> sin limites, genera licencias por ID/movil
+  ADMINISTRADOR  -> gestiona su tienda, crea supervisores/vendedores
+  SUPERVISOR     -> consulta reportes
+  VENDEDOR       -> trabaja con su inventario diario
 """
 import sqlite3, json, os, hashlib, secrets, uuid
 from datetime import datetime
 
 DB_FILE = os.path.join(os.environ.get("TPV_FILES_DIR", os.getcwd()), "tpv_datos.db")
 
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 #  SEGURIDAD
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 def _hash_password(password: str, salt: str = None) -> tuple:
     if salt is None:
         salt = secrets.token_hex(16)
@@ -26,9 +26,9 @@ def verificar_password(password, hash_guardado, salt):
     h, _ = _hash_password(password, salt)
     return h == hash_guardado
 
-# ══════════════════════════════════════════════════════════════
-#  CONEXIÓN
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
+#  CONEXION
+# ==============================================================
 def obtener_conexion():
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
@@ -39,9 +39,9 @@ def obtener_conexion():
     conn.execute("PRAGMA cache_size = -8000")
     return conn
 
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 #  CREAR TABLAS
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 def crear_tablas():
     conn   = obtener_conexion()
     cursor = conn.cursor()
@@ -61,7 +61,7 @@ def crear_tablas():
             username      TEXT    NOT NULL UNIQUE,
             nombre        TEXT    NOT NULL,
             rol           TEXT    NOT NULL CHECK(rol IN
-                          ('desarrollador','administrador','supervisor','vendedor')),
+                          ('desarrollador','administrador','supervisor','vendedor','cajero','cliente')),
             password_hash TEXT    NOT NULL,
             password_salt TEXT    NOT NULL,
             creado_por    TEXT    DEFAULT NULL,
@@ -70,7 +70,7 @@ def crear_tablas():
             creado        TEXT    DEFAULT (datetime('now','localtime'))
         )""")
 
-    # ── LICENCIAS (generadas por el desarrollador) ────────────
+    # -- LICENCIAS (generadas por el desarrollador) ------------
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS licencias (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -100,7 +100,8 @@ def crear_tablas():
             metodo_pago     TEXT    DEFAULT 'efectivo',
             vendedor_id     TEXT    DEFAULT NULL,
             vendedor_nombre TEXT    DEFAULT NULL,
-            fecha           TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
+            fecha           TEXT    NOT NULL DEFAULT (datetime('now','localtime')),
+            FOREIGN KEY (vendedor_id) REFERENCES usuarios(usuario_id)
         )""")
 
     cursor.execute("""
@@ -160,9 +161,10 @@ def crear_tablas():
             precio_venta  REAL    DEFAULT 0,
             precio_costo  REAL    DEFAULT 0,
             activo        INTEGER DEFAULT 1,
-            UNIQUE(fecha, vendedor_id, producto_id)
+            UNIQUE(fecha, vendedor_id, producto_id),
+            FOREIGN KEY (vendedor_id) REFERENCES usuarios(usuario_id)
         )""")
-    # Migración: columnas nuevas en BD existente
+    # Migracion: columnas nuevas en BD existente
     for col, tipo in [
         ('cant_final',    'REAL DEFAULT 0'),
         ('precio_costo',  'REAL DEFAULT 0'),
@@ -181,7 +183,8 @@ def crear_tablas():
             ganancia_neta REAL    DEFAULT 0,
             items_json    TEXT    DEFAULT '[]',
             creado_en     TEXT    DEFAULT (datetime('now','localtime')),
-            UNIQUE(vendedor_id, fecha)
+            UNIQUE(vendedor_id, fecha),
+            FOREIGN KEY (vendedor_id) REFERENCES usuarios(usuario_id)
         )""")
 
     cursor.execute("""
@@ -236,7 +239,7 @@ def crear_tablas():
             timestamp TEXT    DEFAULT (datetime('now','localtime'))
         )""")
 
-    # ── TABLAS v5.1: seguridad, auditoría y descuentos ────────
+    # -- TABLAS v5.1: seguridad, auditoria y descuentos --------
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS login_intentos (
             id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -256,7 +259,8 @@ def crear_tablas():
             valor_antes TEXT    DEFAULT '',
             valor_nuevo TEXT    DEFAULT '',
             usuario_id  TEXT    NOT NULL,
-            timestamp   TEXT    DEFAULT (datetime('now','localtime'))
+            timestamp   TEXT    DEFAULT (datetime('now','localtime')),
+            FOREIGN KEY (usuario_id) REFERENCES usuarios(usuario_id)
         )""")
 
     cursor.execute("""
@@ -289,7 +293,7 @@ def crear_tablas():
     try: cursor.execute("CREATE INDEX IF NOT EXISTS idx_hist_fecha ON historial_diario(fecha DESC)")
     except Exception: pass
 
-    # ── ÍNDICES DE RENDIMIENTO ─────────────────────────────────
+    # -- INDICES DE RENDIMIENTO ---------------------------------
     _indices = [
         "CREATE INDEX IF NOT EXISTS idx_hv_fecha    ON historial_ventas(fecha)",
         "CREATE INDEX IF NOT EXISTS idx_hv_vend     ON historial_ventas(vendedor_id)",
@@ -303,14 +307,14 @@ def crear_tablas():
         try: cursor.execute(idx)
         except Exception: pass
 
-    # ── AUTO-EXPIRAR LOGS > 30 días ────────────────────────────
+    # -- AUTO-EXPIRAR LOGS > 30 dias ----------------------------
     try:
         cursor.execute("DELETE FROM logs_sistema WHERE timestamp < datetime('now','-30 days')")
     except Exception: pass
 
     conn.commit()
 
-    # Migraciones seguras: añadir columnas nuevas a DBs existentes
+    # Migraciones seguras: anadir columnas nuevas a DBs existentes
     _migraciones = [
         ("licencias", "cliente_id",       "TEXT DEFAULT ''"),
         ("licencias", "clave_activacion", "TEXT DEFAULT ''"),
@@ -337,10 +341,10 @@ def crear_tablas():
         from documentation_loader import sync_documentation
         sync_documentation(conn)
     except Exception as exc:
-        print(f"⚠️ No se pudo sincronizar documentación offline: {exc}")
+        print(f"?? No se pudo sincronizar documentacion offline: {exc}")
 
     conn.close()
-    print(f"✅ Base de datos lista: {DB_FILE}")
+    print(f"? Base de datos lista: {DB_FILE}")
 
 
 def _crear_desarrollador_default(cursor, conn):
@@ -356,8 +360,8 @@ def _crear_desarrollador_default(cursor, conn):
         """, (uid, "desarrollador", "Desarrollador Principal",
               "desarrollador", hash_pw, salt, "sistema"))
         conn.commit()
-        print("✅ Desarrollador inicial creado")
-        print("   Completa la configuración inicial desde la pantalla de la aplicación.")
+        print("? Desarrollador inicial creado")
+        print("   Completa la configuracion inicial desde la pantalla de la aplicacion.")
 
 
 def desarrollador_requiere_configuracion():
@@ -394,16 +398,16 @@ def _password_usado_por_otra_cuenta(conn, password, excluir_username="desarrolla
 def errores_password_desarrollador(password):
     """Strict policy for the unique highest-privilege local account."""
     errors = []
-    if len(password) < 12: errors.append("mínimo 12 caracteres")
-    if len(password) > 128: errors.append("máximo 128 caracteres")
-    if not any(char.islower() for char in password): errors.append("una minúscula")
-    if not any(char.isupper() for char in password): errors.append("una mayúscula")
-    if not any(char.isdigit() for char in password): errors.append("un número")
-    if not any(not char.isalnum() and not char.isspace() for char in password): errors.append("un símbolo")
+    if len(password) < 12: errors.append("minimo 12 caracteres")
+    if len(password) > 128: errors.append("maximo 128 caracteres")
+    if not any(char.islower() for char in password): errors.append("una minuscula")
+    if not any(char.isupper() for char in password): errors.append("una mayuscula")
+    if not any(char.isdigit() for char in password): errors.append("un numero")
+    if not any(not char.isalnum() and not char.isspace() for char in password): errors.append("un simbolo")
     if any(char.isspace() for char in password): errors.append("sin espacios")
     normalized = password.lower()
     if normalized in {"desarrollador123!", "password123!", "administrador123!", "tpvultrasmart123!"}:
-        errors.append("no usar una contraseña común")
+        errors.append("no usar una contrasena común")
     return errors
 
 
@@ -417,7 +421,7 @@ def configurar_desarrollador_inicial(password):
         ).fetchone()
         if row is not None and str(row[0]) == "0":
             conn.rollback()
-            return {"ok": False, "error": "Configuración inicial ya completada"}
+            return {"ok": False, "error": "Configuracion inicial ya completada"}
         user = conn.execute(
             "SELECT usuario_id FROM usuarios WHERE username='desarrollador' AND activo=1"
         ).fetchone()
@@ -426,7 +430,7 @@ def configurar_desarrollador_inicial(password):
             return {"ok": False, "error": "Usuario Desarrollador no encontrado"}
         if _password_usado_por_otra_cuenta(conn, password):
             conn.rollback()
-            return {"ok": False, "error": "Elige una contraseña exclusiva que no use otra cuenta"}
+            return {"ok": False, "error": "Elige una contrasena exclusiva que no use otra cuenta"}
         password_hash, salt = _hash_password(password)
         conn.execute(
             "UPDATE usuarios SET password_hash=?, password_salt=? WHERE usuario_id=?",
@@ -444,14 +448,14 @@ def configurar_desarrollador_inicial(password):
     finally:
         conn.close()
 
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 #  USUARIOS
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 def login_usuario(username, password):
     conn   = obtener_conexion()
     cursor = conn.cursor()
     try:
-        # ── Protección contra fuerza bruta ──────────────────
+        # -- Proteccion contra fuerza bruta ------------------
         from datetime import timedelta
         hace10 = (datetime.now() - timedelta(minutes=10)).strftime("%Y-%m-%d %H:%M:%S")
         try:
@@ -462,7 +466,7 @@ def login_usuario(username, password):
             if fallos >= 5:
                 return {"error": "bloqueado", "mensaje": "Cuenta bloqueada 10 min por intentos fallidos"}
         except Exception:
-            pass  # tabla login_intentos no existe aún
+            pass  # tabla login_intentos no existe aun
 
         cursor.execute("""
             SELECT usuario_id, username, nombre, rol,
@@ -494,7 +498,7 @@ def login_usuario(username, password):
             return {"usuario_id": u["usuario_id"], "username": u["username"],
                     "nombre": u["nombre"], "rol": u["rol"]}
         _registrar(False)
-        agregar_log(f"Login fallido: contraseña incorrecta '{username}'", "warning")
+        agregar_log(f"Login fallido: contrasena incorrecta '{username}'", "warning")
         return None
     finally:
         conn.close()
@@ -516,7 +520,7 @@ def password_pertenece_desarrollador(password):
 
 
 def crear_usuario(datos, creado_por_rol, creado_por_id):
-    # Desarrollador sin límites, puede crear cualquier rol excepto otro desarrollador
+    # Desarrollador sin limites, puede crear cualquier rol excepto otro desarrollador
     roles_permitidos = {
         "desarrollador": ["administrador", "supervisor", "vendedor"],
         "administrador": ["supervisor", "vendedor"],
@@ -534,11 +538,11 @@ def crear_usuario(datos, creado_por_rol, creado_por_id):
     if not username or not nombre or not password:
         return {"ok": False, "mensaje": "Faltan campos: username, nombre, password"}
     if username.lower() == "desarrollador" or rol_nuevo == "desarrollador":
-        return {"ok": False, "mensaje": "La identidad Desarrollador es única y reservada"}
+        return {"ok": False, "mensaje": "La identidad Desarrollador es unica y reservada"}
     if len(password) < 4:
-        return {"ok": False, "mensaje": "Contraseña mínimo 4 caracteres"}
+        return {"ok": False, "mensaje": "Contrasena minimo 4 caracteres"}
     if password_pertenece_desarrollador(password):
-        return {"ok": False, "mensaje": "Esa contraseña está reservada para el Desarrollador"}
+        return {"ok": False, "mensaje": "Esa contrasena esta reservada para el Desarrollador"}
 
     hash_pw, salt = _hash_password(password)
     uid = f"user-{uuid.uuid4().hex[:8]}"
@@ -562,7 +566,7 @@ def crear_usuario(datos, creado_por_rol, creado_por_id):
 
 def cambiar_password(usuario_id, password_actual, password_nueva):
     if len(password_nueva) < 4:
-        return {"ok": False, "mensaje": "Mínimo 4 caracteres"}
+        return {"ok": False, "mensaje": "Minimo 4 caracteres"}
     conn = obtener_conexion()
     cursor = conn.cursor()
     try:
@@ -571,24 +575,24 @@ def cambiar_password(usuario_id, password_actual, password_nueva):
         if not u:
             return {"ok": False, "mensaje": "Usuario no encontrado"}
         if not verificar_password(password_actual, u["password_hash"], u["password_salt"]):
-            return {"ok": False, "mensaje": "Contraseña actual incorrecta"}
+            return {"ok": False, "mensaje": "Contrasena actual incorrecta"}
         if u["username"] != "desarrollador" and password_pertenece_desarrollador(password_nueva):
-            return {"ok": False, "mensaje": "Esa contraseña está reservada para el Desarrollador"}
+            return {"ok": False, "mensaje": "Esa contrasena esta reservada para el Desarrollador"}
         if u["username"] == "desarrollador" and errores_password_desarrollador(password_nueva):
-            return {"ok": False, "mensaje": "La contraseña del Desarrollador no cumple la política estricta"}
+            return {"ok": False, "mensaje": "La contrasena del Desarrollador no cumple la politica estricta"}
         if u["username"] == "desarrollador" and _password_usado_por_otra_cuenta(conn, password_nueva):
-            return {"ok": False, "mensaje": "Elige una contraseña exclusiva que no use otra cuenta"}
+            return {"ok": False, "mensaje": "Elige una contrasena exclusiva que no use otra cuenta"}
         nh, ns = _hash_password(password_nueva)
         conn.execute("UPDATE usuarios SET password_hash=?, password_salt=? WHERE usuario_id=?", (nh, ns, usuario_id))
         conn.commit()
-        return {"ok": True, "mensaje": "Contraseña actualizada"}
+        return {"ok": True, "mensaje": "Contrasena actualizada"}
     finally:
         conn.close()
 
 
 def resetear_password(usuario_id, password_nueva, admin_id):
     if len(password_nueva) < 4:
-        return {"ok": False, "mensaje": "Mínimo 4 caracteres"}
+        return {"ok": False, "mensaje": "Minimo 4 caracteres"}
     conn = obtener_conexion()
     cursor = conn.cursor()
     try:
@@ -602,15 +606,15 @@ def resetear_password(usuario_id, password_nueva, admin_id):
         if not target:
             return {"ok": False, "mensaje": "Usuario no encontrado"}
         if target["username"] != "desarrollador" and password_pertenece_desarrollador(password_nueva):
-            return {"ok": False, "mensaje": "Esa contraseña está reservada para el Desarrollador"}
+            return {"ok": False, "mensaje": "Esa contrasena esta reservada para el Desarrollador"}
         if target["username"] == "desarrollador" and errores_password_desarrollador(password_nueva):
-            return {"ok": False, "mensaje": "La contraseña del Desarrollador no cumple la política estricta"}
+            return {"ok": False, "mensaje": "La contrasena del Desarrollador no cumple la politica estricta"}
         if target["username"] == "desarrollador" and _password_usado_por_otra_cuenta(conn, password_nueva):
-            return {"ok": False, "mensaje": "Elige una contraseña exclusiva que no use otra cuenta"}
+            return {"ok": False, "mensaje": "Elige una contrasena exclusiva que no use otra cuenta"}
         nh, ns = _hash_password(password_nueva)
         cursor.execute("UPDATE usuarios SET password_hash=?, password_salt=? WHERE usuario_id=?", (nh, ns, usuario_id))
         conn.commit()
-        return {"ok": True, "mensaje": "Contraseña reseteada"}
+        return {"ok": True, "mensaje": "Contrasena reseteada"}
     finally:
         conn.close()
 
@@ -649,9 +653,9 @@ def desactivar_usuario(usuario_id, admin_id):
     finally:
         conn.close()
 
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 #  LICENCIAS (solo Desarrollador)
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 def crear_licencia(admin_id, tipo, dias, notas, dev_id, cliente_id="", clave_activacion=""):
     """Crea una licencia para un administrador. Solo el desarrollador puede hacerlo."""
     conn   = obtener_conexion()
@@ -675,7 +679,7 @@ def crear_licencia(admin_id, tipo, dias, notas, dev_id, cliente_id="", clave_act
         fecha_expira = (hoy + timedelta(days=int(dias))).isoformat()
         lic_id       = f"lic-{uuid.uuid4().hex[:10]}"
 
-        # Asegurar columnas opcionales existen (migración segura)
+        # Asegurar columnas opcionales existen (migracion segura)
         try:
             conn.execute("ALTER TABLE licencias ADD COLUMN cliente_id TEXT DEFAULT ''")
             conn.commit()
@@ -781,12 +785,12 @@ def desactivar_licencia(licencia_id, dev_id):
     finally:
         conn.close()
 
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 #  INVENTARIO GENERAL
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 def cargar_stock_masivo(admin_id, items):
     """
-    Carga stock a múltiples productos del almacén general de una vez.
+    Carga stock a multiples productos del almacen general de una vez.
     items = [{ producto_id, cantidad, precio_compra }]
     Suma la cantidad al stock_actual existente (igual que registrar_entrada).
     """
@@ -819,7 +823,7 @@ def cargar_stock_masivo(admin_id, items):
         conn.commit()
         agregar_log(f"Stock masivo: {ok} productos actualizados por {admin_id}", "info")
         return {"ok": True, "actualizados": ok,
-                "mensaje": f"✅ Stock cargado en {ok} productos"}
+                "mensaje": f"? Stock cargado en {ok} productos"}
     except sqlite3.Error as e:
         conn.rollback()
         return {"ok": False, "mensaje": str(e)}
@@ -860,7 +864,7 @@ def registrar_entrada_producto(datos, admin_id):
         """, (entrada_id, producto_id, nombre, cantidad, precio_compra,
               proveedor, nota, admin_id, fecha_ahora))
 
-        # Guardar precio_venta, categoria y unidad también para uso en asignación
+        # Guardar precio_venta, categoria y unidad tambien para uso en asignacion
         cursor.execute("""
             INSERT INTO inventario_general
                 (producto_id, nombre, stock_actual, precio_compra, precio_venta,
@@ -933,9 +937,9 @@ def obtener_historial_entradas(admin_id, producto_id=None):
     finally:
         conn.close()
 
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 #  INVENTARIO DIARIO
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 def asignar_inventario_diario(vendedor_id, productos, admin_id):
     conn   = obtener_conexion()
     cursor = conn.cursor()
@@ -964,7 +968,7 @@ def asignar_inventario_diario(vendedor_id, productos, admin_id):
                 errores.append(f"'{prod.get('nombre','?')}': sin stock (disponible: {stock_disp})")
                 continue
 
-            comision_pct = float(prod.get("comision_pct", 0))  # % comisión del admin
+            comision_pct = float(prod.get("comision_pct", 0))  # % comision del admin
 
             cursor.execute("""
                 INSERT INTO inventario_diario
@@ -1038,9 +1042,9 @@ def actualizar_vendido_diario(vendedor_id, producto_id, cantidad_vendida):
     finally:
         conn.close()
 
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 #  LIMPIAR INVENTARIOS DIARIOS
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 def limpiar_inventarios_diarios(admin_id, vendedor_id=None, fecha=None):
     """Elimina registros de inventario_diario. Si vendedor_id=None limpia todos."""
     conn   = obtener_conexion()
@@ -1069,13 +1073,13 @@ def limpiar_inventarios_diarios(admin_id, vendedor_id=None, fecha=None):
         conn.close()
 
 
-# ══════════════════════════════════════════════════════════════
-#  CATÁLOGO DE PRODUCTOS (server-side, compartido entre roles)
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
+#  CATALOGO DE PRODUCTOS (server-side, compartido entre roles)
+# ==============================================================
 def obtener_productos_catalogo():
     """
-    Devuelve catálogo activo desde la tabla productos.
-    NO hace auto-repoblación — si está vacío, devuelve lista vacía.
+    Devuelve catalogo activo desde la tabla productos.
+    NO hace auto-repoblacion - si esta vacio, devuelve lista vacia.
     """
     conn = obtener_conexion()
     try:
@@ -1092,9 +1096,9 @@ def obtener_productos_catalogo():
 
 def sincronizar_productos_catalogo(productos, admin_id):
     """
-    Sincroniza productos del cliente → servidor.
-    Actualiza tabla productos e inventario_general simultáneamente.
-    El stock_actual del almacén NUNCA se modifica.
+    Sincroniza productos del cliente -> servidor.
+    Actualiza tabla productos e inventario_general simultaneamente.
+    El stock_actual del almacen NUNCA se modifica.
     """
     conn   = obtener_conexion()
     cursor = conn.cursor()
@@ -1102,7 +1106,7 @@ def sincronizar_productos_catalogo(productos, admin_id):
         cursor.execute("SELECT rol FROM usuarios WHERE usuario_id=? AND activo=1", (admin_id,))
         u = cursor.fetchone()
         if not u or u["rol"] not in ("administrador","desarrollador"):
-            return {"ok": False, "mensaje": "Solo Admin/Dev puede sincronizar catálogo"}
+            return {"ok": False, "mensaje": "Solo Admin/Dev puede sincronizar catalogo"}
         ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         for p in productos:
             pid  = p.get("id","");
@@ -1154,7 +1158,7 @@ def sincronizar_productos_catalogo(productos, admin_id):
 
 
 def importar_catalogo_a_inventario(admin_id):
-    """Catálogo → inventario_general. Nuevos: stock 0. Existentes: conserva stock."""
+    """Catalogo -> inventario_general. Nuevos: stock 0. Existentes: conserva stock."""
     conn   = obtener_conexion()
     cursor = conn.cursor()
     try:
@@ -1165,7 +1169,7 @@ def importar_catalogo_a_inventario(admin_id):
         cursor.execute("SELECT producto_id,nombre,precio,costo,categoria,unidad_medida FROM productos WHERE activo=1")
         prods = cursor.fetchall()
         if not prods:
-            return {"ok": False, "mensaje": "Catálogo vacío"}
+            return {"ok": False, "mensaje": "Catalogo vacio"}
         ahora   = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         nuevos  = existentes = 0
         for p in prods:
@@ -1192,9 +1196,9 @@ def importar_catalogo_a_inventario(admin_id):
                       ahora, p["producto_id"]))
                 existentes += 1
         conn.commit()
-        agregar_log(f"Import catálogo→almacén: {nuevos} nuevos, {existentes} actualizados", "info")
+        agregar_log(f"Import catalogo->almacen: {nuevos} nuevos, {existentes} actualizados", "info")
         return {"ok":True,"nuevos":nuevos,"existentes":existentes,"total":len(prods),
-                "mensaje":f"{nuevos} nuevos · {existentes} actualizados (stock conservado)"}
+                "mensaje":f"{nuevos} nuevos . {existentes} actualizados (stock conservado)"}
     except sqlite3.Error as e:
         conn.rollback()
         return {"ok": False, "mensaje": str(e)}
@@ -1203,13 +1207,13 @@ def importar_catalogo_a_inventario(admin_id):
 
 
 def eliminar_producto_inventario_general(producto_id, admin_id):
-    """Borra producto del almacén y lo desactiva en catálogo."""
+    """Borra producto del almacen y lo desactiva en catalogo."""
     conn = obtener_conexion()
     try:
         conn.execute("DELETE FROM inventario_general WHERE producto_id=?", (producto_id,))
         conn.execute("UPDATE productos SET activo=0 WHERE producto_id=?", (producto_id,))
         conn.commit()
-        agregar_log(f"Producto {producto_id} eliminado del almacén", "warning")
+        agregar_log(f"Producto {producto_id} eliminado del almacen", "warning")
         return {"ok": True, "mensaje": "Eliminado"}
     except Exception as e:
         return {"ok": False, "mensaje": str(e)}
@@ -1218,14 +1222,14 @@ def eliminar_producto_inventario_general(producto_id, admin_id):
 
 
 
-# ══════════════════════════════════════════════════════════════
-#  SINCRONIZACIÓN COMPLETA — une productos ↔ inventario_general
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
+#  SINCRONIZACION COMPLETA - une productos ? inventario_general
+# ==============================================================
 def sincronizar_estado_completo(admin_id):
     """
-    Sincronización en cascada:
-      1. productos  →  inventario_general  (metadatos, nunca stock)
-      2. inventario_general  →  productos  (productos huérfanos del almacén)
+    Sincronizacion en cascada:
+      1. productos  ->  inventario_general  (metadatos, nunca stock)
+      2. inventario_general  ->  productos  (productos huerfanos del almacen)
     Devuelve resumen de lo sincronizado.
     """
     conn   = obtener_conexion()
@@ -1238,7 +1242,7 @@ def sincronizar_estado_completo(admin_id):
 
         ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        # 1. productos → inventario_general
+        # 1. productos -> inventario_general
         cursor.execute("SELECT * FROM productos WHERE activo=1")
         prods = cursor.fetchall()
         sync_p2i = 0
@@ -1262,7 +1266,7 @@ def sincronizar_estado_completo(admin_id):
                   p["categoria"] or "General", p["unidad_medida"] or "C/U", ahora))
             sync_p2i += 1
 
-        # 2. inventario_general → productos (huérfanos)
+        # 2. inventario_general -> productos (huerfanos)
         cursor.execute("""
             SELECT * FROM inventario_general
             WHERE producto_id NOT IN (SELECT producto_id FROM productos WHERE activo=1)
@@ -1282,14 +1286,14 @@ def sincronizar_estado_completo(admin_id):
 
         conn.commit()
         agregar_log(
-            f"Sync completo: {sync_p2i} productos→almacén, {sync_i2p} huérfanos recuperados",
+            f"Sync completo: {sync_p2i} productos->almacen, {sync_i2p} huerfanos recuperados",
             "info"
         )
         return {
             "ok": True,
             "productos_a_almacen": sync_p2i,
             "huerfanos_recuperados": sync_i2p,
-            "mensaje": f"✅ {sync_p2i} productos sincronizados al almacén · {sync_i2p} huérfanos recuperados"
+            "mensaje": f"? {sync_p2i} productos sincronizados al almacen . {sync_i2p} huerfanos recuperados"
         }
     except sqlite3.Error as e:
         conn.rollback()
@@ -1333,12 +1337,12 @@ def limpiar_tablas_completo(admin_id):
         cursor.execute("DELETE FROM app_state WHERE clave='estado_tpv'")
         conn.commit()
 
-        resumen = " · ".join(f"{t}: {n}" for t, n in conteos.items())
+        resumen = " . ".join(f"{t}: {n}" for t, n in conteos.items())
         agregar_log(f"Limpieza completa por {admin_id}: {resumen}", "warning")
         return {
             "ok":      True,
             "conteos": conteos,
-            "mensaje": f"🗑️ Limpieza completa: {resumen}"
+            "mensaje": f"?? Limpieza completa: {resumen}"
         }
     except sqlite3.Error as e:
         conn.rollback()
@@ -1352,7 +1356,7 @@ def reconstruir_desde_productos(admin_id, productos_js):
     Recibe la lista de productos del cliente (JS) y reconstruye
     productos + inventario_general desde cero.
     Acepta campo opcional 'stock_actual' en cada producto para
-    poblar el almacén con el stock real del Excel importado.
+    poblar el almacen con el stock real del Excel importado.
     """
     conn   = obtener_conexion()
     cursor = conn.cursor()
@@ -1385,7 +1389,7 @@ def reconstruir_desde_productos(admin_id, productos_js):
             """, (pid, nom, pv, pc, cat, um, oferta, img))
 
             if stock is not None:
-                # Stock explícito enviado desde el cliente (viene del XLSX)
+                # Stock explicito enviado desde el cliente (viene del XLSX)
                 cursor.execute("""
                     INSERT OR REPLACE INTO inventario_general
                         (producto_id, nombre, stock_actual, stock_minimo,
@@ -1393,7 +1397,7 @@ def reconstruir_desde_productos(admin_id, productos_js):
                     VALUES (?,?,?,5,?,?,?,?,?)
                 """, (pid, nom, float(stock), pc, pv, cat, um, ahora))
             else:
-                # Sin stock explícito: insertar con 0, o actualizar solo metadatos si ya existe
+                # Sin stock explicito: insertar con 0, o actualizar solo metadatos si ya existe
                 cursor.execute("""
                     INSERT INTO inventario_general
                         (producto_id, nombre, stock_actual, stock_minimo,
@@ -1412,9 +1416,9 @@ def reconstruir_desde_productos(admin_id, productos_js):
             total += 1
 
         conn.commit()
-        agregar_log(f"Reconstrucción: {total} productos desde cliente", "info")
+        agregar_log(f"Reconstruccion: {total} productos desde cliente", "info")
         return {"ok": True, "total": total,
-                "mensaje": f"✅ {total} productos reconstruidos en servidor"}
+                "mensaje": f"? {total} productos reconstruidos en servidor"}
     except Exception as e:
         conn.rollback()
         return {"ok": False, "mensaje": str(e)}
@@ -1422,9 +1426,9 @@ def reconstruir_desde_productos(admin_id, productos_js):
         conn.close()
 
 
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 #  ESTADO JSON
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 def cargar_estado():
     conn   = obtener_conexion()
     cursor = conn.cursor()
@@ -1433,7 +1437,7 @@ def cargar_estado():
         fila = cursor.fetchone()
         return json.loads(fila["valor"]) if fila else None
     except Exception as e:
-        print(f"❌ Error cargar estado: {e}")
+        print(f"? Error cargar estado: {e}")
         return None
     finally:
         conn.close()
@@ -1453,7 +1457,7 @@ def guardar_estado(estado):
         return True
     except Exception as e:
         conn.rollback()
-        print(f"❌ Error guardar estado: {e}")
+        print(f"? Error guardar estado: {e}")
         return False
     finally:
         conn.close()
@@ -1524,9 +1528,9 @@ def _sincronizar_tablas_relacionales(cursor, conn, estado):
             pass
     conn.commit()
 
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 #  CONSULTAS REPORTES
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 def consultar_ventas_por_fecha(fecha_inicio, fecha_fin, vendedor_id=None):
     conn   = obtener_conexion()
     cursor = conn.cursor()
@@ -1590,7 +1594,7 @@ def consultar_inventario_actual():
     try:
         cursor.execute("""
             SELECT producto_id AS id, nombre, precio, costo, categoria,
-                   unidad_medida, CASE WHEN en_oferta=1 THEN 'Sí' ELSE 'No' END AS en_oferta
+                   unidad_medida, CASE WHEN en_oferta=1 THEN 'Si' ELSE 'No' END AS en_oferta
             FROM productos WHERE activo = 1 ORDER BY categoria, nombre ASC
         """)
         return [dict(f) for f in cursor.fetchall()]
@@ -1613,9 +1617,9 @@ def consultar_ganancias_por_dia():
 
 
 
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 #  HISTORIAL DIARIO LOCAL
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 def guardar_historial_diario_local(snapshot: dict) -> bool:
     """Guarda un snapshot diario en SQLite historial_diario."""
     conn = obtener_conexion()
@@ -1649,14 +1653,14 @@ def guardar_historial_diario_local(snapshot: dict) -> bool:
         conn.commit()
         return True
     except Exception as e:
-        print(f"❌ Error guardando historial local: {e}")
+        print(f"? Error guardando historial local: {e}")
         return False
     finally:
         conn.close()
 
 
 def obtener_historial_diario_local(limite=30) -> list:
-    """Devuelve los últimos N días del historial local."""
+    """Devuelve los ultimos N dias del historial local."""
     conn = obtener_conexion()
     try:
         rows = conn.execute("""
@@ -1671,7 +1675,7 @@ def obtener_historial_diario_local(limite=30) -> list:
 
 
 def obtener_historial_detalle_local(fecha: str) -> dict:
-    """Devuelve el detalle completo de un día."""
+    """Devuelve el detalle completo de un dia."""
     conn = obtener_conexion()
     try:
         row = conn.execute("SELECT * FROM historial_diario WHERE fecha=?", (fecha,)).fetchone()
@@ -1712,8 +1716,8 @@ def obtener_info_db():
             except Exception:
                 info["tablas"][t] = 0
         if os.path.exists(DB_FILE):
-            info["tamaño_bytes"] = os.path.getsize(DB_FILE)
-            info["tamaño_kb"]    = round(info["tamaño_bytes"] / 1024, 2)
+            info["tamano_bytes"] = os.path.getsize(DB_FILE)
+            info["tamano_kb"]    = round(info["tamano_bytes"] / 1024, 2)
         return info
     finally:
         conn.close()

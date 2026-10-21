@@ -1,0 +1,96 @@
+{
+  "etiqueta": "wifi_wlan0",
+  "timestamp_utc": "2026-10-21T08:26:17.501785+00:00",
+  "endpoint": "https://cloudflare.com/cdn-cgi/trace",
+  "host": "cloudflare.com",
+  "ip_resuelta": "104.16.133.229",
+  "muestras_por_capa": 20,
+  "endpoint_local": {
+    "ok": true,
+    "hostname": "localhost",
+    "ip_local": "198.18.0.1",
+    "direcciones_locales": [
+      "127.0.0.1"
+    ],
+    "python": "3.14.6",
+    "plataforma": "android",
+    "modo": "información de endpoint local"
+  },
+  "tls_negociado": {
+    "protocolo": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384 (256 bits)"
+  },
+  "capas": {
+    "dns_getaddrinfo": {
+      "n": 20,
+      "media_ms": 17.56,
+      "ic95_pm_ms": 22.86,
+      "mediana_ms": 6.07,
+      "sd_ms": 52.16,
+      "ipdv_rfc3550_ms": 12.89,
+      "p95_ms": 18.65,
+      "min_ms": 4.6,
+      "max_ms": 239.16
+    },
+    "tcp_handshake_syn_ack": {
+      "n": 20,
+      "media_ms": 7.71,
+      "ic95_pm_ms": 1.17,
+      "mediana_ms": 7.16,
+      "sd_ms": 2.67,
+      "ipdv_rfc3550_ms": 1.51,
+      "p95_ms": 13.37,
+      "min_ms": 4.5,
+      "max_ms": 16.67
+    },
+    "tls_handshake": {
+      "n": 20,
+      "media_ms": 482.21,
+      "ic95_pm_ms": 8.01,
+      "mediana_ms": 480.24,
+      "sd_ms": 18.27,
+      "ipdv_rfc3550_ms": 17.4,
+      "p95_ms": 510.67,
+      "min_ms": 449.49,
+      "max_ms": 513.76
+    },
+    "https_frio_sin_reuso": {
+      "n": 20,
+      "media_ms": 866.48,
+      "ic95_pm_ms": 48.98,
+      "mediana_ms": 921.81,
+      "sd_ms": 111.76,
+      "ipdv_rfc3550_ms": 134.46,
+      "p95_ms": 960.59,
+      "min_ms": 695.5,
+      "max_ms": 1098.7
+    },
+    "https_keepalive_1rtt": {
+      "n": 20,
+      "media_ms": 239.98,
+      "ic95_pm_ms": 16.09,
+      "mediana_ms": 229.74,
+      "sd_ms": 36.72,
+      "ipdv_rfc3550_ms": 34.26,
+      "p95_ms": 331.58,
+      "min_ms": 206.49,
+      "max_ms": 342.38
+    }
+  },
+  "reduccion_latencia_keepalive_pct": 72.3,
+  "perdida_muestral_pct": 0.0,
+  "calidad_enlace_keepalive": {
+    "nivel": "degradada",
+    "score": 60,
+    "apta_tpv": true
+  },
+  "plano_local_sqlite": {
+    "ok": true,
+    "metodo": "100 x SELECT 1 + PRAGMA quick_check",
+    "lectura_100_ops_ms": 2.86,
+    "ops_por_segundo": 34946.0,
+    "quick_check": "ok",
+    "quick_check_ms": 3.03,
+    "tamano_kb": 564.0
+  }
+}

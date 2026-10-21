@@ -51,6 +51,37 @@ def _v10(conn):
     return _tab(conn, "ventas_cabecera") and _tab(conn, "ventas_detalle")
 
 
+def _ensure_v10_tables(conn):
+    if _v10(conn):
+        return
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS ventas_cabecera ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " venta_id TEXT NOT NULL UNIQUE,"
+        " client_txn_id TEXT NOT NULL UNIQUE,"
+        " vendedor_id TEXT DEFAULT NULL,"
+        " vendedor_nombre TEXT DEFAULT NULL,"
+        " metodo_pago TEXT NOT NULL DEFAULT 'efectivo',"
+        " total REAL NOT NULL DEFAULT 0,"
+        " estado TEXT NOT NULL DEFAULT 'confirmada'"
+        " CHECK(estado IN ('procesando','confirmada','cancelada')),"
+        " fecha TEXT NOT NULL DEFAULT (datetime('now','localtime'))"
+        ")"
+    )
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS ventas_detalle ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " venta_id TEXT NOT NULL REFERENCES ventas_cabecera(venta_id) ON DELETE CASCADE,"
+        " producto_id TEXT NOT NULL,"
+        " nombre TEXT NOT NULL,"
+        " cantidad REAL NOT NULL DEFAULT 1,"
+        " precio_unit REAL NOT NULL DEFAULT 0,"
+        " subtotal REAL NOT NULL DEFAULT 0"
+        ")"
+    )
+    conn.commit()
+
+
 def _venta_existente(cur, client_txn_id):
     return cur.execute(
         "SELECT venta_id, total, fecha, vendedor_id FROM ventas_cabecera WHERE client_txn_id=?",
@@ -105,8 +136,17 @@ def _registrar(payload, user):
     conn = None
     try:
         conn = obtener_conexion()
+        _ensure_v10_tables(conn)
         cur = conn.cursor()
         cur.execute("BEGIN IMMEDIATE")
+
+        fk_vendedor_id = None
+        if vendedor_id and _tab(conn, "usuarios"):
+            existe_usr = cur.execute(
+                "SELECT 1 FROM usuarios WHERE usuario_id=?", (vendedor_id,)
+            ).fetchone()
+            if existe_usr:
+                fk_vendedor_id = vendedor_id
 
         if _v10(conn):
             prev = _venta_existente(cur, client_txn_id)
@@ -177,7 +217,7 @@ def _registrar(payload, user):
                 "INSERT INTO historial_ventas "
                 "(venta_id, producto_id, nombre, cantidad, precio_unit, total, metodo_pago, fecha, vendedor_id, vendedor_nombre) "
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (venta_id, pid, nombre, cantidad, precio, subtotal, metodo, fecha, vendedor_id, vendedor_nombre),
+                (venta_id, pid, nombre, cantidad, precio, subtotal, metodo, fecha, fk_vendedor_id, vendedor_nombre),
             )
             total += subtotal
 
@@ -272,6 +312,7 @@ def registrar_venta():
 @ventas_core_bp.route("/api/ventas/hoy")
 @login_required
 def ventas_hoy():
+    conn = None
     try:
         u = usuario_actual()
         conn = obtener_conexion()
@@ -312,10 +353,12 @@ def ventas_hoy():
                 "precio_unit": row[3], "total": row[4], "metodo_pago": row[5], "fecha": row[6],
             })
             total += _f(row[4])
-        conn.close()
         return jsonify({"ok": True, "ventas": ventas, "total": round(total, 2), "cantidad": len(ventas)})
     except Exception:
         return jsonify({"ok": True, "ventas": [], "total": 0, "cantidad": 0})
+    finally:
+        if conn is not None:
+            conn.close()
 
 
 @ventas_core_bp.route("/api/ventas/cierre", methods=["POST"])
@@ -324,6 +367,7 @@ def cierre_caja():
     d = request.get_json(silent=True) or {}
     fecha = d.get("fecha", date.today().isoformat())
     u = usuario_actual()
+    conn = None
     try:
         conn = obtener_conexion()
         total_ventas, num_ventas = _sumar_periodo(conn, f"{fecha}%", u.get("usuario_id") if u.get("rol") == "vendedor" else None)
@@ -331,10 +375,13 @@ def cierre_caja():
             "INSERT OR REPLACE INTO cierres_caja (fecha, total_ventas, num_transacciones, cerrado_por) VALUES (?,?,?,?)",
             (fecha, total_ventas, num_ventas, u.get("usuario_id", "sistema")),
         )
-        conn.commit(); conn.close()
+        conn.commit()
         return jsonify({"ok": True, "fecha": fecha, "total_ventas": total_ventas, "num_transacciones": num_ventas, "cerrado_por": u.get("usuario_id", "sistema")})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
+    finally:
+        if conn is not None:
+            conn.close()
 
 
 @ventas_core_bp.route("/api/ventas/cierres")
@@ -345,7 +392,7 @@ def listar_cierres():
         conn = obtener_conexion()
         cur = conn.cursor()
         cur.execute(
-            "SELECT id, fecha, total_ventas, num_transacciones, efectivo, tarjeta, transferencia, cerrado_por, creado "
+            "SELECT id, fecha, total_ventas, num_transacciones, efectivo, tarjeta, transferencia, cerrado_por "
             "FROM cierres_caja ORDER BY fecha DESC LIMIT 30"
         )
         cierres = [{
@@ -363,6 +410,7 @@ def listar_cierres():
 @ventas_core_bp.route("/api/ventas/totales")
 @login_required
 def totales_ventas():
+    conn = None
     try:
         u = usuario_actual()
         conn = obtener_conexion()
@@ -371,7 +419,9 @@ def totales_ventas():
         vendedor_id = u.get("usuario_id") if u.get("rol") == "vendedor" else None
         total_hoy, num_hoy = _sumar_periodo(conn, f"{hoy}%", vendedor_id)
         total_mes, num_mes = _sumar_periodo(conn, f"{mes}%", vendedor_id)
-        conn.close()
         return jsonify({"ok": True, "hoy": {"total": total_hoy, "ventas": num_hoy}, "mes": {"total": total_mes, "ventas": num_mes}})
     except Exception:
         return jsonify({"ok": True, "hoy": {"total": 0, "ventas": 0}, "mes": {"total": 0, "ventas": 0}})
+    finally:
+        if conn is not None:
+            conn.close()

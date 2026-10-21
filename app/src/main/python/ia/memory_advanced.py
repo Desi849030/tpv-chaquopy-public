@@ -49,18 +49,24 @@ class AdvancedMemory:
     """Sistema de memoria persistente con SQLite y caché LRU."""
     
     def __init__(self, db_path: Optional[str] = None):
-        if db_path is None:
-            db_path = os.path.join(os.path.dirname(__file__), "..", "tpv_datos.db")
-        self.db_path = db_path
+        self._explicit_db_path = db_path
         self.cache = LRUCache(maxsize=200, ttl=300)
         self._init_db()
-    
+
+    @property
+    def db_path(self) -> str:
+        if self._explicit_db_path is not None:
+            return self._explicit_db_path
+        base = os.environ.get("TPV_FILES_DIR") or os.path.join(os.path.dirname(__file__), "..")
+        return os.path.join(base, "tpv_datos.db")
+
     def _init_db(self):
-        """Inicializar tabla de memoria."""
+        """Inicializar tabla de historial conversacional."""
+        conn = None
         try:
             conn = sqlite3.connect(self.db_path)
             conn.execute("""
-                CREATE TABLE IF NOT EXISTS ia_memory (
+                CREATE TABLE IF NOT EXISTS ia_conversations (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id TEXT NOT NULL,
                     session_id TEXT NOT NULL,
@@ -74,36 +80,54 @@ class AdvancedMemory:
                 )
             """)
             conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_memory_user 
-                ON ia_memory(user_id, timestamp)
+                CREATE INDEX IF NOT EXISTS idx_conv_user
+                ON ia_conversations(user_id, timestamp)
             """)
             conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_memory_session
-                ON ia_memory(session_id)
+                CREATE INDEX IF NOT EXISTS idx_conv_session
+                ON ia_conversations(session_id)
             """)
             conn.commit()
-            conn.close()
         except Exception as e:
             logger.error(f"Error init memoria: {e}")
-    
-    def save_conversation(self, user_id: str, session_id: str, role: str, 
+        finally:
+            if conn is not None:
+                conn.close()
+
+    def save_conversation(self, user_id: str, session_id: str, role: str,
                           content: str, intent: str = "", entities: str = "",
                           metadata: Optional[dict] = None):
         """Guardar mensaje en memoria persistente."""
+        conn = None
         try:
             conn = sqlite3.connect(self.db_path)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS ia_conversations (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id TEXT NOT NULL,
+                    session_id TEXT NOT NULL,
+                    role TEXT DEFAULT 'user',
+                    content TEXT NOT NULL,
+                    intent TEXT,
+                    entities TEXT,
+                    sentiment TEXT DEFAULT 'neutral',
+                    timestamp TEXT DEFAULT (datetime('now','localtime')),
+                    metadata TEXT
+                )
+            """)
             conn.execute(
-                """INSERT INTO ia_memory (user_id, session_id, role, content, intent, entities, metadata)
+                """INSERT INTO ia_conversations (user_id, session_id, role, content, intent, entities, metadata)
                    VALUES (?, ?, ?, ?, ?, ?, ?)""",
                 (user_id, session_id, role, content, intent, entities,
                  json.dumps(metadata) if metadata else "{}")
             )
             conn.commit()
-            conn.close()
-            # Invalidar caché
             self.cache.invalidate(f"history:{user_id}:{session_id}")
         except Exception as e:
             logger.error(f"Error guardando conversación: {e}")
+        finally:
+            if conn is not None:
+                conn.close()
     
     def get_conversation_history(self, user_id: str, session_id: str, 
                                   limit: int = 20) -> List[Dict]:

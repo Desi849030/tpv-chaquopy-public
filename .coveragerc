@@ -29,7 +29,6 @@ omit =
     */modules/system.py
     */modules/tests_info_bp.py
     */modules/tienda*.py
-    */modules/ventas*.py
 
 [report]
 fail_under = 50

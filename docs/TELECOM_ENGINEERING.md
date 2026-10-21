@@ -47,14 +47,29 @@ Los comercios móviles o pequeños operan sobre enlaces Wi-Fi/celulares con late
 
 ### Dependientes
 
-- RTT mínimo, medio, mediano y P95;
-- desviación estándar de RTT;
+- RTT mínimo, medio, mediano, estable en caliente (`latencia_warm_ms`) y P95;
+- desviación estándar de RTT (`jitter_ms`) y variación absoluta consecutiva RFC 3550 (`jitter_rfc3550_ms`);
+- reducción porcentual de latencia de aplicación por reutilización TLS (`HTTP Keep-Alive`, `1 RTT` frente a petición HTTPS en frío `TCP + TLS 1.3 + HTTP`);
 - porcentaje de solicitudes fallidas;
-- goodput Mbps/KiB/s;
-- tiempo TCP y TLS;
-- tiempo DNS;
-- operaciones SQLite por segundo;
-- continuidad funcional de venta.
+- goodput útil de aplicación en Mbps y KiB/s;
+- tiempos desagregados de resolución DNS (`getaddrinfo`), transporte TCP (`SYN/SYN-ACK`) y negociación TLS;
+- tiempo de lectura e integridad del plano local SQLite WAL (`ops/s`, `PRAGMA quick_check`);
+- continuidad funcional transaccional e idempotencia ante reintentos (`client_txn_id`).
+
+## Campaña reproducible desde Termux (Wi-Fi vs. 4G/LTE)
+
+El repositorio incluye el instrumento `tools/medir_red_tesis.py` (sin dependencias externas fuera de la biblioteca estándar de Python) para generar mediciones auditables JSON y tablas Markdown en `docs/mediciones_campo/`:
+
+```bash
+# 1. Con Wi-Fi activo en el dispositivo Android:
+python tools/medir_red_tesis.py --etiqueta wifi_wlan0 --muestras 20
+
+# 2. Desactivando Wi-Fi y operando sobre Datos Móviles (4G/LTE):
+python tools/medir_red_tesis.py --etiqueta lte_datos_moviles --muestras 20
+
+# 3. Generación automática de tabla comparativa consolidada:
+python tools/medir_red_tesis.py --comparar
+```
 
 ### Controladas
 

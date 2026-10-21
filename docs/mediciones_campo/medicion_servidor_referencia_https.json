@@ -1,0 +1,96 @@
+{
+  "etiqueta": "servidor_referencia_https",
+  "timestamp_utc": "2026-10-21T08:05:25.012253+00:00",
+  "endpoint": "https://cloudflare.com/cdn-cgi/trace",
+  "host": "cloudflare.com",
+  "ip_resuelta": "104.16.133.229",
+  "muestras_por_capa": 15,
+  "endpoint_local": {
+    "ok": true,
+    "hostname": "e2b.local",
+    "ip_local": "169.254.0.21",
+    "direcciones_locales": [
+      "127.0.1.1"
+    ],
+    "python": "3.13.16",
+    "plataforma": "linux",
+    "modo": "información de endpoint local"
+  },
+  "tls_negociado": {
+    "protocolo": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384 (256 bits)"
+  },
+  "capas": {
+    "dns_getaddrinfo": {
+      "n": 15,
+      "media_ms": 5.22,
+      "ic95_pm_ms": 2.2,
+      "mediana_ms": 1.95,
+      "sd_ms": 4.34,
+      "ipdv_rfc3550_ms": 1.95,
+      "p95_ms": 11.46,
+      "min_ms": 1.52,
+      "max_ms": 11.73
+    },
+    "tcp_handshake_syn_ack": {
+      "n": 15,
+      "media_ms": 2.09,
+      "ic95_pm_ms": 0.17,
+      "mediana_ms": 2.05,
+      "sd_ms": 0.34,
+      "ipdv_rfc3550_ms": 0.44,
+      "p95_ms": 2.69,
+      "min_ms": 1.67,
+      "max_ms": 2.97
+    },
+    "tls_handshake": {
+      "n": 15,
+      "media_ms": 19.69,
+      "ic95_pm_ms": 1.08,
+      "mediana_ms": 19.39,
+      "sd_ms": 2.14,
+      "ipdv_rfc3550_ms": 2.28,
+      "p95_ms": 23.6,
+      "min_ms": 16.88,
+      "max_ms": 23.78
+    },
+    "https_frio_sin_reuso": {
+      "n": 15,
+      "media_ms": 73.91,
+      "ic95_pm_ms": 1.66,
+      "mediana_ms": 73.39,
+      "sd_ms": 3.28,
+      "ipdv_rfc3550_ms": 3.58,
+      "p95_ms": 79.36,
+      "min_ms": 69.49,
+      "max_ms": 80.75
+    },
+    "https_keepalive_1rtt": {
+      "n": 15,
+      "media_ms": 11.81,
+      "ic95_pm_ms": 0.35,
+      "mediana_ms": 11.56,
+      "sd_ms": 0.69,
+      "ipdv_rfc3550_ms": 0.67,
+      "p95_ms": 12.9,
+      "min_ms": 11.06,
+      "max_ms": 13.17
+    }
+  },
+  "reduccion_latencia_keepalive_pct": 84.0,
+  "perdida_muestral_pct": 0.0,
+  "calidad_enlace_keepalive": {
+    "nivel": "excelente",
+    "score": 100,
+    "apta_tpv": true
+  },
+  "plano_local_sqlite": {
+    "ok": true,
+    "metodo": "100 x SELECT 1 + PRAGMA quick_check",
+    "lectura_100_ops_ms": 0.28,
+    "ops_por_segundo": 352922.0,
+    "quick_check": "ok",
+    "quick_check_ms": 0.55,
+    "tamano_kb": 556.0
+  }
+}

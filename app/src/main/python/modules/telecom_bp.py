@@ -31,9 +31,11 @@ def _bounded_int(name: str, default: int, minimum: int, maximum: int) -> int:
 @telecom_bp.get("/api/dev/telecom/latencia")
 @_dev_required
 def api_latencia():
-    return jsonify(telecom_diag.medir_latencia_supabase(
-        intentos=_bounded_int("intentos", 5, 1, 10)
-    ))
+    keepalive = request.args.get("keepalive", "0").strip().lower() in ("1", "true", "yes")
+    kwargs = {"intentos": _bounded_int("intentos", 5, 1, 10)}
+    if keepalive:
+        kwargs["keepalive"] = True
+    return jsonify(telecom_diag.medir_latencia_supabase(**kwargs))
 
 
 @telecom_bp.get("/api/dev/telecom/throughput")

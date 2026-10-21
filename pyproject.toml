@@ -25,15 +25,4 @@ dependencies = [
 [tool.ruff]
 target-version = "py310"
 line-length = 100
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-addopts = "-q -W ignore::DeprecationWarning"
-[tool.coverage.run]
-source = ["app/src/main/python"]
-omit = [
-  "*/tools/i18n_builder.py",
-  "*/tools/*_tools.py",
-  "*/security/audit.py",
-  "*/ai_routes.py",
-  "*/api_routes.py",
-  "*/tpv_rutas.py","*/tests/*", "*/legacy/*", "*/docs/*", "*/scripts/*"]
+

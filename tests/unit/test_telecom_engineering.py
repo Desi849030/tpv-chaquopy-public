@@ -115,7 +115,7 @@ def test_sqlite_and_complete_offline(monkeypatch):
     monkeypatch.setattr(diag, "_supabase_url", lambda: "")
     monkeypatch.setattr(diag, "info_red_local", lambda: {"ok": True, "hostname": "phone", "ip_local": "10.0.0.2"})
     monkeypatch.setattr(diag, "medir_dns", lambda: {"ok": True, "host": "example", "tiempo_ms": 4, "ip_principal": "1.1.1.1"})
-    monkeypatch.setattr(diag, "medir_latencia_supabase", lambda intentos=3: {"ok": False, "error": "offline"})
+    monkeypatch.setattr(diag, "medir_latencia_supabase", lambda intentos=5: {"ok": False, "error": "offline"})
     monkeypatch.setattr(diag, "medir_throughput_supabase", lambda: {"ok": False, "error": "offline"})
     monkeypatch.setattr(diag, "medir_tls_handshake", lambda: {"ok": False, "error": "offline"})
     monkeypatch.setattr(diag, "velocidad_sqlite", lambda: {"ok": True, "quick_check": "ok", "ops_por_segundo": 5000, "tamano_kb": 50})
@@ -176,3 +176,61 @@ def test_developer_ia_dispatches_real_telecom(monkeypatch):
 
     monkeypatch.setattr(diag, "formato_humano_diagnostico", lambda: "DIAGNOSTICO TELECOM REAL")
     assert handle_dev(None, "diagnostico completo", "Dev") == "DIAGNOSTICO TELECOM REAL"
+
+
+def test_rfc3550_jitter_and_keepalive_reuse(monkeypatch):
+    import http.client
+
+    assert diag._jitter_rfc3550([120.0, 40.0, 42.0, 40.0, 42.0]) == 21.5
+
+    created_conns = []
+
+    class DummyResp:
+        def read(self):
+            return b"[]"
+
+    class DummyConn:
+        def __init__(self, host, port=443, timeout=5.0, context=None):
+            created_conns.append((host, port))
+            self.req_count = 0
+
+        def request(self, method, path, headers=None):
+            self.req_count += 1
+
+        def getresponse(self):
+            return DummyResp()
+
+        def close(self):
+            pass
+
+    times = iter([
+        0.000, 0.120,  # cold first request: 120 ms (TCP+TLS+HTTP)
+        0.200, 0.240,  # warm keep-alive 2: 40 ms
+        0.300, 0.342,  # warm keep-alive 3: 42 ms
+        0.400, 0.440,  # warm keep-alive 4: 40 ms
+        0.500, 0.542,  # warm keep-alive 5: 42 ms
+    ])
+    monkeypatch.setattr(diag, "_supabase_config", lambda: {"url": "https://demo.supabase.co", "anon_key": "eyJ_valid"})
+    monkeypatch.setattr(diag, "_supabase_url", lambda: "https://demo.supabase.co")
+    monkeypatch.setattr(http.client, "HTTPSConnection", DummyConn)
+    monkeypatch.setattr(diag.time, "perf_counter", lambda: next(times))
+    monkeypatch.setattr(diag.time, "sleep", lambda _s: None)
+
+    res = diag.medir_latencia_supabase(intentos=5, keepalive=True)
+    assert res["ok"] is True
+    assert len(created_conns) == 1  # single reused TLS connection across all 5 samples
+    assert res["metodo"] == "HTTP Keep-Alive RTT (no ICMP)"
+    assert res["latencia_warm_ms"] == 41.0
+    assert res["jitter_rfc3550_ms"] == 21.5
+    assert res["calidad"]["nivel"] == "excelente"
+
+    client = _developer_client()
+    seen = {}
+    monkeypatch.setattr(
+        diag,
+        "medir_latencia_supabase",
+        lambda intentos=5, keepalive=False: seen.update(i=intentos, ka=keepalive) or {"ok": True},
+    )
+    assert client.get("/api/dev/telecom/latencia?intentos=5&keepalive=1").status_code == 200
+    assert seen == {"i": 5, "ka": True}
+

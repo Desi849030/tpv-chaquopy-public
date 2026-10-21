@@ -79,28 +79,35 @@ def get_db_info():
             except Exception:
                 info["tablas"][t] = 0
         if os.path.exists(DB_FILE):
-            info["tamaño_bytes"] = os.path.getsize(DB_FILE)
-            info["tamaño_kb"] = round(info["tamaño_bytes"] / 1024, 2)
+            sz = os.path.getsize(DB_FILE)
+            kb = round(sz / 1024, 2)
+            info["tamaño_bytes"] = sz
+            info["tamano_bytes"] = sz
+            info["tamaño_kb"] = kb
+            info["tamano_kb"] = kb
         return info
     finally:
         conn.close()
 
 
+_AUDIT_Logs_DDL = '''
+    CREATE TABLE IF NOT EXISTS audit_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        usuario TEXT,
+        accion TEXT,
+        tabla TEXT,
+        registro_id TEXT,
+        valor_anterior TEXT,
+        valor_nuevo TEXT,
+        fecha TEXT DEFAULT (datetime('now','localtime'))
+    )
+'''
+
+
 def create_audit_table():
     conn = get_connection()
     try:
-        conn.execute('''
-            CREATE TABLE IF NOT EXISTS audit_logs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                usuario TEXT,
-                accion TEXT,
-                tabla TEXT,
-                registro_id TEXT,
-                valor_anterior TEXT,
-                valor_nuevo TEXT,
-                fecha TEXT DEFAULT (datetime('now','localtime'))
-            )
-        ''')
+        conn.execute(_AUDIT_Logs_DDL)
         conn.commit()
     except Exception as e:
         import sys
@@ -112,6 +119,7 @@ def create_audit_table():
 def audit_log(usuario, accion, tabla, registro_id="", valor_anterior="", valor_nuevo=""):
     conn = get_connection()
     try:
+        conn.execute(_AUDIT_Logs_DDL)
         conn.execute(
             "INSERT INTO audit_logs (usuario,accion,tabla,registro_id,valor_anterior,valor_nuevo) VALUES (?,?,?,?,?,?)",
             (usuario, accion, tabla, registro_id, str(valor_anterior)[:500], str(valor_nuevo)[:500])

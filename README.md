@@ -2,15 +2,15 @@
 
 [![Android CI](https://github.com/Desi849030/tpv-chaquopy-public/actions/workflows/android-ci.yml/badge.svg)](https://github.com/Desi849030/tpv-chaquopy-public/actions/workflows/android-ci.yml)
 ![Version](https://img.shields.io/badge/version-6.13.1-blue)
-![Coverage](https://img.shields.io/badge/coverage-61%25-brightgreen)
-![Tests](https://img.shields.io/badge/tests-585%20passed-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-60.1%25-brightgreen)
+![Tests](https://img.shields.io/badge/tests-659%20passed-brightgreen)
 ![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.14-blue)
 ![Android](https://img.shields.io/badge/Android-API%2021%2B-3DDC84)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 Aplicación Android de punto de venta **offline-first** con backend Flask embebido mediante Chaquopy, base de datos SQLite y agente IA por roles. Las operaciones esenciales funcionan localmente; Supabase es una capacidad opcional de sincronización.
 
-> Estado de calidad validado: **585 pruebas superadas, 71 omitidas y 61% de cobertura**. El workflow bloquea la compilación del APK si los tests fallan o la cobertura baja del 50%.
+> Estado de calidad validado: **659 pruebas superadas, 40 stubs legacy omitidos y 60.1% de cobertura real** (incluyendo el motor transaccional `modules/ventas_atomic_v10.py`). El workflow bloquea la compilación del APK si los tests fallan o la cobertura baja del 50%.
 
 ## Capacidades principales
 

@@ -1,6 +1,25 @@
 # CHANGELOG — TPV Ultra Smart
 
-## [Unreleased]
+## [6.13.1] — 2026-10-21
+
+### Integridad transaccional, idempotencia y seguridad de borde
+- Unificación de `database.py`, `db/schema.py`, `db_connection.py`, `start_server.py` y `modules/ventas_atomic_v10.py`: creación garantizada de `ventas_cabecera`, `ventas_detalle` (`ON DELETE CASCADE`) y `audit_logs` desde el primer arranque del APK Android.
+- Eliminación de `UNIQUE` erróneo sobre `historial_ventas.venta_id` para soportar ventas multi-ítem atómicas con rollback completo ante stock insuficiente (`HTTP 409 STOCK_INSUFICIENTE`).
+- Eliminación de credenciales residuales hardcodeadas en `supabase_sync.py` y `app.py` (`/api/ping` dinámico offline-first) y validación estricta de `Origin` local en loopback (`127.0.0.1:5050`) contra peticiones cross-origin (`HTTP 403`).
+- Preservación íntegra de UTF-8 en mensajes operativos de `database.py` y claves duales `tamaño_kb` / `tamano_kb`.
+
+### Ingeniería en Telecomunicaciones y telemetría experimental
+- Alineación del número de muestras de RTT HTTP (`intentos=5`) entre `diagnostico_completo()` y `/api/dev/telecom/latencia`.
+- Incorporación de jitter consecutivo RFC 3550 (`|L_i - L_{i-1}|`) junto a la desviación estándar muestral y soporte de reutilización TLS con HTTP Keep-Alive (`1 RTT`, `?keepalive=1`).
+- Nueva herramienta reproducible `tools/medir_red_tesis.py` para campañas experimentales multicapa (DNS, TCP `SYN/SYN-ACK`, TLS 1.3, HTTPS en frío vs. HTTPS Keep-Alive, y plano local SQLite WAL) en Termux sobre Wi-Fi y 4G/LTE.
+
+### Cobertura y recuperación de suite automatizada
+- Inclusión efectiva de `modules/ventas*.py` en `.coveragerc` (`72.9%` de cobertura real sobre `ventas_atomic_v10.py`) y limpieza de configuración duplicada en `pyproject.toml`.
+- Reescritura de `tests/unit/test_concurrency_security.py` con 7 pruebas reales de `pytest` sobre Flask `test_client()` y concurrencia multihilo (`BEGIN IMMEDIATE`).
+- Recuperación completa de 31 pruebas antes omitidas de `ia/agent_master.py` y `ia/memory_core.py`.
+- Métricas verificadas: **659 pruebas superadas, 0 fallos, 40 stubs legacy omitidos y 60.1% de cobertura global**; **14 Blueprints**, **178 rutas**, **20 tablas base (`26` totales en arranque completo)** y **6 claves foráneas activas**.
+
+## [6.13.0] — 2026-10-16
 
 ### Correcciones de base de datos
 - Fix de backtick en database.py L138 que causaba 56 strings desplazados

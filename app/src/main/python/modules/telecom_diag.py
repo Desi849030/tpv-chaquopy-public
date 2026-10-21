@@ -1,11 +1,15 @@
+# -*- coding: utf-8 -*-
 """Reproducible telecommunications diagnostics for the developer role.
 
 Measurements are explicitly labelled by layer and method. Network tests use the
-configured Supabase endpoint; they never claim to be ICMP when the sample is an
-HTTP application RTT. All functions degrade safely in offline mode.
+configured Supabase endpoint (or explicit probe URL when requested); they never
+claim to be ICMP when the sample is an HTTP application RTT. Supports both standard
+per-request HTTPS RTT and persistent HTTP Keep-Alive RTT plus RFC 3550 consecutive
+inter-packet delay variation (IPDV / jitter).
 """
 from __future__ import annotations
 
+import http.client
 import math
 import os
 import socket
@@ -22,9 +26,20 @@ def _supabase_config() -> dict:
     try:
         from sync.config_supabase import SUPABASE_CONFIG
 
-        return dict(SUPABASE_CONFIG or {})
+        cfg = dict(SUPABASE_CONFIG or {})
+        if cfg.get("url") and "REMOVED" not in str(cfg.get("anon_key", "")):
+            return cfg
     except Exception:
-        return {}
+        pass
+    try:
+        import supabase_sync
+
+        cfg = dict(getattr(supabase_sync, "SUPABASE_CONFIG", {}) or {})
+        if cfg.get("url") and "REMOVED" not in str(cfg.get("anon_key", "")):
+            return cfg
+    except Exception:
+        pass
+    return {}
 
 
 def _supabase_url() -> str:
@@ -45,6 +60,14 @@ def _percentile(values: list[float], percentile: float) -> float:
         return ordered[lower]
     fraction = position - lower
     return ordered[lower] + (ordered[upper] - ordered[lower]) * fraction
+
+
+def _jitter_rfc3550(samples: list[float]) -> float:
+    """Mean consecutive absolute delay variation |L_i - L_{i-1}| (RFC 3550 / ITU-T)."""
+    if len(samples) < 2:
+        return 0.0
+    diffs = [abs(samples[i] - samples[i - 1]) for i in range(1, len(samples))]
+    return sum(diffs) / len(diffs)
 
 
 def evaluar_calidad(latencia_ms: float | None, jitter_ms: float | None, perdida_pct: float | None) -> dict:
@@ -75,8 +98,12 @@ def evaluar_calidad(latencia_ms: float | None, jitter_ms: float | None, perdida_
     return {"nivel": level, "score": score, "apta_tpv": score >= 50}
 
 
-def medir_latencia_supabase(intentos: int = 5, timeout: float = 5.0) -> dict:
-    """Measure application-layer HTTP RTT, variation and failed-sample ratio."""
+def medir_latencia_supabase(
+    intentos: int = 5,
+    timeout: float = 5.0,
+    keepalive: bool = False,
+) -> dict:
+    """Measure application-layer HTTP RTT, RFC 3550 jitter and failed-sample ratio."""
     attempts = max(1, min(int(intentos), 10))
     url = _supabase_url()
     config = _supabase_config()
@@ -87,22 +114,61 @@ def medir_latencia_supabase(intentos: int = 5, timeout: float = 5.0) -> dict:
         return {"ok": False, "error": "Supabase API key no disponible", "metodo": "HTTP RTT"}
 
     test_url = url.rstrip("/") + "/rest/v1/"
+    headers = {"apikey": api_key, "Connection": "keep-alive"}
+    if api_key.startswith("eyJ"):
+        headers["Authorization"] = f"Bearer {api_key}"
+
     samples: list[float] = []
     errors: list[str] = []
-    for index in range(attempts):
-        started = time.perf_counter()
+
+    if keepalive:
+        parsed = urlparse(test_url)
+        host = parsed.hostname or ""
+        port = parsed.port or (443 if parsed.scheme == "https" else 80)
+        path = parsed.path or "/"
+        conn_http = None
         try:
-            request = urllib.request.Request(test_url, method="GET")
-            request.add_header("apikey", api_key)
-            if api_key.startswith("eyJ"):
-                request.add_header("Authorization", f"Bearer {api_key}")
-            with urllib.request.urlopen(request, timeout=timeout) as response:
-                response.read(128)
-            samples.append((time.perf_counter() - started) * 1000)
-        except Exception as exc:
-            errors.append(f"{type(exc).__name__}: {exc}"[:120])
-        if index + 1 < attempts:
-            time.sleep(0.05)
+            ctx = ssl.create_default_context()
+            conn_http = (
+                http.client.HTTPSConnection(host, port=port, timeout=timeout, context=ctx)
+                if parsed.scheme == "https"
+                else http.client.HTTPConnection(host, port=port, timeout=timeout)
+            )
+            for index in range(attempts):
+                started = time.perf_counter()
+                try:
+                    conn_http.request("GET", path, headers=headers)
+                    resp = conn_http.getresponse()
+                    resp.read()
+                    samples.append((time.perf_counter() - started) * 1000)
+                except Exception as exc:
+                    errors.append(f"{type(exc).__name__}: {exc}"[:120])
+                    try:
+                        conn_http.close()
+                    except Exception:
+                        pass
+                if index + 1 < attempts:
+                    time.sleep(0.05)
+        finally:
+            if conn_http is not None:
+                try:
+                    conn_http.close()
+                except Exception:
+                    pass
+    else:
+        for index in range(attempts):
+            started = time.perf_counter()
+            try:
+                request = urllib.request.Request(test_url, method="GET")
+                for hk, hv in headers.items():
+                    request.add_header(hk, hv)
+                with urllib.request.urlopen(request, timeout=timeout) as response:
+                    response.read(128)
+                samples.append((time.perf_counter() - started) * 1000)
+            except Exception as exc:
+                errors.append(f"{type(exc).__name__}: {exc}"[:120])
+            if index + 1 < attempts:
+                time.sleep(0.05)
 
     failed = attempts - len(samples)
     loss = failed / attempts * 100
@@ -115,11 +181,15 @@ def medir_latencia_supabase(intentos: int = 5, timeout: float = 5.0) -> dict:
         }
 
     mean = statistics.mean(samples)
-    jitter = statistics.stdev(samples) if len(samples) > 1 else 0.0
+    jitter_sd = statistics.stdev(samples) if len(samples) > 1 else 0.0
+    jitter_ipdv = _jitter_rfc3550(samples)
+    warm_samples = samples[1:] if len(samples) > 1 else samples
+    warm_mean = statistics.mean(warm_samples)
+    warm_jitter = statistics.stdev(warm_samples) if len(warm_samples) > 1 else jitter_sd
     return {
         "ok": True,
         "url": test_url,
-        "metodo": "HTTP application RTT (no ICMP)",
+        "metodo": "HTTP Keep-Alive RTT (no ICMP)" if keepalive else "HTTP application RTT (no ICMP)",
         "unidad": "ms",
         "intentos": attempts,
         "exitosos": len(samples),
@@ -128,20 +198,22 @@ def medir_latencia_supabase(intentos: int = 5, timeout: float = 5.0) -> dict:
         "latencia_min_ms": round(min(samples), 2),
         "latencia_max_ms": round(max(samples), 2),
         "latencia_media_ms": round(mean, 2),
+        "latencia_warm_ms": round(warm_mean, 2),
         "latencia_mediana_ms": round(statistics.median(samples), 2),
         "latencia_p95_ms": round(_percentile(samples, 0.95), 2),
-        "jitter_ms": round(jitter, 2),
+        "jitter_ms": round(jitter_sd, 2),
+        "jitter_rfc3550_ms": round(jitter_ipdv, 2),
         "muestras_ms": [round(value, 2) for value in samples],
-        "calidad": evaluar_calidad(mean, jitter, loss),
+        "calidad": evaluar_calidad(
+            warm_mean if keepalive else mean,
+            warm_jitter if keepalive else jitter_sd,
+            loss,
+        ),
     }
 
 
 def medir_throughput_supabase(bytes_objetivo: int = 100_000, timeout: float = 15.0) -> dict:
-    """Measure goodput from a bounded HTTP response sample.
-
-    This is application goodput, not physical link capacity. Protocol overhead and
-    server processing are intentionally part of the observed end-to-end service.
-    """
+    """Measure goodput from a bounded HTTP response sample."""
     target = max(1_024, min(int(bytes_objetivo), 1_000_000))
     config = _supabase_config()
     url = str(config.get("url", ""))
@@ -205,9 +277,9 @@ def medir_dns(host: str | None = None) -> dict:
         return {"ok": False, "error": f"{type(exc).__name__}: {exc}", "host": host, "metodo": "getaddrinfo"}
 
 
-def medir_tls_handshake(timeout: float = 5.0) -> dict:
-    """Measure TCP connect plus TLS negotiation to configured Supabase."""
-    host = urlparse(_supabase_url()).hostname
+def medir_tls_handshake(timeout: float = 5.0, host_override: str | None = None) -> dict:
+    """Measure TCP connect plus TLS negotiation to target host."""
+    host = (host_override or urlparse(_supabase_url()).hostname or "").strip()
     if not host:
         return {"ok": False, "error": "Supabase no configurado", "metodo": "TCP + TLS"}
     started = time.perf_counter()
@@ -290,10 +362,10 @@ def velocidad_sqlite() -> dict:
 
 
 def diagnostico_completo() -> dict:
-    """Run the complete layered telecommunications diagnostic."""
+    """Run the complete layered telecommunications diagnostic (5 RTT attempts)."""
     local = info_red_local()
     dns = medir_dns()
-    latency = medir_latencia_supabase(intentos=3)
+    latency = medir_latencia_supabase(intentos=5)
     throughput = medir_throughput_supabase()
     tls = medir_tls_handshake()
     sqlite = velocidad_sqlite()
@@ -331,7 +403,7 @@ def formato_humano_diagnostico() -> str:
     if latency.get("ok"):
         lines.extend([
             f"  Media: {latency['latencia_media_ms']} ms | P95: {latency['latencia_p95_ms']} ms",
-            f"  Jitter: {latency['jitter_ms']} ms | Fallos: {latency['perdida_pct']}%",
+            f"  Jitter σ: {latency['jitter_ms']} ms | Jitter RFC3550: {latency.get('jitter_rfc3550_ms', 0)} ms | Fallos: {latency['perdida_pct']}%",
             f"  Calidad: {latency['calidad']['nivel']} ({latency['calidad']['score']}/100)",
         ])
     else:

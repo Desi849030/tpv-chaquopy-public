@@ -156,6 +156,22 @@ app.config["PERMANENT_SESSION_LIFETIME"] = 86400 * 7
 app.secret_key = _KEY_FILE.read_text().strip()
 
 
+@app.before_request
+def _enforce_loopback_same_origin():
+    """Block cross-origin state-changing requests against local loopback Flask."""
+    if request.method in ("POST", "PUT", "PATCH", "DELETE") and request.path.startswith("/api/"):
+        origin = request.headers.get("Origin", "").strip()
+        if origin:
+            from urllib.parse import urlparse
+            parsed = urlparse(origin)
+            allowed_hosts = {
+                "127.0.0.1", "localhost", "[::1]",
+                request.host.split(":")[0],
+            }
+            if parsed.hostname and parsed.hostname not in allowed_hosts:
+                return jsonify({"ok": False, "error": "Cross-origin request blocked"}), 403
+
+
 @app.after_request
 def _security_and_cache_headers(response):
     """Safe defaults compatible with the offline WebView and local APIs."""
@@ -1229,13 +1245,18 @@ def get_status():
 def api_ping():
     try:
         import urllib.request
-        req = urllib.request.Request(
-            "https://cclafrwdqentvxgpmdbn.supabase.co/rest/v1/tpv_estado?limit=0")
-        req.add_header("apikey","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjbGFmcndkcWVudHZ4Z3BtZGJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwMDA4MjIsImV4cCI6MjA4ODU3NjgyMn0.***REMOVED***")
-        urllib.request.urlopen(req, timeout=5)
-        return jsonify({"online": True})
-    except:
-        return jsonify({"online": False})
+        url = (_sb.SUPABASE_CONFIG.get("url") or "").strip().rstrip("/")
+        key = (_sb.SUPABASE_CONFIG.get("anon_key") or "").strip()
+        if url and key and "REMOVED" not in key:
+            req = urllib.request.Request(f"{url}/rest/v1/tpv_estado?limit=0")
+            req.add_header("apikey", key)
+            urllib.request.urlopen(req, timeout=5)
+            return jsonify({"online": True, "cloud_configured": True})
+        probe_url = os.environ.get("TPV_TELECOM_PROBE_URL", "https://cloudflare.com/cdn-cgi/trace")
+        urllib.request.urlopen(probe_url, timeout=4)
+        return jsonify({"online": True, "cloud_configured": False})
+    except Exception:
+        return jsonify({"online": False, "cloud_configured": False})
 
 @app.route("/api/backup", methods=["GET"])
 @requiere_rol("administrador","desarrollador")

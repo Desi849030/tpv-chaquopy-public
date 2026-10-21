@@ -15,16 +15,23 @@ from datetime import datetime
 # ══════════════════════════════════════════════════════════════
 #  PERSISTENCIA DE CONFIGURACION A DISCO
 # ══════════════════════════════════════════════════════════════
-_CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.supabase_config.json')
+_CONFIG_FILE = os.path.join(
+    os.environ.get("TPV_FILES_DIR", os.path.dirname(os.path.abspath(__file__))),
+    ".supabase_config.json",
+)
 
 def _cargar_config_desde_archivo():
     """Carga config persistida desde JSON. Retorna dict o None."""
-    try:
-        if os.path.exists(_CONFIG_FILE):
-            with open(_CONFIG_FILE, 'r') as f:
-                return json.load(f)
-    except Exception:
-        pass
+    for ruta in (
+        _CONFIG_FILE,
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), ".supabase_config.json"),
+    ):
+        try:
+            if os.path.exists(ruta):
+                with open(ruta, "r", encoding="utf-8") as f:
+                    return json.load(f)
+        except Exception:
+            pass
     return None
 
 def _guardar_config_a_archivo():
@@ -34,18 +41,17 @@ def _guardar_config_a_archivo():
             "url": SUPABASE_CONFIG.get("url", ""),
             "anon_key": SUPABASE_CONFIG.get("anon_key", ""),
         }
-        with open(_CONFIG_FILE, 'w') as f:
+        with open(_CONFIG_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f)
         return True
     except Exception:
         return False
 
 # ══════════════════════════════════════════════════════════════
-#  CONFIGURACIÓN
+#  CONFIGURACIÓN (sin credenciales hardcodeadas; offline-first)
 # ══════════════════════════════════════════════════════════════
-# Valores por defecto (se sobreescriben con lo persistido en disco)
-_DEFAULT_URL = "https://cclafrwdqentvxgpmdbn.supabase.co"
-_DEFAULT_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjbGFmcndkcWVudHZ4Z3BtZGJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwMDA4MjIsImV4cCI6MjA4ODU3NjgyMn0.***REMOVED***"
+_DEFAULT_URL = os.environ.get("TPV_SUPABASE_URL", "").strip()
+_DEFAULT_KEY = os.environ.get("TPV_SUPABASE_ANON_KEY", "").strip()
 
 # Intentar cargar config persistida desde disco
 _persisted = _cargar_config_desde_archivo()

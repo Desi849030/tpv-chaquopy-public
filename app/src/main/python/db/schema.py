@@ -30,7 +30,7 @@ USUARIOS = """CREATE TABLE IF NOT EXISTS usuarios (
             username      TEXT    NOT NULL UNIQUE,
             nombre        TEXT    NOT NULL,
             rol           TEXT    NOT NULL CHECK(rol IN
-                          ('desarrollador','administrador','supervisor','vendedor','cajero')),
+                          ('desarrollador','administrador','supervisor','vendedor','cajero','cliente')),
             password_hash TEXT    NOT NULL,
             password_salt TEXT    NOT NULL,
             creado_por    TEXT    DEFAULT NULL,

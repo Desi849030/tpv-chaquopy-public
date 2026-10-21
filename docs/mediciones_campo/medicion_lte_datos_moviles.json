@@ -1,0 +1,96 @@
+{
+  "etiqueta": "lte_datos_moviles",
+  "timestamp_utc": "2026-10-21T08:27:46.151980+00:00",
+  "endpoint": "https://cloudflare.com/cdn-cgi/trace",
+  "host": "cloudflare.com",
+  "ip_resuelta": "104.16.132.229",
+  "muestras_por_capa": 20,
+  "endpoint_local": {
+    "ok": true,
+    "hostname": "localhost",
+    "ip_local": "198.18.0.1",
+    "direcciones_locales": [
+      "127.0.0.1"
+    ],
+    "python": "3.14.6",
+    "plataforma": "android",
+    "modo": "información de endpoint local"
+  },
+  "tls_negociado": {
+    "protocolo": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384 (256 bits)"
+  },
+  "capas": {
+    "dns_getaddrinfo": {
+      "n": 20,
+      "media_ms": 16.88,
+      "ic95_pm_ms": 20.63,
+      "mediana_ms": 6.43,
+      "sd_ms": 47.08,
+      "ipdv_rfc3550_ms": 12.27,
+      "p95_ms": 18.56,
+      "min_ms": 4.96,
+      "max_ms": 216.85
+    },
+    "tcp_handshake_syn_ack": {
+      "n": 20,
+      "media_ms": 7.52,
+      "ic95_pm_ms": 0.91,
+      "mediana_ms": 7.21,
+      "sd_ms": 2.07,
+      "ipdv_rfc3550_ms": 1.89,
+      "p95_ms": 9.64,
+      "min_ms": 5.03,
+      "max_ms": 15.09
+    },
+    "tls_handshake": {
+      "n": 20,
+      "media_ms": 492.38,
+      "ic95_pm_ms": 20.32,
+      "mediana_ms": 476.55,
+      "sd_ms": 46.37,
+      "ipdv_rfc3550_ms": 48.96,
+      "p95_ms": 589.44,
+      "min_ms": 448.33,
+      "max_ms": 611.18
+    },
+    "https_frio_sin_reuso": {
+      "n": 20,
+      "media_ms": 835.22,
+      "ic95_pm_ms": 47.22,
+      "mediana_ms": 894.64,
+      "sd_ms": 107.74,
+      "ipdv_rfc3550_ms": 173.71,
+      "p95_ms": 952.51,
+      "min_ms": 680.2,
+      "max_ms": 968.15
+    },
+    "https_keepalive_1rtt": {
+      "n": 20,
+      "media_ms": 222.14,
+      "ic95_pm_ms": 5.32,
+      "mediana_ms": 219.49,
+      "sd_ms": 12.14,
+      "ipdv_rfc3550_ms": 14.17,
+      "p95_ms": 240.81,
+      "min_ms": 204.45,
+      "max_ms": 242.87
+    }
+  },
+  "reduccion_latencia_keepalive_pct": 73.4,
+  "perdida_muestral_pct": 0.0,
+  "calidad_enlace_keepalive": {
+    "nivel": "degradada",
+    "score": 70,
+    "apta_tpv": true
+  },
+  "plano_local_sqlite": {
+    "ok": true,
+    "metodo": "100 x SELECT 1 + PRAGMA quick_check",
+    "lectura_100_ops_ms": 3.05,
+    "ops_por_segundo": 32734.0,
+    "quick_check": "ok",
+    "quick_check_ms": 3.97,
+    "tamano_kb": 572.0
+  }
+}

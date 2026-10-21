@@ -28,7 +28,7 @@ def main():
         "tests/test_agent_roles_v12.py",
         "tests/test_coverage_boost.py",
         "tests/test_e2e_pipeline.py",
-        "tests/test_smart_coverage.py",,
+        "tests/test_smart_coverage.py",
     ]
     cmd = [
         sys.executable, "-m", "pytest",

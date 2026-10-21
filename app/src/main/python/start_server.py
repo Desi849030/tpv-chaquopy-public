@@ -62,8 +62,18 @@ try:
 except Exception as e:
     print(f"[TPV] Security routes adv: {e}",flush=True)
 try:
-    from database import crear_tablas; crear_tablas()
-    print("[TPV] Tablas OK",flush=True)
+    from database import crear_tablas, obtener_conexion
+    from db_connection import create_audit_table
+    from db.schema import crear_tablas_schema
+    crear_tablas()
+    create_audit_table()
+    _sc = obtener_conexion()
+    try:
+        crear_tablas_schema(_sc)
+        _sc.commit()
+    finally:
+        _sc.close()
+    print("[TPV] Tablas OK (v10 idempotencia + auditoría activas)",flush=True)
 except Exception as e:
     print(f"[TPV] DB error: {e}",flush=True); traceback.print_exc()
 try:
